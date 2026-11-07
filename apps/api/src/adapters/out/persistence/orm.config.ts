@@ -3,14 +3,19 @@
 import { Migrator } from '@mikro-orm/migrations';
 import { defineConfig } from '@mikro-orm/sqlite';
 import { Migration20261107000000 } from './migrations/Migration20261107000000.ts';
+import { Migration20261107165031 } from './migrations/Migration20261107165031.ts';
+import { SessionEventSchema, SessionSchema, SourceSchema, TranscriptCursorSchema } from './sessions.schema.ts';
 import { SettingSchema } from './setting.schema.ts';
 
-export const MIGRATIONS = [{ name: 'Migration20261107000000', class: Migration20261107000000 }];
+export const MIGRATIONS = [
+  { name: 'Migration20261107000000', class: Migration20261107000000 },
+  { name: 'Migration20261107165031', class: Migration20261107165031 },
+];
 
 export function ormConfig(dbName: string) {
   return defineConfig({
     dbName,
-    entities: [SettingSchema],
+    entities: [SettingSchema, SourceSchema, SessionSchema, SessionEventSchema, TranscriptCursorSchema],
     extensions: [Migrator],
     migrations: { migrationsList: MIGRATIONS, path: 'src/adapters/out/persistence/migrations', snapshot: false },
     allowGlobalContext: false,
