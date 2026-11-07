@@ -58,7 +58,7 @@ function Row({
       </td>
       {showFolder && (
         <td className="truncate font-mono text-xs text-muted">
-          {session.repository ? session.repository.folder || '.' : '—'}
+          {session.repository ? session.repository.folder || 'racine' : '—'}
         </td>
       )}
       <td className="truncate font-mono text-xs text-muted">{session.branch ?? '—'}</td>
