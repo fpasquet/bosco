@@ -1,5 +1,6 @@
 import type { Preview } from '@storybook/nextjs-vite';
 import { withThemeByClassName } from '@storybook/addon-themes';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import '../src/app/fonts';
 import '../src/app/globals.css';
 
@@ -31,7 +32,12 @@ const preview: Preview = {
   },
   decorators: [
     withThemeByClassName({ themes: { Clair: '', Sombre: 'dark' }, defaultTheme: 'Clair' }),
-    // Textes traduits : envelopper l'histoire dans le fournisseur de messages du projet (next-intl, i18next…).
+    // Données du serveur : un cache TanStack Query neuf par histoire, sans nouvelle tentative
+    (Story) => (
+      <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+        <Story />
+      </QueryClientProvider>
+    ),
   ],
 };
 
