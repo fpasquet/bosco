@@ -21,11 +21,11 @@
 | Agents | Claude Agent SDK | DT-09 | Lancer la CLI |
 | Conteneurs | Docker via `dockerode` | DT-08 | CLI docker |
 | Surveillance de fichiers | `chokidar` | Fiable sous Linux | `fs.watch` |
-| Compilation | TypeScript 6 (`tsc -b`) pour l'API, le worker, la CLI et les paquets ; Next.js pour le web | Choix du porteur du projet ; un seul compilateur, décorateurs et métadonnées vérifiés (DT-18) | Compilateur tiers en plus de `tsc` |
+| Compilation | TypeScript 6 (`tsc -b`) pour l'application serveur (service, worker, commande `bosco`) et les paquets ; Next.js pour le web | Choix du porteur du projet ; un seul compilateur, décorateurs et métadonnées vérifiés (DT-18) | Compilateur tiers en plus de `tsc` |
 | Tests | Vitest pour le domaine, les cas d'usage et les adaptateurs ; playwright-bdd sur Playwright pour les scénarios Gherkin de l'API (anglais) et du web (français), avec axe ; enregistrements rejoués par un module du dépôt sur undici (DT-21) | Choix du porteur du projet ; un seul exécuteur Gherkin, tests rapides et sans réseau, navigateur déjà installé | Jest, Cypress, Cucumber seul |
 | Qualité | Configurations partagées dans `packages/configs` (§7.3, DT-23) ; ESLint 10 (configuration plate) avec typescript-eslint en règles typées, sonarjs, perfectionist, check-file, `eslint-plugin-boundaries` pour les frontières et `@next/eslint-plugin-next` ; Prettier 3 avec `eslint-config-prettier` et `prettier-plugin-gherkin` ; contrôle des `.feature` (DT-21) ; TypeScript strict ; husky, lint-staged et commitlint | Choix du porteur du projet, dernières versions (DT-19) | oxlint, Biome |
 | Architecture du back | Hexagonale (ports et adaptateurs) | Choix du porteur du projet ; domaine testable sans NestJS ni base (DT-15) | Couches NestJS classiques |
-| Organisation | Monorepo pnpm 12 et Turborepo 2.11 (DT-22) | `apps/api` (service et worker, DT-15), `apps/web`, `apps/cli`, `packages/domain` (contrats partagés avec le web), `packages/configs` ; Turborepo ordonne les tâches et les met en cache | Multi-dépôts, Nx, scripts pnpm seuls |
+| Organisation | Monorepo pnpm 12 et Turborepo 2.11 (DT-22) | `apps/api` (service, worker et commande `bosco`, DT-15), `apps/web`, `packages/domain` (contrats partagés avec le web), `packages/configs` ; Turborepo ordonne les tâches et les met en cache | Multi-dépôts, Nx, scripts pnpm seuls |
 
 Versions : les versions stables de NestJS, Next.js, TanStack Query, Zustand, ESLint et Prettier au démarrage du lot 0, figées dans le fichier de verrouillage. Le worker est un second point d'entrée de l'application serveur, sans serveur HTTP, lancé dans son propre processus (DT-02). L'application web reste presque entièrement côté client : elle reçoit ses données par l'API et les flux SSE.
 
@@ -41,7 +41,7 @@ Versions : les versions stables de NestJS, Next.js, TanStack Query, Zustand, ESL
 | `apps/api/src/<contexte>/interface/http` | Contrôleurs REST, flux SSE, entrée des hooks, serveur MCP, schémas zod | application |
 | `apps/api/src/<contexte>/<contexte>.module.ts` | Module NestJS du contexte : chaque port relié à son adaptateur (jetons de `tokens.ts`) | tout le contexte |
 | `apps/api/src/shared` | Noyau partagé : erreur de base, horloge, persistance commune (MikroORM, migrations), hébergement de Next.js | rien |
-| `apps/api/src/app.module.ts`, `main.ts`, `main-worker.ts` | Point de composition et points d'entrée du service et du worker | tout |
+| `apps/api/src/app.module.ts`, `main.ts`, `main-worker.ts`, `cli/main.ts` | Point de composition et points d'entrée : service, worker, commande `bosco` (démarrer, installer le service systemd, reprendre une session) | tout |
 | `packages/domain` | Contrats partagés avec le web : types des vues, `APP_NAME` | rien |
 
 Le domaine et l'application ne connaissent ni NestJS, ni MikroORM, ni Docker : ils se testent avec des adaptateurs en mémoire. Le mapping MikroORM vit dans les adaptateurs (schémas d'entités), pas sur les classes du domaine. Le worker réutilise les mêmes cas d'usage que l'API.

@@ -6,7 +6,7 @@ Extrait du cahier des charges pour l'équipe de développement et ses agents : r
 
 | | |
 |---|---|
-| Version | 0.14 · 07/11/2026 (Brouillon, à relire) |
+| Version | 0.15 · 07/11/2026 (Brouillon, à relire) |
 | Cahier des charges | [artifact](https://claude.ai/artifact/8ze73zWxiHUVDx99xfQqC4) |
 | Specs UI | [artifact](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) |
 | Source | `fpasquet/specs` · `bosco/requirements` |
