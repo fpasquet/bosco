@@ -9,6 +9,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { APP_NAME } from '@bosco/domain';
 import { loadConfig } from '../config.ts';
+import { loadHookSecret } from '../sessions/infrastructure/hooks/hook-secret.ts';
 import { findSession, installSession } from './resume.ts';
 import { serviceUnit } from './service-unit.ts';
 
@@ -69,6 +70,53 @@ program
     // Claude Code du poste, par son chemin : celui des sessions, sans dépendre du PATH
     const child = spawn(config.worker.claudeBinary, ['--resume', session], { cwd, env, stdio: 'inherit' });
     child.on('exit', (code) => process.exit(code ?? 0));
+  });
+
+const mcp = program.command('mcp').description('Manage the MCP server of Bosco in a Claude Code profile (Ma session)');
+
+/** Claude Code du poste, dans le profil choisi : c'est lui qui écrit sa configuration MCP. */
+function claudeIn(profile: string, args: string[]): Promise<number> {
+  const config = loadConfig();
+  return new Promise((resolve) => {
+    const child = spawn(config.worker.claudeBinary, args, {
+      env: { ...process.env, CLAUDE_CONFIG_DIR: profile },
+      stdio: 'inherit',
+    });
+    child.on('exit', (code) => resolve(code ?? 1));
+  });
+}
+
+mcp
+  .command('install')
+  .description('Add the MCP server of Bosco to a Claude Code profile, for every project')
+  .option('--profile <dir>', 'Claude Code profile', join(homedir(), '.claude'))
+  .action(async (options: { profile: string }) => {
+    const config = loadConfig();
+    const secret = loadHookSecret(config.dataDir);
+    const url = `http://127.0.0.1:${config.port}/mcp`;
+    const code = await claudeIn(options.profile, [
+      'mcp',
+      'add',
+      '--scope',
+      'user',
+      '--transport',
+      'http',
+      command,
+      url,
+      '--header',
+      `Authorization: Bearer ${secret}`,
+    ]);
+    if (code === 0) console.log(`in Claude Code, ask: « prends la prochaine tâche ${APP_NAME} »`);
+    process.exit(code);
+  });
+
+mcp
+  .command('remove')
+  .description('Remove the MCP server of Bosco from a Claude Code profile')
+  .option('--profile <dir>', 'Claude Code profile', join(homedir(), '.claude'))
+  .action(async (options: { profile: string }) => {
+    const code = await claudeIn(options.profile, ['mcp', 'remove', '--scope', 'user', command]);
+    process.exit(code);
   });
 
 await program.parseAsync();
