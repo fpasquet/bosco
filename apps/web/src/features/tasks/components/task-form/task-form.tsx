@@ -1,6 +1,9 @@
 'use client';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { X } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
+import { type FieldErrors, type FieldPath, get, useForm, useWatch } from 'react-hook-form';
+import { z } from 'zod';
 import type { TaskDraftDto, TaskDto, TaskIssueDto } from '@bosco/domain';
 import { cn } from '@/lib/cn';
 import { Button } from '@/shared/ui/button';
@@ -42,6 +45,40 @@ function startsWhen(chosen: readonly TaskDto[]): string {
   return `Partira quand ${ids} ${chosen.length > 1 ? 'seront validées' : 'sera validée'}`;
 }
 
+/** Ce que le formulaire vérifie seul, avec les messages de l'API ; les plafonds du dépôt restent vérifiés par l'API. */
+const draftSchema = z.object({
+  repository: z.string().min(1, 'Choisis un dépôt des sources surveillées.'),
+  folder: z.string(),
+  instruction: z.string().refine((value) => value.trim().length > 0, 'Écris la consigne de la tâche.'),
+  mode: z.enum(['session', 'worker']),
+  prerequisites: z.array(z.number()),
+  context: z.string().nullable(),
+  guardrails: z.object({
+    budgetUsd: z.number({ error: 'Un budget en dollars.' }).positive('Un budget au-dessus de 0 $.'),
+    maxTurns: z.number({ error: 'Un nombre de tours.' }).int('Un nombre de tours entier.').positive('Au moins 1 tour.'),
+    model: z.string().nullable(),
+    tools: z.array(z.string()).nullable(),
+  }),
+}) satisfies z.ZodType<TaskDraftDto>;
+
+/** Champ du formulaire de chaque erreur, dans l'ordre du récapitulatif. */
+const PATHS: Record<TaskIssueDto['field'], FieldPath<TaskDraftDto>> = {
+  repository: 'repository',
+  instruction: 'instruction',
+  prerequisites: 'prerequisites',
+  budgetUsd: 'guardrails.budgetUsd',
+  maxTurns: 'guardrails.maxTurns',
+  tools: 'guardrails.tools',
+};
+
+/** Erreurs du formulaire et de l'API, une par champ. */
+function issuesOf(errors: FieldErrors<TaskDraftDto>): TaskIssueDto[] {
+  return (Object.entries(PATHS) as [TaskIssueDto['field'], FieldPath<TaskDraftDto>][]).flatMap(([field, path]) => {
+    const error: undefined | { message?: string } = get(errors, path);
+    return error?.message ? [{ field, message: error.message }] : [];
+  });
+}
+
 const FIELD_IDS: Record<TaskIssueDto['field'], string> = {
   budgetUsd: 'task-budget',
   instruction: 'task-instruction',
@@ -65,30 +102,39 @@ function FieldError({ field, issues }: { field: TaskIssueDto['field']; issues: T
 export function TaskForm({
   busy,
   editing,
-  issues,
+  issues: serverIssues,
   limits: limitsOf,
   onCancel,
   onSubmit,
   repositories,
   tasks,
 }: TaskFormProps) {
-  const [draft, setDraft] = useState<TaskDraftDto>(() => ({
-    repository: editing?.repository.name ?? repositories[0]?.name ?? '',
-    folder: editing?.folder ?? '',
-    instruction: editing?.instruction ?? '',
-    mode: editing?.mode ?? 'worker',
-    prerequisites: editing?.prerequisites ?? [],
-    context: editing?.context ?? null,
-    guardrails: editing?.guardrails ?? { budgetUsd: 1, maxTurns: DEFAULT_LIMITS.maxTurns, model: null, tools: null },
-  }));
+  const { control, formState, handleSubmit, register, setError, setValue } = useForm<TaskDraftDto>({
+    resolver: zodResolver(draftSchema),
+    defaultValues: {
+      repository: editing?.repository.name ?? repositories[0]?.name ?? '',
+      folder: editing?.folder ?? '',
+      instruction: editing?.instruction ?? '',
+      mode: editing?.mode ?? 'worker',
+      prerequisites: editing?.prerequisites ?? [],
+      context: editing?.context ?? null,
+      guardrails: editing?.guardrails ?? { budgetUsd: 1, maxTurns: DEFAULT_LIMITS.maxTurns, model: null, tools: null },
+    },
+  });
+  // Valeurs complètes : chaque champ a sa valeur par défaut
+  const draft = useWatch({ control }) as TaskDraftDto;
+  // Les erreurs renvoyées par l'API se posent sur leur champ, comme celles du formulaire
+  useEffect(() => {
+    for (const issue of serverIssues) setError(PATHS[issue.field], { type: 'server', message: issue.message });
+  }, [serverIssues, setError]);
+  const issues = issuesOf(formState.errors);
   const banner = useRef<HTMLDivElement>(null);
   // Le focus va au récapitulatif des erreurs, qui renvoie à chaque champ (CA-TACH-30)
+  const hasIssues = issues.length > 0;
   useEffect(() => {
-    if (issues.length > 0) banner.current?.focus();
-  }, [issues]);
-  const set = (changes: Partial<TaskDraftDto>) => setDraft((current) => ({ ...current, ...changes }));
-  const setGuardrails = (changes: Partial<TaskDraftDto['guardrails']>) =>
-    setDraft((current) => ({ ...current, guardrails: { ...current.guardrails, ...changes } }));
+    if (hasIssues) banner.current?.focus();
+  }, [hasIssues, serverIssues, formState.submitCount]);
+  const dirty = { shouldDirty: true } as const;
   const candidates = tasks.filter((task) => task.id !== editing?.id && !draft.prerequisites.includes(task.id));
   const chosen = tasks.filter((task) => draft.prerequisites.includes(task.id));
   const sameRepository = chosen.filter((task) => task.repository.name === draft.repository);
@@ -101,10 +147,7 @@ export function TaskForm({
     <form
       className="grid gap-6 md:grid-cols-3"
       noValidate
-      onSubmit={(event) => {
-        event.preventDefault();
-        onSubmit(draft);
-      }}
+      onSubmit={(event) => void handleSubmit((values) => onSubmit(values))(event)}
     >
       <div className="flex flex-col gap-5 md:col-span-2">
         {issues.length > 0 && (
@@ -138,7 +181,7 @@ export function TaskForm({
               value={draft.repository}
               aria-invalid={invalid('repository')}
               aria-describedby={describedBy('repository')}
-              onChange={(event) => set({ repository: event.target.value })}
+              onChange={(event) => setValue('repository', event.target.value, dirty)}
             >
               {repositories.map(({ name }) => (
                 <option key={name} value={name}>
@@ -150,12 +193,7 @@ export function TaskForm({
           </label>
           <label className="flex flex-col gap-1.5">
             <span className="text-xs font-medium">Dossier</span>
-            <input
-              className="input w-full"
-              placeholder="racine du dépôt"
-              value={draft.folder}
-              onChange={(event) => set({ folder: event.target.value })}
-            />
+            <input className="input w-full" placeholder="racine du dépôt" {...register('folder')} />
           </label>
         </div>
         <label className="flex flex-col gap-1.5">
@@ -164,10 +202,9 @@ export function TaskForm({
             id="task-instruction"
             className="textarea w-full"
             rows={4}
-            value={draft.instruction}
             aria-invalid={invalid('instruction')}
             aria-describedby={describedBy('instruction')}
-            onChange={(event) => set({ instruction: event.target.value })}
+            {...register('instruction')}
           />
           <FieldError field="instruction" issues={issues} />
         </label>
@@ -191,7 +228,7 @@ export function TaskForm({
                   name="mode"
                   className="radio mt-0.5 radio-sm"
                   checked={draft.mode === option.value}
-                  onChange={() => set({ mode: option.value })}
+                  onChange={() => setValue('mode', option.value, dirty)}
                 />
                 <span>
                   <span className="block font-medium">{option.label}</span>
@@ -210,7 +247,13 @@ export function TaskForm({
                 <button
                   type="button"
                   aria-label={`Retirer T-${task.id}`}
-                  onClick={() => set({ prerequisites: draft.prerequisites.filter((id) => id !== task.id) })}
+                  onClick={() =>
+                    setValue(
+                      'prerequisites',
+                      draft.prerequisites.filter((id) => id !== task.id),
+                      dirty,
+                    )
+                  }
                 >
                   <X aria-hidden className="size-3" />
                 </button>
@@ -223,7 +266,8 @@ export function TaskForm({
               aria-invalid={invalid('prerequisites')}
               aria-describedby={describedBy('prerequisites')}
               onChange={(event) =>
-                event.target.value && set({ prerequisites: [...draft.prerequisites, Number(event.target.value)] })
+                event.target.value &&
+                setValue('prerequisites', [...draft.prerequisites, Number(event.target.value)], dirty)
               }
             >
               <option value="">Ajouter une tâche préalable</option>
@@ -246,8 +290,7 @@ export function TaskForm({
           <input
             className="input w-full"
             placeholder="Ticket, PR ou décision"
-            value={draft.context ?? ''}
-            onChange={(event) => set({ context: event.target.value || null })}
+            {...register('context', { setValueAs: (value: null | string) => value || null })}
           />
         </label>
         {draft.mode === 'worker' ? (
@@ -264,10 +307,9 @@ export function TaskForm({
                   min={0.1}
                   step={0.1}
                   className="input w-full"
-                  value={draft.guardrails.budgetUsd}
                   aria-invalid={invalid('budgetUsd')}
                   aria-describedby={describedBy('budgetUsd') ?? 'task-budget-cap'}
-                  onChange={(event) => setGuardrails({ budgetUsd: Number(event.target.value) })}
+                  {...register('guardrails.budgetUsd', { valueAsNumber: true })}
                 />
                 <span id="task-budget-cap" className="text-xs text-muted">
                   plafond du dépôt : {usd(limits.budgetUsd)}
@@ -281,10 +323,9 @@ export function TaskForm({
                   type="number"
                   min={1}
                   className="input w-full"
-                  value={draft.guardrails.maxTurns}
                   aria-invalid={invalid('maxTurns')}
                   aria-describedby={describedBy('maxTurns')}
-                  onChange={(event) => setGuardrails({ maxTurns: Number(event.target.value) })}
+                  {...register('guardrails.maxTurns', { valueAsNumber: true })}
                 />
                 <span className="text-xs text-muted">plafond du dépôt : {limits.maxTurns}</span>
                 <FieldError field="maxTurns" issues={issues} />
@@ -300,9 +341,11 @@ export function TaskForm({
                       className="checkbox"
                       checked={tools.includes(tool)}
                       onChange={(event) =>
-                        setGuardrails({
-                          tools: event.target.checked ? [...tools, tool] : tools.filter((t) => t !== tool),
-                        })
+                        setValue(
+                          'guardrails.tools',
+                          event.target.checked ? [...tools, tool] : tools.filter((t) => t !== tool),
+                          dirty,
+                        )
                       }
                     />
                     {toolLabel(tool)}
@@ -321,7 +364,7 @@ export function TaskForm({
       <aside className="flex flex-col gap-3 self-start rounded-card border border-line bg-surface p-4 shadow-card">
         <h2 className="text-xs font-semibold text-muted">Récapitulatif</h2>
         <p>{startsWhen(chosen)}</p>
-        {draft.mode === 'worker' && <p>Coût au plus {usd(draft.guardrails.budgetUsd)}</p>}
+        {draft.mode === 'worker' && <p>Coût au plus {usd(draft.guardrails.budgetUsd || 0)}</p>}
         <p className="text-muted">
           {startFrom ? `Sur la branche de T-${startFrom.id}` : 'Sur la branche principale du dépôt'}
         </p>
