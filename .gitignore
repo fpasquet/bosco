@@ -1,0 +1,19 @@
+node_modules/
+dist/
+.next/
+next-env.d.ts
+*.tsbuildinfo
+.turbo/
+coverage/
+storybook-static/
+.features-gen/
+reports/
+test-results/
+*.db
+*.db-journal
+.env
+# Règles et sous-agents versionnés, même si un .gitignore global ignore .claude ; skills installés, épinglés par
+# skills-lock.json (pnpm skills:install), hors du dépôt
+!.claude/
+.claude/skills/
+.agents/

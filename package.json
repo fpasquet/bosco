@@ -1,0 +1,37 @@
+{
+  "name": "bosco",
+  "private": true,
+  "description": "Bosco : poste de pilotage local des sessions Claude Code. Specs et cahier des charges dans le dépôt de specs (bosco/), export du cahier des charges dans docs/requirements.",
+  "type": "module",
+  "packageManager": "pnpm@12.18.0",
+  "engines": {
+    "node": ">=26.13.0"
+  },
+  "prettier": "@bosco/configs/prettier",
+  "scripts": {
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "check": "turbo run lint typecheck test build",
+    "e2e:api": "turbo run e2e:api",
+    "e2e:web": "turbo run e2e:web",
+    "e2e:api:record": "BOSCO_REPLAY=record turbo run e2e:api --force",
+    "e2e:web:record": "BOSCO_REPLAY=record turbo run e2e:web --force",
+    "e2e:clean": "BOSCO_REPLAY=clean turbo run e2e:api e2e:web --force --concurrency=1",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "skills:install": "node scripts/install-skills.mjs",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@bosco/configs": "workspace:*",
+    "@commitlint/cli": "21.2.4",
+    "@commitlint/config-conventional": "21.2.4",
+    "husky": "9.1.7",
+    "lint-staged": "17.6.0",
+    "prettier": "3.9.10",
+    "turbo": "2.11.10",
+    "typescript": "6.0.3"
+  }
+}

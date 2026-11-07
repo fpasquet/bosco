@@ -1,0 +1,6 @@
+pnpm-lock.yaml
+docs/requirements/
+**/recordings/
+**/__snapshots__/
+**/migrations/
+apps/web/src/styles/tokens.css
