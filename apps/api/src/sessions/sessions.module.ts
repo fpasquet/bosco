@@ -137,7 +137,7 @@ const registry = new FileSessionRegistry();
         ),
     },
   ],
-  exports: [TRANSCRIPT_WATCHER, LIVE_SIGNAL_SERVICE, NOTIFIER, SETTINGS_SERVICE],
+  exports: [TRANSCRIPT_WATCHER, LIVE_SIGNAL_SERVICE, NOTIFIER, SETTINGS_SERVICE, SESSION_SERVICE],
 })
 export class SessionsModule implements OnApplicationBootstrap, OnApplicationShutdown {
   constructor(
