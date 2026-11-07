@@ -19,7 +19,7 @@
 
 ## <a id="e9"></a>E9 · Contexte transmis aux agents
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e9.html`
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e9.html` · implémentation : **À développer**
 
 ### <a id="e9a"></a>E9a · Contexte d'un dépôt
 
@@ -123,7 +123,7 @@ Règles de l'écran :
 
 ## <a id="e10"></a>E10 · Intégrations
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e10.html`
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e10.html` · implémentation : **À développer**
 
 ### <a id="e10a"></a>E10a · Intégrations : connexions
 
@@ -161,7 +161,7 @@ Règles de l'écran :
 
 ## <a id="e11"></a>E11 · Isolation du worker
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e11.html`
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e11.html` · implémentation : **À développer**
 
 ### <a id="e11a"></a>E11a · Isolation du worker : mode et ressources
 
@@ -200,7 +200,7 @@ Règles de l'écran :
 
 ## <a id="e12"></a>E12 · Environnement de test
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e12.html`
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e12.html` · implémentation : **À développer**
 
 ### <a id="e12a"></a>E12a · Environnement de test d'un dépôt
 
@@ -222,7 +222,7 @@ Règles de l'écran :
 
 ## <a id="e14"></a>E14 · Socles
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e14.html`
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e14.html` · implémentation : **À développer**
 
 ### <a id="e14a"></a>E14a · Socles : liste et héritages
 

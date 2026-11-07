@@ -28,22 +28,22 @@ Extrait du cahier des charges pour l'équipe de développement et ses agents : r
 
 ## Écrans
 
-| Lot | Écran | Titre | États | Specs |
-|---|---|---|---|---|
-| Lot 1 · Sessions | E1 | Vue d'ensemble | [E1a](lots/sessions.md#e1a), [E1b](lots/sessions.md#e1b), [E1c](lots/sessions.md#e1c), [E1d](lots/sessions.md#e1d), [E1e](lots/sessions.md#e1e), [E1f](lots/sessions.md#e1f) | [specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `sessions/e1.html` |
-| Lot 1 · Sessions | E2 | Détail d'une session | [E2a](lots/sessions.md#e2a), [E2b](lots/sessions.md#e2b), [E2c](lots/sessions.md#e2c), [E2d](lots/sessions.md#e2d) | [specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `sessions/e2.html` |
-| Lot 1 · Sessions | E3 | Historique | [E3a](lots/sessions.md#e3a), [E3b](lots/sessions.md#e3b) | [specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `sessions/e3.html` |
-| Lot 1 · Sessions | E4 | Sources | [E4a](lots/sessions.md#e4a), [E4b](lots/sessions.md#e4b), [E4c](lots/sessions.md#e4c) | [specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `sessions/e4.html` |
-| Lot 2 · Tâches | E5 | File de tâches | [E5a](lots/taches.md#e5a), [E5b](lots/taches.md#e5b), [E5c](lots/taches.md#e5c) | [specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `taches/e5.html` |
-| Lot 2 · Tâches | E6 | Nouvelle tâche | [E6a](lots/taches.md#e6a), [E6b](lots/taches.md#e6b) | [specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `taches/e6.html` |
-| Lot 2 · Tâches | E7 | Revue d'une tâche | [E7a](lots/taches.md#e7a), [E7b](lots/taches.md#e7b), [E7c](lots/taches.md#e7c) | [specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `taches/e7.html` |
-| Lot 2 · Tâches | E8 | Droits des agents | [E8a](lots/taches.md#e8a) | [specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `taches/e8.html` |
-| Lot 2 · Tâches | E13 | Détail d'une tâche | [E13a](lots/taches.md#e13a), [E13b](lots/taches.md#e13b), [E13c](lots/taches.md#e13c) | [specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `taches/e13.html` |
-| Lot 3 · Contexte et isolation | E9 | Contexte transmis aux agents | [E9a](lots/contexte.md#e9a), [E9b](lots/contexte.md#e9b), [E9c](lots/contexte.md#e9c), [E9d](lots/contexte.md#e9d), [E9e](lots/contexte.md#e9e), [E9f](lots/contexte.md#e9f) | [specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e9.html` |
-| Lot 3 · Contexte et isolation | E10 | Intégrations | [E10a](lots/contexte.md#e10a), [E10b](lots/contexte.md#e10b) | [specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e10.html` |
-| Lot 3 · Contexte et isolation | E11 | Isolation du worker | [E11a](lots/contexte.md#e11a), [E11b](lots/contexte.md#e11b) | [specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e11.html` |
-| Lot 3 · Contexte et isolation | E12 | Environnement de test | [E12a](lots/contexte.md#e12a) | [specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e12.html` |
-| Lot 3 · Contexte et isolation | E14 | Socles | [E14a](lots/contexte.md#e14a), [E14b](lots/contexte.md#e14b) | [specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e14.html` |
+| Lot | Écran | Titre | États | Implémentation | Specs |
+|---|---|---|---|---|---|
+| Lot 1 · Sessions | E1 | Vue d'ensemble | [E1a](lots/sessions.md#e1a), [E1b](lots/sessions.md#e1b), [E1c](lots/sessions.md#e1c), [E1d](lots/sessions.md#e1d), [E1e](lots/sessions.md#e1e), [E1f](lots/sessions.md#e1f) | En cours (Premier lancement (E1a) développé : bienvenue, choix des profils, lecture des sessions des 30 derniers jours. Vue d'ensemble en direct à venir.) | [specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `sessions/e1.html` |
+| Lot 1 · Sessions | E2 | Détail d'une session | [E2a](lots/sessions.md#e2a), [E2b](lots/sessions.md#e2b), [E2c](lots/sessions.md#e2c), [E2d](lots/sessions.md#e2d) | À développer | [specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `sessions/e2.html` |
+| Lot 1 · Sessions | E3 | Historique | [E3a](lots/sessions.md#e3a), [E3b](lots/sessions.md#e3b) | À développer | [specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `sessions/e3.html` |
+| Lot 1 · Sessions | E4 | Sources | [E4a](lots/sessions.md#e4a), [E4b](lots/sessions.md#e4b), [E4c](lots/sessions.md#e4c) | À développer | [specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `sessions/e4.html` |
+| Lot 2 · Tâches | E5 | File de tâches | [E5a](lots/taches.md#e5a), [E5b](lots/taches.md#e5b), [E5c](lots/taches.md#e5c) | À développer | [specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `taches/e5.html` |
+| Lot 2 · Tâches | E6 | Nouvelle tâche | [E6a](lots/taches.md#e6a), [E6b](lots/taches.md#e6b) | À développer | [specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `taches/e6.html` |
+| Lot 2 · Tâches | E7 | Revue d'une tâche | [E7a](lots/taches.md#e7a), [E7b](lots/taches.md#e7b), [E7c](lots/taches.md#e7c) | À développer | [specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `taches/e7.html` |
+| Lot 2 · Tâches | E8 | Droits des agents | [E8a](lots/taches.md#e8a) | À développer | [specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `taches/e8.html` |
+| Lot 2 · Tâches | E13 | Détail d'une tâche | [E13a](lots/taches.md#e13a), [E13b](lots/taches.md#e13b), [E13c](lots/taches.md#e13c) | À développer | [specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `taches/e13.html` |
+| Lot 3 · Contexte et isolation | E9 | Contexte transmis aux agents | [E9a](lots/contexte.md#e9a), [E9b](lots/contexte.md#e9b), [E9c](lots/contexte.md#e9c), [E9d](lots/contexte.md#e9d), [E9e](lots/contexte.md#e9e), [E9f](lots/contexte.md#e9f) | À développer | [specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e9.html` |
+| Lot 3 · Contexte et isolation | E10 | Intégrations | [E10a](lots/contexte.md#e10a), [E10b](lots/contexte.md#e10b) | À développer | [specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e10.html` |
+| Lot 3 · Contexte et isolation | E11 | Isolation du worker | [E11a](lots/contexte.md#e11a), [E11b](lots/contexte.md#e11b) | À développer | [specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e11.html` |
+| Lot 3 · Contexte et isolation | E12 | Environnement de test | [E12a](lots/contexte.md#e12a) | À développer | [specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e12.html` |
+| Lot 3 · Contexte et isolation | E14 | Socles | [E14a](lots/contexte.md#e14a), [E14b](lots/contexte.md#e14b) | À développer | [specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e14.html` |
 
 ## Identifiants
 

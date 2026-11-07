@@ -15,7 +15,7 @@
 
 ## <a id="e5"></a>E5 · File de tâches
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `taches/e5.html`
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `taches/e5.html` · implémentation : **À développer**
 
 ### <a id="e5a"></a>E5a · File de tâches : vide
 
@@ -68,7 +68,7 @@ Règles de l'écran :
 
 ## <a id="e6"></a>E6 · Nouvelle tâche
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `taches/e6.html`
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `taches/e6.html` · implémentation : **À développer**
 
 ### <a id="e6a"></a>E6a · Nouvelle tâche : formulaire
 
@@ -107,7 +107,7 @@ Règles de l'écran :
 
 ## <a id="e7"></a>E7 · Revue d'une tâche
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `taches/e7.html`
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `taches/e7.html` · implémentation : **À développer**
 
 ### <a id="e7a"></a>E7a · Revue d'une tâche : à relire
 
@@ -162,7 +162,7 @@ Règles de l'écran :
 
 ## <a id="e8"></a>E8 · Droits des agents
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `taches/e8.html`
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `taches/e8.html` · implémentation : **À développer**
 
 ### <a id="e8a"></a>E8a · Droits des agents d'un dépôt
 
@@ -185,7 +185,7 @@ Règles de l'écran :
 
 ## <a id="e13"></a>E13 · Détail d'une tâche
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `taches/e13.html`
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `taches/e13.html` · implémentation : **À développer**
 
 ### <a id="e13a"></a>E13a · Détail d'une tâche : bloquée
 

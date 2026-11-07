@@ -18,7 +18,7 @@
 
 ## <a id="e1"></a>E1 · Vue d'ensemble
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `sessions/e1.html`
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `sessions/e1.html` · implémentation : **En cours (Premier lancement (E1a) développé : bienvenue, choix des profils, lecture des sessions des 30 derniers jours. Vue d'ensemble en direct à venir.)**
 
 ### <a id="e1a"></a>E1a · Vue d'ensemble : premier lancement
 
@@ -121,7 +121,7 @@ Règles de l'écran :
 
 ## <a id="e2"></a>E2 · Détail d'une session
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `sessions/e2.html`
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `sessions/e2.html` · implémentation : **À développer**
 
 ### <a id="e2a"></a>E2a · Détail d'une session : en cours
 
@@ -194,7 +194,7 @@ Règles de l'écran :
 
 ## <a id="e3"></a>E3 · Historique
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `sessions/e3.html`
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `sessions/e3.html` · implémentation : **À développer**
 
 ### <a id="e3a"></a>E3a · Historique : recherche et liste
 
@@ -232,7 +232,7 @@ Règles de l'écran :
 
 ## <a id="e4"></a>E4 · Sources
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `sessions/e4.html`
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `sessions/e4.html` · implémentation : **À développer**
 
 ### <a id="e4a"></a>E4a · Sources : profils surveillés et réglages
 
