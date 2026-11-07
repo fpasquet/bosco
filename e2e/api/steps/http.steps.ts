@@ -119,3 +119,10 @@ Then('the response property {string} should match the names {string}', ({ last }
     .reduce<unknown>((node, key) => (node as Record<string, unknown> | undefined)?.[key], last.response?.body);
   expect((list as { name: string }[]).map(({ name }) => name).join(',')).toBe(names);
 });
+
+Then('the response property {string} should contain {string}', ({ last }, path: string, value: string) => {
+  const actual = path
+    .split('.')
+    .reduce<unknown>((node, key) => (node as Record<string, unknown> | undefined)?.[key], last.response?.body);
+  expect(String(actual)).toContain(value);
+});

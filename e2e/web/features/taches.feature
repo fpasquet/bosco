@@ -36,7 +36,8 @@ Fonctionnalité: Tâches
   @CA-TACH-08
   @RF-TACH-07
   Scénario: Annuler une tâche attendue demande confirmation et fait échouer la suite
-    Étant donné une tâche du worker « Ajoute un test du découpage. » existe dans le dépôt « labo-ia »
+    Étant donné Docker ne répond pas
+    Et une tâche du worker « Ajoute un test du découpage. » existe dans le dépôt « labo-ia »
     Et une tâche du worker « Documente le découpage. » attend la tâche 1 dans le dépôt « labo-ia »
     Quand j'ouvre la page « /tasks/2 »
     Alors je vois le texte « Partira de la branche de T-1. »
