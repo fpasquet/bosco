@@ -19,6 +19,11 @@ export interface WorkerStatus {
 }
 
 export interface WorkerDeps {
+  /** Contexte du dépôt transmis à l'agent au lancement (avec la façon de proposer une décision), et les versions des
+   * décisions envoyées (RF-CONT-01) */
+  contextOf: (task: TaskView) => Promise<{ text: string; versions: string }>;
+  /** Décision proposée par l'agent dans un fichier, en attente de ta validation (RF-CONT-02) */
+  propose: (task: TaskView, markdown: string) => Promise<null | number>;
   /** Image de l'agent et services de test du dépôt, lus au lancement (E12a) */
   environmentOf: (task: TaskView) => Promise<{ image: null | string; services: TestService[] }>;
   freeMemory: () => number;
@@ -31,7 +36,7 @@ export interface WorkerDeps {
   runner: AgentRunner;
   /** Dernier lancement des services d'un dépôt, montré dans l'environnement de test ; removed à la fin de la tâche */
   servicesLaunched: (task: TaskView, launches: ServiceLaunch[] | 'removed') => Promise<void>;
-  tasks: Pick<TaskService, 'fail' | 'finish' | 'list' | 'progress' | 'start'>;
+  tasks: Pick<TaskService, 'fail' | 'finish' | 'list' | 'progress' | 'record' | 'start'>;
   workspaces: Workspaces;
 }
 
@@ -49,10 +54,11 @@ export function branchOf(task: Pick<TaskView, 'id' | 'title'>): string {
 }
 
 /** Consigne transmise à l'agent : la tâche, son contexte, et ce qu'on attend de son compte rendu (CA-TACH-25). */
-export function promptOf(task: TaskView): string {
+export function promptOf(task: TaskView, repositoryContext: null | string = null): string {
   return [
     task.instruction,
     task.context ? `Contexte : ${task.context}` : null,
+    repositoryContext,
     'Tu travailles seul, sans terminal, dans une copie jetable du dépôt. Ne pousse rien et ne fusionne rien.',
     'Termine par un compte rendu court : ce qui est fait, et ce qu’il reste à vérifier.',
   ]
@@ -154,6 +160,8 @@ export class WorkerService {
       // Les droits du dépôt ont pu se resserrer depuis la création : le surplus est écarté (CA-TACH-31)
       const tools = (task.guardrails.tools ?? rights.tools).filter((tool) => rights.tools.includes(tool));
       const environment = await this.deps.environmentOf(task);
+      const context = await this.deps.contextOf(task);
+      if (context.versions) await this.deps.tasks.record(task.id, 'Contexte transmis', context.versions);
       if (environment.services.length > 0) servicesStarted = true;
       const run = await this.deps.runner.start({
         taskId: task.id,
@@ -164,7 +172,7 @@ export class WorkerService {
         deniedTools: rights.deniedTools,
         services: environment.services,
         onServices: (launches) => void this.deps.servicesLaunched(task, launches).catch(() => undefined),
-        prompt: promptOf(task),
+        prompt: promptOf(task, context.text),
         model: task.guardrails.model ?? rights.model,
         maxTurns: Math.min(task.guardrails.maxTurns, rights.maxTurns),
         tools,
@@ -225,11 +233,15 @@ export class WorkerService {
       );
       return true;
     }
-    const { base, changes, from } = await this.deps.workspaces.collect(workspace, {
+    const { base, changes, from, proposals } = await this.deps.workspaces.collect(workspace, {
       id: task.id,
       repositoryRoot: task.repository.root,
       title: task.title,
     });
+    for (const markdown of proposals) {
+      const id = await this.deps.propose(task, markdown).catch(() => null);
+      if (id !== null) await this.deps.tasks.record(task.id, 'Décision proposée', `DEC-${id}`);
+    }
     await this.deps.tasks.finish(task.id, progress.spent, {
       base,
       branch: workspace.branch,

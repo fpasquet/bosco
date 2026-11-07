@@ -33,3 +33,15 @@ export type {
   ValidationDto,
   WorkerStatusDto,
 } from './tasks.ts';
+export type {
+  ArchitectureDto,
+  ContextDto,
+  ContextPreviewDto,
+  DecisionDetailDto,
+  DecisionDto,
+  DecisionStateDto,
+  DecisionTargetDto,
+  DecisionTextDto,
+  DecisionVersionDto,
+  SocleDto,
+} from './context.ts';

@@ -69,6 +69,16 @@ export class SessionService {
     private readonly inactivityDelayMs: () => number = () => DEFAULT_INACTIVITY_DELAY_MS,
   ) {}
 
+  /** Dépôts connus du poste, d'après les sessions des profils surveillés : ceux où l'on prépare du travail (E6a, E9a). */
+  async knownRepositories(): Promise<{ name: string; root: string }[]> {
+    const views = await this.listSessions();
+    const roots = new Map<string, string>();
+    for (const view of views) if (view.repository) roots.set(view.repository.root, view.repository.name);
+    return [...roots.entries()]
+      .map(([root, name]) => ({ name, root }))
+      .toSorted((a, b) => a.name.localeCompare(b.name, 'fr'));
+  }
+
   /** Liens vers les tâches, lus au démarrage, et relus après une remise à zéro des scénarios. */
   async useTaskLinks(store: TaskLinkStore | null = this.linkStore): Promise<void> {
     this.linkStore = store;

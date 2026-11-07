@@ -1,7 +1,9 @@
 import { Body, Controller, Get, Headers, HttpCode, Inject, Post, Res, UnauthorizedException } from '@nestjs/common';
 import { timingSafeEqual } from 'node:crypto';
 import { APP_NAME } from '@bosco/domain';
+import type { ContextService } from '../../../context/application/context.service.ts';
 import type { TaskService } from '../../application/task.service.ts';
+import { CONTEXT_SERVICE } from '../../../context/tokens.ts';
 import { HOOK_SECRET } from '../../../sessions/tokens.ts';
 import { TASK_SERVICE } from '../../tokens.ts';
 import { callTool, TOOLS } from './tools.ts';
@@ -25,6 +27,7 @@ export class McpController {
   constructor(
     @Inject(TASK_SERVICE) private readonly tasks: TaskService,
     @Inject(HOOK_SECRET) private readonly secret: string,
+    @Inject(CONTEXT_SERVICE) private readonly context: ContextService,
   ) {}
 
   /** Pas de flux d'événements du serveur vers la session. */
@@ -71,7 +74,7 @@ export class McpController {
         return ok({ tools: TOOLS });
       case 'tools/call': {
         const name = typeof request.params?.name === 'string' ? request.params.name : '';
-        const result = await callTool(this.tasks, name, request.params?.arguments ?? {});
+        const result = await callTool(this.tasks, this.context, name, request.params?.arguments ?? {});
         return ok({ content: [{ type: 'text', text: result.text }], isError: result.error ?? false });
       }
       default:

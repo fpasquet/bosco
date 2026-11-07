@@ -192,8 +192,13 @@ export class Task {
 
   /** Étape signalée par la session qui a pris la tâche (mode Ma session), gardée dans le journal. */
   note(step: string, at: Date): void {
+    this.record('Étape', step, at);
+  }
+
+  /** Événement d'une tâche en cours gardé dans son journal : étape, contexte transmis, décision proposée. */
+  record(event: string, detail: string, at: Date): void {
     if (this.snapshot.state !== 'running') throw new TaskError('taskNotRunning', `Task T-${this.id} is not running`);
-    this.move('running', at, 'Étape', step);
+    this.move('running', at, event, detail);
   }
 
   /** Avancement de l'agent : dépense, tours, branche et session, tenus à jour pendant qu'il travaille. */

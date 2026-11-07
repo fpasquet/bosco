@@ -88,7 +88,13 @@ export interface Workspaces {
   collect(
     workspace: Workspace,
     task: { id: number; repositoryRoot: string; title: string },
-  ): Promise<{ base: string; changes: { added: number; files: number; removed: number }; from: string }>;
+  ): Promise<{
+    base: string;
+    changes: { added: number; files: number; removed: number };
+    from: string;
+    /** Décisions proposées par l'agent dans .bosco/decisions/, retirées de la branche (RF-CONT-02) */
+    proposals: string[];
+  }>;
   prepare(task: { branch: string; id: number; repositoryRoot: string; startBranch: null | string }): Promise<Workspace>;
   remove(workspace: Workspace): Promise<void>;
 }
