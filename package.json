@@ -23,7 +23,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "skills:install": "node scripts/install-skills.mjs",
-    "prepare": "husky"
+    "prepare": "husky",
+    "storybook": "pnpm --filter @bosco/web storybook"
   },
   "devDependencies": {
     "@bosco/configs": "workspace:*",
