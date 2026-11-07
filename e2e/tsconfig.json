@@ -1,0 +1,6 @@
+{
+  "extends": "@bosco/configs/tsconfig/node.json",
+  "compilerOptions": { "noEmit": true, "allowImportingTsExtensions": true },
+  "include": ["**/*.ts"],
+  "exclude": [".features-gen", "node_modules"]
+}

@@ -1,0 +1,34 @@
+{
+  "name": "@bosco/e2e",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "e2e:api": "cd api && bddgen && playwright test",
+    "e2e:web": "cd web && bddgen && playwright test",
+    "lint": "eslint . && node shared/lint-features.ts api/features en && node shared/lint-features.ts web/features fr && node shared/check-recordings.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.14.0",
+    "@bosco/api": "workspace:*",
+    "@bosco/configs": "workspace:*",
+    "@bosco/web": "workspace:*",
+    "@cucumber/gherkin": "42.0.1",
+    "@cucumber/messages": "34.2.1",
+    "@playwright/test": "1.65.0",
+    "@types/node": "26.6.6",
+    "eslint": "10.14.0",
+    "playwright-bdd": "9.2.1",
+    "typescript": "6.0.3",
+    "vitest": "5.1.0"
+  },
+  "description": "Scénarios Gherkin de l'API (anglais) et du web (français), module d'enregistrement des appels sortants.",
+  "exports": {
+    "./replay": "./replay/replay.ts",
+    "./replay/register": "./replay/register.ts"
+  },
+  "dependencies": {
+    "undici": "8.12.4"
+  }
+}
