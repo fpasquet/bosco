@@ -8,7 +8,6 @@
     "./tsconfig/nest.json": "./tsconfig/nest.json",
     "./tsconfig/next.json": "./tsconfig/next.json",
     "./eslint/base": "./eslint/base.mjs",
-    "./eslint/core": "./eslint/core.mjs",
     "./eslint/nest": "./eslint/nest.mjs",
     "./eslint/next": "./eslint/next.mjs",
     "./vitest": "./vitest/base.mjs",
