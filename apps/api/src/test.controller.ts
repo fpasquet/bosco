@@ -1,7 +1,8 @@
 import type { MikroORM } from '@mikro-orm/sqlite';
 import { Controller, HttpCode, Inject, Post } from '@nestjs/common';
-import type { FileTranscriptWatcher } from '../transcripts/transcript-watcher.ts';
-import { ORM, TRANSCRIPT_WATCHER } from '../../../tokens.ts';
+import type { FileTranscriptWatcher } from './sessions/infrastructure/claude-code/transcript-watcher.ts';
+import { TRANSCRIPT_WATCHER } from './sessions/tokens.ts';
+import { ORM } from './shared/tokens.ts';
 
 /** Route réservée aux scénarios (BOSCO_TEST=1) : remet le service à zéro entre deux scénarios. */
 @Controller('__test')

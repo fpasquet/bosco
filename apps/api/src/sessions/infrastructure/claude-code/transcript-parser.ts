@@ -1,6 +1,7 @@
+import type { TranscriptEvent } from '../../domain/transcript-event.ts';
 // Lecture d'une ligne de transcript de Claude Code. Le format est interne et change d'une version à l'autre (DT-05) :
 // on ne garde que quelques faits, et toute ligne inconnue, incomplète ou mal formée est ignorée sans erreur (NF-08).
-import { TokenUsage, type TranscriptEvent } from '@bosco/core/sessions';
+import { TokenUsage } from '../../domain/token-usage.ts';
 
 export interface ParsedLine {
   event: TranscriptEvent;

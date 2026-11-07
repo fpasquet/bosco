@@ -1,5 +1,6 @@
 import type { MikroORM } from '@mikro-orm/sqlite';
-import { Source, type SourceRepository } from '@bosco/core/sessions';
+import type { SourceRepository } from '../../application/ports.ts';
+import { Source } from '../../domain/source.ts';
 import { SourceSchema } from './sessions.schema.ts';
 
 export class MikroOrmSourceRepository implements SourceRepository {

@@ -1,9 +1,10 @@
 import { Body, Controller, Get, Inject, Post } from '@nestjs/common';
 import { homedir } from 'node:os';
 import { z } from 'zod';
-import type { SourceService, SourceSnapshot, SourcesView } from '@bosco/core/sessions';
-import { SOURCE_SERVICE } from '../../../tokens.ts';
-import { parseBody } from './http-errors.ts';
+import type { SourceService, SourcesView } from '../../application/source.service.ts';
+import type { SourceSnapshot } from '../../domain/source.ts';
+import { parseBody } from '../../../shared/interface/http/parse-body.ts';
+import { SOURCE_SERVICE } from '../../tokens.ts';
 
 const watchProfilesSchema = z.object({ paths: z.array(z.string().min(1)) });
 

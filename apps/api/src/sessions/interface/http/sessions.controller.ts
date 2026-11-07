@@ -1,6 +1,6 @@
 import { Controller, Get, Inject } from '@nestjs/common';
-import type { SessionService, SessionView } from '@bosco/core/sessions';
-import { SESSION_SERVICE } from '../../../tokens.ts';
+import type { SessionService, SessionView } from '../../application/session.service.ts';
+import { SESSION_SERVICE } from '../../tokens.ts';
 
 @Controller('api/sessions')
 export class SessionsController {

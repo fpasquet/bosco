@@ -1,5 +1,8 @@
 import type { MikroORM } from '@mikro-orm/sqlite';
-import { type JournalEntry, Session, type SessionRepository, TokenUsage } from '@bosco/core/sessions';
+import type { SessionRepository } from '../../application/ports.ts';
+import type { JournalEntry } from '../../domain/transcript-event.ts';
+import { Session } from '../../domain/session.ts';
+import { TokenUsage } from '../../domain/token-usage.ts';
 import { SessionEventSchema, type SessionRow, SessionSchema } from './sessions.schema.ts';
 
 export class MikroOrmSessionRepository implements SessionRepository {

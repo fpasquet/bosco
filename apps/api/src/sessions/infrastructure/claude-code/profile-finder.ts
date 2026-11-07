@@ -2,7 +2,8 @@
 // seuls noms et dates des fichiers : aucune session n'est lue avant le choix des profils (CA-SESS-02).
 import { readdir, stat } from 'node:fs/promises';
 import { join } from 'node:path';
-import type { ProfileCandidate, ProfileFinder } from '@bosco/core/sessions';
+import type { ProfileFinder } from '../../application/ports.ts';
+import type { ProfileCandidate } from '../../domain/profile-candidate.ts';
 
 const PROFILE_FOLDER = /^\.claude(-[\w.-]+)?$/;
 

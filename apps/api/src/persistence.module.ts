@@ -1,11 +1,13 @@
 import { MikroORM } from '@mikro-orm/sqlite';
-import { Inject, Module, type OnApplicationShutdown } from '@nestjs/common';
+import { Global, Inject, Module, type OnApplicationShutdown } from '@nestjs/common';
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
-import type { Config } from '../../../config.ts';
-import { CONFIG, ORM } from '../../../tokens.ts';
-import { ormConfig } from './orm.config.ts';
+import type { Config } from './config.ts';
+import { ormConfig } from './mikro-orm.config.ts';
+import { CONFIG, ORM } from './shared/tokens.ts';
 
+/** Base du poste, partagée par tous les contextes : ils la reçoivent par le jeton ORM. */
+@Global()
 @Module({
   providers: [
     {

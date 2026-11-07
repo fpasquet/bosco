@@ -3,9 +3,12 @@ import { type FSWatcher, watch } from 'chokidar';
 // position lue. Bosco ne modifie jamais ces fichiers (RF-SESS-01) ; une ligne incomplète attend la lecture suivante.
 import { open, readdir, stat } from 'node:fs/promises';
 import { join } from 'node:path';
-import type { SessionService, Source, TranscriptEvent, TranscriptWatcher } from '@bosco/core/sessions';
-import type { TranscriptCursorStore } from '../../out/persistence/transcript-cursor.store.ts';
-import { TranscriptParser } from '../../out/claude-code/transcript-parser.ts';
+import type { TranscriptWatcher } from '../../application/ports.ts';
+import type { SessionService } from '../../application/session.service.ts';
+import type { Source } from '../../domain/source.ts';
+import type { TranscriptEvent } from '../../domain/transcript-event.ts';
+import type { TranscriptCursorStore } from '../persistence/transcript-cursor.store.ts';
+import { TranscriptParser } from './transcript-parser.ts';
 
 export class FileTranscriptWatcher implements TranscriptWatcher {
   private readonly parsers = new Map<string, TranscriptParser>();

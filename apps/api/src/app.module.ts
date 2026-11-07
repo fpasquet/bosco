@@ -1,10 +1,10 @@
 import { type DynamicModule, Module } from '@nestjs/common';
 import type { Config } from './config.ts';
-import { HealthController } from './adapters/in/http/health.controller.ts';
-import { TestController } from './adapters/in/http/test.controller.ts';
-import { PersistenceModule } from './adapters/out/persistence/persistence.module.ts';
+import { PersistenceModule } from './persistence.module.ts';
 import { SessionsModule } from './sessions/sessions.module.ts';
-import { CONFIG } from './tokens.ts';
+import { HealthController } from './shared/interface/http/health.controller.ts';
+import { CONFIG } from './shared/tokens.ts';
+import { TestController } from './test.controller.ts';
 
 /** Point de composition : relie chaque port à son adaptateur. Les contextes y arrivent lot par lot. */
 @Module({})
