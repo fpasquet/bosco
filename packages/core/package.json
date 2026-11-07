@@ -16,7 +16,8 @@
     "build": "tsc -p tsconfig.build.json",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "dev": "tsc -p tsconfig.build.json --watch --preserveWatchOutput"
   },
   "devDependencies": {
     "@bosco/configs": "workspace:*",

@@ -13,6 +13,8 @@ const schema = z.object({
   // Dossier de l'interface Next.js construite ; vide pour un service sans interface (tests de l'API)
   BOSCO_WEB_DIR: z.string().default(resolve(dirname(fileURLToPath(import.meta.url)), '..', '..', 'web')),
   BOSCO_TEST: z.enum(['0', '1']).default('0'),
+  // Mode développement (pnpm dev) : Next.js compile l'interface à la demande et la recharge à chaud
+  BOSCO_DEV: z.enum(['0', '1']).default('0'),
 });
 
 export type Config = Readonly<{
@@ -21,6 +23,7 @@ export type Config = Readonly<{
   dataDir: string;
   webDir: null | string;
   testing: boolean;
+  dev: boolean;
 }>;
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
@@ -37,5 +40,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     dataDir: values.BOSCO_DATA_DIR,
     webDir: values.BOSCO_WEB_DIR || null,
     testing: values.BOSCO_TEST === '1',
+    dev: values.BOSCO_DEV === '1',
   };
 }

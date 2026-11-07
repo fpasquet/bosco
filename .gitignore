@@ -17,3 +17,4 @@ test-results/
 !.claude/
 .claude/skills/
 .agents/
+.data/

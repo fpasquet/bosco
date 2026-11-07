@@ -11,7 +11,7 @@ const app = await NestFactory.create<NestFastifyApplication>(AppModule.forRoot(c
   logger: ['error', 'warn'],
 });
 app.enableShutdownHooks();
-if (config.webDir) await hostWeb(app, config.webDir);
+if (config.webDir) await hostWeb(app, config.webDir, config.dev);
 await app.listen(config.port, config.host);
 const url = await app.getUrl();
 console.log(`${APP_NAME.toLowerCase()} listening on ${url}`);
