@@ -16,6 +16,8 @@ export interface StreamEvent {
 
 export interface Bosco {
   url: string;
+  /** Adresse HTTPS du téléphone, ouverte seulement quand l'accès est activé (E4c) */
+  phoneUrl: string;
   configDir: string;
   /** Dossier où Bosco cherche les profils de Claude Code (~ du poste pendant les scénarios) */
   profilesRoot: string;
@@ -44,6 +46,7 @@ const SAMPLE_HOME = '/home/dev';
 /** `recordings` : dossier des enregistrements des appels sortants de cette suite. */
 export async function startBosco(recordings: string): Promise<Bosco> {
   const port = await freePort();
+  const phonePort = await freePort();
   const configDir = mkdtempSync(join(tmpdir(), 'bosco-claude-'));
   const dataDir = mkdtempSync(join(tmpdir(), 'bosco-data-'));
   const profilesRoot = mkdtempSync(join(tmpdir(), 'bosco-home-'));
@@ -60,6 +63,9 @@ export async function startBosco(recordings: string): Promise<Bosco> {
         BOSCO_WEB_DIR: join(ROOT, 'apps/web'),
         CLAUDE_CONFIG_DIR: configDir,
         BOSCO_PROFILES_ROOT: profilesRoot,
+        // Le « réseau local » des scénarios est la boucle locale, sur un port à part
+        BOSCO_PHONE_HOST: '127.0.0.1',
+        BOSCO_PHONE_PORT: String(phonePort),
         BOSCO_TEST: '1',
         BOSCO_REPLAY: process.env.BOSCO_REPLAY ?? 'replay',
         BOSCO_RECORDINGS: recordings,
@@ -77,6 +83,7 @@ export async function startBosco(recordings: string): Promise<Bosco> {
   }
   return {
     url,
+    phoneUrl: `https://127.0.0.1:${phonePort}`,
     configDir,
     profilesRoot,
     async reset() {
