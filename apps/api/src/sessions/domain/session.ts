@@ -1,4 +1,5 @@
 import type { JournalEntry, TranscriptEvent } from './transcript-event.ts';
+import { type FileChange, mergeChange } from './file-change.ts';
 import { estimateCostMicros } from './model-pricing.ts';
 import { TokenUsage } from './token-usage.ts';
 
@@ -25,6 +26,8 @@ function isTitleWorthy(prompt: string): boolean {
 
 export interface SessionSnapshot {
   branch: null | string;
+  /** Fichiers modifiés par l'agent, d'après ses appels d'outils (E2a) */
+  changedFiles: FileChange[];
   /** Coût estimé en micro-dollars des tokens dont le modèle a un tarif connu (RF-SESS-05) */
   costMicros: number;
   /** Fin signalée par le suivi en direct ; une reprise de la session l'efface */
@@ -43,6 +46,8 @@ export interface SessionSnapshot {
   sourceId: string;
   startedAt: Date;
   title: null | string;
+  /** Réponses de l'agent, chacune comptée une fois (un message peut s'étaler sur plusieurs lignes) */
+  turns: number;
   /** Tokens d'un modèle sans tarif connu : la session est alors « non chiffrée » pour cette part */
   unpricedTokens: number;
   usage: TokenUsage;
@@ -83,6 +88,8 @@ export class Session {
       nextSeq: 1,
       waiting: null,
       endedAt: null,
+      changedFiles: [],
+      turns: 0,
     });
   }
 
@@ -92,6 +99,8 @@ export class Session {
       recentActions: [...snapshot.recentActions],
       waiting: snapshot.waiting ?? null,
       endedAt: snapshot.endedAt ?? null,
+      changedFiles: [...(snapshot.changedFiles ?? [])],
+      turns: snapshot.turns ?? 0,
     });
   }
 
@@ -165,6 +174,8 @@ export class Session {
       branch: event.branch ?? current.branch,
       model: event.model ?? current.model,
       usage: event.usage ? current.usage.add(event.usage) : current.usage,
+      turns: event.usage ? current.turns + 1 : current.turns,
+      changedFiles: event.change ? mergeChange(current.changedFiles, event.change) : current.changedFiles,
       ...this.costOf(event),
       startedAt: at < current.startedAt ? at : current.startedAt,
       lastEventAt: at > current.lastEventAt ? at : current.lastEventAt,

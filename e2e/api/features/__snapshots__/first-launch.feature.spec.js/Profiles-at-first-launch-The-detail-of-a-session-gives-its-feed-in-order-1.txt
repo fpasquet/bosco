@@ -1,0 +1,56 @@
+{
+  "session": {
+    "branch": "feat/specs",
+    "cost": {
+      "usd": 0.045,
+      "unpriced": false
+    },
+    "id": "c41e9a07",
+    "lastAction": "Bash · npm run db:migrate",
+    "lastEventAt": "2026-11-06T14:02:06.000Z",
+    "lastMessage": "Je commence par relire le contexte du projet.",
+    "model": "claude-opus-5-5",
+    "recentActions": [
+      "Bash · npm run db:migrate"
+    ],
+    "repoPath": "<profiles>/labo-ia/packages/bosco",
+    "repository": {
+      "name": "labo-ia",
+      "root": "<profiles>/labo-ia",
+      "folder": "packages/bosco"
+    },
+    "sourceId": "<masked>",
+    "startedAt": "2026-11-06T14:02:00.000Z",
+    "state": "inactive",
+    "waiting": null,
+    "turns": 1,
+    "changedFiles": [],
+    "title": "Specs du tableau de bord Bosco",
+    "usage": {
+      "input": 1200,
+      "output": 340,
+      "cacheCreation": 5000,
+      "cacheRead": 42000
+    }
+  },
+  "journal": [
+    {
+      "at": "2026-11-06T14:02:00.000Z",
+      "kind": "prompt",
+      "seq": 1,
+      "text": "Écris les specs UI du tableau de bord."
+    },
+    {
+      "at": "2026-11-06T14:02:05.000Z",
+      "kind": "reply",
+      "seq": 2,
+      "text": "Je commence par relire le contexte du projet."
+    },
+    {
+      "at": "2026-11-06T14:02:06.000Z",
+      "kind": "tool",
+      "seq": 3,
+      "text": "Bash · npm run db:migrate"
+    }
+  ]
+}

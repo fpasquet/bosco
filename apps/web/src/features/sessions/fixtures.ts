@@ -20,6 +20,8 @@ function session(overrides: Partial<SessionDto> & Pick<SessionDto, 'id' | 'title
     state: 'running',
     usage: { cacheCreation: 0, cacheRead: 0, input: 0, output: 0 },
     waiting: null,
+    turns: 0,
+    changedFiles: [],
     ...overrides,
   };
 }

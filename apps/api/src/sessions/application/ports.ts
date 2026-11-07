@@ -6,6 +6,8 @@ import type { SessionView } from './session.service.ts';
 
 export interface SessionRepository {
   find(id: string): Promise<null | Session>;
+  /** Journal d'une session, dans l'ordre (E2a) */
+  journal(id: string): Promise<JournalEntry[]>;
   list(): Promise<Session[]>;
   /** Enregistre la session et ajoute les nouvelles entrées de son journal, jamais modifiées ensuite. */
   save(session: Session, journal: JournalEntry[]): Promise<void>;
