@@ -1,0 +1,18 @@
+{
+  "sources": [
+    {
+      "id": "<masked>",
+      "path": "<profiles>/.claude",
+      "label": "claude",
+      "watched": false,
+      "liveTracking": false
+    },
+    {
+      "id": "<masked>",
+      "path": "<profiles>/.claude-perso",
+      "label": "perso",
+      "watched": true,
+      "liveTracking": false
+    }
+  ]
+}

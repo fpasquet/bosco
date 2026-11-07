@@ -1,7 +1,7 @@
 // Une instance de Bosco par processus de test : port, dossier Claude Code et enregistrements propres.
 import { type ChildProcess, spawn } from 'node:child_process';
 import { once } from 'node:events';
-import { cpSync, mkdirSync, mkdtempSync, rmSync } from 'node:fs';
+import { cpSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
 import { createServer } from 'node:net';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
@@ -17,7 +17,11 @@ export interface StreamEvent {
 export interface Bosco {
   url: string;
   configDir: string;
+  /** Dossier où Bosco cherche les profils de Claude Code (~ du poste pendant les scénarios) */
+  profilesRoot: string;
   reset(): Promise<void>;
+  /** Écrit le transcript d'une session dans un profil, comme le ferait Claude Code ; renvoie son chemin. */
+  writeProfileTranscript(profile: string, source: string, sessionId: string): string;
   /** Écrit un transcript d'exemple comme le ferait Claude Code (chemin absolu du fichier source). */
   writeTranscript(source: string, sessionId: string): void;
   /** Ouvre le flux SSE et garde chaque événement reçu. */
@@ -39,6 +43,7 @@ export async function startBosco(recordings: string): Promise<Bosco> {
   const port = await freePort();
   const configDir = mkdtempSync(join(tmpdir(), 'bosco-claude-'));
   const dataDir = mkdtempSync(join(tmpdir(), 'bosco-data-'));
+  const profilesRoot = mkdtempSync(join(tmpdir(), 'bosco-home-'));
   const url = `http://127.0.0.1:${port}`;
   const child: ChildProcess = spawn(
     process.execPath,
@@ -51,6 +56,7 @@ export async function startBosco(recordings: string): Promise<Bosco> {
         BOSCO_DATA_DIR: dataDir,
         BOSCO_WEB_DIR: join(ROOT, 'apps/web'),
         CLAUDE_CONFIG_DIR: configDir,
+        BOSCO_PROFILES_ROOT: profilesRoot,
         BOSCO_TEST: '1',
         BOSCO_REPLAY: process.env.BOSCO_REPLAY ?? 'replay',
         BOSCO_RECORDINGS: recordings,
@@ -69,9 +75,21 @@ export async function startBosco(recordings: string): Promise<Bosco> {
   return {
     url,
     configDir,
+    profilesRoot,
     async reset() {
-      rmSync(join(configDir, 'projects'), { recursive: true, force: true });
       await fetch(`${url}/__test/reset`, { method: 'POST' });
+      rmSync(join(configDir, 'projects'), { recursive: true, force: true });
+      for (const entry of readdirSync(profilesRoot))
+        rmSync(join(profilesRoot, entry), { recursive: true, force: true });
+    },
+    writeProfileTranscript(profile, source, sessionId) {
+      // Dossier de dépôt nommé comme le fait Claude Code : le chemin de travail, / remplacés par -
+      const cwd = /"cwd":\s*"([^"]+)"/.exec(readFileSync(source, 'utf8'))?.[1] ?? '/home/dev';
+      const dir = join(profilesRoot, profile, 'projects', cwd.replaceAll('/', '-'));
+      mkdirSync(dir, { recursive: true });
+      const file = join(dir, `${sessionId}.jsonl`);
+      cpSync(source, file);
+      return file;
     },
     writeTranscript(source, sessionId) {
       const dir = join(configDir, 'projects', '-home-dev');
@@ -108,6 +126,7 @@ export async function startBosco(recordings: string): Promise<Bosco> {
       await exited;
       rmSync(configDir, { recursive: true, force: true });
       rmSync(dataDir, { recursive: true, force: true });
+      rmSync(profilesRoot, { recursive: true, force: true });
     },
   };
 }
