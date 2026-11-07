@@ -25,6 +25,7 @@ src/
 
 - TanStack Query porte tout ce qui vient du serveur : le cache des vues en direct est rempli par le flux (instantané puis changements), celui des autres écrans par l'API REST. Pas de second état à synchroniser.
 - Zustand ne garde que l'état de l'interface (regroupement, filtres, panneaux ouverts) ; le regroupement choisi est conservé d'une visite à l'autre.
+- Tout formulaire passe par React Hook Form : `register` pour les champs natifs, `setValue` et `useWatch` pour les contrôles composés, jamais `useState` pour une valeur saisie. Un schéma zod (`zodResolver`) porte ce que le formulaire vérifie seul, avec les messages de l'API ; les erreurs renvoyées par l'API se posent sur leur champ avec `setError(champ, { type: 'server' })`. Les plafonds qui dépendent des droits restent vérifiés par l'API.
 
 ## Textes et accessibilité
 
