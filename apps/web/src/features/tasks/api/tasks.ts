@@ -1,4 +1,4 @@
-import type { TaskDraftDto, TaskDto, TaskIssueDto, WorkerStatusDto } from '@bosco/domain';
+import type { RightsDto, RightsFieldDto, TaskDraftDto, TaskDto, TaskIssueDto, WorkerStatusDto } from '@bosco/domain';
 
 async function read<T>(path: string): Promise<T> {
   const response = await fetch(path);
@@ -63,3 +63,28 @@ export const editTask = (id: number, draft: TaskDraftDto) => send('PUT', `/api/t
 export const cancelTask = (id: number) => send('POST', `/api/tasks/${id}/cancel`);
 export const relaunchTask = (id: number, changes: { budgetUsd: number; fromBranch: boolean; instruction?: string }) =>
   send('POST', `/api/tasks/${id}/relaunch`, changes);
+
+/** Droits des agents d'un dépôt, ou les réglages généraux sans dépôt (E8a). */
+export const rightsQuery = (repository: null | string) => ({
+  queryKey: ['rights', repository ?? ''],
+  queryFn: () =>
+    read<RightsDto>(repository ? `/api/rights?repository=${encodeURIComponent(repository)}` : '/api/rights'),
+});
+
+/** Droits refusés (400) : le message s'affiche sous la ligne. */
+export class RightsRefused extends Error {}
+
+export async function updateRights(repository: null | string, changes: Partial<Record<RightsFieldDto, unknown>>) {
+  const path = repository ? `/api/rights/repositories/${encodeURIComponent(repository)}` : '/api/rights/general';
+  const response = await fetch(path, {
+    method: 'PUT',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(changes),
+  });
+  if (response.status === 400) {
+    const { message } = (await response.json()) as { message?: string };
+    throw new RightsRefused(message ?? 'Droits refusés.');
+  }
+  if (!response.ok) throw new Error(`PUT ${path} answered ${response.status}`);
+  return (await response.json()) as RightsDto;
+}

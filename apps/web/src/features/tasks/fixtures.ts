@@ -1,5 +1,5 @@
 // Tâches du fil rouge des specs (lot 2), pour les histoires.
-import type { IsolationDto, TaskDto, TestEnvironmentDto } from '@bosco/domain';
+import type { IsolationDto, RightsDto, RightsValuesDto, TaskDto, TestEnvironmentDto } from '@bosco/domain';
 
 const at = (time: string) => new Date(`2026-11-06T${time}:00`).toISOString();
 
@@ -128,4 +128,47 @@ export const STORY_TEST_ENVIRONMENT: TestEnvironmentDto = {
       { name: 'fake-gcs-server', image: 'fake-gcs:1.54.0', readySeconds: 2, error: null },
     ],
   },
+};
+
+const GENERAL_RIGHTS: RightsValuesDto = {
+  tools: ['Read', 'Write', 'Edit', 'Grep', 'Glob', 'Bash'],
+  deniedTools: ['Bash(curl:*)', 'Read(.env*)'],
+  maxTurns: 40,
+  maxBudgetUsd: 5,
+  model: 'claude-sonnet-5-5',
+  concurrency: 4,
+  pullRequest: 'never',
+};
+
+/** Droits des agents d'api-voix du fil rouge (E8a). */
+export const STORY_RIGHTS: RightsDto = {
+  general: GENERAL_RIGHTS,
+  repository: {
+    tools: ['Read', 'Write', 'Edit', 'Grep', 'Bash(npm test)', 'Bash(npm run lint)'],
+    deniedTools: ['Bash(npm publish:*)', 'Edit(.env*)'],
+    maxTurns: 30,
+    maxBudgetUsd: 2,
+    concurrency: 1,
+    pullRequest: 'ask',
+  },
+  effective: {
+    ...GENERAL_RIGHTS,
+    tools: ['Read', 'Write', 'Edit', 'Grep', 'Bash(npm test)', 'Bash(npm run lint)'],
+    deniedTools: ['Bash(curl:*)', 'Read(.env*)', 'Bash(npm publish:*)', 'Edit(.env*)'],
+    maxTurns: 30,
+    maxBudgetUsd: 2,
+    concurrency: 1,
+    pullRequest: 'ask',
+  },
+  origins: {
+    tools: 'dépôt',
+    deniedTools: 'général + dépôt',
+    maxTurns: 'dépôt',
+    maxBudgetUsd: 'dépôt',
+    model: 'général',
+    concurrency: 'dépôt',
+    pullRequest: 'dépôt',
+  },
+  models: ['claude-sonnet-5-5', 'claude-opus-5-5', 'claude-haiku-5-5'],
+  pending: [{ id: 13, state: 'blocked', title: 'Vérifier la prononciation des sigles' }],
 };

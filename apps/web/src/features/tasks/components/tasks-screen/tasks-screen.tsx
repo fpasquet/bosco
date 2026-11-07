@@ -50,8 +50,11 @@ export function TasksScreen({ title }: { title: string }) {
           </p>
           <h1 className="mt-1 hidden font-display text-2xl font-semibold tracking-tight md:block">{title}</h1>
         </div>
+        <Link href="/tasks/rights" className="link text-xs text-muted md:ml-auto">
+          Droits des agents
+        </Link>
         {tasks.length > 0 && (
-          <Button asChild className="md:ml-auto">
+          <Button asChild>
             <Link href="/tasks/new">
               <Plus aria-hidden className="size-4" />
               Nouvelle tâche

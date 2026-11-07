@@ -4,18 +4,21 @@ import { useEffect, useRef, useState } from 'react';
 import type { TaskDraftDto, TaskDto, TaskIssueDto } from '@bosco/domain';
 import { cn } from '@/lib/cn';
 import { Button } from '@/shared/ui/button';
+import { toolLabel } from '../../lib/rights';
 import { usd } from '../../lib/tasks';
 
-/** Plafonds des réglages généraux, tant que le dépôt n'a pas ses propres droits (E8a). */
-export const DEFAULT_LIMITS = { budgetUsd: 2, maxTurns: 30, tools: ['Read', 'Write', 'Edit', 'Grep', 'Glob', 'Bash'] };
+/** Plafonds d'un dépôt, d'après ses droits (E8a). */
+export interface RepositoryLimits {
+  budgetUsd: number;
+  maxTurns: number;
+  tools: string[];
+}
 
-const TOOL_LABELS: Record<string, string> = {
-  Bash: 'Bash',
-  Edit: 'Modifier',
-  Glob: 'Chercher des fichiers',
-  Grep: 'Chercher',
-  Read: 'Lire',
-  Write: 'Écrire',
+/** Plafonds des réglages généraux d'origine, tant que les droits du dépôt ne sont pas lus. */
+export const DEFAULT_LIMITS: RepositoryLimits = {
+  budgetUsd: 2,
+  maxTurns: 30,
+  tools: ['Read', 'Write', 'Edit', 'Grep', 'Glob', 'Bash'],
 };
 
 export interface TaskFormProps {
@@ -23,6 +26,8 @@ export interface TaskFormProps {
   /** Tâche modifiée ; aucune : nouvelle tâche */
   editing?: TaskDto;
   issues: TaskIssueDto[];
+  /** Plafonds de chaque dépôt, par nom */
+  limits?: Record<string, RepositoryLimits>;
   onCancel: () => void;
   onSubmit: (draft: TaskDraftDto) => void;
   repositories: { name: string; root: string }[];
@@ -57,7 +62,16 @@ function FieldError({ field, issues }: { field: TaskIssueDto['field']; issues: T
 }
 
 /** Formulaire d'une tâche (E6a) : où, quoi, comment, après quoi, et dans quelles limites ; erreurs liées (E6b). */
-export function TaskForm({ busy, editing, issues, onCancel, onSubmit, repositories, tasks }: TaskFormProps) {
+export function TaskForm({
+  busy,
+  editing,
+  issues,
+  limits: limitsOf,
+  onCancel,
+  onSubmit,
+  repositories,
+  tasks,
+}: TaskFormProps) {
   const [draft, setDraft] = useState<TaskDraftDto>(() => ({
     repository: editing?.repository.name ?? repositories[0]?.name ?? '',
     folder: editing?.folder ?? '',
@@ -79,7 +93,8 @@ export function TaskForm({ busy, editing, issues, onCancel, onSubmit, repositori
   const chosen = tasks.filter((task) => draft.prerequisites.includes(task.id));
   const sameRepository = chosen.filter((task) => task.repository.name === draft.repository);
   const startFrom = sameRepository.length === 1 ? sameRepository[0] : null;
-  const tools = draft.guardrails.tools ?? DEFAULT_LIMITS.tools;
+  const limits = limitsOf?.[draft.repository] ?? DEFAULT_LIMITS;
+  const tools = draft.guardrails.tools ?? limits.tools;
   const invalid = (field: TaskIssueDto['field']) => issues.some((issue) => issue.field === field);
   const describedBy = (field: TaskIssueDto['field']) => (invalid(field) ? `${FIELD_IDS[field]}-error` : undefined);
   return (
@@ -255,7 +270,7 @@ export function TaskForm({ busy, editing, issues, onCancel, onSubmit, repositori
                   onChange={(event) => setGuardrails({ budgetUsd: Number(event.target.value) })}
                 />
                 <span id="task-budget-cap" className="text-xs text-muted">
-                  plafond du dépôt : {usd(DEFAULT_LIMITS.budgetUsd)}
+                  plafond du dépôt : {usd(limits.budgetUsd)}
                 </span>
                 <FieldError field="budgetUsd" issues={issues} />
               </label>
@@ -271,14 +286,14 @@ export function TaskForm({ busy, editing, issues, onCancel, onSubmit, repositori
                   aria-describedby={describedBy('maxTurns')}
                   onChange={(event) => setGuardrails({ maxTurns: Number(event.target.value) })}
                 />
-                <span className="text-xs text-muted">plafond du dépôt : {DEFAULT_LIMITS.maxTurns}</span>
+                <span className="text-xs text-muted">plafond du dépôt : {limits.maxTurns}</span>
                 <FieldError field="maxTurns" issues={issues} />
               </label>
             </div>
             <fieldset id="task-tools" className="flex flex-col gap-1.5" aria-describedby={describedBy('tools')}>
               <legend className="text-xs font-medium">Outils</legend>
               <div className="flex flex-wrap gap-3">
-                {DEFAULT_LIMITS.tools.map((tool) => (
+                {limits.tools.map((tool) => (
                   <label key={tool} className="flex items-center gap-2 text-sm">
                     <input
                       type="checkbox"
@@ -290,7 +305,7 @@ export function TaskForm({ busy, editing, issues, onCancel, onSubmit, repositori
                         })
                       }
                     />
-                    {TOOL_LABELS[tool] ?? tool}
+                    {toolLabel(tool)}
                   </label>
                 ))}
               </div>
