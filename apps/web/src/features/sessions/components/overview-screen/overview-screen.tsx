@@ -1,9 +1,9 @@
 'use client';
 import { useQuery } from '@tanstack/react-query';
-import { sourcesQuery } from '@/features/sources/api/sources';
-import { LiveTrackingHint } from '@/features/sources/components/live-tracking-hint';
-import { ProfileChoice } from '@/features/sources/components/profile-choice';
-import { Welcome } from '@/features/sources/components/welcome';
+import { sourcesQuery } from '../../api/sources';
+import { LiveTrackingHint } from '../live-tracking-hint';
+import { ProfileChoice } from '../profile-choice';
+import { Welcome } from '../welcome';
 
 /** Vue d'ensemble : premier lancement tant qu'aucun profil n'est choisi (E1a). */
 export function OverviewScreen({ title }: { title: string }) {

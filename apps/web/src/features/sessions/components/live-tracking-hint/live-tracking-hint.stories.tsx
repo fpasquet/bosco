@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/nextjs-vite';
 import { LiveTrackingHint } from './live-tracking-hint';
 
 const meta = {
-  title: 'Features/Sources/LiveTrackingHint',
+  title: 'Features/Sessions/LiveTrackingHint',
   component: LiveTrackingHint,
   parameters: { layout: 'padded' },
 } satisfies Meta<typeof LiveTrackingHint>;

@@ -4,7 +4,7 @@ import { ProfileChoice } from './profile-choice';
 const minutesAgo = (minutes: number) => new Date(Date.now() - minutes * 60_000).toISOString();
 
 const meta = {
-  title: 'Features/Sources/ProfileChoice',
+  title: 'Features/Sessions/ProfileChoice',
   component: ProfileChoice,
   parameters: { layout: 'padded' },
   args: {

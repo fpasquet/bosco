@@ -1,4 +1,4 @@
-import { OverviewScreen } from '@/features/overview/components/overview-screen';
+import { OverviewScreen } from '@/features/sessions/components/overview-screen';
 import { AppShell } from '@/shared/layouts/app-shell';
 
 const TITLE = 'Vue d’ensemble';
