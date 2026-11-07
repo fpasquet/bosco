@@ -1,9 +1,12 @@
 {
   "name": "@bosco/api",
   "private": true,
-  "description": "Service Bosco : API, flux en direct, entrée des hooks ; sert aussi l'interface Next.js sur le même port.",
+  "description": "Application serveur de Bosco : le service (API, flux en direct, hooks, interface Next.js sur le même port) et la commande bosco.",
   "type": "module",
   "main": "./dist/main.js",
+  "bin": {
+    "bosco": "./dist/cli/main.js"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "lint": "eslint .",
@@ -21,6 +24,7 @@
     "@nestjs/core": "12.4.0",
     "@nestjs/platform-fastify": "12.4.0",
     "chokidar": "6.0.0",
+    "commander": "15.1.0",
     "next": "16.4.5",
     "react": "19.3.1",
     "react-dom": "19.3.1",

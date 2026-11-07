@@ -16,7 +16,7 @@ dev: ## Start the service in development mode on http://127.0.0.1:4880 (web hot 
 	pnpm dev
 
 start: build ## Build, then start the service on http://127.0.0.1:4870 and open the overview
-	node apps/cli/dist/main.js start
+	node apps/api/dist/cli/main.js start
 
 build: ## Build every package
 	pnpm build
@@ -61,7 +61,7 @@ db-migration: ## Write the migration that brings the database to the entity sche
 	pnpm --filter @bosco/api db:migration
 
 service-install: build ## Install Bosco as a systemd user service
-	node apps/cli/dist/main.js service install
+	node apps/api/dist/cli/main.js service install
 
 skills: ## Install the skills pinned by skills-lock.json
 	pnpm skills:install

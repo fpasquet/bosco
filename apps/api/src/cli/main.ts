@@ -18,7 +18,8 @@ program
   .option('--port <port>', 'port to listen on, loopback only')
   .option('--no-open', 'do not open the browser')
   .action((options: { open: boolean; port?: string }) => {
-    const api = fileURLToPath(import.meta.resolve('@bosco/api'));
+    // Le service est le point d'entrée voisin de la même application (dist/main.js)
+    const api = fileURLToPath(new URL('../main.js', import.meta.url));
     const env = { ...process.env, ...(options.port ? { BOSCO_PORT: options.port } : {}) };
     const child = spawn(process.execPath, [api], { env, stdio: ['ignore', 'pipe', 'inherit'] });
     child.stdout.on('data', (chunk: Buffer) => {
