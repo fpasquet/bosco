@@ -11,6 +11,7 @@ export interface SourceRow {
 export interface SessionRow {
   branch: null | string;
   costMicros: number;
+  endedAt: Date | null;
   lastAction: null | string;
   recentActions: string[];
   repoRoot: null | string;
@@ -83,6 +84,7 @@ export const SessionSchema = new EntitySchema<SessionRow>({
     costMicros: { type: 'integer', fieldName: 'cost_micros', default: 0 },
     unpricedTokens: { type: 'integer', fieldName: 'unpriced_tokens', default: 0 },
     waiting: { type: 'json', nullable: true },
+    endedAt: { type: 'datetime', fieldName: 'ended_at', nullable: true },
   },
 });
 

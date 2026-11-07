@@ -68,6 +68,15 @@ describe('Session', () => {
     expect(session.waiting).toBeNull();
   });
 
+  it('ends when Claude Code says so, unless the registry still holds it open, and opens again on resume', () => {
+    const session = Session.discover('92c46031', 'pro', at('14:02:00'));
+    session.end(at('14:02:10'));
+    const soon = at('14:02:20');
+    expect([session.stateAt(soon), session.stateAt(soon, true)]).toEqual(['ended', 'running']);
+    session.resume(at('14:05:00'));
+    expect(session.stateAt(at('14:05:10'))).toBe('running');
+  });
+
   it('adds up the token usage, cache included', () => {
     const session = Session.discover('c41e9a07', 'pro', at('14:02:00'));
     session.record(reply('14:02:00', new TokenUsage(10, 20, 30, 40)));

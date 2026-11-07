@@ -27,6 +27,8 @@ export interface SessionSnapshot {
   branch: null | string;
   /** Coût estimé en micro-dollars des tokens dont le modèle a un tarif connu (RF-SESS-05) */
   costMicros: number;
+  /** Fin signalée par le suivi en direct ; une reprise de la session l'efface */
+  endedAt: Date | null;
   id: string;
   /** Dernier outil appelé par l'agent (« Bash · npm test ») */
   lastAction: null | string;
@@ -80,11 +82,17 @@ export class Session {
       usage: TokenUsage.ZERO,
       nextSeq: 1,
       waiting: null,
+      endedAt: null,
     });
   }
 
   static restore(snapshot: SessionSnapshot): Session {
-    return new Session({ ...snapshot, recentActions: [...snapshot.recentActions], waiting: snapshot.waiting ?? null });
+    return new Session({
+      ...snapshot,
+      recentActions: [...snapshot.recentActions],
+      waiting: snapshot.waiting ?? null,
+      endedAt: snapshot.endedAt ?? null,
+    });
   }
 
   get waiting(): null | Waiting {
@@ -118,10 +126,17 @@ export class Session {
     if (cwd && !this.snapshot.repoPath) this.snapshot = { ...this.snapshot, repoPath: cwd };
   }
 
-  /** La session reprend (message envoyé, action de l'agent) : elle n'attend plus rien. */
+  /** La session reprend (démarrage, message envoyé, action de l'agent) : elle n'attend plus rien et reste ouverte. */
   resume(at: Date): void {
     this.touch(at);
-    if (this.snapshot.waiting?.kind === 'turn') this.snapshot = { ...this.snapshot, waiting: null };
+    const waiting = this.snapshot.waiting?.kind === 'turn' ? null : this.snapshot.waiting;
+    this.snapshot = { ...this.snapshot, waiting, endedAt: null };
+  }
+
+  /** Claude Code signale la fin de la session : elle passe Terminée, même sans registre des sessions ouvertes. */
+  end(at: Date): void {
+    this.touch(at);
+    this.snapshot = { ...this.snapshot, waiting: null, endedAt: at };
   }
 
   /** Une autorisation laissée en attente par un arrêt de Bosco ne peut plus recevoir de réponse depuis Bosco. */
@@ -189,8 +204,8 @@ export class Session {
    * événement est récent, puis Inactive (RF-SESS-02). `open` : null quand le profil ne dit pas ce qui est ouvert.
    */
   stateAt(now: Date, open: boolean | null = null, inactivityDelayMs = DEFAULT_INACTIVITY_DELAY_MS): SessionState {
-    if (open === false) return 'ended';
-    const { lastEventAt, waiting } = this.snapshot;
+    const { endedAt, lastEventAt, waiting } = this.snapshot;
+    if (open === false || (open === null && endedAt)) return 'ended';
     // Une autorisation attend sa réponse sans limite côté Bosco : Claude Code annule lui-même le hook après 10 min
     if (waiting?.kind === 'permission') return 'waiting';
     // Un tour terminé resté sans réponse devient lui aussi Inactive après le délai (RF-SESS-02)

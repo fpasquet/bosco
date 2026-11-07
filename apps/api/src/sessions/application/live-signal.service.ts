@@ -57,6 +57,7 @@ export class LiveSignalService {
     const at = this.clock.now();
     const session = await this.sessionOf(origin, at);
     if (signal.kind === 'stop') session.endTurn(signal.message, at);
+    else if (signal.kind === 'end') session.end(at);
     else session.resume(at);
     await this.publish(session);
   }
