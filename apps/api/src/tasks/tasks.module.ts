@@ -12,17 +12,21 @@ import { SESSION_SERVICE } from '../sessions/tokens.ts';
 import { CONFIG, ORM } from '../shared/tokens.ts';
 import { IsolationService } from './application/isolation.service.ts';
 import { TaskService } from './application/task.service.ts';
+import { TestEnvironmentService } from './application/test-environment.service.ts';
 import { WorkerService } from './application/worker.service.ts';
 import { DEFAULT_RIGHTS } from './domain/rights.ts';
 import { AllowListFile } from './infrastructure/isolation/allow-list-file.ts';
 import { MikroOrmIsolationStore } from './infrastructure/persistence/isolation.store.ts';
 import { MikroOrmTaskRepository } from './infrastructure/persistence/task.repository.ts';
+import { MikroOrmTestEnvironmentStore } from './infrastructure/persistence/test-environment.store.ts';
 import { TaskEventsBus } from './infrastructure/task-events.bus.ts';
+import { FileComposeSource, GitComposeSource, servicesFile } from './infrastructure/test-services/compose-file.ts';
 import { DockerAgentRunner } from './infrastructure/worker/docker-agent-runner.ts';
 import { GitWorkspaces } from './infrastructure/worker/git-workspaces.ts';
 import { ScriptedAgentRunner, scriptedWorkspaces } from './infrastructure/worker/scripted-agent.ts';
 import { IsolationController } from './interface/http/isolation.controller.ts';
 import { TasksController } from './interface/http/tasks.controller.ts';
+import { TestEnvironmentController } from './interface/http/test-environment.controller.ts';
 import { WorkerController } from './interface/http/worker.controller.ts';
 import {
   AGENT_RUNNER,
@@ -30,6 +34,7 @@ import {
   REPOSITORY_CATALOG,
   TASK_EVENTS,
   TASK_SERVICE,
+  TEST_ENVIRONMENT_SERVICE,
   WORKER_SERVICE,
 } from './tokens.ts';
 
@@ -43,7 +48,7 @@ const rights = { rightsOf: () => Promise.resolve(DEFAULT_RIGHTS) };
 /** Contexte des tâches (RF-TACH) ; les dépôts viennent des sessions, par le point de composition. */
 @Module({
   imports: [SessionsModule],
-  controllers: [TasksController, WorkerController, IsolationController],
+  controllers: [TasksController, WorkerController, IsolationController, TestEnvironmentController],
   providers: [
     { provide: TASK_EVENTS, useValue: new TaskEventsBus() },
     {
@@ -65,6 +70,17 @@ const rights = { rightsOf: () => Promise.resolve(DEFAULT_RIGHTS) };
       inject: [ORM, REPOSITORY_CATALOG, TASK_EVENTS],
       useFactory: (orm: MikroORM, catalog: RepositoryCatalog, bus: TaskEventsBus) =>
         new TaskService(new MikroOrmTaskRepository(orm), catalog, rights, bus, clock),
+    },
+    {
+      provide: TEST_ENVIRONMENT_SERVICE,
+      inject: [CONFIG, ORM, REPOSITORY_CATALOG],
+      useFactory: (config: Config, orm: MikroORM, catalog: RepositoryCatalog) =>
+        new TestEnvironmentService(
+          new MikroOrmTestEnvironmentStore(orm),
+          servicesFile(config.testing ? new FileComposeSource() : new GitComposeSource()),
+          catalog,
+          clock,
+        ),
     },
     {
       provide: ISOLATION_SERVICE,
@@ -92,14 +108,17 @@ const rights = { rightsOf: () => Promise.resolve(DEFAULT_RIGHTS) };
     },
     {
       provide: WORKER_SERVICE,
-      inject: [CONFIG, TASK_SERVICE, AGENT_RUNNER, ISOLATION_SERVICE],
+      inject: [CONFIG, TASK_SERVICE, AGENT_RUNNER, ISOLATION_SERVICE, TEST_ENVIRONMENT_SERVICE],
       useFactory: (
         config: Config,
         tasks: TaskService,
         runner: DockerAgentRunner | ScriptedAgentRunner,
         isolation: IsolationService,
+        environments: TestEnvironmentService,
       ) =>
         new WorkerService({
+          environmentOf: (task) => environments.forTask(task.repository),
+          servicesLaunched: (task, launches) => environments.launched(task.repository.name, task.id, launches),
           tasks,
           runner,
           health: runner,

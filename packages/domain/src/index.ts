@@ -22,5 +22,7 @@ export type {
   TaskIssueDto,
   TaskModeDto,
   TaskStateDto,
+  TestEnvironmentDto,
+  TestServicesModeDto,
   WorkerStatusDto,
 } from './tasks.ts';

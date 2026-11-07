@@ -13,7 +13,12 @@ const OPEN_PATHS = [/^\/pair(\/|$|\?)/, /^\/_next\//, /^\/api\/pairing\/claim$/,
 
 /** Réservé au poste, même pour un téléphone appairé : les hooks, l'accès, les tests, et tout réglage (E4b mobile). */
 const WORKSTATION_ONLY = [/^\/api\/hooks\//, /^\/api\/phone-access/, /^\/api\/devices/, /^\/__test\//];
-const SETTINGS = [/^\/api\/sources/, /^\/api\/settings/, /^\/api\/isolation/];
+const SETTINGS = [
+  /^\/api\/sources/,
+  /^\/api\/settings/,
+  /^\/api\/isolation/,
+  /^\/api\/repositories\/[^/]+\/test-environment/,
+];
 
 function workstationOnly(request: IncomingMessage, path: string): boolean {
   if (WORKSTATION_ONLY.some((pattern) => pattern.test(path))) return true;

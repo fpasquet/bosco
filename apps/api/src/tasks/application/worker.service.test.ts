@@ -58,6 +58,8 @@ function setup(events: AgentEvent[], options: { budgetUsd?: number; hang?: boole
     health: { check: () => Promise.resolve(options.health ?? null) },
     freeMemory: () => 32 * 1024 ** 3,
     maxAgents: () => 4,
+    environmentOf: () => Promise.resolve({ image: null, services: [] }),
+    servicesLaunched: () => Promise.resolve(),
     priceOf: () => 1,
     rightsOf: () => Promise.resolve(DEFAULT_RIGHTS),
     workspaces: {

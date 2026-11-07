@@ -93,3 +93,27 @@ export interface IsolationDto {
   limits: { cpus: number; memory: number; processes: number };
   refusals: EgressRefusalDto[];
 }
+
+export type TestServicesModeDto = 'auto' | 'choose' | 'none';
+
+/** Environnement de test d'un dépôt (E12a) : image de l'agent, services lus dans son fichier, dernier lancement. */
+export interface TestEnvironmentDto {
+  branch: null | string;
+  defaultImage: string;
+  excluded: { name: string; reason: string }[];
+  file: null | string;
+  image: null | string;
+  lastRun: null | {
+    at: string;
+    launches: { error: null | string; image: string; name: string; readySeconds: null | number }[];
+    removedAt: null | string;
+    taskId: number;
+  };
+  launched: { image: string; name: string }[];
+  limits: { cpus: number; memory: number; waitSeconds: number };
+  mode: TestServicesModeDto;
+  removed: string[];
+  repository: string;
+  selected: string[];
+  services: { image: null | string; name: string }[];
+}

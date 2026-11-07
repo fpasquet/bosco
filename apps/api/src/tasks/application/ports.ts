@@ -1,5 +1,6 @@
 import type { RepositoryRights } from '../domain/rights.ts';
 import type { Task } from '../domain/task.ts';
+import type { ServiceLaunch, TestService } from '../domain/test-services.ts';
 import type { TaskView } from './task.service.ts';
 
 export interface TaskRepository {
@@ -44,9 +45,15 @@ export type AgentEvent =
 
 export interface AgentSpec {
   folder: string;
+  /** Image de l'agent choisie pour le dépôt ; null : l'image par défaut (CA-CONT-54) */
+  image: null | string;
   maxTurns: number;
   model: string;
+  /** Résultat du lancement des services de test, avant que l'agent démarre */
+  onServices: (launches: ServiceLaunch[]) => void;
   prompt: string;
+  /** Services de test lancés autour de l'agent, sur son réseau privé (E12a) */
+  services: TestService[];
   taskId: number;
   tools: string[];
   workspace: Workspace;
