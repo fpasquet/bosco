@@ -7,23 +7,27 @@ import { SessionService } from './application/session.service.ts';
 import { SourceService } from './application/source.service.ts';
 import { FileProfileFinder } from './infrastructure/claude-code/profile-finder.ts';
 import { FileTranscriptWatcher } from './infrastructure/claude-code/transcript-watcher.ts';
+import { SessionEventsBus } from './infrastructure/events/session-events.bus.ts';
 import { MikroOrmSessionRepository } from './infrastructure/persistence/session.repository.ts';
 import { MikroOrmSourceRepository } from './infrastructure/persistence/source.repository.ts';
 import { TranscriptCursorStore } from './infrastructure/persistence/transcript-cursor.store.ts';
+import { EventsController } from './interface/http/events.controller.ts';
 import { SessionsController } from './interface/http/sessions.controller.ts';
 import { SourcesController } from './interface/http/sources.controller.ts';
-import { SESSION_SERVICE, SOURCE_SERVICE, TRANSCRIPT_WATCHER } from './tokens.ts';
+import { SESSION_EVENTS, SESSION_SERVICE, SOURCE_SERVICE, TRANSCRIPT_WATCHER } from './tokens.ts';
 
 const clock = { now: () => new Date() };
 
 /** Contexte des sessions : chaque port du domaine relié à son adaptateur. */
 @Module({
-  controllers: [SourcesController, SessionsController],
+  controllers: [SourcesController, SessionsController, EventsController],
   providers: [
+    { provide: SESSION_EVENTS, useValue: new SessionEventsBus() },
     {
       provide: SESSION_SERVICE,
-      inject: [ORM],
-      useFactory: (orm: MikroORM) => new SessionService(new MikroOrmSessionRepository(orm), clock),
+      inject: [ORM, SESSION_EVENTS],
+      useFactory: (orm: MikroORM, bus: SessionEventsBus) =>
+        new SessionService(new MikroOrmSessionRepository(orm), clock, bus),
     },
     {
       provide: TRANSCRIPT_WATCHER,
