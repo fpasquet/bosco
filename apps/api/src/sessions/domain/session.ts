@@ -2,8 +2,11 @@ import type { JournalEntry, TranscriptEvent } from './transcript-event.ts';
 import { estimateCostMicros } from './model-pricing.ts';
 import { TokenUsage } from './token-usage.ts';
 
-/** États d'une session (RF-SESS-02). Sans suivi en direct, seuls running et inactive peuvent se déduire. */
-export type SessionState = 'inactive' | 'running';
+/**
+ * États d'une session (RF-SESS-02). Sans suivi en direct, running et inactive se déduisent de l'activité, ended du
+ * registre des sessions ouvertes que tient Claude Code.
+ */
+export type SessionState = 'ended' | 'inactive' | 'running';
 
 /** Délai sans événement après lequel une session ouverte devient Inactive (réglable dans les sources). */
 export const DEFAULT_INACTIVITY_DELAY_MS = 15 * 60 * 1000;
@@ -114,8 +117,12 @@ export class Session {
       : { costMicros: costMicros + cost, unpricedTokens };
   }
 
-  /** État à un instant donné : En cours tant qu'un événement est récent, puis Inactive (RF-SESS-02). */
-  stateAt(now: Date, inactivityDelayMs = DEFAULT_INACTIVITY_DELAY_MS): SessionState {
+  /**
+   * État à un instant donné : Terminée dès que Claude Code ne la tient plus pour ouverte, sinon En cours tant qu'un
+   * événement est récent, puis Inactive (RF-SESS-02). `open` : null quand le profil ne dit pas ce qui est ouvert.
+   */
+  stateAt(now: Date, open: boolean | null = null, inactivityDelayMs = DEFAULT_INACTIVITY_DELAY_MS): SessionState {
+    if (open === false) return 'ended';
     return now.getTime() - this.snapshot.lastEventAt.getTime() < inactivityDelayMs ? 'running' : 'inactive';
   }
 

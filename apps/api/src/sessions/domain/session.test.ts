@@ -26,6 +26,13 @@ describe('Session', () => {
     expect(session.stateAt(new Date(lastEvent + DEFAULT_INACTIVITY_DELAY_MS))).toBe('inactive');
   });
 
+  it('ends as soon as Claude Code no longer holds the session open, even right after an event', () => {
+    const session = Session.discover('c41e9a07', 'pro', at('14:02:00'));
+    session.record(reply('14:02:00'));
+    const justAfter = new Date(at('14:02:00').getTime() + 1000);
+    expect([session.stateAt(justAfter, false), session.stateAt(justAfter, true)]).toEqual(['ended', 'running']);
+  });
+
   it('adds up the token usage, cache included', () => {
     const session = Session.discover('c41e9a07', 'pro', at('14:02:00'));
     session.record(reply('14:02:00', new TokenUsage(10, 20, 30, 40)));

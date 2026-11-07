@@ -6,6 +6,7 @@ import { CONFIG, ORM } from '../shared/tokens.ts';
 import { SessionService } from './application/session.service.ts';
 import { SourceService } from './application/source.service.ts';
 import { FileProfileFinder } from './infrastructure/claude-code/profile-finder.ts';
+import { FileSessionRegistry } from './infrastructure/claude-code/session-registry.ts';
 import { FileTranscriptWatcher } from './infrastructure/claude-code/transcript-watcher.ts';
 import { SessionEventsBus } from './infrastructure/events/session-events.bus.ts';
 import { MikroOrmSessionRepository } from './infrastructure/persistence/session.repository.ts';
@@ -17,6 +18,7 @@ import { SourcesController } from './interface/http/sources.controller.ts';
 import { SESSION_EVENTS, SESSION_SERVICE, SOURCE_SERVICE, TRANSCRIPT_WATCHER } from './tokens.ts';
 
 const clock = { now: () => new Date() };
+const registry = new FileSessionRegistry();
 
 /** Contexte des sessions : chaque port du domaine relié à son adaptateur. */
 @Module({
@@ -27,7 +29,7 @@ const clock = { now: () => new Date() };
       provide: SESSION_SERVICE,
       inject: [ORM, SESSION_EVENTS],
       useFactory: (orm: MikroORM, bus: SessionEventsBus) =>
-        new SessionService(new MikroOrmSessionRepository(orm), clock, bus),
+        new SessionService(new MikroOrmSessionRepository(orm), clock, bus, registry),
     },
     {
       provide: TRANSCRIPT_WATCHER,
@@ -39,14 +41,15 @@ const clock = { now: () => new Date() };
     },
     {
       provide: SOURCE_SERVICE,
-      inject: [ORM, CONFIG, TRANSCRIPT_WATCHER],
-      useFactory: (orm: MikroORM, config: Config, watcher: FileTranscriptWatcher) =>
+      inject: [ORM, CONFIG, TRANSCRIPT_WATCHER, SESSION_SERVICE],
+      useFactory: (orm: MikroORM, config: Config, watcher: FileTranscriptWatcher, sessionService: SessionService) =>
         new SourceService(
           new MikroOrmSourceRepository(orm),
           new FileProfileFinder(config.profilesRoot),
           watcher,
           { next: randomUUID },
           clock,
+          { service: sessionService, sessions: registry },
         ),
     },
   ],
@@ -63,6 +66,7 @@ export class SessionsModule implements OnApplicationBootstrap, OnApplicationShut
   }
 
   async onApplicationShutdown(): Promise<void> {
+    registry.close();
     await this.watcher.close();
   }
 }

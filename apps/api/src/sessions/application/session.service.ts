@@ -1,6 +1,6 @@
 import type { SessionState } from '../domain/session.ts';
 import type { TranscriptEvent } from '../domain/transcript-event.ts';
-import type { Clock, SessionEvents, SessionRepository } from './ports.ts';
+import type { Clock, SessionEvents, SessionRegistry, SessionRepository } from './ports.ts';
 import { Session } from '../domain/session.ts';
 
 export interface SessionView {
@@ -29,7 +29,16 @@ export class SessionService {
     private readonly sessionRepository: SessionRepository,
     private readonly clock: Clock,
     private readonly sessionEvents: SessionEvents = { sessionChanged: () => undefined },
+    private readonly registry: Pick<SessionRegistry, 'isOpen'> = { isOpen: () => null },
   ) {}
+
+  /** Sessions entrées dans le registre des sessions ouvertes, ou sorties : leur état change sans nouvel événement. */
+  async refreshSessions(sessionIds: string[]): Promise<void> {
+    for (const id of sessionIds) {
+      const session = await this.sessionRepository.find(id);
+      if (session) this.sessionEvents.sessionChanged(this.view(session));
+    }
+  }
 
   /** Tient compte des lignes nouvellement lues dans le transcript d'une session, qu'elle soit connue ou non. */
   async recordTranscript(sourceId: string, sessionId: string, events: TranscriptEvent[]): Promise<SessionView | null> {
@@ -78,7 +87,7 @@ export class SessionService {
       repository: repositoryOf(snapshot.repoRoot, repoPath),
       sourceId,
       startedAt,
-      state: session.stateAt(this.clock.now()),
+      state: session.stateAt(this.clock.now(), this.registry.isOpen(sourceId, id)),
       title,
       usage: {
         input: usage.input,

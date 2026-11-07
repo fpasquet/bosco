@@ -22,7 +22,7 @@ export interface SourcesDto {
   sources: SourceDto[];
 }
 
-export type SessionStateDto = 'inactive' | 'running';
+export type SessionStateDto = 'ended' | 'inactive' | 'running';
 
 export interface SessionDto {
   branch: null | string;
