@@ -99,6 +99,13 @@ export class LiveSignalService {
     entry.resolve(answer);
   }
 
+  /** Oublie les demandes en cours et les derniers signaux (remise à zéro des scénarios). */
+  forget(): void {
+    for (const entry of this.pending.values()) entry.resolve(null);
+    this.pending.clear();
+    this.lastSignals.clear();
+  }
+
   /** Au démarrage : une autorisation restée en attente lors de l'arrêt ne peut plus se donner que dans le terminal. */
   async dropStalePermissions(): Promise<void> {
     for (const session of await this.sessionRepository.list()) {

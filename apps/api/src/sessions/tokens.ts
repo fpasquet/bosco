@@ -3,3 +3,6 @@ export const SESSION_SERVICE = Symbol('SessionService');
 export const SOURCE_SERVICE = Symbol('SourceService');
 export const TRANSCRIPT_WATCHER = Symbol('TranscriptWatcher');
 export const SESSION_EVENTS = Symbol('SessionEvents');
+export const LIVE_SIGNAL_SERVICE = Symbol('LiveSignalService');
+export const LIVE_TRACKING_SERVICE = Symbol('LiveTrackingService');
+export const HOOK_SECRET = Symbol('HookSecret');
