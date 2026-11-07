@@ -33,6 +33,7 @@ function session(id: string, overrides: Partial<SessionDto> = {}): SessionDto {
     state: 'running',
     title: `Session ${id}`,
     usage: { cacheCreation: 0, cacheRead: 0, input: 0, output: 0 },
+    task: null,
     waiting: null,
     turns: 0,
     changedFiles: [],

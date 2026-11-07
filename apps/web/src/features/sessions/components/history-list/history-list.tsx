@@ -21,7 +21,7 @@ function Row({ now, profile, session }: { now: Date; profile: null | string; ses
   return (
     <tr className="relative h-row border-b border-line hover:bg-surface-alt">
       <td className="pl-4">
-        <SessionStateBadge state={session.state} />
+        <SessionStateBadge state={session.state} task={session.task} />
       </td>
       <td className="min-w-0">
         <Link

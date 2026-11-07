@@ -20,6 +20,7 @@ import { PermissionCard } from '../permission-card';
 import { SessionFeed } from '../session-feed';
 import { SessionHeader } from '../session-header';
 import { SessionSide } from '../session-side';
+import { WorkerTaskNotice } from '../worker-task-notice';
 
 /** Ce que l'agent a dit juste avant de demander l'autorisation. */
 function agentSays(journal: JournalEntryDto[], session: SessionDto): null | string {
@@ -71,6 +72,7 @@ export function SessionDetailScreen({ id }: { id: string }) {
         resume={resume}
         onCopy={copy}
       />
+      <WorkerTaskNotice session={session} />
       <div className="grid min-h-0 flex-1 gap-4 md:grid-cols-3">
         <div className="flex min-h-0 flex-col md:col-span-2">
           <SessionFeed
