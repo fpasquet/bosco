@@ -1,9 +1,16 @@
 import type { SessionDto, SessionStateDto, SourceDto } from '@bosco/domain';
 
 /** Ordre des états dans la vue d'ensemble : ce qui demande une action d'abord (RF-SESS-02). */
-export const STATE_ORDER: readonly SessionStateDto[] = ['running', 'inactive'];
+export const STATE_ORDER: readonly SessionStateDto[] = ['running', 'inactive', 'ended'];
 
-export const STATE_LABELS: Record<SessionStateDto, string> = { inactive: 'Inactive', running: 'En cours' };
+/** Colonnes de la vue par état (E1d) : les sessions terminées vont dans l'historique. */
+const BOARD_STATES: readonly SessionStateDto[] = ['running', 'inactive'];
+
+export const STATE_LABELS: Record<SessionStateDto, string> = {
+  ended: 'Terminée',
+  inactive: 'Inactive',
+  running: 'En cours',
+};
 
 export interface OverviewFilters {
   hideInactive: boolean;
@@ -19,6 +26,8 @@ export interface RepositoryGroup {
 
 export interface OverviewIndicators {
   costToday: { unpriced: boolean; usd: number };
+  /** Sessions commencées aujourd'hui et déjà terminées */
+  endedToday: number;
   inactive: number;
   /** Fin d'activité de la session inactive la plus récente : « depuis 47 min » */
   inactiveSince: Date | null;
@@ -35,11 +44,13 @@ function isToday(iso: string, now: Date): boolean {
 }
 
 /**
- * Sessions ouvertes : tant que le suivi en direct n'est pas installé, Bosco ne sait pas qu'une session est close ; une
- * session sans événement depuis aujourd'hui passe dans l'historique (E3a).
+ * Sessions ouvertes : une session terminée passe dans l'historique (E3a). Quand Claude Code ne dit pas ce qui est
+ * ouvert, une session sans événement depuis aujourd'hui y passe aussi.
  */
 export function openSessions(sessions: readonly SessionDto[], now: Date): SessionDto[] {
-  return sessions.filter((session) => session.state === 'running' || isToday(session.lastEventAt, now));
+  return sessions.filter(
+    (session) => session.state === 'running' || (session.state === 'inactive' && isToday(session.lastEventAt, now)),
+  );
 }
 
 function byStateThenActivity(left: SessionDto, right: SessionDto): number {
@@ -69,7 +80,7 @@ export function groupByRepository(sessions: readonly SessionDto[]): RepositoryGr
 
 /** Colonnes par état (E1d) : une colonne par état, triée par activité la plus récente. */
 export function groupByState(sessions: readonly SessionDto[]): { sessions: SessionDto[]; state: SessionStateDto }[] {
-  return STATE_ORDER.map((state) => ({
+  return BOARD_STATES.map((state) => ({
     state,
     sessions: sortSessions(sessions.filter((session) => session.state === state)),
   }));
@@ -102,6 +113,7 @@ export function indicatorsOf(open: readonly SessionDto[], all: readonly SessionD
     inactive: inactive.length,
     inactiveSince: lastInactive ? new Date(lastInactive) : null,
     sessionsToday: today.length,
+    endedToday: today.filter((session) => session.state === 'ended').length,
     costToday: {
       usd: today.reduce((total, session) => total + session.cost.usd, 0),
       unpriced: today.some((session) => session.cost.unpriced),

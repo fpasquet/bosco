@@ -46,6 +46,14 @@ describe('openSessions', () => {
   });
 });
 
+describe('openSessions once Claude Code tells which sessions are open', () => {
+  it('leaves the ended sessions to the history, even active a moment ago', () => {
+    expect(openSessions([session('ended', { state: 'ended' }), session('live')], now).map(({ id }) => id)).toEqual([
+      'live',
+    ]);
+  });
+});
+
 describe('sortSessions', () => {
   it('sorts by state, then by the most recent activity (CA-SESS-09)', () => {
     const sorted = sortSessions([
@@ -113,7 +121,7 @@ describe('indicatorsOf', () => {
     const yesterday = session('yesterday', { startedAt: new Date('2026-11-05T22:00:00').toISOString() });
     const open = [session('rag', { cost: { unpriced: false, usd: 0.62 } }), yesterday];
     const indicators = indicatorsOf(open, [...open, closed], now);
-    expect(indicators.sessionsToday).toBe(2);
+    expect([indicators.sessionsToday, indicators.endedToday]).toEqual([2, 0]);
     expect(indicators.costToday.usd).toBeCloseTo(1.36);
     expect(indicators.running).toBe(2);
   });

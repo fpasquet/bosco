@@ -13,3 +13,5 @@ type Story = StoryObj<typeof meta>;
 export const Running: Story = {};
 
 export const Inactive: Story = { args: { state: 'inactive' } };
+
+export const Ended: Story = { args: { state: 'ended' } };

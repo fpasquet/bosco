@@ -4,6 +4,7 @@ import { STATE_LABELS } from '../../lib/overview';
 
 const STYLES: Record<SessionStateDto, { badge: string; dot: string }> = {
   running: { badge: 'badge-soft badge-info', dot: 'animate-pulse bg-info' },
+  ended: { badge: 'badge-soft badge-success', dot: 'bg-success' },
   inactive: { badge: 'badge-ghost', dot: 'bg-muted' },
 };
 

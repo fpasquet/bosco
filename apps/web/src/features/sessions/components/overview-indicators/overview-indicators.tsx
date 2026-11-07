@@ -24,9 +24,15 @@ function Tile({
   );
 }
 
+/** « 8 terminées » ; rien tant qu'aucune session du jour n'est terminée. */
+function endedLabel(count: number): string | undefined {
+  if (count === 0) return undefined;
+  return `${count} ${count > 1 ? 'terminées' : 'terminée'}`;
+}
+
 /** Bande d'indicateurs de la vue d'ensemble ; le coût du jour est une estimation au tarif public (RF-SESS-05). */
 export function OverviewIndicators({ indicators, now }: { indicators: Indicators; now: Date }) {
-  const { costToday, inactive, inactiveSince, running, sessionsToday } = indicators;
+  const { costToday, endedToday, inactive, inactiveSince, running, sessionsToday } = indicators;
   return (
     <dl className="grid grid-cols-2 divide-line rounded-card border border-line bg-surface shadow-card md:grid-cols-4 md:divide-x">
       <Tile label="En cours" value={String(running)} live={running > 0} />
@@ -35,7 +41,7 @@ export function OverviewIndicators({ indicators, now }: { indicators: Indicators
         value={String(inactive)}
         detail={inactiveSince ? `depuis ${elapsed(inactiveSince, now)}` : undefined}
       />
-      <Tile label="Sessions aujourd’hui" value={String(sessionsToday)} />
+      <Tile label="Sessions aujourd’hui" value={String(sessionsToday)} detail={endedLabel(endedToday)} />
       <Tile
         label="Coût du jour"
         value={formatCost({ ...costToday, unpriced: false })}
