@@ -3,6 +3,7 @@ import type { Config } from './config.ts';
 import { HealthController } from './adapters/in/http/health.controller.ts';
 import { TestController } from './adapters/in/http/test.controller.ts';
 import { PersistenceModule } from './adapters/out/persistence/persistence.module.ts';
+import { SessionsModule } from './sessions/sessions.module.ts';
 import { CONFIG } from './tokens.ts';
 
 /** Point de composition : relie chaque port à son adaptateur. Les contextes y arrivent lot par lot. */
@@ -12,7 +13,7 @@ export class AppModule {
     return {
       module: AppModule,
       global: true,
-      imports: [PersistenceModule],
+      imports: [PersistenceModule, SessionsModule],
       controllers: [HealthController, ...(config.testing ? [TestController] : [])],
       providers: [{ provide: CONFIG, useValue: config }],
       exports: [CONFIG],
