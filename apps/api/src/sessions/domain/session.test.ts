@@ -13,6 +13,7 @@ const reply = (time: string, usage: TokenUsage | null = null): TranscriptEvent =
   cwd: '/home/dev/labo-ia/packages/bosco',
   branch: 'feat/specs',
   model: 'claude-opus-5-5',
+  repoRoot: '/home/dev/labo-ia',
   usage,
 });
 
@@ -41,5 +42,17 @@ describe('Session', () => {
     restored.record(reply('14:05:00'));
     expect(restored.pullJournal().map((entry) => entry.seq)).toEqual([2]);
     expect(restored.toSnapshot().title).toBe('Specs du tableau de bord Bosco');
+  });
+});
+
+describe('Session cost', () => {
+  it('prices each event at the model that produced it and counts unpriced tokens apart', () => {
+    const session = Session.discover('c41e9a07', 'pro', at('14:02:00'));
+    session.record(reply('14:02:00', new TokenUsage(1_000_000, 0, 0, 0)));
+    session.record({ ...reply('14:03:00', new TokenUsage(1_000_000, 0, 0, 0)), model: 'claude-sonnet-5-5' });
+    session.record({ ...reply('14:04:00', new TokenUsage(500, 0, 0, 0)), model: '<synthetic>' });
+    const { costMicros, unpricedTokens } = session.toSnapshot();
+    expect(costMicros).toBe(6_000_000);
+    expect(unpricedTokens).toBe(500);
   });
 });

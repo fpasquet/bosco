@@ -1,4 +1,5 @@
 import type { JournalEntry, TranscriptEvent } from './transcript-event.ts';
+import { estimateCostMicros } from './model-pricing.ts';
 import { TokenUsage } from './token-usage.ts';
 
 /** États d'une session (RF-SESS-02). Sans suivi en direct, seuls running et inactive peuvent se déduire. */
@@ -9,15 +10,22 @@ export const DEFAULT_INACTIVITY_DELAY_MS = 15 * 60 * 1000;
 
 export interface SessionSnapshot {
   branch: null | string;
+  /** Coût estimé en micro-dollars des tokens dont le modèle a un tarif connu (RF-SESS-05) */
+  costMicros: number;
   id: string;
+  /** Dernier outil appelé par l'agent (« Bash · npm test ») */
+  lastAction: null | string;
   lastEventAt: Date;
   lastMessage: null | string;
   model: null | string;
   nextSeq: number;
   repoPath: null | string;
+  repoRoot: null | string;
   sourceId: string;
   startedAt: Date;
   title: null | string;
+  /** Tokens d'un modèle sans tarif connu : la session est alors « non chiffrée » pour cette part */
+  unpricedTokens: number;
   usage: TokenUsage;
 }
 
@@ -40,7 +48,11 @@ export class Session {
       id,
       sourceId,
       repoPath: null,
+      repoRoot: null,
       branch: null,
+      lastAction: null,
+      costMicros: 0,
+      unpricedTokens: 0,
       title: null,
       model: null,
       startedAt: at,
@@ -62,9 +74,11 @@ export class Session {
     this.snapshot = {
       ...current,
       repoPath: event.cwd ?? current.repoPath,
+      repoRoot: event.repoRoot ?? current.repoRoot,
       branch: event.branch ?? current.branch,
       model: event.model ?? current.model,
       usage: event.usage ? current.usage.add(event.usage) : current.usage,
+      ...this.costOf(event),
       startedAt: at < current.startedAt ? at : current.startedAt,
       lastEventAt: at > current.lastEventAt ? at : current.lastEventAt,
     };
@@ -72,9 +86,23 @@ export class Session {
       this.snapshot = { ...this.snapshot, title: event.text };
       return;
     }
-    if (event.kind !== 'tool') this.snapshot = { ...this.snapshot, lastMessage: event.text };
+    if (event.text === '') return;
+    this.snapshot =
+      event.kind === 'tool'
+        ? { ...this.snapshot, lastAction: event.text }
+        : { ...this.snapshot, lastMessage: event.text };
     this.pending.push({ seq: this.snapshot.nextSeq, at, kind: event.kind, text: event.text });
     this.snapshot = { ...this.snapshot, nextSeq: this.snapshot.nextSeq + 1 };
+  }
+
+  /** Coût de l'usage d'un événement, au tarif du modèle qui l'a produit (une session peut changer de modèle). */
+  private costOf(event: TranscriptEvent): Pick<SessionSnapshot, 'costMicros' | 'unpricedTokens'> {
+    const { costMicros, unpricedTokens } = this.snapshot;
+    if (!event.usage) return { costMicros, unpricedTokens };
+    const cost = estimateCostMicros(event.model ?? this.snapshot.model, event.usage);
+    return cost === null
+      ? { costMicros, unpricedTokens: unpricedTokens + event.usage.total }
+      : { costMicros: costMicros + cost, unpricedTokens };
   }
 
   /** État à un instant donné : En cours tant qu'un événement est récent, puis Inactive (RF-SESS-02). */
