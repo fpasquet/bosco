@@ -44,6 +44,8 @@ export type AgentEvent =
   | { kind: 'usage'; model: null | string; usage: AgentUsage };
 
 export interface AgentSpec {
+  /** Outils interdits du dépôt, en plus de ceux que Claude Code refuse déjà */
+  deniedTools: string[];
   folder: string;
   /** Image de l'agent choisie pour le dépôt ; null : l'image par défaut (CA-CONT-54) */
   image: null | string;

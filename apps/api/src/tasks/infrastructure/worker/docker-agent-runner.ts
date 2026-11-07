@@ -259,6 +259,7 @@ export class DockerAgentRunner implements AgentRunner, WorkerHealth {
         'dontAsk',
         '--allowedTools',
         spec.tools.join(','),
+        ...(spec.deniedTools.length > 0 ? ['--disallowedTools', spec.deniedTools.join(',')] : []),
       ],
       { stdio: ['ignore', 'pipe', 'pipe'] },
     );
