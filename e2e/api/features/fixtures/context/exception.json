@@ -1,0 +1,10 @@
+{
+  "target": { "kind": "repository", "name": "labo-ia" },
+  "text": {
+    "title": "Garder Jest pour les tests",
+    "context": "Les tests existants sont en Jest.",
+    "decision": "Garder Jest."
+  },
+  "accept": true,
+  "exceptionTo": 1
+}

@@ -1,0 +1,11 @@
+{
+  "target": { "kind": "repository", "name": "labo-ia" },
+  "text": {
+    "title": "Découper les tableaux par ligne",
+    "context": "Les tableaux des PDF arrivent fusionnés.",
+    "decision": "Découper chaque tableau par ligne avant l'indexation.",
+    "consequences": null,
+    "alternatives": null
+  },
+  "accept": true
+}

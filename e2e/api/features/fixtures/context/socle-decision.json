@@ -1,0 +1,9 @@
+{
+  "target": { "kind": "socle", "id": 1 },
+  "text": {
+    "title": "Tests avec Vitest",
+    "context": "Un seul outil de test.",
+    "decision": "Écrire les tests avec Vitest."
+  },
+  "accept": true
+}

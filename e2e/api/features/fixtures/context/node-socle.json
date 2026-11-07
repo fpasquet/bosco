@@ -1,0 +1,1 @@
+{ "name": "Socle Node.js", "scope": "shared", "inherits": 1, "repositories": ["labo-ia"] }
