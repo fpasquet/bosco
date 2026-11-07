@@ -18,7 +18,7 @@
 
 ## <a id="e1"></a>E1 · Vue d'ensemble
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `sessions/e1.html` · implémentation : **En cours (Premier lancement (E1a) et vue d'ensemble en direct (E1b à E1e) développés : bandeau T'attend avec « Autoriser » et « Refuser » (motif facultatif), colonne T'attend en regroupement par état, message bref quand une autorisation reçoit sa réponse ici ou dans le terminal ; regroupement par dépôt ou par état, filtre par dépôt, indicateurs et coût du jour, progression de la lecture. Une session arrêtée passe en Terminée ; chaque nouvelle attente déclenche une notification du bureau. Restent la liste des terminées du jour et Bosco injoignable (E1f).)**
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `sessions/e1.html` · implémentation : **Livré (Premier lancement (E1a) et vue d'ensemble en direct (E1b à E1e) développés : bandeau T'attend avec « Autoriser » et « Refuser » (motif facultatif), colonne T'attend en regroupement par état, message bref quand une autorisation reçoit sa réponse ici ou dans le terminal ; regroupement par dépôt ou par état, filtre par dépôt, indicateurs et coût du jour, progression de la lecture. Une session arrêtée passe en Terminée ; chaque nouvelle attente déclenche une notification du bureau. Bosco injoignable (E1f) : écran figé et daté, réponses désactivées, reconnexion toutes les 5 s. Sessions terminées du jour sous la vue filtrée et la vue par état, avec « Voir l'historique ».)**
 
 ### <a id="e1a"></a>E1a · Vue d'ensemble : premier lancement
 
@@ -194,7 +194,7 @@ Règles de l'écran :
 
 ## <a id="e3"></a>E3 · Historique
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `sessions/e3.html` · implémentation : **À développer**
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `sessions/e3.html` · implémentation : **Livré (Historique développé : liste par jour avec son total, chargée au défilement, recherche dans les titres, messages et commandes (index plein texte), filtres en puces qui se cumulent (période, dépôt, profil, état) ; onglet Coûts avec total, moyenne par jour ouvré, part du cache, graphique par jour ouvré empilé par dépôt, tableaux par dépôt (triable) et par modèle. Écarts : la répartition par modèle suit le modèle principal de chaque session ; « Tout afficher » d'un jour chargé n'existe pas, toutes ses sessions sont montrées.)**
 
 ### <a id="e3a"></a>E3a · Historique : recherche et liste
 
@@ -232,7 +232,7 @@ Règles de l'écran :
 
 ## <a id="e4"></a>E4 · Sources
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `sessions/e4.html` · implémentation : **En cours (Sources développées (E4a, E4b) : interrupteur de lecture par profil, état du suivi en direct et dernier signal, seuil d'inactivité (5 à 60 min), notifications du bureau envoyées par le service à chaque nouvelle attente, historique conservé en entier ; installation du suivi en trois étapes. Écarts : « Ajouter un dossier », « Gérer » et l'état « À mettre à jour » d'une source illisible ne sont pas faits ; le serveur Bosco (tâches et décisions) n'est pas encore ajouté au profil. Reste l'appairage du téléphone (E4c).)**
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `sessions/e4.html` · implémentation : **Livré (Sources développées (E4a, E4b) : interrupteur de lecture par profil, état du suivi en direct et dernier signal, seuil d'inactivité (5 à 60 min), notifications du bureau envoyées par le service à chaque nouvelle attente, historique conservé en entier ; installation du suivi en trois étapes. Écarts : « Ajouter un dossier », « Gérer » et l'état « À mettre à jour » d'une source illisible ne sont pas faits ; le serveur Bosco (tâches et décisions) n'est pas encore ajouté au profil. Accès depuis le téléphone (E4c) : écoute HTTPS sur le réseau local seulement une fois activé, certificat créé par Bosco, code de 6 chiffres valable 5 min, à usage unique et 5 essais, page d'appairage sur le téléphone, téléphones appairés retirés d'un clic. Écart : pas de QR code, l'adresse se copie.)**
 
 ### <a id="e4a"></a>E4a · Sources : profils surveillés et réglages
 
