@@ -46,7 +46,7 @@ Le service NestJS porte l'API, les flux SSE, Next.js et l'écoute HTTPS du tél�
 
 ## <a id="85-cicd"></a>8.5 CI/CD
 
-GitHub Actions à chaque push, chaque étape par `turbo run` avec le cache de Turborepo conservé entre deux exécutions (DT-22) : ESLint, `prettier --check` (code et `.feature`), contrôle des `.feature`, typage par `tsc -b` (TypeScript 6), tests Vitest, build, les deux suites Gherkin (API, puis web) en mode `replay`, recherche de secrets dans les enregistrements ; `tsc --noEmit` de TypeScript 7 en contrôle non bloquant (DT-20). Aucun déploiement : l'installation se fait sur le poste, depuis le dépôt. Travail sur branches, relecture humaine avant fusion. Retour arrière : réinstaller la version précédente ; les migrations de base sont additives.
+GitHub Actions à chaque push, chaque étape par `turbo run` avec le cache de Turborepo conservé entre deux exécutions (DT-22) : ESLint, `prettier --check` (code et `.feature`), contrôle des `.feature`, typage par `tsc -b` (TypeScript 6), tests Vitest, build, les deux suites Gherkin (API, puis web) en mode `replay`, recherche de secrets dans les enregistrements. Aucun déploiement : l'installation se fait sur le poste, depuis le dépôt. Travail sur branches, relecture humaine avant fusion. Retour arrière : réinstaller la version précédente ; les migrations de base sont additives.
 
 ## <a id="86-configuration-secrets-et-infrastructure-as-code"></a>8.6 Configuration, secrets et infrastructure as code
 

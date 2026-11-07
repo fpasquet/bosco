@@ -153,7 +153,14 @@ Droits, plafonds et réglages sont stockés par niveau (général, dépôt, tâc
 
 L'architecture hexagonale (DT-15) n'est utile que si le domaine porte vraiment les règles. Cette partie fixe comment le découper et l'écrire ; les règles du code (§7.4) la reprennent pour les agents, et le lint vérifie les frontières (DT-23).
 
-**Contextes.** Un dossier par contexte dans `packages/core/src/<contexte>/`, chacun en deux couches : `domain/` (classes, objets valeur, événements, erreurs) et `application/` (un service par agrégat et `ports.ts`). `src/shared/` est le noyau partagé : erreur de base, identifiants, horloge. Le domaine est commun à l'API, au worker et à la CLI, d'où un paquet à part plutôt qu'un domaine par application.
+**Contextes.** Tout le code serveur vit dans une seule application, `apps/api`, avec un module par contexte : `src/<contexte>/`, en quatre couches.
+
+- `domain/` : agrégats, objets valeur, événements, erreurs ;
+- `application/` : un service par agrégat et `ports.ts` ;
+- `infrastructure/` : les adaptateurs des ports (persistance MikroORM, lecture des transcripts, Docker, git, intégrations) ;
+- `interface/http/` : contrôleurs, flux en direct, entrée des hooks, schémas de validation.
+
+`<contexte>.module.ts` relie chaque port à son adaptateur, avec les jetons de `<contexte>/tokens.ts`. `src/shared/` est le noyau partagé (erreur de base, horloge, persistance commune), `src/app.module.ts` le point de composition. Le worker (DT-02) est un second point d'entrée de la même application (`src/main-worker.ts`), lancé dans son propre processus, qui ne charge que les modules dont il a besoin. Les contrats partagés avec le web (types des vues, nom de l'application) vivent dans `packages/domain`, et nulle part ailleurs.
 
 | Contexte | Agrégats | Règles portées | Lots |
 |---|---|---|---|
@@ -163,7 +170,7 @@ L'architecture hexagonale (DT-15) n'est utile que si le domaine porte vraiment l
 | `policies` | Garde-fous (général, dépôt, tâche), isolation, sortie réseau | RF-TACH-05, RF-CONT-06 à RF-CONT-09, RF-CONT-12 | 2 et 3 |
 | `knowledge` | Décision (avec ses versions), Socle, Lien | RF-CONT-01 à RF-CONT-05, RF-CONT-10, RF-CONT-11 | 3 |
 
-Un contexte n'importe jamais les classes d'un autre : quand `tasks` a besoin de savoir qu'une session est close, il déclare un port (`SessionStatus`), que l'assemblage (`apps/api`, `apps/worker`) branche sur le service de `sessions`.
+Un contexte n'importe jamais les classes d'un autre : quand `tasks` a besoin de savoir qu'une session est close, il déclare un port (`SessionStatus`), que le point de composition (`src/app.module.ts`) branche sur le service de `sessions`.
 
 **Agrégats et invariants.** Un agrégat garantit seul ses règles : on le charge, on appelle une méthode métier, on l'enregistre. Ses invariants se testent sans base ni framework.
 
@@ -187,14 +194,14 @@ Un contexte n'importe jamais les classes d'un autre : quand `tasks` a besoin de 
 
 **Erreurs.** Une erreur du domaine hérite de l'erreur de base de son contexte et porte un code stable en camelCase (`permissionAlreadyPending`, `taskNotFound`) et un message en anglais. L'adaptateur HTTP les traduit en statut et en corps `{ statusCode, code, message }` ; l'interface traduit le code et n'affiche jamais le message. Un 5xx ne renvoie aucun détail interne.
 
-**Assemblage.** `apps/api` et `apps/worker` relient chaque port à son adaptateur dans un module NestJS par contexte (fabriques et jetons `Symbol`), avec des remplacements possibles pour les tests. Le mapping MikroORM vit dans les adaptateurs (`EntitySchema` ou `defineEntity`, DT-18) : les classes du domaine restent sans décorateur.
+**Assemblage.** Chaque `<contexte>.module.ts` relie ses ports à leurs adaptateurs (fabriques `useFactory` et jetons `Symbol`), avec des remplacements possibles pour les tests ; `src/app.module.ts` assemble les contextes et câble ce qui les croise. Le mapping MikroORM vit dans les adaptateurs (`EntitySchema` ou `defineEntity`, DT-18) : les classes du domaine restent sans décorateur.
 
 ## <a id="68-anti-patterns-a-eviter"></a>6.8 Anti-patterns à éviter
 
 | Anti-pattern | À quoi on le reconnaît | À faire |
 |---|---|---|
 | Domaine anémique | Classes à propriétés publiques modifiées par les services ; règles dans les cas d'usage | Méthodes métier sur l'agrégat (`session.askPermission(at)`) qui protègent ses invariants |
-| Framework dans le domaine | Import de `@nestjs/*`, `@mikro-orm/*`, `rxjs`, `node:fs`… dans `packages/core` ; décorateurs sur les entités | Un port dans l'application, l'adaptateur dans `apps/` ; refusé par le lint |
+| Framework dans le domaine | Import de `@nestjs/*`, `@mikro-orm/*`, `rxjs`, `node:fs`… dans `domain/` ou `application/` ; décorateurs sur les entités | Un port dans l'application, l'adaptateur dans `infrastructure/` ; refusé par le lint |
 | Logique dans un adaptateur | Règle métier dans un contrôleur, le flux SSE, un hook ou un adaptateur de dépôt | L'adaptateur traduit et délègue au cas d'usage |
 | Fuite de l'ORM | Un dépôt renvoie une entité MikroORM, un `QueryBuilder` ou une ligne brute | Le dépôt renvoie des objets du domaine |
 | Temps et hasard implicites | `new Date()`, `Date.now()`, `randomUUID()` dans le domaine | Ports `Clock` et `IdGenerator`, horloge fixe dans les tests |
@@ -209,7 +216,7 @@ Un contexte n'importe jamais les classes d'un autre : quand `tasks` a besoin de 
 
 **DT-01 · Dépôt dédié.** Bosco vit dans son propre dépôt, avec les specs. Écarté : rester avec les POC.
 
-**DT-02 · Service et worker séparés.** Redémarrer l'interface ne coupe pas les tâches (NF-07). Coût : deux processus coordonnés par la base. Écarté : un seul processus.
+**DT-02 · Service et worker séparés.** Redémarrer l'interface ne coupe pas les tâches (NF-07). Deux processus, coordonnés par la base, lancés depuis la même application serveur (`main.ts` et `main-worker.ts`, DT-15). Écarté : un seul processus.
 
 **DT-03 · Worker écrit à neuf.** Le code est écrit pour ce modèle de données, sans reprise. Coût : lot 2 plus long.
 
@@ -237,7 +244,7 @@ Un contexte n'importe jamais les classes d'un autre : quand `tasks` a besoin de 
 
 **DT-14 · MikroORM.** Choix du porteur du projet. Pilote SQLite, unité de travail, migrations versionnées. La recherche plein texte (FTS5) passe par des requêtes natives dans l'adaptateur. Écartés : Drizzle, Prisma, TypeORM.
 
-**DT-15 · Architecture hexagonale.** Choix du porteur du projet. Domaine et cas d'usage dans `packages/core`, découpés en contextes métier (§6.7), sans dépendance technique ; NestJS, MikroORM, Docker et les intégrations sont des adaptateurs derrière des ports. Conséquence : un peu plus de code d'assemblage, en échange de tests du domaine rapides et sans infrastructure.
+**DT-15 · Architecture hexagonale par modules.** Choix du porteur du projet. Une seule application serveur, `apps/api`, avec un module par contexte métier et ses quatre couches (`domain`, `application`, `infrastructure`, `interface/http`, §6.7) ; le domaine et l'application restent sans dépendance technique ; NestJS, MikroORM, Docker et les intégrations sont des adaptateurs derrière des ports. Conséquence : un peu plus de code d'assemblage, en échange de tests du domaine rapides et sans infrastructure. Écarté : un paquet `packages/core` pour le domaine, partagé par l'API et le worker (un paquet à compiler avant l'API, trois couches réparties entre deux dossiers, pour un worker qui peut être un second point d'entrée de la même application).
 
 **DT-16 · TypeScript 6 et ESM.** Choix du porteur du projet. TypeScript 6.0, dernière version de la branche 6, pour tout le code, en modules ESM ; les tests passent par Vitest, sans Jest. NestJS et MikroORM s'appuient sur les métadonnées des décorateurs (voir DT-18). Le passage à TypeScript 7 est prévu dès que l'outillage le permet (DT-20).
 
@@ -247,7 +254,7 @@ Un contexte n'importe jamais les classes d'un autre : quand `tasks` a besoin de 
 
 **DT-19 · ESLint et Prettier.** Choix du porteur du projet, dernières versions : ESLint 10 en configuration plate, typescript-eslint 8.72 avec règles typées (`recommendedTypeChecked`, `projectService`), `@next/eslint-plugin-next` pour le web (réglage `settings.next.rootDir` sur `apps/web` dans le monorepo), Prettier 3.9 et `eslint-config-prettier` pour qu'ESLint ne juge pas la mise en forme. Essai du 07/11/2026 avec TypeScript 6.0.3 : ESLint passe sur le code propre, signale une promesse non attendue (règle typée) et une balise `<img>` (règle Next.js) ; Prettier signale un fichier mal formé et accepte le reste. Écartés : oxlint, Biome.
 
-**DT-20 · Passage à TypeScript 7.** Prévu, pas encore possible : TypeScript 7 n'a plus l'API JavaScript du compilateur, et typescript-eslint, qui en dépend, n'accepte TypeScript que jusqu'à la 6.0 (8.72.1, 26/10/2026). La nouvelle API arrive avec TypeScript 7.1 (beta du 20/10/2026) et sa prise en charge par typescript-eslint est en cours. Déclencheur : une version stable de typescript-eslint qui accepte TypeScript 7.1, vérifiée au démarrage de chaque lot. D'ici là, la CI lance `tsc --noEmit` de TypeScript 7 en contrôle non bloquant, pour que le code reste compatible. Passage : monter `typescript`, puis rejouer typage, tests, ESLint et build Next.js ; c'est une tâche à part, hors des lots, estimée à moins d'une demi-journée de relecture.
+**DT-20 · Passage à TypeScript 7.** Prévu, pas encore possible : TypeScript 7 n'a plus l'API JavaScript du compilateur, et typescript-eslint, qui en dépend, n'accepte TypeScript que jusqu'à la 6.0 (8.72.1, 26/10/2026). La nouvelle API arrive avec TypeScript 7.1 (beta du 20/10/2026) et sa prise en charge par typescript-eslint est en cours. Déclencheur : une version stable de typescript-eslint qui accepte TypeScript 7.1, vérifiée au démarrage de chaque lot. D'ici là, le projet compile et se vérifie en TypeScript 6 seul ; la CI ne lance pas TypeScript 7. Passage : monter `typescript`, puis rejouer typage, tests, ESLint et build Next.js ; c'est une tâche à part, hors des lots, estimée à moins d'une demi-journée de relecture.
 
 **DT-21 · Stratégie de tests.** Choix du porteur du projet, après un essai complet le 07/11/2026.
 
@@ -276,9 +283,9 @@ Un contexte n'importe jamais les classes d'un autre : quand `tasks` a besoin de 
 
 Écartés : cache distant (un seul poste, la CI se suffit du cache local), Nx (plus lourd à régler pour cinq paquets), scripts pnpm seuls (`pnpm -r` ne sait ni éviter une tâche inchangée ni rejouer un résultat).
 
-**DT-23 · Qualité du code partagée et frontières vérifiées.** Choix du porteur du projet. Un paquet `packages/configs` porte toutes les configurations (§7.3) : TypeScript, ESLint, Vitest et Prettier. Chaque paquet les étend en quelques lignes, et aucune règle ne se désactive dans le code. Les frontières de l'architecture hexagonale (§6.7) sont des règles ESLint de `packages/core`, et non une convention écrite.
+**DT-23 · Qualité du code partagée et frontières vérifiées.** Choix du porteur du projet. Un paquet `packages/configs` porte toutes les configurations (§7.3) : TypeScript, ESLint, Vitest et Prettier. Chaque paquet les étend en quelques lignes, et aucune règle ne se désactive dans le code. Les frontières de l'architecture hexagonale (§6.7) sont des règles ESLint de l'application serveur (`eslint/nest`), et non une convention écrite.
 
-- **Essai du 07/11/2026** (ESLint 10.14, typescript-eslint 8.72.1, eslint-plugin-boundaries 7.4.2, TypeScript 6.0.3) : un `packages/core` à deux contextes passe le lint, le typage et ses tests. Cinq violations écrites exprès sont refusées, chacune avec un message qui dit quoi faire : `@mikro-orm/core` dans le domaine, domaine qui importe l'application, contexte qui importe un autre contexte, `node:fs` dans l'application, fichier hors kebab-case. Sur le code de l'essai, écrit sans ces règles, le lint a relevé 46 défauts : 25 corrigés automatiquement, 21 à la main (expressions régulières à risque, valeurs `any`, méthode détachée de son objet, comparaison toujours fausse). Les 14 tâches `lint`, `typecheck`, `test` et `build` et les deux suites e2e passent ensuite.
+- **Essai du 07/11/2026** (ESLint 10.14, typescript-eslint 8.72.1, eslint-plugin-boundaries 7.4.2, TypeScript 6.0.3) : un domaine à deux contextes passe le lint, le typage et ses tests. Cinq violations écrites exprès sont refusées, chacune avec un message qui dit quoi faire : `@mikro-orm/core` dans le domaine, domaine qui importe l'application, contexte qui importe un autre contexte, `node:fs` dans l'application, fichier hors kebab-case. Sur le code de l'essai, écrit sans ces règles, le lint a relevé 46 défauts : 25 corrigés automatiquement, 21 à la main (expressions régulières à risque, valeurs `any`, méthode détachée de son objet, comparaison toujours fausse). Les 14 tâches `lint`, `typecheck`, `test` et `build` et les deux suites e2e passent ensuite.
 - **Points relevés** :
   - `eslint-plugin-jsx-a11y` (6.10.2, octobre 2024) déclare ESLint 9 au plus. Il fonctionne avec ESLint 10, mais pnpm le signale (RQ-11).
   - Les motifs ignorés doivent commencer par `**/`, sinon les dossiers générés des sous-dossiers (`api/.features-gen`) sont analysés.
