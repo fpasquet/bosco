@@ -10,7 +10,7 @@ export const metadata: Metadata = { title: APP_NAME, icons: { icon: '/favicon.sv
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="fr">
-      <body className="font-sans">
+      <body className="bg-canvas font-sans text-sm text-ink">
         <Providers>{children}</Providers>
       </body>
     </html>
