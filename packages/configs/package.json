@@ -1,0 +1,38 @@
+{
+  "name": "@bosco/configs",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./tsconfig/base.json": "./tsconfig/base.json",
+    "./tsconfig/node.json": "./tsconfig/node.json",
+    "./tsconfig/nest.json": "./tsconfig/nest.json",
+    "./tsconfig/next.json": "./tsconfig/next.json",
+    "./eslint/base": "./eslint/base.mjs",
+    "./eslint/core": "./eslint/core.mjs",
+    "./eslint/nest": "./eslint/nest.mjs",
+    "./eslint/next": "./eslint/next.mjs",
+    "./vitest": "./vitest/base.mjs",
+    "./prettier": "./prettier.mjs"
+  },
+  "dependencies": {
+    "@eslint/js": "10.0.1",
+    "@next/eslint-plugin-next": "16.4.5",
+    "eslint": "10.14.0",
+    "eslint-config-prettier": "10.1.8",
+    "eslint-import-resolver-typescript": "4.4.5",
+    "eslint-plugin-boundaries": "7.4.2",
+    "eslint-plugin-check-file": "3.3.2",
+    "eslint-plugin-jsx-a11y": "6.10.2",
+    "eslint-plugin-perfectionist": "5.13.0",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "eslint-plugin-sonarjs": "4.2.2",
+    "globals": "17.14.0",
+    "prettier-plugin-gherkin": "4.0.0",
+    "typescript-eslint": "8.72.1"
+  },
+  "peerDependencies": {
+    "vitest": "5.1.0",
+    "prettier": "3.9.10"
+  },
+  "description": "Configurations partagées : TypeScript, ESLint (base, core, nest, next), Vitest, Prettier."
+}
