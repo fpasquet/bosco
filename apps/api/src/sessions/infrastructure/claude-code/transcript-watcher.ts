@@ -2,7 +2,7 @@ import { type FSWatcher, watch } from 'chokidar';
 // Lecture des transcripts d'un profil : d'abord ceux des derniers jours, puis chaque ajout, à partir de la dernière
 // position lue. Bosco ne modifie jamais ces fichiers (RF-SESS-01) ; une ligne incomplète attend la lecture suivante.
 import { open, readdir, stat } from 'node:fs/promises';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import type { TranscriptWatcher } from '../../application/ports.ts';
 import type { SessionService } from '../../application/session.service.ts';
 import type { Source } from '../../domain/source.ts';
@@ -11,6 +11,7 @@ import type { TranscriptCursorStore } from '../persistence/transcript-cursor.sto
 import { TranscriptParser } from './transcript-parser.ts';
 
 export class FileTranscriptWatcher implements TranscriptWatcher {
+  private readonly gitRoots = new Map<string, Promise<null | string>>();
   private readonly parsers = new Map<string, TranscriptParser>();
   private readonly queues = new Map<string, Promise<void>>();
   private readonly watchers = new Map<string, FSWatcher>();
@@ -55,6 +56,15 @@ export class FileTranscriptWatcher implements TranscriptWatcher {
     return next;
   }
 
+  /** Racine git d'un dossier de travail (le dossier qui contient .git), cherchée une fois par dossier. */
+  private gitRootOf(cwd: string): Promise<null | string> {
+    const known = this.gitRoots.get(cwd);
+    if (known) return known;
+    const found = findGitRoot(cwd);
+    this.gitRoots.set(cwd, found);
+    return found;
+  }
+
   private async readNewLines(source: Source, file: string): Promise<void> {
     const info = await stat(file);
     const stored = await this.cursors.offsetOf(file);
@@ -75,13 +85,22 @@ export class FileTranscriptWatcher implements TranscriptWatcher {
     const bySession = new Map<string, TranscriptEvent[]>();
     for (const line of buffer.subarray(0, end).toString('utf8').split('\n')) {
       for (const { sessionId, event } of parser.parse(line)) {
-        bySession.set(sessionId, [...(bySession.get(sessionId) ?? []), event]);
+        const repoRoot = event.cwd ? await this.gitRootOf(event.cwd) : null;
+        bySession.set(sessionId, [...(bySession.get(sessionId) ?? []), { ...event, repoRoot }]);
       }
     }
     for (const [sessionId, events] of bySession)
       await this.sessionService.recordTranscript(source.id, sessionId, events);
     await this.cursors.moveTo(file, offset + end + 1);
   }
+}
+
+async function findGitRoot(cwd: string): Promise<null | string> {
+  for (let dir = cwd; dir !== dirname(dir); dir = dirname(dir)) {
+    const marker = await stat(join(dir, '.git')).catch(() => null);
+    if (marker) return dir;
+  }
+  return null;
 }
 
 async function recentTranscripts(projects: string, since: Date): Promise<string[]> {
