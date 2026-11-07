@@ -40,6 +40,9 @@ make storybook        # http://localhost:6006
 make format
 make tokens           # recopie les tokens des specs (../specs/bosco/ui)
 make requirements     # régénère docs/requirements depuis le cahier des charges
+make claude-compat    # vérifie le hook d'autorisation sur le Claude Code installé (NF-09)
 ```
+
+À chaque nouvelle version de Claude Code, `make claude-compat` lance deux sessions courtes sur Haiku, sur l'abonnement : « Autoriser » doit laisser la commande s'exécuter, « Refuser » doit transmettre son motif à l'agent, et la fin de session doit arriver. Le comportement du hook n'est pas documenté par Claude Code (RQ-01).
 
 Les specs se clonent à côté (`~/www/specs` et `~/www/bosco`) : la copie des tokens (`tokens.mjs` du skill `design-system`) et l'export du cahier des charges (`export.mjs` du skill `requirements-doc`) se régénèrent depuis ce clone.

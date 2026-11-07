@@ -3,7 +3,7 @@ SPECS ?= ../specs
 SKILLS := .claude/skills
 
 .DEFAULT_GOAL := help
-.PHONY: help install dev start build check lint typecheck test format format-check e2e e2e-api e2e-web e2e-record e2e-clean storybook db-migration service-install skills tokens tokens-check requirements requirements-check
+.PHONY: help install dev start build check lint typecheck test format format-check e2e e2e-api e2e-web e2e-record e2e-clean storybook claude-compat db-migration service-install skills tokens tokens-check requirements requirements-check
 
 help: ## List the commands
 	@grep -E '^[a-z0-9-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN { FS = ":.*## " } { printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2 }'
@@ -56,6 +56,9 @@ e2e-clean: ## Remove the recordings no scenario uses
 
 storybook: ## Start Storybook on http://localhost:6006
 	pnpm storybook
+
+claude-compat: build ## Check the permission hook against the installed Claude Code (NF-09; two short sessions on the Claude subscription)
+	node e2e/compat/claude-code.ts
 
 db-migration: ## Write the migration that brings the database to the entity schemas
 	pnpm --filter @bosco/api db:migration
