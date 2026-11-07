@@ -19,6 +19,8 @@ export interface Bosco {
   /** Adresse HTTPS du téléphone, ouverte seulement quand l'accès est activé (E4c) */
   phoneUrl: string;
   configDir: string;
+  /** Secret de l'installation, exigé par l'entrée des hooks et le serveur MCP */
+  secret(): string;
   /** Dossier où Bosco cherche les profils de Claude Code (~ du poste pendant les scénarios) */
   profilesRoot: string;
   reset(): Promise<void>;
@@ -84,6 +86,7 @@ export async function startBosco(recordings: string): Promise<Bosco> {
   return {
     url,
     phoneUrl: `https://127.0.0.1:${phonePort}`,
+    secret: () => readFileSync(join(dataDir, 'hooks.secret'), 'utf8').trim(),
     configDir,
     profilesRoot,
     async reset() {

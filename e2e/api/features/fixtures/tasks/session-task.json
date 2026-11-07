@@ -1,0 +1,8 @@
+{
+  "repository": "labo-ia",
+  "folder": "packages/rag",
+  "instruction": "Relis le découpage des tableaux et note ce qui manque.",
+  "mode": "session",
+  "prerequisites": [],
+  "guardrails": { "budgetUsd": 1, "maxTurns": 30 }
+}
