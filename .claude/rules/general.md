@@ -22,6 +22,7 @@ Valables pour tout le dépôt. `AGENTS.md` donne le cadre : langue, specs, git.
 - pnpm 12 et Turborepo ; versions **exactes** dans les `package.json` (pas de `^`). Prendre la dernière version stable, vérifier ses dépendances pairs et noter un écart dans le compte rendu.
 - Pas de paquet sans second consommateur : le code d'une seule application reste dans cette application.
 - Un paquet dont le script d'installation doit tourner s'ajoute à `allowBuilds` de `pnpm-workspace.yaml`.
+- Les commandes passent par le Makefile (`make dev`, `make check`, `make e2e`, `make storybook`…) : une nouvelle commande courante y gagne une cible décrite en anglais, que liste `make help`.
 
 ## Configuration et secrets
 
@@ -38,7 +39,7 @@ Valables pour tout le dépôt. `AGENTS.md` donne le cadre : langue, specs, git.
 
 ## Avant de rendre la main
 
-1. `pnpm format:check`
-2. `pnpm check` (lint, types, tests, build de chaque paquet)
-3. `pnpm e2e:api` ou `pnpm e2e:web` dès qu'une route, un écran ou un scénario change
+1. `make format-check`
+2. `make check` (lint, types, tests, build de chaque paquet)
+3. `make e2e-api` ou `make e2e-web` dès qu'une route, un écran ou un scénario change
 4. Commits atomiques ; compte rendu de ce qui a été vérifié, et de ce qui ne l'a pas été

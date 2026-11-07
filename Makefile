@@ -1,0 +1,79 @@
+# Commandes courantes de Bosco : make help les liste. Chaque cible passe par pnpm et Turborepo.
+SPECS ?= ../specs
+SKILLS := .claude/skills
+
+.DEFAULT_GOAL := help
+.PHONY: help install dev start build check lint typecheck test format format-check e2e e2e-api e2e-web e2e-record e2e-clean storybook db-migration service-install skills tokens tokens-check requirements requirements-check
+
+help: ## List the commands
+	@grep -E '^[a-z0-9-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN { FS = ":.*## " } { printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2 }'
+
+install: ## Install the dependencies and the pinned skills
+	pnpm install
+	pnpm skills:install
+
+dev: ## Start the service in development mode on http://127.0.0.1:4880 (web hot reload, data in .data/)
+	pnpm dev
+
+start: build ## Build, then start the service on http://127.0.0.1:4870 and open the overview
+	node apps/cli/dist/main.js start
+
+build: ## Build every package
+	pnpm build
+
+check: ## Lint, typecheck, test and build every package
+	pnpm check
+
+lint: ## Lint every package (code, Gherkin scenarios, recordings)
+	pnpm lint
+
+typecheck: ## Typecheck every package
+	pnpm typecheck
+
+test: ## Run the Vitest tests and the Storybook stories
+	pnpm test
+
+format: ## Format the repository with Prettier
+	pnpm format
+
+format-check: ## Check the formatting
+	pnpm format:check
+
+e2e: e2e-api e2e-web ## Run both end-to-end suites
+
+e2e-api: ## Run the API scenarios (replayed recordings)
+	pnpm e2e:api
+
+e2e-web: ## Run the web scenarios, desktop and mobile
+	pnpm e2e:web
+
+e2e-record: ## Record the missing outgoing calls of both suites, with the real accesses
+	pnpm e2e:api:record
+	pnpm e2e:web:record
+
+e2e-clean: ## Remove the recordings no scenario uses
+	pnpm e2e:clean
+
+storybook: ## Start Storybook on http://localhost:6006
+	pnpm storybook
+
+db-migration: ## Write the migration that brings the database to the entity schemas
+	pnpm --filter @bosco/api db:migration
+
+service-install: build ## Install Bosco as a systemd user service
+	node apps/cli/dist/main.js service install
+
+skills: ## Install the skills pinned by skills-lock.json
+	pnpm skills:install
+
+tokens: ## Copy the tokens of the specs (../specs/bosco/ui) into the web app
+	node $(SKILLS)/design-system/scripts/tokens.mjs apps/web --from $(SPECS)/bosco/ui
+
+tokens-check: ## Check that the tokens copy is up to date with the specs
+	node $(SKILLS)/design-system/scripts/tokens.mjs apps/web --check --from $(SPECS)/bosco/ui
+
+requirements: ## Export the requirements of the specs into docs/requirements
+	cd $(SPECS) && node .claude/skills/requirements-doc/scripts/export.mjs bosco/requirements
+
+requirements-check: ## Check that docs/requirements is up to date with the specs
+	cd $(SPECS) && node .claude/skills/requirements-doc/scripts/export.mjs bosco/requirements --check

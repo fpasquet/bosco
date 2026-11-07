@@ -30,13 +30,17 @@ Les conventions sont dans `.claude/rules/`, que Claude Code charge selon les fic
 
 ## Commandes
 
+Les commandes passent par le Makefile (`make help`) : Node 26 (`.nvmrc`), pnpm 12.
+
 ```bash
-pnpm install          # Node 26 (.nvmrc), pnpm 12
-pnpm check            # turbo run lint typecheck test build
-pnpm e2e:api          # scénarios de l'API (anglais), en rejeu
-pnpm e2e:web          # parcours du web (français), ordinateur et téléphone
-pnpm format:check
-node apps/cli/dist/main.js start   # bosco start : le service et la coquille
+make install          # dépendances et skills épinglés
+make dev              # service en développement sur 4880, interface rechargée à chaud, données dans .data/
+make storybook        # http://localhost:6006
+make check            # lint, types, tests et build (Turborepo)
+make e2e              # e2e-api (anglais, en rejeu) puis e2e-web (français, ordinateur et téléphone)
+make format-check
+make tokens           # après une évolution des tokens dans les specs
+make requirements     # après une évolution du cahier des charges
 ```
 
 ## Git

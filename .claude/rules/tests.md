@@ -32,5 +32,5 @@ paths:
 ## Enregistrements des appels sortants
 
 - Le code de l'application garde `fetch` ; le module `e2e/replay` est chargé par `node --import` dans le service testé seulement.
-- Modes (`BOSCO_REPLAY`) : `replay` (par défaut et en CI, une requête inconnue échoue), `record` (`pnpm e2e:api:record`, sur le poste avec les vrais accès), `update`, `clean` (`pnpm e2e:clean`, supprime ce qu'aucun scénario n'a utilisé). Les modes qui écrivent passent `--force` à Turborepo.
+- Modes (`BOSCO_REPLAY`) : `replay` (par défaut et en CI, une requête inconnue échoue), `record` (`make e2e-record`, sur le poste avec les vrais accès), `update`, `clean` (`make e2e-clean`, supprime ce qu'aucun scénario n'a utilisé). Les modes qui écrivent passent `--force` à Turborepo.
 - Un fichier JSON lisible par réponse, rangé par hôte ; en-têtes en liste blanche, secrets masqués à l'enregistrement.

@@ -11,10 +11,10 @@ Poste de pilotage local des sessions Claude Code : Bosco découvre les sessions 
 Prérequis : Node 26 (`.nvmrc`), pnpm 12 (`corepack enable`).
 
 ```bash
-pnpm install
-pnpm build
-node apps/cli/dist/main.js start      # service sur http://127.0.0.1:4870, ouvre la vue d'ensemble
-node apps/cli/dist/main.js service install   # service systemd de l'utilisateur
+make install          # dépendances et skills épinglés
+make dev              # développement : http://127.0.0.1:4880, rechargement de l'interface, données dans .data/
+make start            # le service sur http://127.0.0.1:4870, ouvre la vue d'ensemble
+make service-install  # service systemd de l'utilisateur
 ```
 
 Données : `~/.local/share/bosco` (`BOSCO_DATA_DIR`). Port : `BOSCO_PORT` (4870 par défaut), toujours sur la boucle locale.
@@ -32,13 +32,15 @@ Données : `~/.local/share/bosco` (`BOSCO_DATA_DIR`). Port : `BOSCO_PORT` (4870 
 
 ## Commandes
 
+`make help` liste toutes les commandes. Les plus courantes :
+
 ```bash
-pnpm check            # lint, types, tests et build de chaque paquet (Turborepo)
-pnpm e2e:api          # scénarios de l'API
-pnpm e2e:web          # parcours du web, ordinateur et téléphone
-pnpm --filter @bosco/web storybook
-pnpm format
-pnpm skills:install   # skills design-system et requirements-doc, épinglés par skills-lock.json
+make check            # lint, types, tests et build de chaque paquet (Turborepo)
+make e2e              # scénarios de l'API, puis parcours du web (ordinateur et téléphone)
+make storybook        # http://localhost:6006
+make format
+make tokens           # recopie les tokens des specs (../specs/bosco/ui)
+make requirements     # régénère docs/requirements depuis le cahier des charges
 ```
 
 Les specs se clonent à côté (`~/www/specs` et `~/www/bosco`) : la copie des tokens (`tokens.mjs` du skill `design-system`) et l'export du cahier des charges (`export.mjs` du skill `requirements-doc`) se régénèrent depuis ce clone.
