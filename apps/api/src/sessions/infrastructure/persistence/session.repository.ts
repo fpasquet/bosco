@@ -1,7 +1,7 @@
 import type { MikroORM } from '@mikro-orm/sqlite';
 import type { SessionRepository } from '../../application/ports.ts';
 import type { JournalEntry } from '../../domain/transcript-event.ts';
-import { Session } from '../../domain/session.ts';
+import { Session, type Waiting } from '../../domain/session.ts';
 import { TokenUsage } from '../../domain/token-usage.ts';
 import { SessionEventSchema, type SessionRow, SessionSchema } from './sessions.schema.ts';
 
@@ -20,9 +20,10 @@ export class MikroOrmSessionRepository implements SessionRepository {
 
   async save(session: Session, journal: JournalEntry[]): Promise<void> {
     const em = this.orm.em.fork();
-    const { usage, ...snapshot } = session.toSnapshot();
+    const { usage, waiting, ...snapshot } = session.toSnapshot();
     await em.upsert(SessionSchema, {
       ...snapshot,
+      waiting: waiting ? { ...waiting, since: waiting.since.toISOString() } : null,
       inputTokens: usage.input,
       outputTokens: usage.output,
       cacheCreationTokens: usage.cacheCreation,
@@ -44,9 +45,10 @@ export class MikroOrmSessionRepository implements SessionRepository {
 }
 
 function toSession(row: SessionRow): Session {
-  const { inputTokens, outputTokens, cacheCreationTokens, cacheReadTokens, ...snapshot } = row;
+  const { inputTokens, outputTokens, cacheCreationTokens, cacheReadTokens, waiting, ...snapshot } = row;
   return Session.restore({
     ...snapshot,
+    waiting: waiting ? ({ ...waiting, since: new Date(String(waiting.since)) } as unknown as Waiting) : null,
     usage: new TokenUsage(inputTokens, outputTokens, cacheCreationTokens, cacheReadTokens),
   });
 }

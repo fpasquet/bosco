@@ -48,7 +48,11 @@ export class EventsController {
       const progress = this.bus.importProgress.pipe(
         map((value) => ({ type: 'import.progress', data: { progress: value } })),
       );
-      return merge(first.pipe(concatWith(changes)), later, progress).pipe(finalize(() => subscription.unsubscribe()));
+      // Réponse à une autorisation, donnée ici ou dans le terminal : un message bref dans l'interface (CA-SESS-07)
+      const settlements = this.bus.settlements.pipe(map((settled) => ({ type: 'permission.settled', data: settled })));
+      return merge(first.pipe(concatWith(changes)), later, progress, settlements).pipe(
+        finalize(() => subscription.unsubscribe()),
+      );
     });
   }
 }

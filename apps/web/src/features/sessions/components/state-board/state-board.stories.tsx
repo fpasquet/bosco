@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite';
-import { STORY_SESSIONS } from '../../fixtures';
+import { STORY_SESSIONS, STORY_WAITING } from '../../fixtures';
 import { groupByState } from '../../lib/overview';
 import { StateBoard } from './state-board';
 
@@ -17,4 +17,8 @@ export const ByState: Story = {};
 
 export const NothingInactive: Story = {
   args: { columns: groupByState(STORY_SESSIONS.filter((session) => session.state === 'running')) },
+};
+
+export const WithLiveTracking: Story = {
+  args: { columns: groupByState([...STORY_WAITING, ...STORY_SESSIONS], true) },
 };

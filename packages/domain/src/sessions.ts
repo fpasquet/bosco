@@ -22,7 +22,12 @@ export interface SourcesDto {
   sources: SourceDto[];
 }
 
-export type SessionStateDto = 'ended' | 'inactive' | 'running';
+export type SessionStateDto = 'ended' | 'inactive' | 'running' | 'waiting';
+
+/** Ce qu'attend une session qui t'attend : une autorisation (« Bash », « npm run db:migrate ») ou ta réponse au tour. */
+export type WaitingDto =
+  | { detail: null | string; kind: 'permission'; requestId: string; since: string; tool: string }
+  | { kind: 'turn'; message: null | string; since: string };
 
 export interface SessionDto {
   branch: null | string;
@@ -43,6 +48,7 @@ export interface SessionDto {
   state: SessionStateDto;
   title: null | string;
   usage: { cacheCreation: number; cacheRead: number; input: number; output: number };
+  waiting: null | WaitingDto;
 }
 
 /** Avancement de la première lecture de l'historique ; null quand elle est finie. */
@@ -54,5 +60,9 @@ export interface ImportProgressDto {
 /** Événements du flux en direct (GET /api/events) : un instantané d'abord, puis les changements. */
 export type LiveEventDto =
   | { data: { progress: ImportProgressDto | null }; type: 'import.progress' }
+  | {
+      data: { outcome: 'allowed' | 'denied' | 'elsewhere'; sessionId: string; title: null | string };
+      type: 'permission.settled';
+    }
   | { data: { session: SessionDto }; type: 'session.updated' }
   | { data: { sessions: SessionDto[] }; type: 'sessions.snapshot' };

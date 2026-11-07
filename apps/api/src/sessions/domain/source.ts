@@ -22,6 +22,19 @@ export class Source {
     return this.snapshot.watched;
   }
 
+  get liveTracking(): boolean {
+    return this.snapshot.liveTracking;
+  }
+
+  /** Le suivi en direct est installé dans le profil : T'attend et les autorisations deviennent possibles (RF-SESS-03). */
+  enableLiveTracking(): void {
+    this.snapshot = { ...this.snapshot, liveTracking: true };
+  }
+
+  disableLiveTracking(): void {
+    this.snapshot = { ...this.snapshot, liveTracking: false };
+  }
+
   /** Un profil retenu au premier lancement, ou laissé de côté : il garde sa place pour être activé plus tard. */
   static choose(id: string, path: string, watched: boolean): Source {
     return new Source({ id, path, label: labelOf(path), watched, liveTracking: false });

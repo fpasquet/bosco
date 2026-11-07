@@ -18,3 +18,21 @@ export const importProgressQuery = {
   initialData: null,
   staleTime: Number.POSITIVE_INFINITY,
 };
+
+export type PermissionAnswerDto = { behavior: 'allow' } | { behavior: 'deny'; reason: null | string };
+
+/** Réponse à une autorisation ; false quand le terminal a répondu le premier (409, la première réponse l'emporte). */
+export async function answerPermission(
+  sessionId: string,
+  requestId: string,
+  answer: PermissionAnswerDto,
+): Promise<boolean> {
+  const response = await fetch(`/api/sessions/${encodeURIComponent(sessionId)}/permission`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ ...answer, requestId }),
+  });
+  if (response.status === 409) return false;
+  if (!response.ok) throw new Error(`POST /api/sessions/${sessionId}/permission answered ${response.status}`);
+  return true;
+}

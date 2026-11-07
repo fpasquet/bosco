@@ -1,0 +1,106 @@
+'use client';
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
+import { APP_NAME, type SourceDto } from '@bosco/domain';
+import { installLiveTracking, liveTrackingQuery, uninstallLiveTracking } from '../../api/live-tracking';
+import { sourcesQuery } from '../../api/sources';
+import { useNow } from '../../hooks/use-now';
+import { displayPath } from '../../lib/format';
+import { useNotices } from '../../lib/notices';
+import { LiveTrackingPanel, type LiveTrackingStep } from '../live-tracking-panel';
+import { Notices } from '../notices';
+import { SourceCard } from '../source-card';
+
+/** Le dernier signal se relit à cet intervalle ; plus souvent pendant la vérification de l'installation. */
+const STATUS_REFRESH_MS = 5000;
+const CHECK_REFRESH_MS = 1500;
+
+/** Sources (E4a) : les profils surveillés, leur suivi en direct, et l'installation pas à pas (E4b). */
+export function SourcesScreen({ title }: { title: string }) {
+  const now = useNow(STATUS_REFRESH_MS);
+  const client = useQueryClient();
+  const push = useNotices((state) => state.push);
+  const { data } = useQuery(sourcesQuery);
+  const sources = data?.sources.filter((source) => source.watched) ?? [];
+  const [selected, setSelected] = useState<null | SourceDto>(null);
+  const [step, setStep] = useState<LiveTrackingStep>('intro');
+  const statuses = useQueries({
+    queries: sources.map((source) => ({
+      ...liveTrackingQuery(source.id),
+      refetchInterval: selected?.id === source.id && step === 'check' ? CHECK_REFRESH_MS : STATUS_REFRESH_MS,
+    })),
+  });
+  const refresh = async () => {
+    await client.invalidateQueries({ queryKey: sourcesQuery.queryKey });
+    await client.invalidateQueries({ queryKey: ['live-tracking'] });
+  };
+  const install = useMutation({
+    mutationFn: ({ backup, id }: { backup: boolean; id: string }) => installLiveTracking(id, backup),
+    onSuccess: async () => {
+      await refresh();
+      setStep('check');
+    },
+    onError: () => push('Les réglages du profil n’ont pas pu être écrits : ils ont été laissés tels quels.', 'warning'),
+  });
+  const uninstall = useMutation({
+    mutationFn: (id: string) => uninstallLiveTracking(id),
+    onSuccess: async () => {
+      await refresh();
+      setSelected(null);
+      push('Suivi en direct retiré : les réglages d’avant sont remis.', 'info');
+    },
+  });
+  if (!data) return null;
+  const statusOf = (id: string) => statuses[sources.findIndex((source) => source.id === id)]?.data;
+  const selectedStatus = selected ? statusOf(selected.id) : undefined;
+  return (
+    <div className="flex flex-col gap-5 p-4 md:px-8 md:pt-6">
+      <div>
+        <p className="text-xs text-muted">Poste local · lecture seule, rien n’est modifié sans ton accord</p>
+        <h1 className="mt-1 hidden font-display text-2xl font-semibold tracking-tight md:block">{title}</h1>
+      </div>
+      <p className="rounded-card border border-line bg-surface-alt px-4 py-3 text-xs text-muted md:hidden">
+        Le suivi en direct s’installe depuis le poste : ouvre {APP_NAME} sur l’ordinateur, dans Sources, pour
+        l’installer ou le retirer.
+      </p>
+      <section aria-labelledby="sources-title" className="rounded-card border border-line bg-surface shadow-card">
+        <h2 id="sources-title" className="border-b border-line px-4 py-2.5 text-xs font-semibold text-muted">
+          {sources.length > 1 ? `${sources.length} sources surveillées` : '1 source surveillée'}
+        </h2>
+        <ul className="divide-y divide-line">
+          {sources.map((source) => {
+            const signal = statusOf(source.id)?.lastSignalAt;
+            return (
+              <SourceCard
+                key={source.id}
+                label={source.label}
+                path={displayPath(source.path, data.home)}
+                liveTracking={source.liveTracking}
+                lastSignalAt={signal ? new Date(signal) : null}
+                now={now}
+                onOpenLiveTracking={() => {
+                  setSelected(source);
+                  setStep(source.liveTracking ? 'check' : 'intro');
+                }}
+              />
+            );
+          })}
+        </ul>
+      </section>
+      <LiveTrackingPanel
+        source={selected && { label: selected.label, path: displayPath(selected.path, data.home) }}
+        status={
+          selectedStatus && { ...selectedStatus, settingsPath: displayPath(selectedStatus.settingsPath, data.home) }
+        }
+        step={step}
+        now={now}
+        busy={install.isPending || uninstall.isPending}
+        onStepChange={setStep}
+        onClose={() => setSelected(null)}
+        onInstall={(backup) => selected && install.mutate({ backup, id: selected.id })}
+        onUninstall={() => selected && uninstall.mutate(selected.id)}
+      />
+      <Notices />
+    </div>
+  );
+}

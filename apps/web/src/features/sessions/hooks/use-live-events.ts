@@ -3,6 +3,7 @@ import { type QueryClient, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import type { LiveEventDto, SessionDto } from '@bosco/domain';
 import { importProgressQuery, sessionsQuery } from '../api/sessions';
+import { settledNotice, useNotices } from '../lib/notices';
 
 type EventOf<T extends LiveEventDto['type']> = Extract<LiveEventDto, { type: T }>['data'];
 
@@ -19,6 +20,10 @@ function listen(source: EventSource, client: QueryClient): void {
     client.setQueryData<SessionDto[]>(sessionsQuery.queryKey, (sessions) => upsert(sessions, session)),
   );
   on('import.progress', ({ progress }) => client.setQueryData(importProgressQuery.queryKey, progress));
+  on('permission.settled', ({ outcome, sessionId, title }) => {
+    const notice = settledNotice(outcome, title ?? `Session ${sessionId.slice(0, 8)}`);
+    useNotices.getState().push(notice.text, notice.tone);
+  });
 }
 
 /**

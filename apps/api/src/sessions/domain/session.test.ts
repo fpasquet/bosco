@@ -45,6 +45,38 @@ describe('Session', () => {
     expect(session.toSnapshot().title).toBe('Calculs rapides');
   });
 
+  it('waits for a permission until it is settled, whoever answers first', () => {
+    const session = Session.discover('c41e9a07', 'perso', at('14:02:00'));
+    session.awaitPermission('req-1', 'Bash', 'npm run db:migrate', at('14:02:20'));
+    const later = at('14:40:00');
+    expect(session.stateAt(later)).toBe('waiting');
+    expect(session.settlePermission('req-other', at('14:02:30'))).toBe(false);
+    expect(session.settlePermission('req-1', at('14:02:30'))).toBe(true);
+    expect(session.settlePermission('req-1', at('14:02:31'))).toBe(false);
+    expect(session.stateAt(at('14:02:40'))).toBe('running');
+  });
+
+  it('waits after its turn, becomes inactive after the delay, and resumes on a newer event', () => {
+    const session = Session.discover('5e0a91c3', 'pro', at('14:02:00'));
+    session.endTurn('Veux-tu que je lance les tests ?', at('14:02:10'));
+    const turnEnd = at('14:02:10').getTime();
+    expect(session.stateAt(new Date(turnEnd + 1000))).toBe('waiting');
+    expect(session.stateAt(new Date(turnEnd + DEFAULT_INACTIVITY_DELAY_MS))).toBe('inactive');
+    session.record(reply('14:02:05'));
+    expect(session.waiting?.kind).toBe('turn');
+    session.record(reply('14:03:00'));
+    expect(session.waiting).toBeNull();
+  });
+
+  it('ends when Claude Code says so, unless the registry still holds it open, and opens again on resume', () => {
+    const session = Session.discover('92c46031', 'pro', at('14:02:00'));
+    session.end(at('14:02:10'));
+    const soon = at('14:02:20');
+    expect([session.stateAt(soon), session.stateAt(soon, true)]).toEqual(['ended', 'running']);
+    session.resume(at('14:05:00'));
+    expect(session.stateAt(at('14:05:10'))).toBe('running');
+  });
+
   it('adds up the token usage, cache included', () => {
     const session = Session.discover('c41e9a07', 'pro', at('14:02:00'));
     session.record(reply('14:02:00', new TokenUsage(10, 20, 30, 40)));

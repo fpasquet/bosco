@@ -6,6 +6,7 @@ import { importProgressQuery, sessionsQuery } from '../../api/sessions';
 import { sourcesQuery } from '../../api/sources';
 import { useLiveEvents } from '../../hooks/use-live-events';
 import { useNow } from '../../hooks/use-now';
+import { usePermissionAnswers } from '../../hooks/use-permission-answers';
 import { formatCost } from '../../lib/format';
 import {
   filterSessions,
@@ -14,16 +15,20 @@ import {
   indicatorsOf,
   openSessions,
   profileMark,
+  waitingSessions,
 } from '../../lib/overview';
 import { useOverviewPreferences } from '../../lib/preferences';
 import { ImportProgressBanner } from '../import-progress-banner';
 import { LiveTrackingHint } from '../live-tracking-hint';
 import { LiveTrackingLine } from '../live-tracking-line';
+import { Notices } from '../notices';
 import { OverviewHeader } from '../overview-header';
 import { OverviewIndicators } from '../overview-indicators';
+import { PermissionDialog } from '../permission-dialog';
 import { ProfileChoice } from '../profile-choice';
 import { SessionsTable } from '../sessions-table';
 import { StateBoard } from '../state-board';
+import { WaitingActions, WaitingBanner } from '../waiting-banner';
 import { Welcome } from '../welcome';
 
 interface OverviewProps {
@@ -48,6 +53,8 @@ function LiveOverview({ repository, sources, title }: OverviewProps & { sources:
   const indicators = indicatorsOf(open, all, now);
   const loading = sessions === undefined || progress !== null;
   const liveTracking = sources.sources.some((source) => source.liveTracking);
+  const answers = usePermissionAnswers();
+  const actions = { busyId: answers.busyId, onAllow: answers.onAllow, onDeny: answers.onDeny };
   const opened = `${open.length} ${open.length > 1 ? 'sessions ouvertes' : 'session ouverte'}`;
   const summary = `${opened} · ${indicators.sessionsToday} aujourd’hui · ${formatCost(indicators.costToday)} estimés`;
   return (
@@ -69,6 +76,7 @@ function LiveOverview({ repository, sources, title }: OverviewProps & { sources:
       {!liveTracking && <LiveTrackingLine />}
       {grouping === 'repository' ? (
         <>
+          {liveTracking && <WaitingBanner now={now} sessions={waitingSessions(open)} {...actions} />}
           {progress === null && sessions !== undefined && (
             <div className="hidden md:block">
               <OverviewIndicators indicators={indicators} now={now} />
@@ -83,9 +91,20 @@ function LiveOverview({ repository, sources, title }: OverviewProps & { sources:
           />
         </>
       ) : (
-        <StateBoard columns={groupByState(visible)} now={now} />
+        <StateBoard
+          columns={groupByState(visible, liveTracking)}
+          now={now}
+          actionsOf={(session) => <WaitingActions session={session} {...actions} />}
+        />
       )}
       {!loading && open.length === 0 && <p className="text-center text-muted">Aucune session ouverte aujourd’hui.</p>}
+      <PermissionDialog
+        mode={answers.dialog?.mode ?? 'deny'}
+        session={answers.dialog?.session ?? null}
+        onCancel={answers.cancel}
+        onConfirm={answers.confirm}
+      />
+      <Notices />
     </div>
   );
 }
