@@ -78,3 +78,7 @@ Then('l’interrupteur {texte} est {texte}', async ({ page }, label: string, sta
   const toggle = page.getByRole('switch', { name: label });
   await (state === 'activé' ? expect(toggle).toBeChecked() : expect(toggle).not.toBeChecked());
 });
+
+Then('le bouton {texte} est désactivé', async ({ page }, name: string) => {
+  await expect(page.getByRole('button', { name })).toBeDisabled();
+});
