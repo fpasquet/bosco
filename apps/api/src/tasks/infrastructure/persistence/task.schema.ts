@@ -11,6 +11,7 @@ export interface TaskRow {
   instruction: string;
   log: { at: string; detail: null | string; event: string }[];
   mode: string;
+  outcome: Record<string, unknown>;
   prerequisites: number[];
   repositoryName: string;
   repositoryRoot: string;
@@ -37,6 +38,7 @@ export const TaskSchema = new EntitySchema<TaskRow>({
     guardrails: { type: 'json' },
     prerequisites: { type: 'json' },
     log: { type: 'json' },
+    outcome: { type: 'json', default: '{}' },
     spentUsd: { type: 'double', fieldName: 'spent_usd' },
     createdAt: { type: 'datetime', fieldName: 'created_at' },
     updatedAt: { type: 'datetime', fieldName: 'updated_at' },

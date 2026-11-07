@@ -2,7 +2,15 @@ import type { RepositoryRights } from '../domain/rights.ts';
 import type { Clock, RepositoryCatalog, RightsReader, TaskEvents, TaskRepository } from './ports.ts';
 import { DomainError } from '../../shared/domain/domain-error.ts';
 import { TaskBoard } from '../domain/task-board.ts';
-import { type Guardrails, NOT_STARTED, Task, type TaskMode, type TaskSnapshot, titleOf } from '../domain/task.ts';
+import {
+  type Guardrails,
+  NOT_STARTED,
+  Task,
+  type TaskMode,
+  type TaskOutcome,
+  type TaskSnapshot,
+  titleOf,
+} from '../domain/task.ts';
 
 export interface TaskDraft {
   context: null | string;
@@ -172,6 +180,43 @@ export class TaskService {
       task.edit({ instruction: `${snapshot.instruction}\n\n${changes.instruction.trim()}` }, at);
     const revived = new TaskBoard(tasks).revive(id, at);
     return this.commit(tasks, [task, ...revived], id);
+  }
+
+  /** Le worker lance la tâche (RF-TACH-05). */
+  async start(id: number, detail: null | string): Promise<TaskView> {
+    const tasks = await this.tasks.list();
+    const task = this.find(tasks, id);
+    task.start(this.clock.now(), detail);
+    return this.commit(tasks, [task], id);
+  }
+
+  /** Avancement de l'agent : dépense, session, branche, publiés en direct. */
+  async progress(id: number, spentUsd: number, outcome: Partial<TaskOutcome>): Promise<TaskView> {
+    const tasks = await this.tasks.list();
+    const task = this.find(tasks, id);
+    if (task.state !== 'running') return this.view(task, tasks);
+    task.progress(spentUsd, outcome, this.clock.now());
+    return this.commit(tasks, [task], id);
+  }
+
+  /** L'agent a fini : la tâche attend ta relecture (E7a) ; une tâche annulée entre-temps le reste. */
+  async finish(id: number, spentUsd: number, outcome: Partial<TaskOutcome>): Promise<TaskView> {
+    const tasks = await this.tasks.list();
+    const task = this.find(tasks, id);
+    if (task.state !== 'running') return this.view(task, tasks);
+    task.finish(spentUsd, outcome, this.clock.now());
+    return this.commit(tasks, [task], id);
+  }
+
+  /** Échec d'une tâche en cours : celles qui l'attendent échouent en cascade (RF-TACH-03). */
+  async fail(id: number, reason: string): Promise<TaskView> {
+    const tasks = await this.tasks.list();
+    const task = this.find(tasks, id);
+    if (task.state !== 'running') return this.view(task, tasks);
+    const at = this.clock.now();
+    task.fail(reason, at);
+    const failed = new TaskBoard(tasks).cascade(id, 'en échec', at);
+    return this.commit(tasks, [task, ...failed], id);
   }
 
   async validate(id: number): Promise<TaskView> {

@@ -1,4 +1,5 @@
 // Configuration du service, validée au démarrage : une valeur invalide arrête Bosco avec un message clair.
+import { realpathSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -20,6 +21,9 @@ const schema = z.object({
   // Accès du téléphone (E4c) : port HTTPS sur le réseau local (par défaut, celui du service + 1) et adresse imposée
   BOSCO_PHONE_PORT: z.coerce.number().int().min(1024).max(65535).optional(),
   BOSCO_PHONE_HOST: z.string().min(1).optional(),
+  // Worker (DT-09) : identifiants de l'abonnement Claude du poste et exécutable de Claude Code monté dans l'agent
+  BOSCO_WORKER_CREDENTIALS: z.string().min(1).optional(),
+  BOSCO_CLAUDE_BIN: z.string().min(1).optional(),
 });
 
 export type Config = Readonly<{
@@ -32,7 +36,18 @@ export type Config = Readonly<{
   dev: boolean;
   /** Écoute HTTPS du téléphone, ouverte seulement quand l'accès est activé (NF-13) */
   phone: { host: null | string; port: number };
+  worker: { claudeBinary: string; credentials: string };
 }>;
+
+/** Claude Code installé sur le poste : le lien de ~/.local/bin/claude mène à l'exécutable de la version courante. */
+function installedClaude(): string {
+  const link = join(homedir(), '.local', 'bin', 'claude');
+  try {
+    return realpathSync(link);
+  } catch {
+    return link;
+  }
+}
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   const parsed = schema.safeParse(env);
@@ -51,5 +66,9 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     testing: values.BOSCO_TEST === '1',
     dev: values.BOSCO_DEV === '1',
     phone: { host: values.BOSCO_PHONE_HOST ?? null, port: values.BOSCO_PHONE_PORT ?? values.BOSCO_PORT + 1 },
+    worker: {
+      credentials: values.BOSCO_WORKER_CREDENTIALS ?? join(values.BOSCO_PROFILES_ROOT, '.claude', '.credentials.json'),
+      claudeBinary: values.BOSCO_CLAUDE_BIN ?? installedClaude(),
+    },
   };
 }

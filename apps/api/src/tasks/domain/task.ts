@@ -31,6 +31,18 @@ export interface TaskLogEntry {
   event: string;
 }
 
+/** Ce qu'une tâche du worker a produit : sa branche, son compte rendu et le résumé de ses modifications (E7a). */
+export interface TaskOutcome {
+  /** Branche de la tâche, rapatriée dans le dépôt (« bosco/t-12-sncf ») */
+  branch: null | string;
+  changes: { added: number; files: number; removed: number } | null;
+  /** Compte rendu de l'agent, tel qu'il le donne en fin de session */
+  report: null | string;
+  /** Session Claude Code de l'agent, pour son fil (E2c, E2d) */
+  sessionId: null | string;
+  turns: number;
+}
+
 export interface TaskSnapshot {
   /** Lien de contexte facultatif : ticket, PR, décision (RF-TACH-01) */
   context: null | string;
@@ -47,6 +59,7 @@ export interface TaskSnapshot {
   /** Journal des changements d'état, jamais vidé, même après une relance (E13a) */
   log: TaskLogEntry[];
   mode: TaskMode;
+  outcome: TaskOutcome;
   prerequisites: number[];
   /** Dépôt : son nom et sa racine sur le poste */
   repository: { name: string; root: string };
@@ -95,7 +108,7 @@ export class Task {
   }
 
   static create(
-    fields: Omit<TaskSnapshot, 'createdAt' | 'failure' | 'log' | 'spentUsd' | 'state' | 'updatedAt'>,
+    fields: Omit<TaskSnapshot, 'createdAt' | 'failure' | 'log' | 'outcome' | 'spentUsd' | 'state' | 'updatedAt'>,
     at: Date,
   ): Task {
     const task = new Task({
@@ -105,6 +118,7 @@ export class Task {
       updatedAt: at,
       failure: null,
       spentUsd: 0,
+      outcome: { branch: null, changes: null, report: null, sessionId: null, turns: 0 },
       state: 'blocked',
       log: [{ at, event: 'Créée', detail: fields.createdBy === 'session' ? 'par une session' : null }],
     });
@@ -112,7 +126,12 @@ export class Task {
   }
 
   static restore(snapshot: TaskSnapshot): Task {
-    return new Task({ ...snapshot, log: [...snapshot.log], prerequisites: [...snapshot.prerequisites] });
+    return new Task({
+      ...snapshot,
+      log: [...snapshot.log],
+      prerequisites: [...snapshot.prerequisites],
+      outcome: snapshot.outcome ?? { branch: null, changes: null, report: null, sessionId: null, turns: 0 },
+    });
   }
 
   /** État de départ d'une tâche prête : En file pour le worker, En attente d'une session sinon. */
@@ -156,9 +175,14 @@ export class Task {
     this.move('running', at, 'Démarrée', detail);
   }
 
+  /** Avancement de l'agent : dépense, tours, branche et session, tenus à jour pendant qu'il travaille. */
+  progress(spentUsd: number, outcome: Partial<TaskOutcome>, at: Date): void {
+    this.snapshot = { ...this.snapshot, spentUsd, updatedAt: at, outcome: { ...this.snapshot.outcome, ...outcome } };
+  }
+
   /** L'agent a fini : la tâche attend ta relecture (E7a). */
-  finish(spentUsd: number, at: Date): void {
-    this.snapshot = { ...this.snapshot, spentUsd };
+  finish(spentUsd: number, outcome: Partial<TaskOutcome>, at: Date): void {
+    this.progress(spentUsd, outcome, at);
     this.move('to_review', at, 'À relire');
   }
 
