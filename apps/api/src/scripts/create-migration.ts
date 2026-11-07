@@ -4,7 +4,7 @@ import { MikroORM } from '@mikro-orm/sqlite';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { ormConfig } from '../adapters/out/persistence/orm.config.ts';
+import { ormConfig } from '../mikro-orm.config.ts';
 
 const dir = mkdtempSync(join(tmpdir(), 'bosco-migration-'));
 const orm = await MikroORM.init(ormConfig(join(dir, 'schema.db')));

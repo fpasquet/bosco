@@ -16,7 +16,7 @@ Tu dis, pour un lot, **ce que l'application fait par rapport à ce que les specs
 
 1. `docs/requirements/README.md` (version, écrans, statuts), puis `docs/requirements/lots/<lot>.md` (règles RF, écrans, critères CA ; ignorer ceux marqués « Retiré »).
 2. Une maquette seulement si un écran est ambigu : `../specs/bosco/ui/sources/<lot>/<n>-<état>.html`, lue sans les classes (`sed 's/class="[^"]*"//g'`). Ne jamais lire `../specs/bosco/ui/site/` ni le cahier des charges assemblé.
-3. Le code : routes de `apps/web/src/app`, fonctionnalités de `apps/web/src/features`, contrôleurs de `apps/api/src/adapters/in`, domaine de `packages/core/src/<contexte>`.
+3. Le code : routes de `apps/web/src/app`, fonctionnalités de `apps/web/src/features`, modules de `apps/api/src/<contexte>` (domaine, cas d'usage, contrôleurs de `interface/http`).
 4. La couverture : les tests et scénarios qui citent chaque critère (`grep -rn "CA-<LOT>-" --include=*.ts --include=*.feature`).
 
 ## Méthode

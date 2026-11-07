@@ -9,7 +9,7 @@ Valables pour tout le dépôt. `AGENTS.md` donne le cadre : langue, specs, git.
 - URL et chemins en anglais : routes de l'API (`/api/sessions`), pages de l'interface (`/history`, `/tasks`).
 - Fichiers et dossiers en kebab-case (`session.service.ts`) ; vérifié par le lint.
 - Aucune référence aux specs dans le code (ni écran, ni règle, ni décision). Seule exception : le nom d'un test ou le tag d'un scénario cite le critère qu'il vérifie (`tests.md`).
-- Le nom de l'application ne s'écrit jamais en dur : `APP_NAME` de `@bosco/core/shared`.
+- Le nom de l'application ne s'écrit jamais en dur : `APP_NAME` de `@bosco/domain`.
 
 ## TypeScript et modules
 

@@ -1,0 +1,16 @@
+{
+  "sources": [],
+  "candidates": [
+    {
+      "path": "<profiles>/.claude",
+      "repositoryCount": 1,
+      "lastSessionAt": "<masked>"
+    },
+    {
+      "path": "<profiles>/.claude-perso",
+      "repositoryCount": 2,
+      "lastSessionAt": "<masked>"
+    }
+  ],
+  "home": "<masked>"
+}

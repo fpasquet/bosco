@@ -12,6 +12,8 @@ const schema = z.object({
     .default(join(homedir(), '.local', 'share', 'bosco')),
   // Dossier de l'interface Next.js construite ; vide pour un service sans interface (tests de l'API)
   BOSCO_WEB_DIR: z.string().default(resolve(dirname(fileURLToPath(import.meta.url)), '..', '..', 'web')),
+  // Dossier où chercher les profils de Claude Code (~/.claude, ~/.claude-perso…)
+  BOSCO_PROFILES_ROOT: z.string().min(1).default(homedir()),
   BOSCO_TEST: z.enum(['0', '1']).default('0'),
   // Mode développement (pnpm dev) : Next.js compile l'interface à la demande et la recharge à chaud
   BOSCO_DEV: z.enum(['0', '1']).default('0'),
@@ -21,6 +23,7 @@ export type Config = Readonly<{
   port: number;
   host: '127.0.0.1';
   dataDir: string;
+  profilesRoot: string;
   webDir: null | string;
   testing: boolean;
   dev: boolean;
@@ -38,6 +41,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     port: values.BOSCO_PORT,
     host: '127.0.0.1',
     dataDir: values.BOSCO_DATA_DIR,
+    profilesRoot: values.BOSCO_PROFILES_ROOT,
     webDir: values.BOSCO_WEB_DIR || null,
     testing: values.BOSCO_TEST === '1',
     dev: values.BOSCO_DEV === '1',

@@ -1,10 +1,10 @@
 import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
-import { APP_NAME } from '@bosco/core/shared';
-import { hostWeb } from './adapters/in/web/next-host.ts';
+import { APP_NAME } from '@bosco/domain';
 import { AppModule } from './app.module.ts';
 import { loadConfig } from './config.ts';
+import { hostWeb } from './shared/infrastructure/web/next-host.ts';
 
 const config = loadConfig();
 const app = await NestFactory.create<NestFastifyApplication>(AppModule.forRoot(config), new FastifyAdapter(), {

@@ -1,22 +1,28 @@
 import { cn } from '@/lib/cn';
-import { APP_NAME } from '@bosco/core/shared';
+import { APP_NAME } from '@bosco/domain';
 
 interface LogoProps {
   className?: string;
+  /** md : coquille (28 px) ; lg : bienvenue (48 px) */
+  size?: 'lg' | 'md';
   /** Seul sur l'écran (en-tête du téléphone) : le logo porte le nom ; à côté du nom écrit, il est décoratif. */
   labelled?: boolean;
 }
 
 /** Sifflet de bosco, blanc sur primary : l'appeau qui appelle l'équipage. */
-export function Logo({ className, labelled = false }: LogoProps) {
+export function Logo({ className, labelled = false, size = 'md' }: LogoProps) {
   return (
     <span
-      className={cn('grid size-7 shrink-0 place-items-center rounded-control bg-primary text-on-primary', className)}
+      className={cn(
+        'grid shrink-0 place-items-center bg-primary text-on-primary',
+        size === 'lg' ? 'size-12 rounded-card' : 'size-7 rounded-control',
+        className,
+      )}
       {...(labelled ? { role: 'img', 'aria-label': APP_NAME } : { 'aria-hidden': true })}
     >
       <svg
         viewBox="0 0 24 24"
-        className="size-5"
+        className={size === 'lg' ? 'size-8' : 'size-5'}
         fill="none"
         stroke="currentColor"
         strokeWidth="2"

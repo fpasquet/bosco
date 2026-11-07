@@ -1,0 +1,23 @@
+{
+  "name": "@bosco/domain",
+  "private": true,
+  "description": "Contrats partagés entre le service et l'interface : nom de l'application, types des vues renvoyées par l'API.",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@bosco/configs": "workspace:*",
+    "@types/node": "26.6.6",
+    "eslint": "10.14.0",
+    "typescript": "6.0.3"
+  }
+}

@@ -2,7 +2,7 @@ import './fonts';
 import './globals.css';
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
-import { APP_NAME } from '@bosco/core/shared';
+import { APP_NAME } from '@bosco/domain';
 import { Providers } from './providers';
 
 export const metadata: Metadata = { title: APP_NAME, icons: { icon: '/favicon.svg' } };
@@ -10,7 +10,7 @@ export const metadata: Metadata = { title: APP_NAME, icons: { icon: '/favicon.sv
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="fr">
-      <body className="font-sans">
+      <body className="bg-canvas font-sans text-sm text-ink">
         <Providers>{children}</Providers>
       </body>
     </html>

@@ -8,7 +8,9 @@ import { cleanUnused, findSecrets, installReplay } from './replay.ts';
 // « Vrai » service : un serveur local qui compte les appels et renvoie le jeton reçu
 let server: Server;
 let calls = 0;
-const origin = 'http://127.0.0.1:4571';
+// Port libre choisi au démarrage : Turborepo lance d'autres tests en parallèle
+let host = '';
+let origin = '';
 beforeAll(async () => {
   server = createServer((request, response) => {
     let body = '';
@@ -26,7 +28,10 @@ beforeAll(async () => {
       );
     });
   });
-  await new Promise<void>((resolve) => server.listen(4571, resolve));
+  await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+  const address = server.address();
+  host = `127.0.0.1:${typeof address === 'object' && address ? address.port : 0}`;
+  origin = `http://${host}`;
 });
 afterAll(() => server.close());
 
@@ -43,7 +48,6 @@ const post = async (path: string, body: object) =>
 
 describe('replay', () => {
   const dir = mkdtempSync(join(tmpdir(), 'replay-'));
-  const host = '127.0.0.1:4571';
 
   test('record : enregistre les réponses, lisibles et anonymisées', async () => {
     const replay = installReplay({ mode: 'record', dir });
@@ -94,7 +98,7 @@ describe('replay', () => {
     expect(await get('/pulls/1')).toMatchObject({ call: 1 });
     await get('/pulls/2');
     expect(calls).toBe(before + 1);
-    expect(replay.used()).toEqual(['127.0.0.1:4571/get-pulls-1.1.json', '127.0.0.1:4571/get-pulls-2.1.json']);
+    expect(replay.used()).toEqual([`${host}/get-pulls-1.1.json`, `${host}/get-pulls-2.1.json`]);
   });
 
   test("clean : supprime ce qu'aucun processus n'a utilisé", async () => {
@@ -107,9 +111,9 @@ describe('replay', () => {
     expect(removed).toHaveLength(3);
     expect(removed).toEqual(
       expect.arrayContaining([
-        '127.0.0.1:4571/get-pulls-1.2.json',
-        '127.0.0.1:4571/get-pulls-2.1.json',
-        expect.stringMatching(/^127\.0\.0\.1:4571\/post-search-\w+\.1\.json$/),
+        `${host}/get-pulls-1.2.json`,
+        `${host}/get-pulls-2.1.json`,
+        expect.stringMatching(new RegExp(`^${host.replaceAll('.', '\\.')}/post-search-\\w+\\.1\\.json$`)),
       ]),
     );
     expect(readdirSync(join(dir, host))).toHaveLength(2);

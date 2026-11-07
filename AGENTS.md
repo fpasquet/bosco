@@ -19,14 +19,13 @@ Les specs UI et le cahier des charges de Bosco vivent dans le dépôt de specs (
 
 Les conventions sont dans `.claude/rules/`, que Claude Code charge selon les fichiers ouverts. **Avant de modifier du code, lire la règle qui le couvre.**
 
-| Règle                                                | Couvre                                                                                                            |
-| ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| [`general.md`](.claude/rules/general.md)             | Tout le dépôt : nommage, TypeScript, dépendances, configuration, secrets, lint, contrôles avant de rendre la main |
-| [`core.md`](.claude/rules/core.md)                   | `packages/core` : contextes, agrégats, objets valeur, événements, ports, cas d'usage, erreurs, anti-patterns      |
-| [`nestjs.md`](.claude/rules/nestjs.md)               | `apps/api` (et le worker) : adaptateurs, assemblage, erreurs HTTP, validation, MikroORM, flux en direct           |
-| [`nextjs.md`](.claude/rules/nextjs.md)               | `apps/web` : organisation, données (TanStack Query, Zustand), textes, accessibilité                               |
-| [`design-system.md`](.claude/rules/design-system.md) | `apps/web` : tokens, classes de daisyUI, composants, Storybook, lint des classes                                  |
-| [`tests.md`](.claude/rules/tests.md)                 | Tests Vitest, scénarios Gherkin de l'API et du web, enregistrements                                               |
+| Règle                                                | Couvre                                                                                                                                                          |
+| ---------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`general.md`](.claude/rules/general.md)             | Tout le dépôt : nommage, TypeScript, dépendances, configuration, secrets, lint, contrôles avant de rendre la main                                               |
+| [`nestjs.md`](.claude/rules/nestjs.md)               | `apps/api` : modules par contexte et leurs quatre couches, domaine, cas d'usage, adaptateurs, erreurs HTTP, validation, MikroORM, flux en direct, anti-patterns |
+| [`nextjs.md`](.claude/rules/nextjs.md)               | `apps/web` : organisation, données (TanStack Query, Zustand), textes, accessibilité                                                                             |
+| [`design-system.md`](.claude/rules/design-system.md) | `apps/web` : tokens, classes de daisyUI, composants, Storybook, lint des classes                                                                                |
+| [`tests.md`](.claude/rules/tests.md)                 | Tests Vitest, scénarios Gherkin de l'API et du web, enregistrements                                                                                             |
 
 ## Commandes
 
