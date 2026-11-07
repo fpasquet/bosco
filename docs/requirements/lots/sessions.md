@@ -18,7 +18,7 @@
 
 ## <a id="e1"></a>E1 · Vue d'ensemble
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `sessions/e1.html` · implémentation : **En cours (Premier lancement (E1a) développé : bienvenue, choix des profils, lecture des sessions des 30 derniers jours. Vue d'ensemble en direct à venir.)**
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `sessions/e1.html` · implémentation : **En cours (Premier lancement (E1a) et vue d'ensemble en direct (E1b à E1e) développés : regroupement par dépôt ou par état, filtre par dépôt, indicateurs et coût du jour, progression de la lecture. Sans suivi en direct, une session sans événement aujourd'hui passe dans l'historique. Le bandeau T'attend, les terminées du jour et Bosco injoignable (E1f) viennent avec le suivi en direct.)**
 
 ### <a id="e1a"></a>E1a · Vue d'ensemble : premier lancement
 
