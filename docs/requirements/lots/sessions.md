@@ -18,7 +18,7 @@
 
 ## <a id="e1"></a>E1 · Vue d'ensemble
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `sessions/e1.html` · implémentation : **En cours (Premier lancement (E1a) et vue d'ensemble en direct (E1b à E1e) développés : bandeau T'attend avec « Autoriser » et « Refuser » (motif facultatif), colonne T'attend en regroupement par état, message bref quand une autorisation reçoit sa réponse ici ou dans le terminal ; regroupement par dépôt ou par état, filtre par dépôt, indicateurs et coût du jour, progression de la lecture. Une session arrêtée passe en Terminée. Restent la liste des terminées du jour et Bosco injoignable (E1f).)**
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `sessions/e1.html` · implémentation : **En cours (Premier lancement (E1a) et vue d'ensemble en direct (E1b à E1e) développés : bandeau T'attend avec « Autoriser » et « Refuser » (motif facultatif), colonne T'attend en regroupement par état, message bref quand une autorisation reçoit sa réponse ici ou dans le terminal ; regroupement par dépôt ou par état, filtre par dépôt, indicateurs et coût du jour, progression de la lecture. Une session arrêtée passe en Terminée ; chaque nouvelle attente déclenche une notification du bureau. Restent la liste des terminées du jour et Bosco injoignable (E1f).)**
 
 ### <a id="e1a"></a>E1a · Vue d'ensemble : premier lancement
 
@@ -232,7 +232,7 @@ Règles de l'écran :
 
 ## <a id="e4"></a>E4 · Sources
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `sessions/e4.html` · implémentation : **En cours (Liste des sources avec l'état du suivi en direct et le dernier signal (E4a, sans les réglages), et installation en trois étapes (E4b) : copie des réglages cochée par défaut, vérification sur un vrai signal, désinstallation qui remet les réglages d'avant. Écarts : le serveur Bosco (tâches et décisions) n'est pas encore ajouté au profil, et la ligne « Réponse aux autorisations vérifiée » attend une première autorisation. Restent les réglages d'E4a et l'appairage du téléphone (E4c).)**
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `sessions/e4.html` · implémentation : **En cours (Sources développées (E4a, E4b) : interrupteur de lecture par profil, état du suivi en direct et dernier signal, seuil d'inactivité (5 à 60 min), notifications du bureau envoyées par le service à chaque nouvelle attente, historique conservé en entier ; installation du suivi en trois étapes. Écarts : « Ajouter un dossier », « Gérer » et l'état « À mettre à jour » d'une source illisible ne sont pas faits ; le serveur Bosco (tâches et décisions) n'est pas encore ajouté au profil. Reste l'appairage du téléphone (E4c).)**
 
 ### <a id="e4a"></a>E4a · Sources : profils surveillés et réglages
 
