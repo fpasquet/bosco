@@ -86,7 +86,8 @@ export function nest(options) {
                   to: {
                     element: {
                       types: { anyOf: ['domain', 'application'] },
-                      captured: { context: '!{{from.element.captured.context}}' },
+                      // Le noyau partagé (src/shared) reste accessible à tous les contextes
+                      captured: { context: '!(shared|{{from.element.captured.context}})' },
                     },
                   },
                 },
