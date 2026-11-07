@@ -58,7 +58,7 @@ Fonctionnalité: Suivi en direct
     Et je clique sur le bouton « Refuser »
     Et je saisis « Pas de migration avant la revue du schéma. » dans le champ « Motif, facultatif : il est transmis à l’agent comme consigne »
     Et je clique sur le bouton « Refuser » de la fenêtre
-    Alors Claude Code reçoit le refus avec le motif « Pas de migration avant la revue du schéma. »
+    Alors Claude Code reçoit le refus avec le motif « La personne a refusé cette commande depuis Bosco. Motif : Pas de migration avant la revue du schéma. »
 
   @CA-SESS-07
   Scénario: Une autorisation donnée dans le terminal disparaît du bandeau

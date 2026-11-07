@@ -31,12 +31,19 @@ const hookSchema = z.looseObject({
 
 type HookInput = z.infer<typeof hookSchema>;
 
+/**
+ * Message d'un refus : Claude Code le rend à l'agent comme une erreur de l'outil, sans rien autour. Il dit donc que la
+ * personne a refusé, sinon un motif court (« description ») passe pour une panne de l'outil (CA-SESS-34).
+ */
+export function refusalMessage(reason: null | string): string {
+  const refused = 'La personne a refusé cette commande depuis Bosco.';
+  return reason ? `${refused} Motif : ${reason}` : refused;
+}
+
 /** Réponse du hook PermissionRequest (documentation des hooks de Claude Code) : la décision, pour cette seule commande. */
 function permissionOutput(answer: PermissionAnswer) {
   const decision =
-    answer.behavior === 'allow'
-      ? { behavior: 'allow' }
-      : { behavior: 'deny', message: answer.reason ?? 'Refusé depuis Bosco.' };
+    answer.behavior === 'allow' ? { behavior: 'allow' } : { behavior: 'deny', message: refusalMessage(answer.reason) };
   return { hookSpecificOutput: { hookEventName: 'PermissionRequest', decision } };
 }
 

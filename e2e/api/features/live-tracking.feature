@@ -61,7 +61,7 @@ Feature: Live tracking
     And I answer the permission of the session "c41e9a07" with the JSON "fixtures/deny-with-reason.json"
     Then the pending response code should be 200
     And the response property "hookSpecificOutput.decision.behavior" should equal "deny"
-    And the response property "hookSpecificOutput.decision.message" should equal "Pas de migration avant la revue du schéma."
+    And the response property "hookSpecificOutput.decision.message" should equal "La personne a refusé cette commande depuis Bosco. Motif : Pas de migration avant la revue du schéma."
 
   @CA-SESS-07
   @CA-SESS-33
