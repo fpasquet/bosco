@@ -1,0 +1,7 @@
+{
+  "repository": "labo-ia",
+  "instruction": "Supprime les anciens index.",
+  "mode": "worker",
+  "prerequisites": [1],
+  "guardrails": { "budgetUsd": 3, "maxTurns": 30, "tools": ["Read", "WebFetch"] }
+}
