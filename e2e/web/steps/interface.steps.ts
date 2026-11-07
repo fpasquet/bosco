@@ -11,7 +11,8 @@ When("j'ouvre la page {texte}", async ({ page }, path: string) => {
 });
 
 When('je clique sur le bouton {texte}', async ({ page }, name: string) => {
-  await page.getByRole('button', { name }).click();
+  // Nom exact : « Accepter » ne désigne pas « Modifier avant d’accepter »
+  await page.getByRole('button', { name, exact: true }).click();
 });
 
 When('je clique sur le lien {texte}', async ({ page }, name: string) => {
