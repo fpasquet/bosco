@@ -14,7 +14,7 @@ Feature: Profiles at first launch
   Scenario: The profiles are proposed with a preview, and no session is read
     When I send GET request to "/api/sources"
     Then the response code should be 200
-    And the response should match snapshot except for "candidates.0.lastSessionAt, candidates.1.lastSessionAt"
+    And the response should match snapshot except for "home, candidates.0.lastSessionAt, candidates.1.lastSessionAt"
     When I send GET request to "/api/sessions"
     Then the response should match snapshot
 

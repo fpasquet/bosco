@@ -11,5 +11,6 @@
       "repositoryCount": 2,
       "lastSessionAt": "<masked>"
     }
-  ]
+  ],
+  "home": "<masked>"
 }
