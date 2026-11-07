@@ -24,6 +24,7 @@ export class TranscriptParser {
       cwd: text(record.cwd),
       branch: text(record.gitBranch),
       model: null,
+      repoRoot: null,
       usage: null,
     };
     switch (record.type) {
@@ -68,7 +69,7 @@ export class TranscriptParser {
   }
 }
 
-type Base = Pick<TranscriptEvent, 'at' | 'branch' | 'cwd' | 'model' | 'usage'>;
+type Base = Pick<TranscriptEvent, 'at' | 'branch' | 'cwd' | 'model' | 'repoRoot' | 'usage'>;
 
 /** Bloc d'un message de l'assistant : son texte, ou l'outil appelé et son argument principal. */
 function blockEvent(block: Record<string, unknown>): Pick<TranscriptEvent, 'kind' | 'text' | 'usage'>[] {

@@ -7,9 +7,13 @@ import { loadConfig } from './config.ts';
 import { hostWeb } from './shared/infrastructure/web/next-host.ts';
 
 const config = loadConfig();
-const app = await NestFactory.create<NestFastifyApplication>(AppModule.forRoot(config), new FastifyAdapter(), {
-  logger: ['error', 'warn'],
-});
+const app = await NestFactory.create<NestFastifyApplication>(
+  AppModule.forRoot(config),
+  new FastifyAdapter({ forceCloseConnections: true }),
+  {
+    logger: ['error', 'warn'],
+  },
+);
 app.enableShutdownHooks();
 if (config.webDir) await hostWeb(app, config.webDir, config.dev);
 await app.listen(config.port, config.host);

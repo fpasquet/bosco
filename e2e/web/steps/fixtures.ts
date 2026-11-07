@@ -6,7 +6,7 @@ import { RECORDINGS } from '../paths.ts';
 
 // Le web n'appelle aucun service extérieur côté serveur : le dossier d'enregistrements reste vide et tout appel sortant échoue.
 export const test = boscoTest(join(RECORDINGS, 'server')).extend<
-  { pending: { hook?: Promise<unknown> } },
+  { pending: { hook?: Promise<unknown> }; transcripts: Map<string, string> },
   { replayUsed: Set<string> }
 >({
   // Enregistrements rejoués par le navigateur dans ce processus, réunis pour le mode clean
@@ -24,6 +24,10 @@ export const test = boscoTest(join(RECORDINGS, 'server')).extend<
 
   pending: async ({}, use) => {
     await use({});
+  },
+  // Transcripts écrits par le scénario, par identifiant de session, pour les faire vivre ensuite
+  transcripts: async ({}, use) => {
+    await use(new Map());
   },
 });
 

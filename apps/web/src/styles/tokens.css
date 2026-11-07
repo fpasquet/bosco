@@ -16,9 +16,9 @@
  */
 @theme {
   /* Polices : Instrument Sans pour le texte et les titres, JetBrains Mono pour les chemins, branches, commandes et chiffres */
-  --font-sans: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 
   /* Surfaces : neutres légèrement teintés vers le vert d'eau de la marque */
   --color-canvas: #f3f6f5;
@@ -61,5 +61,5 @@
   --spacing-row: 3rem;
   --shadow-card: 0 1px 2px rgb(20 35 33 / 0.06);
   --shadow-overlay: 0 12px 32px rgb(20 35 33 / 0.18);
-  --color-overlay: #1423214d;     /* voile sous les fenêtres et panneaux (bg-overlay) : encre à 30 % */
+  --color-overlay: #1423214d; /* voile sous les fenêtres et panneaux (bg-overlay) : encre à 30 % */
 }

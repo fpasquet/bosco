@@ -14,6 +14,22 @@ When('je clique sur le bouton {texte}', async ({ page }, name: string) => {
   await page.getByRole('button', { name }).click();
 });
 
+When('je clique sur le lien {texte}', async ({ page }, name: string) => {
+  await page.getByRole('link', { name }).click();
+});
+
+When('je recharge la page', async ({ page }) => {
+  await page.reload();
+});
+
+Then('je ne vois plus le texte {texte}', async ({ page }, text: string) => {
+  await expect(page.getByText(text)).toHaveCount(0);
+});
+
+Then('le bouton {texte} est enfoncé', async ({ page }, name: string) => {
+  await expect(page.getByRole('button', { name, pressed: true })).toBeVisible();
+});
+
 Then('je vois le texte {texte}', async ({ page }, text: string) => {
   await expect(page.getByText(text)).toBeVisible();
 });

@@ -10,6 +10,11 @@ export interface SourceRow {
 
 export interface SessionRow {
   branch: null | string;
+  costMicros: number;
+  lastAction: null | string;
+  recentActions: string[];
+  repoRoot: null | string;
+  unpricedTokens: number;
   cacheCreationTokens: number;
   cacheReadTokens: number;
   id: string;
@@ -59,17 +64,22 @@ export const SessionSchema = new EntitySchema<SessionRow>({
     id: { type: 'string', primary: true },
     sourceId: { type: 'string', fieldName: 'source_id', index: true },
     repoPath: { type: 'string', fieldName: 'repo_path', nullable: true },
+    repoRoot: { type: 'string', fieldName: 'repo_root', nullable: true },
     branch: { type: 'string', nullable: true },
     title: { type: 'string', nullable: true },
     model: { type: 'string', nullable: true },
     startedAt: { type: 'datetime', fieldName: 'started_at' },
     lastEventAt: { type: 'datetime', fieldName: 'last_event_at', index: true },
     lastMessage: { type: 'text', fieldName: 'last_message', nullable: true },
+    lastAction: { type: 'text', fieldName: 'last_action', nullable: true },
+    recentActions: { type: 'json', fieldName: 'recent_actions', default: '[]' },
     inputTokens: { type: 'integer', fieldName: 'input_tokens' },
     outputTokens: { type: 'integer', fieldName: 'output_tokens' },
     cacheCreationTokens: { type: 'integer', fieldName: 'cache_creation_tokens' },
     cacheReadTokens: { type: 'integer', fieldName: 'cache_read_tokens' },
     nextSeq: { type: 'integer', fieldName: 'next_seq' },
+    costMicros: { type: 'integer', fieldName: 'cost_micros', default: 0 },
+    unpricedTokens: { type: 'integer', fieldName: 'unpriced_tokens', default: 0 },
   },
 });
 

@@ -1,7 +1,7 @@
 // Une instance de Bosco par processus de test : port, dossier Claude Code et enregistrements propres.
 import { type ChildProcess, spawn } from 'node:child_process';
 import { once } from 'node:events';
-import { cpSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
+import { cpSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { createServer } from 'node:net';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
@@ -37,6 +37,9 @@ async function freePort(): Promise<number> {
   if (!address || typeof address === 'string') throw new Error('No free port');
   return address.port;
 }
+
+/** Dossier personnel écrit dans les transcripts d'exemple, remplacé par le dossier du scénario. */
+const SAMPLE_HOME = '/home/dev';
 
 /** `recordings` : dossier des enregistrements des appels sortants de cette suite. */
 export async function startBosco(recordings: string): Promise<Bosco> {
@@ -83,12 +86,18 @@ export async function startBosco(recordings: string): Promise<Bosco> {
         rmSync(join(profilesRoot, entry), { recursive: true, force: true });
     },
     writeProfileTranscript(profile, source, sessionId) {
+      // Les dossiers de travail (/home/dev/labo-ia/packages/rag) sont recréés dans le dossier du scénario, chaque dépôt
+      // avec son .git, pour que Bosco trouve les dépôts comme sur le poste.
+      const content = readFileSync(source, 'utf8').replaceAll(SAMPLE_HOME, profilesRoot);
+      const cwd = /"cwd":\s*"([^"]+)"/.exec(content)?.[1] ?? profilesRoot;
+      const repository = cwd.slice(profilesRoot.length + 1).split('/')[0];
+      if (repository) mkdirSync(join(profilesRoot, repository, '.git'), { recursive: true });
+      mkdirSync(cwd, { recursive: true });
       // Dossier de dépôt nommé comme le fait Claude Code : le chemin de travail, / remplacés par -
-      const cwd = /"cwd":\s*"([^"]+)"/.exec(readFileSync(source, 'utf8'))?.[1] ?? '/home/dev';
       const dir = join(profilesRoot, profile, 'projects', cwd.replaceAll('/', '-'));
       mkdirSync(dir, { recursive: true });
       const file = join(dir, `${sessionId}.jsonl`);
-      cpSync(source, file);
+      writeFileSync(file, content);
       return file;
     },
     writeTranscript(source, sessionId) {

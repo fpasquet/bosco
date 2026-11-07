@@ -1,5 +1,13 @@
 import type { ProfileCandidate } from '../domain/profile-candidate.ts';
-import type { Clock, IdGenerator, ProfileFinder, SourceRepository, TranscriptWatcher } from './ports.ts';
+import type {
+  Clock,
+  IdGenerator,
+  ProfileFinder,
+  SessionRegistry,
+  SourceRepository,
+  TranscriptWatcher,
+} from './ports.ts';
+import type { SessionService } from './session.service.ts';
 import { Source, type SourceSnapshot } from '../domain/source.ts';
 
 /** Profils lus au premier lancement : les 30 derniers jours (CA-SESS-03). */
@@ -18,6 +26,7 @@ export class SourceService {
     private readonly transcriptWatcher: TranscriptWatcher,
     private readonly idGenerator: IdGenerator,
     private readonly clock: Clock,
+    private readonly registry?: { service: Pick<SessionService, 'refreshSessions'>; sessions: SessionRegistry },
   ) {}
 
   /** Profils déjà choisis, ou, au premier lancement, les dossiers trouvés et leur aperçu, sans rien lire d'autre. */
@@ -42,6 +51,11 @@ export class SourceService {
   async resumeWatching(sources?: Source[]): Promise<void> {
     const watched = (sources ?? (await this.sourceRepository.list())).filter((source) => source.watched);
     const since = new Date(this.clock.now().getTime() - HISTORY_DAYS * 24 * 60 * 60 * 1000);
-    for (const source of watched) await this.transcriptWatcher.watch(source, since);
+    for (const source of watched) {
+      // Le registre d'abord : les sessions lues ensuite ont déjà leur état ouvert ou terminé
+      const registry = this.registry;
+      if (registry) await registry.sessions.watch(source, (ids) => void registry.service.refreshSessions(ids));
+      await this.transcriptWatcher.watch(source, since);
+    }
   }
 }

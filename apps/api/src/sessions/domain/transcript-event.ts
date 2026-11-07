@@ -12,6 +12,8 @@ export interface TranscriptEvent {
   cwd: null | string;
   kind: 'prompt' | 'reply' | 'title' | 'tool';
   model: null | string;
+  /** Racine git du dossier de travail, trouvée par l'adaptateur : elle donne le dépôt de la session */
+  repoRoot: null | string;
   /** Texte court : message, nom et argument d'un outil, ou titre */
   text: string;
   usage: null | TokenUsage;

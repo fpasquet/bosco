@@ -13,6 +13,7 @@ const reply = (time: string, usage: TokenUsage | null = null): TranscriptEvent =
   cwd: '/home/dev/labo-ia/packages/bosco',
   branch: 'feat/specs',
   model: 'claude-opus-5-5',
+  repoRoot: '/home/dev/labo-ia',
   usage,
 });
 
@@ -23,6 +24,25 @@ describe('Session', () => {
     const lastEvent = at('14:02:00').getTime();
     expect(session.stateAt(new Date(lastEvent + DEFAULT_INACTIVITY_DELAY_MS - 1))).toBe('running');
     expect(session.stateAt(new Date(lastEvent + DEFAULT_INACTIVITY_DELAY_MS))).toBe('inactive');
+  });
+
+  it('ends as soon as Claude Code no longer holds the session open, even right after an event', () => {
+    const session = Session.discover('c41e9a07', 'pro', at('14:02:00'));
+    session.record(reply('14:02:00'));
+    const justAfter = new Date(at('14:02:00').getTime() + 1000);
+    expect([session.stateAt(justAfter, false), session.stateAt(justAfter, true)]).toEqual(['ended', 'running']);
+  });
+
+  it('takes its first request as title until Claude Code names it, never a command', () => {
+    const session = Session.discover('36cf26ee', 'pro', at('14:02:00'));
+    const prompt = (time: string, text: string) => ({ ...reply(time), kind: 'prompt' as const, text });
+    session.record(prompt('14:02:00', '<command-name>/clear</command-name>'));
+    session.record(prompt('14:02:10', '2+2'));
+    session.record(prompt('14:02:20', 'Et 3+3 ?'));
+    expect(session.toSnapshot().title).toBe('2+2');
+    session.record({ ...reply('14:03:00'), kind: 'title', text: 'Calculs rapides' });
+    session.record(prompt('14:03:10', 'Et 4+4 ?'));
+    expect(session.toSnapshot().title).toBe('Calculs rapides');
   });
 
   it('adds up the token usage, cache included', () => {
@@ -41,5 +61,31 @@ describe('Session', () => {
     restored.record(reply('14:05:00'));
     expect(restored.pullJournal().map((entry) => entry.seq)).toEqual([2]);
     expect(restored.toSnapshot().title).toBe('Specs du tableau de bord Bosco');
+  });
+});
+
+describe('Session cost', () => {
+  it('prices each event at the model that produced it and counts unpriced tokens apart', () => {
+    const session = Session.discover('c41e9a07', 'pro', at('14:02:00'));
+    session.record(reply('14:02:00', new TokenUsage(1_000_000, 0, 0, 0)));
+    session.record({ ...reply('14:03:00', new TokenUsage(1_000_000, 0, 0, 0)), model: 'claude-sonnet-5-5' });
+    session.record({ ...reply('14:04:00', new TokenUsage(500, 0, 0, 0)), model: '<synthetic>' });
+    const { costMicros, unpricedTokens } = session.toSnapshot();
+    expect(costMicros).toBe(6_000_000);
+    expect(unpricedTokens).toBe(500);
+  });
+});
+
+describe('Session recent actions', () => {
+  it('keeps the last three actions, the most recent first', () => {
+    const session = Session.discover('c41e9a07', 'pro', at('14:02:00'));
+    const actions: [string, string][] = [
+      ['14:02:01', 'Lit a.ts'],
+      ['14:02:02', 'Lit b.ts'],
+      ['14:02:03', 'Modifie c.ts'],
+      ['14:02:04', 'npm test'],
+    ];
+    for (const [time, text] of actions) session.record({ ...reply(time), kind: 'tool', text });
+    expect(session.toSnapshot().recentActions).toEqual(['npm test', 'Modifie c.ts', 'Lit b.ts']);
   });
 });
