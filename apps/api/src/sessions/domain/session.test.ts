@@ -56,3 +56,17 @@ describe('Session cost', () => {
     expect(unpricedTokens).toBe(500);
   });
 });
+
+describe('Session recent actions', () => {
+  it('keeps the last three actions, the most recent first', () => {
+    const session = Session.discover('c41e9a07', 'pro', at('14:02:00'));
+    const actions: [string, string][] = [
+      ['14:02:01', 'Lit a.ts'],
+      ['14:02:02', 'Lit b.ts'],
+      ['14:02:03', 'Modifie c.ts'],
+      ['14:02:04', 'npm test'],
+    ];
+    for (const [time, text] of actions) session.record({ ...reply(time), kind: 'tool', text });
+    expect(session.toSnapshot().recentActions).toEqual(['npm test', 'Modifie c.ts', 'Lit b.ts']);
+  });
+});

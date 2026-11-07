@@ -6,6 +6,7 @@ import { defineConfig } from '@mikro-orm/sqlite';
 import { Migration20261107000000 } from './migrations/Migration20261107000000.ts';
 import { Migration20261107165031 } from './migrations/Migration20261107165031.ts';
 import { Migration20261107172330 } from './migrations/Migration20261107172330.ts';
+import { Migration20261107174017 } from './migrations/Migration20261107174017.ts';
 import {
   SessionEventSchema,
   SessionSchema,
@@ -18,6 +19,7 @@ export const MIGRATIONS = [
   { name: 'Migration20261107000000', class: Migration20261107000000 },
   { name: 'Migration20261107165031', class: Migration20261107165031 },
   { name: 'Migration20261107172330', class: Migration20261107172330 },
+  { name: 'Migration20261107174017', class: Migration20261107174017 },
 ];
 
 export function ormConfig(dbName: string) {

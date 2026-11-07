@@ -12,6 +12,7 @@ export interface SessionRow {
   branch: null | string;
   costMicros: number;
   lastAction: null | string;
+  recentActions: string[];
   repoRoot: null | string;
   unpricedTokens: number;
   cacheCreationTokens: number;
@@ -71,6 +72,7 @@ export const SessionSchema = new EntitySchema<SessionRow>({
     lastEventAt: { type: 'datetime', fieldName: 'last_event_at', index: true },
     lastMessage: { type: 'text', fieldName: 'last_message', nullable: true },
     lastAction: { type: 'text', fieldName: 'last_action', nullable: true },
+    recentActions: { type: 'json', fieldName: 'recent_actions', default: '[]' },
     inputTokens: { type: 'integer', fieldName: 'input_tokens' },
     outputTokens: { type: 'integer', fieldName: 'output_tokens' },
     cacheCreationTokens: { type: 'integer', fieldName: 'cache_creation_tokens' },

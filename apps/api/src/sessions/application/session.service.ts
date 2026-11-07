@@ -10,6 +10,7 @@ export interface SessionView {
   id: string;
   lastAction: null | string;
   lastEventAt: Date;
+  recentActions: string[];
   lastMessage: null | string;
   model: null | string;
   repoPath: null | string;
@@ -72,6 +73,7 @@ export class SessionService {
       lastEventAt,
       lastMessage,
       model,
+      recentActions: snapshot.recentActions,
       repoPath,
       repository: repositoryOf(snapshot.repoRoot, repoPath),
       sourceId,

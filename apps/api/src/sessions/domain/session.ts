@@ -8,6 +8,8 @@ export type SessionState = 'inactive' | 'running';
 /** Délai sans événement après lequel une session ouverte devient Inactive (réglable dans les sources). */
 export const DEFAULT_INACTIVITY_DELAY_MS = 15 * 60 * 1000;
 
+const RECENT_ACTIONS = 3;
+
 export interface SessionSnapshot {
   branch: null | string;
   /** Coût estimé en micro-dollars des tokens dont le modèle a un tarif connu (RF-SESS-05) */
@@ -15,6 +17,8 @@ export interface SessionSnapshot {
   id: string;
   /** Dernier outil appelé par l'agent (« Bash · npm test ») */
   lastAction: null | string;
+  /** Trois dernières actions de l'agent, la plus récente en premier (CA-SESS-15) */
+  recentActions: string[];
   lastEventAt: Date;
   lastMessage: null | string;
   model: null | string;
@@ -51,6 +55,7 @@ export class Session {
       repoRoot: null,
       branch: null,
       lastAction: null,
+      recentActions: [],
       costMicros: 0,
       unpricedTokens: 0,
       title: null,
@@ -64,7 +69,7 @@ export class Session {
   }
 
   static restore(snapshot: SessionSnapshot): Session {
-    return new Session({ ...snapshot });
+    return new Session({ ...snapshot, recentActions: [...snapshot.recentActions] });
   }
 
   /** Tient compte d'un événement lu dans le transcript : contexte, usage, dernier message, journal. */
@@ -89,7 +94,11 @@ export class Session {
     if (event.text === '') return;
     this.snapshot =
       event.kind === 'tool'
-        ? { ...this.snapshot, lastAction: event.text }
+        ? {
+            ...this.snapshot,
+            lastAction: event.text,
+            recentActions: [event.text, ...this.snapshot.recentActions].slice(0, RECENT_ACTIONS),
+          }
         : { ...this.snapshot, lastMessage: event.text };
     this.pending.push({ seq: this.snapshot.nextSeq, at, kind: event.kind, text: event.text });
     this.snapshot = { ...this.snapshot, nextSeq: this.snapshot.nextSeq + 1 };
