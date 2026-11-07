@@ -2,7 +2,7 @@ import { Copy } from 'lucide-react';
 import type { SessionDto } from '@bosco/domain';
 import { Button } from '@/shared/ui/button';
 import { cacheShare, durationEnd } from '../../lib/detail';
-import { elapsed, formatCost, formatTokens, relativePath } from '../../lib/format';
+import { elapsed, formatCost, formatTokens, modelName, relativePath } from '../../lib/format';
 import { totalTokens } from '../../lib/overview';
 
 export interface SessionSideProps {
@@ -11,14 +11,6 @@ export interface SessionSideProps {
   /** Commande de reprise d'une session close ; null tant qu'elle est ouverte (RF-SESS-09) */
   resume: null | string;
   session: SessionDto;
-}
-
-/** « Opus 5.5 » d'après « claude-opus-5-5 » ; un modèle inconnu reste tel quel. */
-function modelName(model: null | string): string {
-  const match = model && /^claude-([a-z]+)-(\d+)-(\d+)/.exec(model);
-  if (!match) return model ?? '—';
-  const [, family = '', major, minor] = match;
-  return `${family.charAt(0).toUpperCase()}${family.slice(1)} ${major}.${minor}`;
 }
 
 function Row({ label, value }: { label: string; value: string }) {

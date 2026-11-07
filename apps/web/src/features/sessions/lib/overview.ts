@@ -54,6 +54,13 @@ export function openSessions(sessions: readonly SessionDto[], now: Date): Sessio
   );
 }
 
+/** Sessions terminées aujourd'hui, des plus récentes aux plus anciennes (E1c, E1d). */
+export function endedToday(sessions: readonly SessionDto[], now: Date): SessionDto[] {
+  return sessions
+    .filter((session) => session.state === 'ended' && isToday(session.lastEventAt, now))
+    .toSorted((left, right) => right.lastEventAt.localeCompare(left.lastEventAt));
+}
+
 function byStateThenActivity(left: SessionDto, right: SessionDto): number {
   const state = STATE_ORDER.indexOf(left.state) - STATE_ORDER.indexOf(right.state);
   return state === 0 ? right.lastEventAt.localeCompare(left.lastEventAt) : state;
