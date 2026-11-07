@@ -1,6 +1,6 @@
 import { MikroORM } from '@mikro-orm/sqlite';
 // pnpm --filter @bosco/api db:migration : écrit la migration qui amène la base au schéma des entités.
-// La migration créée s'ajoute ensuite à MIGRATIONS (orm.config.ts), puis se relit avant d'être commitée.
+// La migration créée s'ajoute ensuite à MIGRATIONS (src/mikro-orm.config.ts), puis se relit avant d'être commitée.
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -13,5 +13,7 @@ const result = await orm.migrator.create();
 await orm.close();
 rmSync(dir, { recursive: true, force: true });
 console.log(
-  result.fileName ? `created ${result.fileName}: add it to MIGRATIONS in orm.config.ts` : 'schema already up to date',
+  result.fileName
+    ? `created ${result.fileName}: add it to MIGRATIONS in src/mikro-orm.config.ts`
+    : 'schema already up to date',
 );
