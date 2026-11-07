@@ -18,10 +18,22 @@ export async function hostWeb(app: NestFastifyApplication, dir: string, dev: boo
       await handle(request.raw, reply.raw);
     });
   // Rechargement à chaud : Next.js en mode développement ouvre une connexion WebSocket sur le même port
+  const upgraded = new Set<Duplex>();
   if (dev) {
     const upgrade = web.getUpgradeHandler();
     app.getHttpServer().on('upgrade', (request: IncomingMessage, socket: Duplex, head: Buffer) => {
+      upgraded.add(socket);
+      socket.once('close', () => upgraded.delete(socket));
       void upgrade(request, socket, head);
     });
   }
+  // À l'arrêt, les WebSocket ne sont plus suivies par le serveur HTTP et Next.js garde ses observateurs de fichiers :
+  // sans les fermer, un redémarrage attend sans fin
+  app
+    .getHttpAdapter()
+    .getInstance()
+    .addHook('preClose', async () => {
+      for (const socket of upgraded) socket.destroy();
+      await web.close();
+    });
 }
