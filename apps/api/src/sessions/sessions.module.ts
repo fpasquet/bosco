@@ -31,9 +31,11 @@ const clock = { now: () => new Date() };
     },
     {
       provide: TRANSCRIPT_WATCHER,
-      inject: [SESSION_SERVICE, ORM],
-      useFactory: (sessionService: SessionService, orm: MikroORM) =>
-        new FileTranscriptWatcher(sessionService, new TranscriptCursorStore(orm)),
+      inject: [SESSION_SERVICE, ORM, SESSION_EVENTS],
+      useFactory: (sessionService: SessionService, orm: MikroORM, bus: SessionEventsBus) =>
+        new FileTranscriptWatcher(sessionService, new TranscriptCursorStore(orm), (progress) =>
+          bus.importProgress.next(progress),
+        ),
     },
     {
       provide: SOURCE_SERVICE,

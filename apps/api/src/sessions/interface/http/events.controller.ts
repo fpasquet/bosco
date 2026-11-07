@@ -41,7 +41,11 @@ export class EventsController {
         switchMap(() => from(this.sessionService.listSessions())),
         map(snapshotEvent),
       );
-      return merge(first.pipe(concatWith(changes)), later).pipe(finalize(() => subscription.unsubscribe()));
+      // Avancement de la première lecture de l'historique (E1e), le dernier connu d'abord
+      const progress = this.bus.importProgress.pipe(
+        map((value) => ({ type: 'import.progress', data: { progress: value } })),
+      );
+      return merge(first.pipe(concatWith(changes)), later, progress).pipe(finalize(() => subscription.unsubscribe()));
     });
   }
 }

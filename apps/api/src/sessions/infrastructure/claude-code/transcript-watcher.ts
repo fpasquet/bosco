@@ -7,6 +7,7 @@ import type { TranscriptWatcher } from '../../application/ports.ts';
 import type { SessionService } from '../../application/session.service.ts';
 import type { Source } from '../../domain/source.ts';
 import type { TranscriptEvent } from '../../domain/transcript-event.ts';
+import type { ImportProgress } from '../events/session-events.bus.ts';
 import type { TranscriptCursorStore } from '../persistence/transcript-cursor.store.ts';
 import { TranscriptParser } from './transcript-parser.ts';
 
@@ -19,6 +20,8 @@ export class FileTranscriptWatcher implements TranscriptWatcher {
   constructor(
     private readonly sessionService: SessionService,
     private readonly cursors: TranscriptCursorStore,
+    /** Avancement de la première lecture, pour le bandeau de chargement ; null quand elle est finie */
+    private readonly reportProgress: (progress: ImportProgress | null) => void = () => undefined,
   ) {}
 
   async watch(source: Source, since: Date): Promise<void> {
@@ -32,7 +35,14 @@ export class FileTranscriptWatcher implements TranscriptWatcher {
     watcher.on('add', (file) => void this.enqueue(source, file));
     watcher.on('change', (file) => void this.enqueue(source, file));
     this.watchers.set(source.id, watcher);
-    for (const file of await recentTranscripts(projects, since)) await this.enqueue(source, file);
+    const files = await recentTranscripts(projects, since);
+    // Les sessions récentes d'abord : les sessions ouvertes s'affichent avant l'historique
+    files.sort((a, b) => b.mtime - a.mtime);
+    for (const [index, file] of files.entries()) {
+      this.reportProgress({ read: index, total: files.length });
+      await this.enqueue(source, file.path);
+    }
+    this.reportProgress(null);
   }
 
   async close(): Promise<void> {
@@ -103,15 +113,15 @@ async function findGitRoot(cwd: string): Promise<null | string> {
   return null;
 }
 
-async function recentTranscripts(projects: string, since: Date): Promise<string[]> {
+async function recentTranscripts(projects: string, since: Date): Promise<{ mtime: number; path: string }[]> {
   const repositories = await readdir(projects, { withFileTypes: true }).catch(() => []);
-  const files: string[] = [];
+  const files: { mtime: number; path: string }[] = [];
   for (const repository of repositories.filter((entry) => entry.isDirectory())) {
     const names = await readdir(join(projects, repository.name)).catch(() => []);
     for (const name of names.filter((candidate) => candidate.endsWith('.jsonl'))) {
       const file = join(projects, repository.name, name);
       const info = await stat(file);
-      if (info.mtime >= since) files.push(file);
+      if (info.mtime >= since) files.push({ path: file, mtime: info.mtimeMs });
     }
   }
   return files;
