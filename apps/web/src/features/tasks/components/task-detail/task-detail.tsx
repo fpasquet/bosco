@@ -181,6 +181,12 @@ export function TaskDetail({ busy, failing, onCancel, onRelaunch, task }: TaskDe
           }}
         />
       )}
+      {task.state === 'awaiting_session' && (
+        <p className="rounded-card border border-line bg-surface-alt px-4 py-3">
+          À prendre depuis Claude Code sur le poste : dans le dépôt, demande « prends la prochaine tâche Bosco ». Le
+          serveur MCP de Bosco s’ajoute à un profil avec <code className="font-mono">bosco mcp install</code>.
+        </p>
+      )}
       {task.outcome.pullRequest && (
         <p className="rounded-card border border-line bg-surface px-4 py-3">
           PR en brouillon :{' '}

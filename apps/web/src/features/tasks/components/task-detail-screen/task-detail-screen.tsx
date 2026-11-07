@@ -23,9 +23,10 @@ export function TaskDetailScreen({ id }: { id: number }) {
   const client = useQueryClient();
   const tasks = useLiveTasks();
   const task = tasks?.find((candidate) => candidate.id === id);
-  const toReview = task?.state === 'to_review' && task.mode === 'worker';
+  const toReview = task?.state === 'to_review';
   const { data: failing } = useQuery({ ...cancellationQuery(id), enabled: Boolean(task) });
-  const { data: changes } = useQuery({ ...changesQuery(id), enabled: toReview });
+  // Une tâche « Ma session » n'a pas de branche : son travail est déjà dans le dépôt
+  const { data: changes } = useQuery({ ...changesQuery(id), enabled: toReview && Boolean(task?.outcome.base) });
   const { data: review } = useQuery({ ...reviewQuery(id), enabled: toReview || task?.state === 'validated' });
   const [dialog, setDialog] = useState<'reject' | 'validate' | null>(null);
   const [pullRequestError, setPullRequestError] = useState<null | string>(null);

@@ -55,7 +55,7 @@ export function TaskReview({ busy, changes, followers, onCopy, onReject, onValid
           </h1>
           <p className="mt-1 font-mono text-xs text-muted">
             {task.repository.name}
-            {task.folder ? ` · ${task.folder}` : ''} · Worker
+            {task.folder ? ` · ${task.folder}` : ''} · {task.mode === 'worker' ? 'Worker' : 'Ma session'}
           </p>
         </div>
         <div className="fixed inset-x-0 bottom-16 z-10 flex gap-2 border-t border-line bg-surface p-3 md:static md:border-0 md:bg-transparent md:p-0">
@@ -78,27 +78,35 @@ export function TaskReview({ busy, changes, followers, onCopy, onReject, onValid
             </Card>
           </div>
           <Card id="review-changes" title="Modifications">
-            {changes ? <DiffView changes={changes} /> : <p className="text-muted">Lecture du diff…</p>}
+            {task.mode === 'session' && (
+              <p className="text-muted">
+                Travail fait par ta session, directement dans le dépôt : relis-le avec git ou ton éditeur.
+              </p>
+            )}
+            {task.mode === 'worker' &&
+              (changes ? <DiffView changes={changes} /> : <p className="text-muted">Lecture du diff…</p>)}
           </Card>
         </div>
         <aside className="flex flex-col gap-4">
-          <Card id="review-usage" title="Consommation">
-            <dl className="flex flex-col gap-1.5 text-sm">
-              <div className="flex justify-between gap-3">
-                <dt className="text-muted">Budget</dt>
-                <dd>
-                  {usd(task.spentUsd)} / {usd(task.guardrails.budgetUsd)}
-                </dd>
-              </div>
-              <div className="flex justify-between gap-3">
-                <dt className="text-muted">Tours</dt>
-                <dd>
-                  {task.outcome.turns} / {task.guardrails.maxTurns}
-                </dd>
-              </div>
-            </dl>
-            <p className="mt-2 text-xs text-muted">Coût estimé au tarif public.</p>
-          </Card>
+          {task.mode === 'worker' && (
+            <Card id="review-usage" title="Consommation">
+              <dl className="flex flex-col gap-1.5 text-sm">
+                <div className="flex justify-between gap-3">
+                  <dt className="text-muted">Budget</dt>
+                  <dd>
+                    {usd(task.spentUsd)} / {usd(task.guardrails.budgetUsd)}
+                  </dd>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <dt className="text-muted">Tours</dt>
+                  <dd>
+                    {task.outcome.turns} / {task.guardrails.maxTurns}
+                  </dd>
+                </div>
+              </dl>
+              <p className="mt-2 text-xs text-muted">Coût estimé au tarif public.</p>
+            </Card>
+          )}
           <Card id="review-after" title="Après">
             {followers.length === 0 ? (
               <p className="text-sm text-muted">Aucune tâche n’attend celle-ci.</p>
