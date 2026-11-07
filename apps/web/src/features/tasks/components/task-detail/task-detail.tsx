@@ -1,7 +1,10 @@
 'use client';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
 import type { TaskDto } from '@bosco/domain';
 import { Button } from '@/shared/ui/button';
 import { usd } from '../../lib/tasks';
@@ -55,12 +58,30 @@ function CancelConfirmation({
   );
 }
 
+const relaunchSchema = z.object({
+  start: z.enum(['branch', 'scratch']),
+  budgetUsd: z.number({ error: 'Un budget en dollars.' }).positive('Un budget au-dessus de 0 $.'),
+  instruction: z.string().max(5000),
+});
+
+type RelaunchValues = z.infer<typeof relaunchSchema>;
+
 function Relaunch({ busy, onRelaunch, task }: Pick<TaskDetailProps, 'busy' | 'onRelaunch' | 'task'>) {
-  const [fromBranch, setFromBranch] = useState(true);
-  const [budget, setBudget] = useState(Math.min(2, Number((task.guardrails.budgetUsd * 1.5).toFixed(2))));
-  const [instruction, setInstruction] = useState('');
+  const { formState, handleSubmit, register } = useForm<RelaunchValues>({
+    resolver: zodResolver(relaunchSchema),
+    defaultValues: {
+      start: 'branch',
+      budgetUsd: Math.min(2, Number((task.guardrails.budgetUsd * 1.5).toFixed(2))),
+      instruction: '',
+    },
+  });
+  const relaunch = handleSubmit(({ budgetUsd, instruction, start }) =>
+    onRelaunch({ budgetUsd, fromBranch: start === 'branch', instruction: instruction.trim() || undefined }),
+  );
   return (
-    <section
+    <form
+      noValidate
+      onSubmit={(event) => void relaunch(event)}
       aria-labelledby="relaunch-title"
       className="flex flex-col gap-3 rounded-card border border-line bg-surface p-4 shadow-card"
     >
@@ -70,11 +91,11 @@ function Relaunch({ busy, onRelaunch, task }: Pick<TaskDetailProps, 'busy' | 'on
       <fieldset className="flex flex-col gap-2">
         <legend className="sr-only">Point de départ</legend>
         <label className="flex items-center gap-2">
-          <input type="radio" className="radio radio-sm" checked={fromBranch} onChange={() => setFromBranch(true)} />
+          <input type="radio" className="radio radio-sm" value="branch" {...register('start')} />
           Repartir de la branche (garde le travail déjà fait)
         </label>
         <label className="flex items-center gap-2">
-          <input type="radio" className="radio radio-sm" checked={!fromBranch} onChange={() => setFromBranch(false)} />
+          <input type="radio" className="radio radio-sm" value="scratch" {...register('start')} />
           Repartir de zéro
         </label>
       </fieldset>
@@ -85,27 +106,24 @@ function Relaunch({ busy, onRelaunch, task }: Pick<TaskDetailProps, 'busy' | 'on
           min={0.1}
           step={0.1}
           className="input w-40"
-          value={budget}
-          onChange={(event) => setBudget(Number(event.target.value))}
+          aria-invalid={formState.errors.budgetUsd ? true : undefined}
+          aria-describedby={formState.errors.budgetUsd ? 'relaunch-budget-error' : undefined}
+          {...register('budgetUsd', { valueAsNumber: true })}
         />
+        {formState.errors.budgetUsd && (
+          <span id="relaunch-budget-error" className="text-xs text-danger">
+            {formState.errors.budgetUsd.message}
+          </span>
+        )}
       </label>
       <label className="flex flex-col gap-1.5">
         <span className="text-xs font-medium">Consigne en plus (facultatif)</span>
-        <textarea
-          className="textarea w-full"
-          rows={2}
-          value={instruction}
-          onChange={(event) => setInstruction(event.target.value)}
-        />
+        <textarea className="textarea w-full" rows={2} {...register('instruction')} />
       </label>
-      <Button
-        className="self-start"
-        disabled={busy}
-        onClick={() => onRelaunch({ budgetUsd: budget, fromBranch, instruction: instruction || undefined })}
-      >
+      <Button type="submit" className="self-start" disabled={busy}>
         Relancer
       </Button>
-    </section>
+    </form>
   );
 }
 

@@ -1,7 +1,7 @@
 'use client';
 import { KeyRound, Lock, ShieldAlert, X } from 'lucide-react';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useForm, useWatch } from 'react-hook-form';
 import type { IsolationDto } from '@bosco/domain';
 import { Button } from '@/shared/ui/button';
 import { refusalTime } from '../../lib/isolation';
@@ -32,7 +32,8 @@ function Card({ children, id, title }: { children: React.ReactNode; id: string; 
  * ce que chaque tâche reçoit comme secrets. Un domaine autorisé vaut tout de suite, sans relancer la tâche.
  */
 export function IsolationEgress({ busy, error, isolation, now, onAdd, onRemove }: IsolationEgressProps) {
-  const [draft, setDraft] = useState('');
+  const { control, handleSubmit, register } = useForm({ defaultValues: { domain: '' } });
+  const draft = useWatch({ control, name: 'domain' });
   const { added, locked } = isolation.domains;
   return (
     <div className="grid gap-4 md:grid-cols-2">
@@ -75,10 +76,7 @@ export function IsolationEgress({ busy, error, isolation, now, onAdd, onRemove }
             </div>
             <form
               className="hidden flex-col gap-1 md:flex"
-              onSubmit={(event) => {
-                event.preventDefault();
-                if (draft.trim()) onAdd(draft);
-              }}
+              onSubmit={(event) => void handleSubmit(({ domain }) => onAdd(domain))(event)}
             >
               <label htmlFor="egress-domain" className="text-xs font-medium">
                 Ajouter un domaine
@@ -90,8 +88,7 @@ export function IsolationEgress({ busy, error, isolation, now, onAdd, onRemove }
                   placeholder="pypi.org"
                   aria-describedby="egress-domain-hint"
                   aria-invalid={error ? true : undefined}
-                  value={draft}
-                  onChange={(event) => setDraft(event.target.value)}
+                  {...register('domain', { required: true })}
                 />
                 <Button type="submit" size="sm" variant="outline" disabled={busy || !draft.trim()}>
                   Ajouter

@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { useForm } from 'react-hook-form';
 import type { RightsDto, RightsFieldDto, RightsValuesDto } from '@bosco/domain';
 import { cn } from '@/lib/cn';
 import { Button } from '@/shared/ui/button';
@@ -49,13 +50,13 @@ function Editor({
   onSave: (value: unknown) => void;
   value: RightsValuesDto[RightsFieldDto];
 }) {
-  const [text, setText] = useState(draftOf(field, value));
+  const { handleSubmit, register } = useForm({ defaultValues: { text: draftOf(field, value) } });
   const id = `rights-${field}`;
   const label = RIGHTS_LABELS[field];
   let input: React.ReactNode;
   if (field === 'model')
     input = (
-      <select id={id} className="select select-sm" value={text} onChange={(event) => setText(event.target.value)}>
+      <select id={id} className="select select-sm" {...register('text')}>
         {models.map((model) => (
           <option key={model} value={model}>
             {modelLabel(model)}
@@ -65,7 +66,7 @@ function Editor({
     );
   else if (field === 'pullRequest')
     input = (
-      <select id={id} className="select select-sm" value={text} onChange={(event) => setText(event.target.value)}>
+      <select id={id} className="select select-sm" {...register('text')}>
         {Object.entries(PULL_REQUEST_LABELS).map(([mode, modeLabel]) => (
           <option key={mode} value={mode}>
             {modeLabel}
@@ -80,27 +81,14 @@ function Editor({
         rows={4}
         className="textarea font-mono textarea-sm"
         placeholder={field === 'tools' ? 'Read\nBash(npm test)' : 'Bash(curl:*)\nRead(.env*)'}
-        value={text}
-        onChange={(event) => setText(event.target.value)}
+        {...register('text')}
       />
     );
-  else
-    input = (
-      <input
-        id={id}
-        inputMode="decimal"
-        className="input w-32 input-sm"
-        value={text}
-        onChange={(event) => setText(event.target.value)}
-      />
-    );
+  else input = <input id={id} inputMode="decimal" className="input w-32 input-sm" {...register('text')} />;
   return (
     <form
       className="flex flex-col gap-1.5"
-      onSubmit={(event) => {
-        event.preventDefault();
-        onSave(parse(field, text));
-      }}
+      onSubmit={(event) => void handleSubmit(({ text }) => onSave(parse(field, text)))(event)}
     >
       <label htmlFor={id} className="sr-only">
         {label}
