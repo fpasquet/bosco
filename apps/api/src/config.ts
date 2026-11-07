@@ -17,6 +17,9 @@ const schema = z.object({
   BOSCO_TEST: z.enum(['0', '1']).default('0'),
   // Mode développement (pnpm dev) : Next.js compile l'interface à la demande et la recharge à chaud
   BOSCO_DEV: z.enum(['0', '1']).default('0'),
+  // Accès du téléphone (E4c) : port HTTPS sur le réseau local (par défaut, celui du service + 1) et adresse imposée
+  BOSCO_PHONE_PORT: z.coerce.number().int().min(1024).max(65535).optional(),
+  BOSCO_PHONE_HOST: z.string().min(1).optional(),
 });
 
 export type Config = Readonly<{
@@ -27,6 +30,8 @@ export type Config = Readonly<{
   webDir: null | string;
   testing: boolean;
   dev: boolean;
+  /** Écoute HTTPS du téléphone, ouverte seulement quand l'accès est activé (NF-13) */
+  phone: { host: null | string; port: number };
 }>;
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
@@ -45,5 +50,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     webDir: values.BOSCO_WEB_DIR || null,
     testing: values.BOSCO_TEST === '1',
     dev: values.BOSCO_DEV === '1',
+    phone: { host: values.BOSCO_PHONE_HOST ?? null, port: values.BOSCO_PHONE_PORT ?? values.BOSCO_PORT + 1 },
   };
 }

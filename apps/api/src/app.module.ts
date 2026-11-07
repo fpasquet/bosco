@@ -1,5 +1,6 @@
 import { type DynamicModule, Module } from '@nestjs/common';
 import type { Config } from './config.ts';
+import { AccessModule } from './access/access.module.ts';
 import { PersistenceModule } from './persistence.module.ts';
 import { SessionsModule } from './sessions/sessions.module.ts';
 import { HealthController } from './shared/interface/http/health.controller.ts';
@@ -13,7 +14,7 @@ export class AppModule {
     return {
       module: AppModule,
       global: true,
-      imports: [PersistenceModule, SessionsModule],
+      imports: [PersistenceModule, SessionsModule, AccessModule],
       controllers: [HealthController, ...(config.testing ? [TestController] : [])],
       providers: [{ provide: CONFIG, useValue: config }],
       exports: [CONFIG],
