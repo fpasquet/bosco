@@ -89,11 +89,11 @@ export class ContextService {
   }
 
   /** Décisions transmises à un lancement, avec leur version : gardées dans le journal de la tâche (CA-CONT-23). */
-  async sentTo(repository: string): Promise<{ text: string; versions: string }> {
+  async sentTo(repository: string, links: readonly ContextLink[] = []): Promise<{ text: string; versions: string }> {
     const context = await this.contextOf(repository);
     const sent = [...context.decisions, ...context.socles.flatMap(({ decisions }) => decisions)];
     return {
-      text: contextText(repository, context),
+      text: contextText(repository, context, links),
       versions: sent.map((decision) => `DEC-${decision.id} v${decision.versions.length}`).join(', '),
     };
   }
