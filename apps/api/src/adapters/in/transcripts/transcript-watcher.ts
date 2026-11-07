@@ -36,6 +36,8 @@ export class FileTranscriptWatcher implements TranscriptWatcher {
     this.watchers.clear();
     await Promise.all(watchers.map((watcher) => watcher.close()));
     await Promise.all(this.queues.values());
+    this.queues.clear();
+    this.parsers.clear();
   }
 
   /** Une lecture à la fois par fichier, dans l'ordre des modifications. */

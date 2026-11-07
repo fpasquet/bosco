@@ -44,6 +44,7 @@ const clock = { now: () => new Date() };
         ),
     },
   ],
+  exports: [TRANSCRIPT_WATCHER],
 })
 export class SessionsModule implements OnApplicationBootstrap, OnApplicationShutdown {
   constructor(
