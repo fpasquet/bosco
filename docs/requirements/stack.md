@@ -16,6 +16,7 @@
 | Composants | shadcn/ui sur Radix, dont les variantes (CVA) posent les classes de daisyUI ; Storybook (pages Tokens et Classes, accessibilité bloquante) ; conventions du skill `design-system` (DT-25) | Comportements accessibles de Radix, rendu des classes de daisyUI, un seul catalogue | Composants de daisyUI seuls (sans comportements clavier), bibliothèque de composants complète |
 | Données serveur | TanStack Query, dernière version | Choix du porteur du projet ; cache, invalidation et synchronisation avec les flux SSE | SWR, Redux |
 | État client | Zustand, dernière version | Choix du porteur du projet ; état propre à l'interface : regroupement, filtres, panneaux ouverts, sélection (DT-17) | Redux, Context React |
+| Formulaires | React Hook Form, dernière version, avec son résolveur zod | Choix du porteur du projet ; valeurs, erreurs par champ et soumission gérées par la bibliothèque, schémas zod partagés avec l'API ; les erreurs renvoyées par l'API se posent sur leur champ | État local à la main, Formik |
 | Icônes | `lucide-react` | Mêmes icônes que les maquettes | Autres jeux |
 | MCP | SDK MCP officiel | Serveur HTTP | Implémentation maison |
 | Agents | Claude Agent SDK | DT-09 | Lancer la CLI |
@@ -27,7 +28,7 @@
 | Architecture du back | Hexagonale (ports et adaptateurs) | Choix du porteur du projet ; domaine testable sans NestJS ni base (DT-15) | Couches NestJS classiques |
 | Organisation | Monorepo pnpm 12 et Turborepo 2.11 (DT-22) | `apps/api` (service, worker et commande `bosco`, DT-15), `apps/web`, `packages/domain` (contrats partagés avec le web), `packages/configs` ; Turborepo ordonne les tâches et les met en cache | Multi-dépôts, Nx, scripts pnpm seuls |
 
-Versions : les versions stables de NestJS, Next.js, TanStack Query, Zustand, ESLint et Prettier au démarrage du lot 0, figées dans le fichier de verrouillage. Le worker est un second point d'entrée de l'application serveur, sans serveur HTTP, lancé dans son propre processus (DT-02). L'application web reste presque entièrement côté client : elle reçoit ses données par l'API et les flux SSE.
+Versions : les versions stables de NestJS, Next.js, TanStack Query, Zustand, React Hook Form, ESLint et Prettier au démarrage du lot 0, figées dans le fichier de verrouillage. Le worker est un second point d'entrée de l'application serveur, sans serveur HTTP, lancé dans son propre processus (DT-02). L'application web reste presque entièrement côté client : elle reçoit ses données par l'API et les flux SSE.
 
 ## <a id="72-structure-du-code"></a>7.2 Structure du code
 
@@ -82,7 +83,7 @@ Claude Code écrit le code (DT-24) : les conventions sont des fichiers du dépô
 | `AGENTS.md` (et le lien `CLAUDE.md`) | Langue des échanges et du code ; specs comme référence, avec la mémoire à lire en premier (`specs/ui/CONTEXTE.md`, `specs/requirements/REQUIREMENTS.md`) et ce qu'il ne faut jamais lire en entier ; écart entre le code et les specs tranché avec le développeur, puis reporté dans les specs dans le même changement ; identifiants stables ; git (branches, commits atomiques, aucune écriture distante sans confirmation) ; table des règles ci-dessous |
 | `.claude/rules/general.md` | Tout le dépôt : nommage, TypeScript, dépendances et versions exactes, variables d'environnement validées au démarrage, secrets jamais journalisés, lint sans désactivation, contrôles avant de rendre la main |
 | `.claude/rules/nestjs.md` (`paths: apps/api/**`) | Modules par contexte et leurs quatre couches, agrégats, objets valeur, événements, ports, nommage des cas d'usage, erreurs du domaine (§6.7), anti-patterns (§6.8), adaptateurs, assemblage, traduction des erreurs, validation des entrées, MikroORM (schémas d'entités, migrations relues, jamais modifiées une fois commitées), flux SSE, hooks |
-| `.claude/rules/nextjs.md` (`paths: apps/web/**`) | Organisation par fonctionnalité, TanStack Query et Zustand (DT-17), accessibilité, textes |
+| `.claude/rules/nextjs.md` (`paths: apps/web/**`) | Organisation par fonctionnalité, TanStack Query, Zustand et React Hook Form (DT-17), accessibilité, textes |
 | `.claude/rules/design-system.md` (`paths: apps/web/**`) | Posé par le skill `design-system` (`scaffold.mjs --specs`) : tokens en source unique, classes de daisyUI posées par les variantes des composants, un dossier par composant, Storybook, lint des classes |
 | `.claude/rules/tests.md` (`paths:` tests, `e2e/**`, `**/*.feature`) | Ce que teste chaque niveau, les deux suites et leurs langues, phrases génériques, enregistrements et leurs modes, tags permis (DT-21) |
 | `.claude/agents/specs-gap-reviewer.md` | Sous-agent en lecture seule, lancé en fin de lot : confronte le code aux règles RF et critères CA du lot, propose le statut de chaque écran et les écarts à trancher |
