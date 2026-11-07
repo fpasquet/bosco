@@ -111,13 +111,20 @@ export function SourcesScreen({ title }: { title: string }) {
           onChange={(changes) => saveSettings.mutate(changes)}
         />
       )}
-      <Link
-        href="/settings"
-        className="flex items-center justify-between rounded-card border border-line bg-surface px-4 py-3 shadow-card md:hidden"
+      <nav
+        aria-label="Réglages du worker"
+        className="flex flex-col divide-y divide-line rounded-card border border-line bg-surface shadow-card md:hidden"
       >
-        <span className="font-medium">Isolation du worker</span>
-        <ChevronRight aria-hidden className="size-4 text-muted" />
-      </Link>
+        {[
+          { href: '/settings/isolation', label: 'Isolation du worker' },
+          { href: '/settings/test-environments', label: 'Environnements de test' },
+        ].map(({ href, label }) => (
+          <Link key={href} href={href} className="flex items-center justify-between px-4 py-3">
+            <span className="font-medium">{label}</span>
+            <ChevronRight aria-hidden className="size-4 text-muted" />
+          </Link>
+        ))}
+      </nav>
       <LiveTrackingPanel
         source={selected && { label: selected.label, path: displayPath(selected.path, data.home) }}
         status={

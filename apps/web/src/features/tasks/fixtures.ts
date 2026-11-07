@@ -1,5 +1,5 @@
 // Tâches du fil rouge des specs (lot 2), pour les histoires.
-import type { IsolationDto, TaskDto } from '@bosco/domain';
+import type { IsolationDto, TaskDto, TestEnvironmentDto } from '@bosco/domain';
 
 const at = (time: string) => new Date(`2026-11-06T${time}:00`).toISOString();
 
@@ -89,4 +89,43 @@ export const STORY_ISOLATION: IsolationDto = {
     { at: at('15:02'), taskId: 12, host: 'pypi.org' },
     { at: new Date('2026-11-05T11:41:00').toISOString(), taskId: 9, host: 'api.fastify.dev' },
   ],
+};
+
+/** Environnement de test d'api-voix du fil rouge (E12a). */
+export const STORY_TEST_ENVIRONMENT: TestEnvironmentDto = {
+  repository: 'api-voix',
+  branch: 'develop',
+  file: 'compose.yaml',
+  mode: 'auto',
+  selected: [],
+  image: null,
+  defaultImage: 'bosco-agent:1',
+  services: [
+    { name: 'app', image: null },
+    { name: 'node', image: 'node:22' },
+    { name: 'database', image: 'mysql:8.0' },
+    { name: 'rabbitmq', image: 'rabbitmq:3.8' },
+    { name: 'fake-gcs-server', image: 'fake-gcs:1.54.0' },
+  ],
+  launched: [
+    { name: 'database', image: 'mysql:8.0' },
+    { name: 'rabbitmq', image: 'rabbitmq:3.8' },
+    { name: 'fake-gcs-server', image: 'fake-gcs:1.54.0' },
+  ],
+  excluded: [
+    { name: 'app', reason: 'c’est l’application elle-même' },
+    { name: 'node', reason: 'sert à lancer l’application' },
+  ],
+  removed: ['ports publiés', 'volumes nommés'],
+  limits: { memory: 1024 ** 3, cpus: 1, waitSeconds: 180 },
+  lastRun: {
+    taskId: 12,
+    at: at('14:47'),
+    removedAt: at('14:56'),
+    launches: [
+      { name: 'database', image: 'mysql:8.0', readySeconds: 11, error: null },
+      { name: 'rabbitmq', image: 'rabbitmq:3.8', readySeconds: 8, error: null },
+      { name: 'fake-gcs-server', image: 'fake-gcs:1.54.0', readySeconds: 2, error: null },
+    ],
+  },
 };
