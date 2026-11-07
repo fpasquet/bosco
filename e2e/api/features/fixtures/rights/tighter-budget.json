@@ -1,0 +1,1 @@
+{ "maxBudgetUsd": 1, "deniedTools": ["Bash(npm publish:*)"] }
