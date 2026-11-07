@@ -45,6 +45,12 @@ export class FileTranscriptWatcher implements TranscriptWatcher {
     this.reportProgress(null);
   }
 
+  async unwatch(sourceId: string): Promise<void> {
+    const watcher = this.watchers.get(sourceId);
+    this.watchers.delete(sourceId);
+    await watcher?.close();
+  }
+
   async close(): Promise<void> {
     const watchers = [...this.watchers.values()];
     this.watchers.clear();

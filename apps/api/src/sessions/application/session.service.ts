@@ -2,7 +2,7 @@ import type { FileChange } from '../domain/file-change.ts';
 import type { SessionState, Waiting } from '../domain/session.ts';
 import type { JournalEntry, TranscriptEvent } from '../domain/transcript-event.ts';
 import type { Clock, SessionEvents, SessionRegistry, SessionRepository } from './ports.ts';
-import { Session } from '../domain/session.ts';
+import { DEFAULT_INACTIVITY_DELAY_MS, Session } from '../domain/session.ts';
 
 export interface SessionView {
   branch: null | string;
@@ -45,6 +45,8 @@ export class SessionService {
       sessionChanged: () => undefined,
     },
     private readonly registry: Pick<SessionRegistry, 'isOpen'> = { isOpen: () => null },
+    /** Seuil d'inactivité réglé dans les sources (CA-SESS-59) */
+    private readonly inactivityDelayMs: () => number = () => DEFAULT_INACTIVITY_DELAY_MS,
   ) {}
 
   /** Sessions entrées dans le registre des sessions ouvertes, ou sorties : leur état change sans nouvel événement. */
@@ -87,7 +89,8 @@ export class SessionService {
 
   private view(session: Session): SessionView {
     const snapshot = session.toSnapshot();
-    const state = session.stateAt(this.clock.now(), this.registry.isOpen(snapshot.sourceId, snapshot.id));
+    const open = this.registry.isOpen(snapshot.sourceId, snapshot.id);
+    const state = session.stateAt(this.clock.now(), open, this.inactivityDelayMs());
     const {
       branch,
       costMicros,

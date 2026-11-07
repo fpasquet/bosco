@@ -47,6 +47,21 @@ export class SourceService {
     return sources.map((source) => source.toSnapshot());
   }
 
+  /** Interrupteur d'une source (E4a) : la lecture s'arrête, ou reprend là où elle en était (CA-SESS-56). */
+  async setWatched(sourceId: string, watched: boolean): Promise<null | SourceSnapshot> {
+    const sources = await this.sourceRepository.list();
+    const source = sources.find((candidate) => candidate.id === sourceId);
+    if (!source) return null;
+    source.setWatched(watched);
+    await this.sourceRepository.save([source]);
+    if (watched) await this.resumeWatching([source]);
+    else {
+      await this.transcriptWatcher.unwatch(source.id);
+      this.registry?.sessions.unwatch(source.id);
+    }
+    return source.toSnapshot();
+  }
+
   /** Au démarrage du service : reprend la lecture des profils surveillés là où elle s'était arrêtée. */
   async resumeWatching(sources?: Source[]): Promise<void> {
     const watched = (sources ?? (await this.sourceRepository.list())).filter((source) => source.watched);

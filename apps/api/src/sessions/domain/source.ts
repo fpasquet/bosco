@@ -31,6 +31,11 @@ export class Source {
     this.snapshot = { ...this.snapshot, liveTracking: true };
   }
 
+  /** Interrupteur de la source (E4a) : la lecture s'arrête ou reprend, rien n'est effacé (CA-SESS-56). */
+  setWatched(watched: boolean): void {
+    this.snapshot = { ...this.snapshot, watched };
+  }
+
   disableLiveTracking(): void {
     this.snapshot = { ...this.snapshot, liveTracking: false };
   }
