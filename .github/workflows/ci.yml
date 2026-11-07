@@ -40,6 +40,3 @@ jobs:
         run: pnpm e2e:api --cache-dir=.turbo/cache
       - name: End-to-end tests of the web
         run: pnpm e2e:web --cache-dir=.turbo/cache
-      - name: TypeScript 7 (non-blocking)
-        continue-on-error: true
-        run: for project in packages/core apps/api apps/cli; do pnpm dlx --package typescript@7.0.2 tsc --noEmit -p "$project"; done
