@@ -23,6 +23,7 @@
       "sourceId": "<masked>",
       "startedAt": "2026-11-06T14:02:00.000Z",
       "state": "inactive",
+      "waiting": null,
       "title": "Specs du tableau de bord Bosco",
       "usage": {
         "input": 1200,

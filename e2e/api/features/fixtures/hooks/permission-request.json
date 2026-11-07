@@ -1,0 +1,9 @@
+{
+  "session_id": "c41e9a07",
+  "transcript_path": "{{profiles}}/.claude-perso/projects/c41e9a07.jsonl",
+  "cwd": "{{profiles}}/labo-ia/packages/bosco",
+  "permission_mode": "default",
+  "hook_event_name": "PermissionRequest",
+  "tool_name": "Bash",
+  "tool_input": { "command": "npm run db:migrate", "description": "Run the migrations" }
+}
