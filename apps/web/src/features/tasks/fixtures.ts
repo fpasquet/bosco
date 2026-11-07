@@ -14,6 +14,7 @@ function task(overrides: Partial<TaskDto> & Pick<TaskDto, 'id' | 'instruction' |
     guardrails: { budgetUsd: 2, maxTurns: 30, model: null, tools: null },
     log: [{ at: at('14:00'), event: 'Créée', detail: null }],
     mode: 'worker',
+    outcome: { branch: null, changes: null, report: null, sessionId: null, turns: 0 },
     prerequisites: [],
     repository: { name: 'api-voix', root: '/home/dev/api-voix' },
     spentUsd: 0,

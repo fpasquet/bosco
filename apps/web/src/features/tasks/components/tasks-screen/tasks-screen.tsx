@@ -1,14 +1,17 @@
 'use client';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 import { cn } from '@/lib/cn';
 import { Button } from '@/shared/ui/button';
+import { checkWorker, workerQuery } from '../../api/tasks';
 import { useLiveTasks } from '../../hooks/use-live-tasks';
 import { chainOf, sortTasks, tabOf, type TaskTab } from '../../lib/tasks';
 import { TaskChain } from '../task-chain';
 import { TaskList } from '../task-list';
 import { TasksEmpty } from '../tasks-empty';
+import { WorkerBanner } from '../worker-banner';
 
 const TABS: { label: string; value: TaskTab }[] = [
   { label: 'Actives', value: 'active' },
@@ -19,11 +22,17 @@ const TABS: { label: string; value: TaskTab }[] = [
 /** File de tâches (E5a, E5b) : tout le travail préparé pour Claude Code, du plus urgent au plus lointain. */
 export function TasksScreen({ title }: { title: string }) {
   const tasks = useLiveTasks();
+  const client = useQueryClient();
+  const { data: worker } = useQuery(workerQuery);
+  const retry = useMutation({
+    mutationFn: checkWorker,
+    onSuccess: (status) => client.setQueryData(workerQuery.queryKey, status),
+  });
   const [tab, setTab] = useState<TaskTab>('active');
   const [repository, setRepository] = useState('');
   const [mode, setMode] = useState('');
   if (!tasks) return null;
-  const running = tasks.filter((task) => task.state === 'running' && task.mode === 'worker').length;
+  const running = worker?.running ?? tasks.filter((task) => task.state === 'running' && task.mode === 'worker').length;
   const filtered = tasks.filter(
     (task) => (!repository || task.repository.name === repository) && (!mode || task.mode === mode),
   );
@@ -35,7 +44,10 @@ export function TasksScreen({ title }: { title: string }) {
     <div className="flex flex-col gap-4 p-4 md:px-8 md:pt-6">
       <div className="flex flex-wrap items-end gap-3">
         <div>
-          <p className="text-xs text-muted">Worker : {running} / 4 agents au travail</p>
+          <p className="flex items-center gap-1.5 text-xs text-muted">
+            <span aria-hidden className={cn('size-2 rounded-full', worker?.unavailable ? 'bg-danger' : 'bg-success')} />
+            Worker : {worker?.unavailable ? 'indisponible' : `${running} / ${worker?.capacity ?? 4} agents au travail`}
+          </p>
           <h1 className="mt-1 hidden font-display text-2xl font-semibold tracking-tight md:block">{title}</h1>
         </div>
         {tasks.length > 0 && (
@@ -47,6 +59,9 @@ export function TasksScreen({ title }: { title: string }) {
           </Button>
         )}
       </div>
+      {worker?.unavailable && (
+        <WorkerBanner reason={worker.unavailable} busy={retry.isPending} onRetry={() => retry.mutate()} />
+      )}
       {tasks.length === 0 ? (
         <TasksEmpty />
       ) : (
@@ -92,7 +107,7 @@ export function TasksScreen({ title }: { title: string }) {
           </div>
           <div className="grid gap-4 md:grid-cols-3">
             <div className="md:col-span-2">
-              <TaskList tasks={shown} />
+              <TaskList tasks={shown} waiting={worker?.waiting ?? {}} />
             </div>
             <TaskChain tasks={chainOf(filtered)} />
           </div>
