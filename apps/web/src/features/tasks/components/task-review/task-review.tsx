@@ -53,9 +53,16 @@ export function TaskReview({ busy, changes, followers, onCopy, onReject, onValid
             <TaskStateBadge state={task.state} />
             {task.title}
           </h1>
-          <p className="mt-1 font-mono text-xs text-muted">
-            {task.repository.name}
-            {task.folder ? ` · ${task.folder}` : ''} · {task.mode === 'worker' ? 'Worker' : 'Ma session'}
+          <p className="mt-1 flex flex-wrap items-center gap-x-3 font-mono text-xs text-muted">
+            <span>
+              {task.repository.name}
+              {task.folder ? ` · ${task.folder}` : ''} · {task.mode === 'worker' ? 'Worker' : 'Ma session'}
+            </span>
+            {task.outcome.sessionId && (
+              <Link href={`/sessions/${task.outcome.sessionId}`} className="link font-sans">
+                Voir la session
+              </Link>
+            )}
           </p>
         </div>
         <div className="fixed inset-x-0 bottom-16 z-10 flex gap-2 border-t border-line bg-surface p-3 md:static md:border-0 md:bg-transparent md:p-0">

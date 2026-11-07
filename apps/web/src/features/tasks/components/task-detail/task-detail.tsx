@@ -151,6 +151,14 @@ export function TaskDetail({ busy, failing, onCancel, onRelaunch, task }: TaskDe
             {task.repository.name}
             {task.folder ? ` · ${task.folder}` : ''} · {task.mode === 'worker' ? 'Worker' : 'Ma session'}
             {task.createdBy === 'session' ? ' · créée par une session' : ''}
+            {task.outcome.sessionId && (
+              <>
+                {' · '}
+                <Link href={`/sessions/${task.outcome.sessionId}`} className="link font-sans">
+                  Voir la session
+                </Link>
+              </>
+            )}
           </p>
         </div>
         <div className="flex gap-2">
