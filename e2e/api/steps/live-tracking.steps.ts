@@ -146,6 +146,11 @@ Then('the task {int} should become {string}', async ({ request }, id: number, st
     .toBe(state);
 });
 
+Given('the proxy of the task {int} refused {string}', async ({ request }, taskId: number, host: string) => {
+  const response = await request.post('/__test/refusals', { data: { taskId, host } });
+  expect(response.status()).toBe(204);
+});
+
 When('I ask the worker to check again', async ({ last, request }) => {
   const response = await request.post('/api/worker/check');
   last.response = { status: response.status(), body: (await response.json()) as unknown };

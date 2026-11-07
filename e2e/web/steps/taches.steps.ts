@@ -1,6 +1,6 @@
 // Phrases des tâches : des tâches préparées par l'API avant d'ouvrir l'écran.
 import { expect } from '@playwright/test';
-import { Given, When } from './fixtures.ts';
+import { Given, Then, When } from './fixtures.ts';
 
 Given(
   'une tâche du worker {texte} existe dans le dépôt {texte}',
@@ -43,4 +43,22 @@ Given('Docker ne répond pas', async ({ bosco }) => {
     body: JSON.stringify({ unavailable: 'Docker ne répond pas' }),
   });
   expect(response.status).toBe(204);
+});
+
+Given('le proxy de la tâche {int} a refusé {texte}', async ({ bosco }, taskId: number, host: string) => {
+  const response = await fetch(`${bosco.url}/__test/refusals`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ taskId, host }),
+  });
+  expect(response.status).toBe(204);
+});
+
+Then('la liste {texte} contient {texte}', async ({ page }, label: string, item: string) => {
+  await expect(page.getByRole('list', { name: label }).getByRole('listitem').filter({ hasText: item })).toBeVisible();
+});
+
+Then('la liste {texte} ne contient plus {texte}', async ({ page }, label: string, item: string) => {
+  await expect(page.getByRole('listitem').filter({ hasText: item })).toHaveCount(0);
+  await expect(page.getByRole('list', { name: label })).toBeHidden();
 });
