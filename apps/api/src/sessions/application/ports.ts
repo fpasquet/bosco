@@ -49,6 +49,21 @@ export interface PermissionSettled {
   title: null | string;
 }
 
+/** Adresse et secret de l'entrée des hooks de Bosco pour un profil, écrits dans ses réglages. */
+export interface HookEndpoint {
+  secret: string;
+  url: string;
+}
+
+/** Réglages d'un profil Claude Code (<profil>/settings.json) : Bosco y ajoute ses hooks sans rien remplacer. */
+export interface ProfileSettings {
+  /** Hooks de Bosco ajoutés aux réglages ; `backup` garde d'abord une copie des réglages actuels (CA-SESS-62) */
+  install(profilePath: string, endpoint: HookEndpoint, backup: boolean): Promise<{ backupPath: null | string }>;
+  isInstalled(profilePath: string, endpoint: HookEndpoint): Promise<boolean>;
+  /** Retire les seuls hooks de Bosco : les réglages redeviennent ceux d'avant l'installation (CA-SESS-63) */
+  uninstall(profilePath: string, endpoint: HookEndpoint): Promise<void>;
+}
+
 export interface Clock {
   now(): Date;
 }
