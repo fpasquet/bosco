@@ -4,11 +4,18 @@ import { APP_NAME } from '@bosco/domain';
 import { NAV_ITEMS } from './nav-items';
 import { NavLink } from './nav-link';
 
+interface AppShellProps {
+  children: ReactNode;
+  /** Suite de la barre latérale propre à l'écran : dépôts, profils et état des sources de la vue d'ensemble */
+  sidebar?: ReactNode;
+  title: string;
+}
+
 /**
  * Coquille de l'application (disposition « Tour de contrôle ») : barre latérale sur ordinateur ; en-tête et onglets
- * en bas sur téléphone, sous 768 px. Les dépôts, profils et l'état des sources s'y ajoutent avec le lot 1.
+ * en bas sur téléphone, sous 768 px.
  */
-export function AppShell({ children, title }: { children: ReactNode; title: string }) {
+export function AppShell({ children, sidebar, title }: AppShellProps) {
   return (
     <div className="flex h-dvh bg-canvas text-ink">
       <aside className="hidden w-60 shrink-0 flex-col border-r border-line bg-nav px-3 py-4 text-nav-muted md:flex">
@@ -29,6 +36,7 @@ export function AppShell({ children, title }: { children: ReactNode; title: stri
             </NavLink>
           ))}
         </nav>
+        {sidebar}
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex h-14 shrink-0 items-center gap-3 border-b border-line bg-nav px-4 text-nav-ink md:hidden">

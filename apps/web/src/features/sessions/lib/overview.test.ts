@@ -36,7 +36,7 @@ function session(id: string, overrides: Partial<SessionDto> = {}): SessionDto {
 }
 
 const at = (time: string) => new Date(`2026-11-06T${time}`).toISOString();
-const outilsNode = { folder: '.', name: 'outils-node', root: '/home/dev/www/outils-node' };
+const outilsNode = { folder: '', name: 'outils-node', root: '/home/dev/www/outils-node' };
 
 describe('openSessions', () => {
   it('keeps running sessions and sessions active today, and leaves older ones to the history', () => {
