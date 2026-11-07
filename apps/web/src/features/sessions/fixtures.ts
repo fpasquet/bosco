@@ -78,3 +78,28 @@ export const STORY_SESSIONS: SessionDto[] = [
     usage: { cacheCreation: 0, cacheRead: 10_000, input: 7000, output: 1000 },
   }),
 ];
+
+/** Les deux sessions du fil rouge qui t'attendent : une autorisation demandée, un tour terminé. */
+export const STORY_WAITING: SessionDto[] = [
+  session({
+    id: '7a3e5f21',
+    title: 'Digest quotidien de la veille média',
+    branch: 'feat/digest',
+    repository: laboIa('packages/veille-presse'),
+    state: 'waiting',
+    lastEventAt: ago(6 * 60),
+    waiting: { kind: 'turn', message: 'Le digest est généré. Veux-tu que je lance les tests ?', since: ago(6 * 60) },
+    cost: { unpriced: false, usd: 0.38 },
+  }),
+  session({
+    id: 'c41e9a07',
+    title: 'Specs du tableau de bord Bosco',
+    sourceId: 'perso',
+    branch: 'feat/specs',
+    repository: laboIa('packages/bosco'),
+    state: 'waiting',
+    lastEventAt: ago(40),
+    waiting: { kind: 'permission', requestId: 'req-1', tool: 'Bash', detail: 'npm run db:migrate', since: ago(40) },
+    cost: { unpriced: false, usd: 1.84 },
+  }),
+];

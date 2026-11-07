@@ -1,0 +1,1 @@
+export { Notices } from './notices';

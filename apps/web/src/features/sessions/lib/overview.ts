@@ -79,9 +79,16 @@ export function groupByRepository(sessions: readonly SessionDto[]): RepositoryGr
     });
 }
 
-/** Colonnes par état (E1d) : une colonne par état, triée par activité la plus récente. */
-export function groupByState(sessions: readonly SessionDto[]): { sessions: SessionDto[]; state: SessionStateDto }[] {
-  return BOARD_STATES.map((state) => ({
+/**
+ * Colonnes par état (E1d) : une colonne par état, triée par activité la plus récente. La colonne T'attend n'existe
+ * qu'avec le suivi en direct : elle remplace alors le bandeau (CA-SESS-14).
+ */
+export function groupByState(
+  sessions: readonly SessionDto[],
+  liveTracking = false,
+): { sessions: SessionDto[]; state: SessionStateDto }[] {
+  const states = BOARD_STATES.filter((state) => liveTracking || state !== 'waiting');
+  return states.map((state) => ({
     state,
     sessions: sortSessions(sessions.filter((session) => session.state === state)),
   }));
@@ -102,6 +109,13 @@ export function filterSessions(sessions: readonly SessionDto[], filters: Overvie
       !(filters.hideInactive && session.state === 'inactive') &&
       matches(session, filters.query),
   );
+}
+
+/** Sessions qui t'attendent, la plus ancienne attente en premier (CA-SESS-05). */
+export function waitingSessions(sessions: readonly SessionDto[]): SessionDto[] {
+  return sessions
+    .filter((session) => session.state === 'waiting' && session.waiting)
+    .toSorted((left, right) => (left.waiting?.since ?? '').localeCompare(right.waiting?.since ?? ''));
 }
 
 /** Indicateurs de la vue d'ensemble ; le coût du jour additionne les sessions commencées aujourd'hui (CA-SESS-10). */

@@ -10,6 +10,7 @@ import {
   profileMark,
   repositoriesOf,
   sortSessions,
+  waitingSessions,
 } from './overview';
 
 const now = new Date('2026-11-06T15:00:00');
@@ -84,10 +85,20 @@ describe('groupByRepository', () => {
 describe('groupByState', () => {
   it('gives one column per state, even an empty one', () => {
     expect(groupByState([session('a'), session('b')]).map(({ sessions, state }) => [state, sessions.length])).toEqual([
-      ['waiting', 0],
       ['running', 2],
       ['inactive', 0],
     ]);
+    expect(groupByState([session('a')], true).map(({ state }) => state)).toEqual(['waiting', 'running', 'inactive']);
+  });
+});
+
+describe('waitingSessions', () => {
+  it('puts the oldest wait first (CA-SESS-05)', () => {
+    const waiting = (id: string, since: string) =>
+      session(id, { state: 'waiting', waiting: { kind: 'turn', message: null, since: at(since) } });
+    expect(
+      waitingSessions([session('busy'), waiting('recent', '14:59:20'), waiting('old', '14:54:00')]).map(({ id }) => id),
+    ).toEqual(['old', 'recent']);
   });
 });
 

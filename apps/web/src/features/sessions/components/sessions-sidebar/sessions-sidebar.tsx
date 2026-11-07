@@ -30,7 +30,7 @@ export function SessionsSidebar({ liveTracking, profiles, repositories, selected
                 aria-current={selected === name ? 'page' : undefined}
                 className={ITEM}
               >
-                <FolderGit2 aria-hidden className="size-4" />
+                <FolderGit2 aria-hidden className="size-4 shrink-0" />
                 <span className="truncate">{name}</span>
                 <span className="ml-auto font-mono text-xs">{count}</span>
               </Link>
@@ -44,7 +44,7 @@ export function SessionsSidebar({ liveTracking, profiles, repositories, selected
       <ul aria-labelledby="sidebar-profiles" className="mt-1.5 flex flex-col gap-0.5">
         {profiles.map(({ count, label, path }) => (
           <li key={path} className="flex h-8 items-center gap-3 px-2.5">
-            <SquareTerminal aria-hidden className="size-4" />
+            <SquareTerminal aria-hidden className="size-4 shrink-0" />
             {label}
             <span className="truncate font-mono text-xs">{path}</span>
             <span className="ml-auto font-mono text-xs">{count}</span>
