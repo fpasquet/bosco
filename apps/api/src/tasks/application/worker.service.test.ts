@@ -65,7 +65,7 @@ function setup(events: AgentEvent[], options: { budgetUsd?: number; hang?: boole
     workspaces: {
       cleanupAll: () => Promise.resolve(),
       prepare: ({ branch }) => Promise.resolve({ branch, dir: '/var/lib/bosco/t-1' }),
-      collect: () => Promise.resolve({ files: 2, added: 38, removed: 4 }),
+      collect: () => Promise.resolve({ base: 'abc123', changes: { files: 2, added: 38, removed: 4 }, from: 'main' }),
       remove: () => Promise.resolve(),
     },
   });

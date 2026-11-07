@@ -86,7 +86,7 @@ export interface Workspaces {
   collect(
     workspace: Workspace,
     task: { id: number; repositoryRoot: string; title: string },
-  ): Promise<{ added: number; files: number; removed: number }>;
+  ): Promise<{ base: string; changes: { added: number; files: number; removed: number }; from: string }>;
   prepare(task: { branch: string; id: number; repositoryRoot: string; startBranch: null | string }): Promise<Workspace>;
   remove(workspace: Workspace): Promise<void>;
 }

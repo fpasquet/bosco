@@ -33,9 +33,15 @@ export interface TaskLogEntry {
 
 /** Ce qu'une tâche du worker a produit : sa branche, son compte rendu et le résumé de ses modifications (E7a). */
 export interface TaskOutcome {
+  /** Point de départ de la branche (commit), d'où se calcule le diff de la relecture (E7a) */
+  base: null | string;
   /** Branche de la tâche, rapatriée dans le dépôt (« bosco/t-12-sncf ») */
   branch: null | string;
   changes: { added: number; files: number; removed: number } | null;
+  /** Branche de départ (« develop »), vers laquelle s'ouvre la PR brouillon (E7c) */
+  from: null | string;
+  /** Adresse de la PR brouillon ouverte à la validation */
+  pullRequest: null | string;
   /** Compte rendu de l'agent, tel qu'il le donne en fin de session */
   report: null | string;
   /** Session Claude Code de l'agent, pour son fil (E2c, E2d) */
@@ -118,7 +124,16 @@ export class Task {
       updatedAt: at,
       failure: null,
       spentUsd: 0,
-      outcome: { branch: null, changes: null, report: null, sessionId: null, turns: 0 },
+      outcome: {
+        base: null,
+        branch: null,
+        changes: null,
+        from: null,
+        pullRequest: null,
+        report: null,
+        sessionId: null,
+        turns: 0,
+      },
       state: 'blocked',
       log: [{ at, event: 'Créée', detail: fields.createdBy === 'session' ? 'par une session' : null }],
     });

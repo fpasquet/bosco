@@ -37,6 +37,9 @@ export class GitWorkspaces implements Workspaces {
     await git(this.root, 'clone', '--quiet', '--no-hardlinks', task.repositoryRoot, join(dir, 'repo'));
     const repo = join(dir, 'repo');
     const start = task.startBranch ? `origin/${task.startBranch}` : 'HEAD';
+    // Branche de départ, vers laquelle s'ouvrira une PR : celle de la préalable, ou la branche courante du dépôt
+    const from = task.startBranch ?? (await git(repo, 'rev-parse', '--abbrev-ref', 'HEAD'));
+    await writeFile(join(dir, 'from'), from);
     await git(repo, 'checkout', '--quiet', '-B', task.branch, start);
     // Point de départ de la branche, pour le résumé des modifications : noté dans la copie, jamais dans le dépôt
     const head = await git(repo, 'rev-parse', 'HEAD');
@@ -64,9 +67,11 @@ export class GitWorkspaces implements Workspaces {
     const start = saved.trim();
     const stat = await git(repo, 'diff', '--shortstat', start, 'HEAD');
     const changes = shortStat(stat);
+    const origin = await readFile(join(workspace.dir, 'from'), 'utf8');
+    const from = origin.trim();
     // La branche rejoint le dépôt de la personne, sans toucher à sa branche courante ni à sa copie de travail
     await git(task.repositoryRoot, 'fetch', '--quiet', '--no-tags', repo, `+${workspace.branch}:${workspace.branch}`);
-    return changes;
+    return { base: start, changes, from };
   }
 
   async remove(workspace: Workspace): Promise<void> {

@@ -18,7 +18,10 @@ function toTask(row: TaskRow): Task {
     prerequisites: row.prerequisites,
     log: row.log.map((entry) => ({ ...entry, at: new Date(entry.at) })),
     outcome: {
+      base: null,
       branch: null,
+      from: null,
+      pullRequest: null,
       changes: null,
       report: null,
       sessionId: null,

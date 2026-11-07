@@ -24,6 +24,7 @@ const schema = z.object({
   // Worker (DT-09) : identifiants de l'abonnement Claude du poste et exécutable de Claude Code monté dans l'agent
   BOSCO_WORKER_CREDENTIALS: z.string().min(1).optional(),
   BOSCO_CLAUDE_BIN: z.string().min(1).optional(),
+  BOSCO_GH_BIN: z.string().min(1).optional(),
 });
 
 export type Config = Readonly<{
@@ -36,7 +37,7 @@ export type Config = Readonly<{
   dev: boolean;
   /** Écoute HTTPS du téléphone, ouverte seulement quand l'accès est activé (NF-13) */
   phone: { host: null | string; port: number };
-  worker: { claudeBinary: string; credentials: string };
+  worker: { claudeBinary: string; credentials: string; gh: string };
 }>;
 
 /** Claude Code installé sur le poste : le lien de ~/.local/bin/claude mène à l'exécutable de la version courante. */
@@ -69,6 +70,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     worker: {
       credentials: values.BOSCO_WORKER_CREDENTIALS ?? join(values.BOSCO_PROFILES_ROOT, '.claude', '.credentials.json'),
       claudeBinary: values.BOSCO_CLAUDE_BIN ?? installedClaude(),
+      gh: values.BOSCO_GH_BIN ?? '/usr/bin/gh',
     },
   };
 }

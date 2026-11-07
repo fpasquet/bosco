@@ -51,8 +51,6 @@ const relaunchSchema = z.object({
   instruction: z.string().max(5000).optional(),
 });
 
-const rejectSchema = z.object({ reason: z.string().trim().max(2000).nullish() });
-
 function draftOf(body: unknown): TaskDraft {
   const draft = parseBody(draftSchema, body);
   return {
@@ -63,7 +61,7 @@ function draftOf(body: unknown): TaskDraft {
 }
 
 /** Traduit les erreurs du domaine : 400 avec les champs en cause (E6b), 404, 409. */
-async function guard<T>(work: () => Promise<T>): Promise<T> {
+export async function guard<T>(work: () => Promise<T>): Promise<T> {
   try {
     return await work();
   } catch (error) {
@@ -74,7 +72,7 @@ async function guard<T>(work: () => Promise<T>): Promise<T> {
   }
 }
 
-async function guardTask(work: () => Promise<TaskView>): Promise<TaskDto> {
+export async function guardTask(work: () => Promise<TaskView>): Promise<TaskDto> {
   const task = await guard(work);
   return presentTask(task);
 }
@@ -149,16 +147,5 @@ export class TasksController {
   async relaunch(@Param('id', ParseIntPipe) id: number, @Body() body: unknown): Promise<TaskDto> {
     const changes = parseBody(relaunchSchema, body);
     return guardTask(() => this.tasks.relaunch(id, changes));
-  }
-
-  @Post('tasks/:id/validate')
-  async validate(@Param('id', ParseIntPipe) id: number): Promise<TaskDto> {
-    return guardTask(() => this.tasks.validate(id));
-  }
-
-  @Post('tasks/:id/reject')
-  async reject(@Param('id', ParseIntPipe) id: number, @Body() body: unknown): Promise<TaskDto> {
-    const { reason } = parseBody(rejectSchema, body ?? {});
-    return guardTask(() => this.tasks.reject(id, reason ?? null));
   }
 }
