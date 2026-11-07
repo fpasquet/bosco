@@ -14,7 +14,9 @@ export type {
   WaitingDto,
 } from './sessions.ts';
 export type {
+  EgressRefusalDto,
   GuardrailsDto,
+  IsolationDto,
   TaskDraftDto,
   TaskDto,
   TaskIssueDto,

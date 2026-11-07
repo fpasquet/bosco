@@ -2,8 +2,11 @@ import type { RepositoryRights } from '../domain/rights.ts';
 import type { AgentEvent, AgentRun, AgentRunner, AgentUsage, WorkerHealth, Workspace, Workspaces } from './ports.ts';
 import type { TaskService, TaskView } from './task.service.ts';
 
-/** Capacité du worker (E11a) : agents au plus, mémoire par agent et mémoire gardée libre. */
-export const CAPACITY = { agents: 4, agentMemory: 4 * 1024 ** 3, reservedMemory: 4 * 1024 ** 3 } as const;
+/** Limites de chaque agent (E11a) : mémoire, processeurs et processus. */
+export const AGENT_LIMITS = { memory: 4 * 1024 ** 3, cpus: 2, processes: 512 } as const;
+
+/** Mémoire gardée libre sur le poste : une tâche ne part que s'il reste de quoi loger un agent au-delà (E11a). */
+export const RESERVED_MEMORY = 4 * 1024 ** 3;
 
 export interface WorkerStatus {
   capacity: number;
@@ -17,6 +20,8 @@ export interface WorkerStatus {
 export interface WorkerDeps {
   freeMemory: () => number;
   health: WorkerHealth;
+  /** Plafond d'agents en même temps, réglé dans l'isolation du worker (E11a) */
+  maxAgents: () => number;
   /** Coût estimé d'un message de l'agent au tarif public (RF-SESS-05), en dollars ; null si le modèle n'a pas de tarif */
   priceOf: (model: null | string, usage: AgentUsage) => null | number;
   rightsOf: (repository: string) => Promise<RepositoryRights>;
@@ -58,13 +63,13 @@ export class WorkerService {
   private readonly runs = new Map<number, AgentRun>();
   /** Tâches lancées dans ce passage, dont l'agent n'a pas encore démarré : leur place est déjà prise */
   private readonly starting = new Map<number, string>();
-  private status: WorkerStatus = { capacity: CAPACITY.agents, running: 0, unavailable: null, waiting: {} };
+  private status: WorkerStatus = { capacity: 0, running: 0, unavailable: null, waiting: {} };
   private ticking = false;
 
   constructor(private readonly deps: WorkerDeps) {}
 
   current(): WorkerStatus {
-    return { ...this.status, running: this.busy() };
+    return { ...this.status, capacity: this.deps.maxAgents(), running: this.busy() };
   }
 
   private busy(): number {
@@ -98,7 +103,7 @@ export class WorkerService {
           void this.run(task);
         }
       }
-      this.status = { capacity: CAPACITY.agents, running: this.busy(), unavailable, waiting };
+      this.status = { capacity: this.deps.maxAgents(), running: this.busy(), unavailable, waiting };
       return this.current();
     } finally {
       this.ticking = false;
@@ -111,8 +116,9 @@ export class WorkerService {
   }
 
   private async blocker(task: TaskView, tasks: TaskView[]): Promise<null | string> {
-    if (this.busy() >= CAPACITY.agents) return `Plus de place : ${CAPACITY.agents} agents au travail`;
-    if (this.deps.freeMemory() - CAPACITY.reservedMemory < CAPACITY.agentMemory) return 'Mémoire libre insuffisante';
+    const agents = this.deps.maxAgents();
+    if (this.busy() >= agents) return `Plus de place : ${agents} ${agents > 1 ? 'agents' : 'agent'} au travail`;
+    if (this.deps.freeMemory() - RESERVED_MEMORY < AGENT_LIMITS.memory) return 'Mémoire libre insuffisante';
     const rights = await this.deps.rightsOf(task.repository.name);
     const running = tasks.filter(
       (other) => other.repository.name === task.repository.name && other.state === 'running',
