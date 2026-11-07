@@ -3,6 +3,7 @@ import { type QueryClient, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import type { LiveEventDto, SessionDto } from '@bosco/domain';
 import { importProgressQuery, sessionsQuery } from '../api/sessions';
+import { RETRY_MS, useConnection } from '../lib/connection';
 import { settledNotice, useNotices } from '../lib/notices';
 import { useSettlements } from '../lib/settlements';
 
@@ -15,7 +16,10 @@ function upsert(sessions: SessionDto[] | undefined, session: SessionDto): Sessio
 
 function listen(source: EventSource, client: QueryClient): void {
   const on = <T extends LiveEventDto['type']>(type: T, apply: (data: EventOf<T>) => void) =>
-    source.addEventListener(type, (event) => apply(JSON.parse((event as MessageEvent<string>).data) as EventOf<T>));
+    source.addEventListener(type, (event) => {
+      useConnection.getState().markData();
+      apply(JSON.parse((event as MessageEvent<string>).data) as EventOf<T>);
+    });
   on('sessions.snapshot', ({ sessions }) => client.setQueryData(sessionsQuery.queryKey, sessions));
   on('session.updated', ({ session }) => {
     client.setQueryData<SessionDto[]>(sessionsQuery.queryKey, (sessions) => upsert(sessions, session));
@@ -32,14 +36,33 @@ function listen(source: EventSource, client: QueryClient): void {
 
 /**
  * Abonne le cache des sessions au flux en direct : l'instantané le remplace, chaque changement y entre aussitôt
- * (CA-SESS-16). EventSource se reconnecte seul et reçoit un nouvel instantané.
+ * (CA-SESS-16). Une coupure est signalée aussitôt et une reconnexion tentée toutes les 5 s, ou tout de suite par
+ * « Réessayer » (E1f) ; la reconnexion reçoit un nouvel instantané (CA-SESS-26).
  */
 export function useLiveEvents(enabled: boolean): void {
   const client = useQueryClient();
   useEffect(() => {
     if (!enabled) return;
-    const source = new EventSource('/api/events');
-    listen(source, client);
-    return () => source.close();
+    const connection = useConnection.getState();
+    let source: EventSource | null = null;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const connect = () => {
+      clearTimeout(timer);
+      source?.close();
+      source = new EventSource('/api/events');
+      listen(source, client);
+      source.addEventListener('open', () => useConnection.getState().markOnline());
+      source.addEventListener('error', () => {
+        source?.close();
+        useConnection.getState().markOffline(new Date(Date.now() + RETRY_MS).toISOString());
+        timer = setTimeout(connect, RETRY_MS);
+      });
+    };
+    connection.setRetry(connect);
+    connect();
+    return () => {
+      clearTimeout(timer);
+      source?.close();
+    };
   }, [client, enabled]);
 }

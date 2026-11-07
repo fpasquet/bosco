@@ -2,11 +2,14 @@ import { FolderGit2 } from 'lucide-react';
 import Link from 'next/link';
 import type { SessionDto } from '@bosco/domain';
 import { cn } from '@/lib/cn';
+import { clockOf } from '../../lib/detail';
 import { actionLabel, elapsed, formatCost, formatTokens, sessions as sessionsLabel } from '../../lib/format';
 import { type RepositoryGroup, totalTokens } from '../../lib/overview';
 import { SessionStateBadge } from '../session-state-badge';
 
 export interface SessionsTableProps {
+  /** Bosco injoignable : les données sont figées, « Vu à » remplace les durées (E1f, CA-SESS-23) */
+  frozen?: boolean;
   groups: RepositoryGroup[];
   /** Marque du profil (« perso ») d'une session lancée avec un autre dossier de configuration que celui par défaut */
   markOf: (session: SessionDto) => null | string;
@@ -32,11 +35,13 @@ function groupLabel(group: RepositoryGroup, pending: boolean): string {
 }
 
 function Row({
+  frozen,
   markOf,
   now,
   session,
   showFolder,
 }: {
+  frozen: boolean;
   markOf: SessionsTableProps['markOf'];
   now: Date;
   session: SessionDto;
@@ -47,7 +52,7 @@ function Row({
   return (
     <tr className={cn('relative h-row border-b border-line hover:bg-surface-alt', inactive && 'text-muted')}>
       <td className="pl-4">
-        <SessionStateBadge state={session.state} />
+        <SessionStateBadge state={session.state} still={frozen} />
       </td>
       <td>
         <span className="flex items-center gap-2">
@@ -73,7 +78,9 @@ function Row({
       <td className="font-mono text-xs tabular-nums">
         {formatCost(session.cost)} · {formatTokens(totalTokens(session.usage))}
       </td>
-      <td className="pr-4 text-right text-xs text-muted tabular-nums">{elapsed(new Date(session.lastEventAt), now)}</td>
+      <td className="pr-4 text-right text-xs text-muted tabular-nums">
+        {frozen ? clockOf(session.lastEventAt) : elapsed(new Date(session.lastEventAt), now)}
+      </td>
     </tr>
   );
 }
@@ -125,7 +132,14 @@ function MobileList({ groups, now, pendingRows, showFolder }: Omit<SessionsTable
 }
 
 /** Tableau des sessions ouvertes, groupées par dépôt (E1b) ou d'un seul dépôt avec ses dossiers (E1c). */
-export function SessionsTable({ groups, markOf, now, pendingRows = 0, showFolder = false }: SessionsTableProps) {
+export function SessionsTable({
+  frozen = false,
+  groups,
+  markOf,
+  now,
+  pendingRows = 0,
+  showFolder = false,
+}: SessionsTableProps) {
   const columns = showFolder ? 7 : 6;
   return (
     <>
@@ -140,7 +154,7 @@ export function SessionsTable({ groups, markOf, now, pendingRows = 0, showFolder
               <th className="w-32 font-medium">Branche</th>
               <th className="w-52 font-medium">Dernière action</th>
               <th className="w-32 font-medium">Coût · tokens</th>
-              <th className="w-20 pr-4 text-right font-medium">Activité</th>
+              <th className="w-20 pr-4 text-right font-medium">{frozen ? 'Vu à' : 'Activité'}</th>
             </tr>
           </thead>
           {groups.map((group) => (
@@ -157,7 +171,14 @@ export function SessionsTable({ groups, markOf, now, pendingRows = 0, showFolder
                 </tr>
               )}
               {group.sessions.map((session) => (
-                <Row key={session.id} markOf={markOf} now={now} session={session} showFolder={showFolder} />
+                <Row
+                  key={session.id}
+                  frozen={frozen}
+                  markOf={markOf}
+                  now={now}
+                  session={session}
+                  showFolder={showFolder}
+                />
               ))}
             </tbody>
           ))}

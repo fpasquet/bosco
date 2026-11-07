@@ -7,6 +7,7 @@ import { sourcesQuery } from '../../api/sources';
 import { useLiveEvents } from '../../hooks/use-live-events';
 import { useNow } from '../../hooks/use-now';
 import { usePermissionAnswers } from '../../hooks/use-permission-answers';
+import { useOffline } from '../../lib/connection';
 import { formatCost } from '../../lib/format';
 import {
   filterSessions,
@@ -19,6 +20,7 @@ import {
 } from '../../lib/overview';
 import { useOverviewPreferences } from '../../lib/preferences';
 import { AllowDialog } from '../allow-dialog';
+import { ConnectionStatus } from '../connection-status';
 import { ImportProgressBanner } from '../import-progress-banner';
 import { LiveTrackingHint } from '../live-tracking-hint';
 import { LiveTrackingLine } from '../live-tracking-line';
@@ -54,7 +56,8 @@ function LiveOverview({ repository, sources, title }: OverviewProps & { sources:
   const loading = sessions === undefined || progress !== null;
   const liveTracking = sources.sources.some((source) => source.liveTracking);
   const answers = usePermissionAnswers();
-  const actions = { busyId: answers.busyId, onAllow: answers.onAllow };
+  const offline = useOffline();
+  const actions = { busyId: answers.busyId, offline, onAllow: answers.onAllow };
   const opened = `${open.length} ${open.length > 1 ? 'sessions ouvertes' : 'session ouverte'}`;
   const summary = `${opened} · ${indicators.sessionsToday} aujourd’hui · ${formatCost(indicators.costToday)} estimés`;
   return (
@@ -72,6 +75,7 @@ function LiveOverview({ repository, sources, title }: OverviewProps & { sources:
         costToday={formatCost(indicators.costToday)}
         summary={grouping === 'state' ? summary : undefined}
       />
+      <ConnectionStatus />
       {progress && <ImportProgressBanner progress={progress} />}
       {!liveTracking && <LiveTrackingLine />}
       {grouping === 'repository' ? (
@@ -88,6 +92,7 @@ function LiveOverview({ repository, sources, title }: OverviewProps & { sources:
             now={now}
             pendingRows={loading ? PENDING_ROWS : 0}
             showFolder={repository !== null}
+            frozen={offline}
           />
         </>
       ) : (
