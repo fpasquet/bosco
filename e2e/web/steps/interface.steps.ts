@@ -51,7 +51,11 @@ Then('la page est accessible', async ({ page }) => {
   const { violations } = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa'])
     .analyze();
-  expect(violations.map(({ id, help }) => `${id} · ${help}`)).toEqual([]);
+  // Les éléments en cause accompagnent chaque règle, pour corriger sans relancer
+  const found = violations.map(({ help, id, nodes }) =>
+    [id, help, nodes.map((node) => node.target.join(' ')).join(', ')].join(' · '),
+  );
+  expect(found).toEqual([]);
 });
 
 Then('je vois le lien {texte}', async ({ page }, name: string) => {
