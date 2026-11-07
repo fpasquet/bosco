@@ -4,9 +4,9 @@ Feature: Profiles at first launch
   so that nothing is read without my consent.
 
   Background:
-    Given the Claude Code profile ".claude" has the transcript "fixtures/session-labo-ia-rag.jsonl" for the session "5e0a91c3"
-    And the Claude Code profile ".claude-perso" has the transcript "fixtures/session-labo-ia-bosco.jsonl" for the session "c41e9a07"
-    And the Claude Code profile ".claude-perso" has the transcript "fixtures/session-api-voix-fastify.jsonl" for the session "a41f07c2"
+    Given the Claude Code profile ".claude" has the transcript "session-labo-ia-rag.jsonl" for the session "5e0a91c3"
+    And the Claude Code profile ".claude-perso" has the transcript "session-labo-ia-bosco.jsonl" for the session "c41e9a07"
+    And the Claude Code profile ".claude-perso" has the transcript "session-api-voix-fastify.jsonl" for the session "a41f07c2"
     And the transcript of the session "a41f07c2" was last modified 40 days ago
 
   @CA-SESS-01

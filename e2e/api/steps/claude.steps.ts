@@ -1,7 +1,7 @@
 // Phrases Claude Code : des profils et des transcripts écrits comme le fait Claude Code, dans le dossier du scénario.
 import { utimesSync } from 'node:fs';
 import { join } from 'node:path';
-import { FEATURES } from '../paths.ts';
+import { TRANSCRIPTS } from '../../shared/transcripts.ts';
 import { Given } from './fixtures.ts';
 
 const written = new Map<string, string>();
@@ -9,7 +9,7 @@ const written = new Map<string, string>();
 Given(
   'the Claude Code profile {string} has the transcript {string} for the session {string}',
   ({ bosco }, profile: string, fixture: string, sessionId: string) => {
-    written.set(sessionId, bosco.writeProfileTranscript(profile, join(FEATURES, fixture), sessionId));
+    written.set(sessionId, bosco.writeProfileTranscript(profile, join(TRANSCRIPTS, fixture), sessionId));
   },
 );
 
