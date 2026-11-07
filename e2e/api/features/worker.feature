@@ -35,3 +35,12 @@ Feature: Worker
     Then the task 1 should become "running"
     When I send POST request to "/api/tasks/1/cancel"
     Then the task 1 should become "cancelled"
+
+  @RF-TACH-06
+  Scenario: The session of the agent joins the history with the state of its task
+    When I send POST request to "/api/tasks" with the JSON "fixtures/tasks/worker-task.json"
+    Then the task 1 should become "to_review"
+    And the session "scripted-1" should have the task state "to_review"
+    When I send GET request to "/api/sessions/scripted-1"
+    Then the response property "session.repository.name" should equal "labo-ia"
+    And the response property "session.task.id" should equal "1"

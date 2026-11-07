@@ -155,3 +155,16 @@ When('I ask the worker to check again', async ({ last, request }) => {
   const response = await request.post('/api/worker/check');
   last.response = { status: response.status(), body: (await response.json()) as unknown };
 });
+
+Then('the session {string} should have the task state {string}', async ({ request }, id: string, state: string) => {
+  await expect
+    .poll(
+      async () => {
+        const response = await request.get(`/api/sessions/${id}`);
+        if (!response.ok()) return null;
+        return ((await response.json()) as { session: { task: null | { state: string } } }).session.task?.state;
+      },
+      { timeout: 10_000 },
+    )
+    .toBe(state);
+});

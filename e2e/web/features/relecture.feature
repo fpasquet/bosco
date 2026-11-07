@@ -34,3 +34,11 @@ Fonctionnalité: Relecture d'une tâche
     Alors je vois le titre « Valider T-1 »
     Quand je clique sur le bouton « Valider et ouvrir la PR »
     Alors je vois le lien « https://github.com/exemple/depot/pull/50 »
+
+  @NF-18
+  Scénario: La session de l'agent mène à la revue de sa tâche
+    Quand j'ouvre la page « /sessions/scripted-1 »
+    Alors je vois le texte « Session du worker pour T-1, à relire. »
+    Et la page est accessible
+    Quand je clique sur le lien « Ouvrir la revue »
+    Alors je suis sur la page « /tasks/1 »
