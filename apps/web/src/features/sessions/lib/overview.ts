@@ -1,15 +1,16 @@
 import type { SessionDto, SessionStateDto, SourceDto } from '@bosco/domain';
 
 /** Ordre des états dans la vue d'ensemble : ce qui demande une action d'abord (RF-SESS-02). */
-export const STATE_ORDER: readonly SessionStateDto[] = ['running', 'inactive', 'ended'];
+export const STATE_ORDER: readonly SessionStateDto[] = ['waiting', 'running', 'inactive', 'ended'];
 
 /** Colonnes de la vue par état (E1d) : les sessions terminées vont dans l'historique. */
-const BOARD_STATES: readonly SessionStateDto[] = ['running', 'inactive'];
+const BOARD_STATES: readonly SessionStateDto[] = ['waiting', 'running', 'inactive'];
 
 export const STATE_LABELS: Record<SessionStateDto, string> = {
   ended: 'Terminée',
   inactive: 'Inactive',
   running: 'En cours',
+  waiting: 'T’attend',
 };
 
 export interface OverviewFilters {
@@ -48,8 +49,8 @@ function isToday(iso: string, now: Date): boolean {
  * ouvert, une session sans événement depuis aujourd'hui y passe aussi.
  */
 export function openSessions(sessions: readonly SessionDto[], now: Date): SessionDto[] {
-  return sessions.filter(
-    (session) => session.state === 'running' || (session.state === 'inactive' && isToday(session.lastEventAt, now)),
+  return sessions.filter((session) =>
+    session.state === 'ended' ? false : session.state !== 'inactive' || isToday(session.lastEventAt, now),
   );
 }
 

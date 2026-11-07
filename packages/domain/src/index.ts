@@ -7,4 +7,5 @@ export type {
   SessionStateDto,
   SourceDto,
   SourcesDto,
+  WaitingDto,
 } from './sessions.ts';

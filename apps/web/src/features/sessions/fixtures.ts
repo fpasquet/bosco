@@ -19,6 +19,7 @@ function session(overrides: Partial<SessionDto> & Pick<SessionDto, 'id' | 'title
     startedAt: ago(38 * 60),
     state: 'running',
     usage: { cacheCreation: 0, cacheRead: 0, input: 0, output: 0 },
+    waiting: null,
     ...overrides,
   };
 }

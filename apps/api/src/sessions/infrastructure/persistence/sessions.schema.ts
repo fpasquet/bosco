@@ -28,6 +28,8 @@ export interface SessionRow {
   sourceId: string;
   startedAt: Date;
   title: null | string;
+  /** Attente de la session, en JSON (dates en ISO 8601) */
+  waiting: null | Record<string, unknown>;
 }
 
 /** Journal d'une session : une ligne par événement, numérotée, jamais modifiée. */
@@ -80,6 +82,7 @@ export const SessionSchema = new EntitySchema<SessionRow>({
     nextSeq: { type: 'integer', fieldName: 'next_seq' },
     costMicros: { type: 'integer', fieldName: 'cost_micros', default: 0 },
     unpricedTokens: { type: 'integer', fieldName: 'unpriced_tokens', default: 0 },
+    waiting: { type: 'json', nullable: true },
   },
 });
 

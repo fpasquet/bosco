@@ -1,4 +1,5 @@
 import type { TranscriptEvent } from '../../domain/transcript-event.ts';
+import { describeAction, shorten } from '../../domain/action-summary.ts';
 // Lecture d'une ligne de transcript de Claude Code. Le format est interne et change d'une version à l'autre (DT-05) :
 // on ne garde que quelques faits, et toute ligne inconnue, incomplète ou mal formée est ignorée sans erreur (NF-08).
 import { TokenUsage } from '../../domain/token-usage.ts';
@@ -7,8 +8,6 @@ export interface ParsedLine {
   event: TranscriptEvent;
   sessionId: string;
 }
-
-const TEXT_LIMIT = 280;
 
 /** Une session lue en plusieurs fois garde ce suivi : un message de l'assistant écrit bloc par bloc répète son usage. */
 export class TranscriptParser {
@@ -126,12 +125,5 @@ function textBlocks(content: unknown): null | string {
 }
 
 function toolSummary(block: Record<string, unknown>): string {
-  const input = isRecord(block.input) ? block.input : {};
-  const detail = text(input.command) ?? text(input.file_path) ?? text(input.pattern) ?? text(input.url) ?? '';
-  return shorten(detail ? `${String(block.name)} · ${detail}` : String(block.name));
-}
-
-function shorten(value: string): string {
-  const single = value.replaceAll(/\s+/g, ' ').trim();
-  return single.length > TEXT_LIMIT ? `${single.slice(0, TEXT_LIMIT - 1)}…` : single;
+  return describeAction(String(block.name), block.input).summary;
 }

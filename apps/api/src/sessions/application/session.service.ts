@@ -1,4 +1,4 @@
-import type { SessionState } from '../domain/session.ts';
+import type { SessionState, Waiting } from '../domain/session.ts';
 import type { TranscriptEvent } from '../domain/transcript-event.ts';
 import type { Clock, SessionEvents, SessionRegistry, SessionRepository } from './ports.ts';
 import { Session } from '../domain/session.ts';
@@ -21,6 +21,8 @@ export interface SessionView {
   state: SessionState;
   title: null | string;
   usage: { cacheCreation: number; cacheRead: number; input: number; output: number };
+  /** Ce qu'attend la session tant qu'elle t'attend ; rien sinon */
+  waiting: null | Waiting;
 }
 
 /** Cas d'usage des sessions : une méthode par intention. */
@@ -28,7 +30,10 @@ export class SessionService {
   constructor(
     private readonly sessionRepository: SessionRepository,
     private readonly clock: Clock,
-    private readonly sessionEvents: SessionEvents = { sessionChanged: () => undefined },
+    private readonly sessionEvents: SessionEvents = {
+      permissionSettled: () => undefined,
+      sessionChanged: () => undefined,
+    },
     private readonly registry: Pick<SessionRegistry, 'isOpen'> = { isOpen: () => null },
   ) {}
 
@@ -58,8 +63,14 @@ export class SessionService {
     return sessions.map((session) => this.view(session));
   }
 
+  /** Vue d'une session à l'instant présent, avec son état. */
+  viewOf(session: Session): SessionView {
+    return this.view(session);
+  }
+
   private view(session: Session): SessionView {
     const snapshot = session.toSnapshot();
+    const state = session.stateAt(this.clock.now(), this.registry.isOpen(snapshot.sourceId, snapshot.id));
     const {
       branch,
       costMicros,
@@ -87,7 +98,8 @@ export class SessionService {
       repository: repositoryOf(snapshot.repoRoot, repoPath),
       sourceId,
       startedAt,
-      state: session.stateAt(this.clock.now(), this.registry.isOpen(sourceId, id)),
+      state,
+      waiting: state === 'waiting' ? snapshot.waiting : null,
       title,
       usage: {
         input: usage.input,

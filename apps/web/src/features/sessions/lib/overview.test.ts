@@ -31,6 +31,7 @@ function session(id: string, overrides: Partial<SessionDto> = {}): SessionDto {
     state: 'running',
     title: `Session ${id}`,
     usage: { cacheCreation: 0, cacheRead: 0, input: 0, output: 0 },
+    waiting: null,
     ...overrides,
   };
 }
@@ -83,6 +84,7 @@ describe('groupByRepository', () => {
 describe('groupByState', () => {
   it('gives one column per state, even an empty one', () => {
     expect(groupByState([session('a'), session('b')]).map(({ sessions, state }) => [state, sessions.length])).toEqual([
+      ['waiting', 0],
       ['running', 2],
       ['inactive', 0],
     ]);

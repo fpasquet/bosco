@@ -38,7 +38,15 @@ export interface SessionRegistry {
 
 /** Publie chaque changement d'une session vers le flux en direct (DT-06) ; le domaine ne connaît pas le transport. */
 export interface SessionEvents {
+  /** Une autorisation a reçu sa réponse : ici, ou dans le terminal (« elsewhere »), pour un message bref (CA-SESS-07) */
+  permissionSettled(settled: PermissionSettled): void;
   sessionChanged(session: SessionView): void;
+}
+
+export interface PermissionSettled {
+  outcome: 'allowed' | 'denied' | 'elsewhere';
+  sessionId: string;
+  title: null | string;
 }
 
 export interface Clock {
