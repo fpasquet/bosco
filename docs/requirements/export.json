@@ -1,0 +1,43 @@
+{
+  "generator": "requirements-doc/scripts/export.mjs",
+  "title": "Bosco · Cahier des charges",
+  "version": "0.13 · 07/11/2026",
+  "source": {
+    "repository": "fpasquet/specs",
+    "path": "bosco/requirements",
+    "commit": "5a9d3d5"
+  },
+  "artifacts": {
+    "specs": "https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1",
+    "requirements": "https://claude.ai/artifact/8ze73zWxiHUVDx99xfQqC4"
+  },
+  "screens": {
+    "e1": "todo",
+    "e2": "todo",
+    "e3": "todo",
+    "e4": "todo",
+    "e5": "todo",
+    "e6": "todo",
+    "e7": "todo",
+    "e8": "todo",
+    "e13": "todo",
+    "e9": "todo",
+    "e10": "todo",
+    "e11": "todo",
+    "e12": "todo",
+    "e14": "todo"
+  },
+  "files": {
+    "README.md": "2a1aeb67bbcd3b9d",
+    "presentation.md": "3e8a2c6be5d9319b",
+    "utilisateurs.md": "e24eac95cdde3821",
+    "lots/sessions.md": "76075862217afc79",
+    "lots/taches.md": "ced9306c0452f148",
+    "lots/contexte.md": "7ef97882d98778e2",
+    "interface.md": "e614bb32e4a10923",
+    "exigences-non-fonctionnelles.md": "5e997e7690c6d7cc",
+    "architecture.md": "a8a16c21c2b5cb48",
+    "stack.md": "c30b3b75ca5f6048",
+    "infrastructure.md": "0641284b203d8559"
+  }
+}
