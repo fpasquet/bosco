@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
-import { APP_NAME } from '@bosco/core/shared';
+import { APP_NAME } from '@bosco/domain';
 import { hostWeb } from './adapters/in/web/next-host.ts';
 import { AppModule } from './app.module.ts';
 import { loadConfig } from './config.ts';

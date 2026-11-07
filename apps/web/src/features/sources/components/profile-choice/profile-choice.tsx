@@ -2,13 +2,14 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Check, History, Radar, SquareTerminal } from 'lucide-react';
 import { useState } from 'react';
+import type { ProfileCandidateDto } from '@bosco/domain';
 import { Button } from '@/shared/ui/button';
-import { APP_NAME } from '@bosco/core/shared';
-import { type ProfileCandidate, sourcesQuery, watchProfiles } from '../../api/sources';
+import { APP_NAME } from '@bosco/domain';
+import { sourcesQuery, watchProfiles } from '../../api/sources';
 import { displayPath, repositories, sinceNow } from '../../lib/format';
 
 interface ProfileChoiceProps {
-  candidates: ProfileCandidate[];
+  candidates: ProfileCandidateDto[];
   home: string;
 }
 

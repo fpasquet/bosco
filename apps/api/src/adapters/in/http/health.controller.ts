@@ -1,5 +1,5 @@
 import { Controller, Get } from '@nestjs/common';
-import { APP_NAME } from '@bosco/core/shared';
+import { APP_NAME } from '@bosco/domain';
 
 @Controller('api')
 export class HealthController {

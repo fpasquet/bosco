@@ -1,29 +1,11 @@
-export interface ProfileCandidate {
-  lastSessionAt: null | string;
-  path: string;
-  repositoryCount: number;
-}
-
-export interface Source {
-  id: string;
-  label: string;
-  liveTracking: boolean;
-  path: string;
-  watched: boolean;
-}
-
-export interface SourcesView {
-  candidates: ProfileCandidate[];
-  home: string;
-  sources: Source[];
-}
+import type { SourcesDto } from '@bosco/domain';
 
 export const sourcesQuery = {
   queryKey: ['sources'],
-  queryFn: async (): Promise<SourcesView> => {
+  queryFn: async (): Promise<SourcesDto> => {
     const response = await fetch('/api/sources');
     if (!response.ok) throw new Error(`GET /api/sources answered ${response.status}`);
-    return (await response.json()) as SourcesView;
+    return (await response.json()) as SourcesDto;
   },
 };
 

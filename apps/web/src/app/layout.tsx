@@ -2,7 +2,7 @@ import './fonts';
 import './globals.css';
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
-import { APP_NAME } from '@bosco/core/shared';
+import { APP_NAME } from '@bosco/domain';
 import { Providers } from './providers';
 
 export const metadata: Metadata = { title: APP_NAME, icons: { icon: '/favicon.svg' } };

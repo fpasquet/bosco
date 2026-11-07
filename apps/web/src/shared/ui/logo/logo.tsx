@@ -1,5 +1,5 @@
 import { cn } from '@/lib/cn';
-import { APP_NAME } from '@bosco/core/shared';
+import { APP_NAME } from '@bosco/domain';
 
 interface LogoProps {
   className?: string;

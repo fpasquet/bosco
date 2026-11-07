@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Logo } from '@/shared/ui/logo';
-import { APP_NAME } from '@bosco/core/shared';
+import { APP_NAME } from '@bosco/domain';
 import { NAV_ITEMS } from './nav-items';
 import { NavLink } from './nav-link';
 

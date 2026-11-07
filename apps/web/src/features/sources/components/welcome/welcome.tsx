@@ -1,6 +1,6 @@
 import { BellRing, ListChecks, ShieldCheck } from 'lucide-react';
 import { Logo } from '@/shared/ui/logo';
-import { APP_NAME } from '@bosco/core/shared';
+import { APP_NAME } from '@bosco/domain';
 
 const USES = [
   { icon: BellRing, strong: 't’attendent', before: 'Repère les sessions qui ', after: '' },
