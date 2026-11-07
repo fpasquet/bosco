@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Lint, types, tests and build
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - name: Turborepo cache
+        uses: actions/cache@v4
+        with:
+          path: .turbo/cache
+          key: turbo-${{ runner.os }}-${{ github.sha }}
+          restore-keys: turbo-${{ runner.os }}-
+      - run: pnpm install --frozen-lockfile
+      - name: Commit messages
+        if: github.event_name == 'pull_request'
+        run: pnpm exec commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }}
+      - run: pnpm format:check
+      - name: Install Chromium
+        run: pnpm --filter @bosco/e2e exec playwright install --with-deps chromium
+      - run: pnpm check --cache-dir=.turbo/cache
+      - name: End-to-end tests of the API
+        run: pnpm e2e:api --cache-dir=.turbo/cache
+      - name: End-to-end tests of the web
+        run: pnpm e2e:web --cache-dir=.turbo/cache
+      - name: TypeScript 7 (non-blocking)
+        continue-on-error: true
+        run: pnpm dlx @typescript/native-preview@7 tsc --noEmit -p packages/core
