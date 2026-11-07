@@ -13,6 +13,11 @@ export const DEFAULT_INACTIVITY_DELAY_MS = 15 * 60 * 1000;
 
 const RECENT_ACTIONS = 3;
 
+/** Une commande (« <command-name>/clear</command-name> ») ne dit rien du sujet de la session. */
+function isTitleWorthy(prompt: string): boolean {
+  return !prompt.trimStart().startsWith('<');
+}
+
 export interface SessionSnapshot {
   branch: null | string;
   /** Coût estimé en micro-dollars des tokens dont le modèle a un tarif connu (RF-SESS-05) */
@@ -95,6 +100,9 @@ export class Session {
       return;
     }
     if (event.text === '') return;
+    if (event.kind === 'prompt' && this.snapshot.title === null && isTitleWorthy(event.text))
+      // Sans titre de Claude Code (échange trop court), la première demande en tient lieu, comme dans /resume
+      this.snapshot = { ...this.snapshot, title: event.text };
     this.snapshot =
       event.kind === 'tool'
         ? {

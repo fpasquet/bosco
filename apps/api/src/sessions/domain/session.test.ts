@@ -33,6 +33,18 @@ describe('Session', () => {
     expect([session.stateAt(justAfter, false), session.stateAt(justAfter, true)]).toEqual(['ended', 'running']);
   });
 
+  it('takes its first request as title until Claude Code names it, never a command', () => {
+    const session = Session.discover('36cf26ee', 'pro', at('14:02:00'));
+    const prompt = (time: string, text: string) => ({ ...reply(time), kind: 'prompt' as const, text });
+    session.record(prompt('14:02:00', '<command-name>/clear</command-name>'));
+    session.record(prompt('14:02:10', '2+2'));
+    session.record(prompt('14:02:20', 'Et 3+3 ?'));
+    expect(session.toSnapshot().title).toBe('2+2');
+    session.record({ ...reply('14:03:00'), kind: 'title', text: 'Calculs rapides' });
+    session.record(prompt('14:03:10', 'Et 4+4 ?'));
+    expect(session.toSnapshot().title).toBe('Calculs rapides');
+  });
+
   it('adds up the token usage, cache included', () => {
     const session = Session.discover('c41e9a07', 'pro', at('14:02:00'));
     session.record(reply('14:02:00', new TokenUsage(10, 20, 30, 40)));

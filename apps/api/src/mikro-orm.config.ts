@@ -7,6 +7,7 @@ import { Migration20261107000000 } from './migrations/Migration20261107000000.ts
 import { Migration20261107165031 } from './migrations/Migration20261107165031.ts';
 import { Migration20261107172330 } from './migrations/Migration20261107172330.ts';
 import { Migration20261107174017 } from './migrations/Migration20261107174017.ts';
+import { Migration20261107190000 } from './migrations/Migration20261107190000.ts';
 import {
   SessionEventSchema,
   SessionSchema,
@@ -20,6 +21,7 @@ export const MIGRATIONS = [
   { name: 'Migration20261107165031', class: Migration20261107165031 },
   { name: 'Migration20261107172330', class: Migration20261107172330 },
   { name: 'Migration20261107174017', class: Migration20261107174017 },
+  { name: 'Migration20261107190000', class: Migration20261107190000 },
 ];
 
 export function ormConfig(dbName: string) {
