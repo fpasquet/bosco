@@ -181,6 +181,14 @@ export function TaskDetail({ busy, failing, onCancel, onRelaunch, task }: TaskDe
           }}
         />
       )}
+      {task.outcome.pullRequest && (
+        <p className="rounded-card border border-line bg-surface px-4 py-3">
+          PR en brouillon :{' '}
+          <a href={task.outcome.pullRequest} className="link link-primary" target="_blank" rel="noreferrer">
+            {task.outcome.pullRequest}
+          </a>
+        </p>
+      )}
       {failed && task.failure && (
         <p role="status" className="rounded-card border border-danger bg-danger-soft px-4 py-3 text-danger">
           {task.failure}

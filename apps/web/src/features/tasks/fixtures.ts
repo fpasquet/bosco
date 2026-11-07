@@ -1,5 +1,13 @@
 // Tâches du fil rouge des specs (lot 2), pour les histoires.
-import type { IsolationDto, RightsDto, RightsValuesDto, TaskDto, TestEnvironmentDto } from '@bosco/domain';
+import type {
+  IsolationDto,
+  RightsDto,
+  RightsValuesDto,
+  TaskChangesDto,
+  TaskDto,
+  TaskReviewDto,
+  TestEnvironmentDto,
+} from '@bosco/domain';
 
 const at = (time: string) => new Date(`2026-11-06T${time}:00`).toISOString();
 
@@ -14,7 +22,16 @@ function task(overrides: Partial<TaskDto> & Pick<TaskDto, 'id' | 'instruction' |
     guardrails: { budgetUsd: 2, maxTurns: 30, model: null, tools: null },
     log: [{ at: at('14:00'), event: 'Créée', detail: null }],
     mode: 'worker',
-    outcome: { branch: null, changes: null, report: null, sessionId: null, turns: 0 },
+    outcome: {
+      base: null,
+      branch: null,
+      changes: null,
+      from: null,
+      pullRequest: null,
+      report: null,
+      sessionId: null,
+      turns: 0,
+    },
     prerequisites: [],
     repository: { name: 'api-voix', root: '/home/dev/api-voix' },
     spentUsd: 0,
@@ -171,4 +188,38 @@ export const STORY_RIGHTS: RightsDto = {
   },
   models: ['claude-sonnet-5-5', 'claude-opus-5-5', 'claude-haiku-5-5'],
   pending: [{ id: 13, state: 'blocked', title: 'Vérifier la prononciation des sigles' }],
+};
+
+/** T-12 du fil rouge, terminée par l'agent et à relire (E7a). */
+export const STORY_REVIEW_TASK: TaskDto = {
+  ...(STORY_TASKS.find((candidate) => candidate.id === 12) as TaskDto),
+  instruction:
+    'Ajoute au lexique la prononciation de « SNCF » (èss-ène-cé-èf) et écris un test de prononciation, en suivant la décision DEC-3.',
+  outcome: {
+    base: '4f2a9c1',
+    branch: 'bosco/t-12-sncf',
+    changes: { files: 2, added: 14, removed: 0 },
+    from: 'develop',
+    pullRequest: null,
+    report:
+      'Entrée ajoutée au lexique et test de prononciation écrit. À vérifier : la variante « S.N.C.F. » avec points. Selon l’agent : 48 tests verts.',
+    sessionId: 'b81d02aa',
+    turns: 14,
+  },
+};
+
+export const STORY_CHANGES: TaskChangesDto = {
+  files: [
+    { path: 'lexique/sigles.json', added: 3, removed: 0 },
+    { path: 'test/prononciation.test.ts', added: 11, removed: 0 },
+  ],
+  diff: 'diff --git a/lexique/sigles.json b/lexique/sigles.json\n--- a/lexique/sigles.json\n+++ b/lexique/sigles.json\n@@ -1,3 +1,4 @@\n {\n   "RATP": "èr-a-té-pé",\n+  "SNCF": "èss-ène-cé-èf",\n   "EDF": "eu-dé-èf"\n }\n',
+  truncated: false,
+};
+
+export const STORY_REVIEW: TaskReviewDto = {
+  blocked: null,
+  commits: 2,
+  proposal: { title: STORY_REVIEW_TASK.title, body: `${STORY_REVIEW_TASK.outcome.report ?? ''}\n\nTâche T-12` },
+  pullRequest: 'ask',
 };

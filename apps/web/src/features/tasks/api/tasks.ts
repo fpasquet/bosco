@@ -1,4 +1,14 @@
-import type { RightsDto, RightsFieldDto, TaskDraftDto, TaskDto, TaskIssueDto, WorkerStatusDto } from '@bosco/domain';
+import type {
+  RightsDto,
+  RightsFieldDto,
+  TaskChangesDto,
+  TaskDraftDto,
+  TaskDto,
+  TaskIssueDto,
+  TaskReviewDto,
+  ValidationDto,
+  WorkerStatusDto,
+} from '@bosco/domain';
 
 async function read<T>(path: string): Promise<T> {
   const response = await fetch(path);
@@ -88,3 +98,33 @@ export async function updateRights(repository: null | string, changes: Partial<R
   if (!response.ok) throw new Error(`PUT ${path} answered ${response.status}`);
   return (await response.json()) as RightsDto;
 }
+
+export const changesQuery = (id: number) => ({
+  queryKey: ['task-changes', id],
+  queryFn: () => read<TaskChangesDto>(`/api/tasks/${id}/changes`),
+});
+
+export const reviewQuery = (id: number) => ({
+  queryKey: ['task-review', id],
+  queryFn: () => read<TaskReviewDto>(`/api/tasks/${id}/review`),
+});
+
+async function post<T>(path: string, body: unknown): Promise<T> {
+  const response = await fetch(path, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!response.ok) throw new Error(`POST ${path} answered ${response.status}`);
+  return (await response.json()) as T;
+}
+
+/** Valider, avec la PR brouillon demandée ou sans (E7c) ; un envoi en échec laisse la tâche validée. */
+export const validateTask = (id: number, pullRequest: null | { body: string; title: string }) =>
+  post<ValidationDto>(`/api/tasks/${id}/validate`, { pullRequest });
+
+export const retryPullRequest = (id: number, pullRequest: { body: string; title: string }) =>
+  post<ValidationDto>(`/api/tasks/${id}/pull-request`, pullRequest);
+
+export const rejectTask = (id: number, values: { reason: string; relaunch: boolean }) =>
+  post<TaskDto>(`/api/tasks/${id}/reject`, values);
