@@ -90,3 +90,20 @@ Then('le bouton {texte} est désactivé', async ({ page }, name: string) => {
 Then('je vois le message {texte}', async ({ page }, text: string) => {
   await expect(page.getByRole('status').filter({ hasText: text })).toBeVisible();
 });
+
+When('je coche {texte}', async ({ page }, label: string) => {
+  // Case enregistrée côté Bosco : elle se coche à sa réponse
+  const box = page.getByRole('checkbox', { name: label });
+  await box.click();
+  await expect(box).toBeChecked();
+});
+
+Then('la case {texte} est cochée', async ({ page }, label: string) => {
+  await expect(page.getByRole('checkbox', { name: label })).toBeChecked();
+});
+
+When('je clique sur le bouton radio {texte}', async ({ page }, label: string) => {
+  const radio = page.getByRole('radio', { name: label });
+  await radio.click();
+  await expect(radio).toBeChecked();
+});

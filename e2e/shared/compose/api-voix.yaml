@@ -1,0 +1,16 @@
+services:
+  app:
+    build: .
+    ports: ['3000:3000']
+  node:
+    image: node:22
+  database:
+    image: mysql:8.0
+    ports: ['3306:3306']
+    volumes: ['db-data:/var/lib/mysql']
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+  rabbitmq:
+    image: rabbitmq:3.8
+volumes:
+  db-data:
