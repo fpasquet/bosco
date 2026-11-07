@@ -47,6 +47,14 @@ Given('la session {texte} du profil {texte} donne un signal', async ({ bosco }, 
   expect(response.status).toBe(200);
 });
 
+Given('la session {texte} du profil {texte} se termine', async ({ bosco }, sessionId: string, profile: string) => {
+  const response = await sendHook(bosco.profilesRoot, profile, {
+    ...base(bosco, sessionId, 'SessionEnd'),
+    reason: 'prompt_input_exit',
+  });
+  expect(response.status).toBe(200);
+});
+
 Given(
   'la session {texte} du profil {texte} demande l’autorisation de lancer {texte}',
   async ({ bosco, pending }, sessionId: string, profile: string, command: string) => {

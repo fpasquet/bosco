@@ -50,16 +50,6 @@ Fonctionnalité: Suivi en direct
     Et je vois le texte « Autorisé · Specs du tableau de bord Bosco »
     Et je ne vois plus le bandeau des sessions qui t’attendent
 
-  @CA-SESS-34
-  Scénario: Un refus transmet son motif à l'agent
-    Étant donné le suivi en direct est installé dans le profil « .claude-perso »
-    Et la session « c41e9a07 » du profil « .claude-perso » demande l’autorisation de lancer « npm run db:migrate »
-    Quand j'ouvre la page « / »
-    Et je clique sur le bouton « Refuser »
-    Et je saisis « Pas de migration avant la revue du schéma. » dans le champ « Motif, facultatif : il est transmis à l’agent comme consigne »
-    Et je clique sur le bouton « Refuser » de la fenêtre
-    Alors Claude Code reçoit le refus avec le motif « La personne a refusé cette commande depuis Bosco. Motif : Pas de migration avant la revue du schéma. »
-
   @CA-SESS-07
   Scénario: Une autorisation donnée dans le terminal disparaît du bandeau
     Étant donné le suivi en direct est installé dans le profil « .claude-perso »

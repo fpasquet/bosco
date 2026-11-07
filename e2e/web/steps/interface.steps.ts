@@ -26,6 +26,14 @@ Then('je ne vois plus le texte {texte}', async ({ page }, text: string) => {
   await expect(page.getByText(text)).toHaveCount(0);
 });
 
+Then('je suis sur la page {texte}', async ({ page }, path: string) => {
+  await expect(page).toHaveURL((url) => url.pathname === path);
+});
+
+Then('je ne vois pas le bouton {texte}', async ({ page }, name: string) => {
+  await expect(page.getByRole('button', { name })).toHaveCount(0);
+});
+
 Then('le bouton {texte} est enfoncé', async ({ page }, name: string) => {
   await expect(page.getByRole('button', { name, pressed: true })).toBeVisible();
 });
