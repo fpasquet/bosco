@@ -5,7 +5,7 @@
   "source": {
     "repository": "fpasquet/specs",
     "path": "bosco/requirements",
-    "commit": "1c03171"
+    "commit": "4abeeb5"
   },
   "artifacts": {
     "specs": "https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1",
@@ -22,7 +22,7 @@
     "e8": "done",
     "e13": "doing",
     "e9": "done",
-    "e10": "todo",
+    "e10": "done",
     "e11": "doing",
     "e12": "done",
     "e14": "doing"
