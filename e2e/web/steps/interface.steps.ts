@@ -33,3 +33,7 @@ Then('la page est accessible', async ({ page }) => {
 Then('je vois le lien {texte}', async ({ page }, name: string) => {
   await expect(page.getByRole('link', { name })).toBeVisible();
 });
+
+Then('je vois le titre {texte}', async ({ page }, name: string) => {
+  await expect(page.getByRole('heading', { name })).toBeVisible();
+});
