@@ -17,13 +17,13 @@ jobs:
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v5
         with:
           node-version-file: .nvmrc
           cache: pnpm
       - name: Turborepo cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: .turbo/cache
           key: turbo-${{ runner.os }}-${{ github.sha }}
@@ -42,4 +42,4 @@ jobs:
         run: pnpm e2e:web --cache-dir=.turbo/cache
       - name: TypeScript 7 (non-blocking)
         continue-on-error: true
-        run: pnpm dlx @typescript/native-preview@7 tsc --noEmit -p packages/core
+        run: for project in packages/core apps/api apps/cli; do pnpm dlx --package typescript@7.0.2 tsc --noEmit -p "$project"; done
