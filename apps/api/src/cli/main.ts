@@ -1,12 +1,15 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
-// Commande bosco : `bosco start` lance le service au premier plan, `bosco service install` l'installe pour l'utilisateur.
+// Commande bosco : `bosco start` lance le service au premier plan, `bosco service install` l'installe pour l'utilisateur,
+// `bosco resume <session>` reprend dans un terminal la session d'un agent du worker.
 import { spawn } from 'node:child_process';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { APP_NAME } from '@bosco/domain';
+import { loadConfig } from '../config.ts';
+import { findSession, installSession } from './resume.ts';
 import { serviceUnit } from './service-unit.ts';
 
 const command = APP_NAME.toLowerCase();
@@ -46,6 +49,26 @@ program
     console.log(
       `wrote ${file}\nenable it with: systemctl --user daemon-reload && systemctl --user enable --now ${command}`,
     );
+  });
+
+program
+  .command('resume')
+  .description('Resume a session of a worker agent in this terminal')
+  .argument('<session>', 'session id')
+  .option('--profile <dir>', 'Claude Code profile to resume in', join(homedir(), '.claude'))
+  .action(async (session: string, options: { profile: string }) => {
+    const config = loadConfig();
+    const worker = join(config.dataDir, 'worker');
+    const found = await findSession(worker, session);
+    if (!found) {
+      console.error(`no session ${session} in ${worker}`);
+      process.exit(1);
+    }
+    const cwd = await installSession(found, options.profile, session);
+    const env = { ...process.env, CLAUDE_CONFIG_DIR: options.profile };
+    // Claude Code du poste, par son chemin : celui des sessions, sans dépendre du PATH
+    const child = spawn(config.worker.claudeBinary, ['--resume', session], { cwd, env, stdio: 'inherit' });
+    child.on('exit', (code) => process.exit(code ?? 0));
   });
 
 await program.parseAsync();

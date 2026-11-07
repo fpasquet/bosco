@@ -62,6 +62,17 @@ export class SourceService {
     return source.toSnapshot();
   }
 
+  /** Profil tenu par Bosco (celui du worker) : surveillé dès qu'il existe, sans passer par le premier lancement. */
+  async ensureSource(path: string): Promise<SourceSnapshot> {
+    const sources = await this.sourceRepository.list();
+    const known = sources.find((source) => source.toSnapshot().path === path);
+    if (known) return known.toSnapshot();
+    const source = Source.choose(this.idGenerator.next(), path, true);
+    await this.sourceRepository.save([source]);
+    await this.resumeWatching([source]);
+    return source.toSnapshot();
+  }
+
   /** Au démarrage du service : reprend la lecture des profils surveillés là où elle s'était arrêtée. */
   async resumeWatching(sources?: Source[]): Promise<void> {
     const watched = (sources ?? (await this.sourceRepository.list())).filter((source) => source.watched);

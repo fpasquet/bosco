@@ -21,6 +21,7 @@ import { DesktopNotifier, RecordingNotifier } from './infrastructure/notificatio
 import { MikroOrmSessionRepository } from './infrastructure/persistence/session.repository.ts';
 import { MikroOrmSettingsRepository } from './infrastructure/persistence/settings.repository.ts';
 import { MikroOrmSourceRepository } from './infrastructure/persistence/source.repository.ts';
+import { MikroOrmTaskLinkStore } from './infrastructure/persistence/task-link.store.ts';
 import { TranscriptCursorStore } from './infrastructure/persistence/transcript-cursor.store.ts';
 import { EventsController } from './interface/http/events.controller.ts';
 import { HistoryController } from './interface/http/history.controller.ts';
@@ -137,7 +138,7 @@ const registry = new FileSessionRegistry();
         ),
     },
   ],
-  exports: [TRANSCRIPT_WATCHER, LIVE_SIGNAL_SERVICE, NOTIFIER, SETTINGS_SERVICE, SESSION_SERVICE],
+  exports: [TRANSCRIPT_WATCHER, LIVE_SIGNAL_SERVICE, NOTIFIER, SETTINGS_SERVICE, SESSION_SERVICE, SOURCE_SERVICE],
 })
 export class SessionsModule implements OnApplicationBootstrap, OnApplicationShutdown {
   constructor(
@@ -145,10 +146,13 @@ export class SessionsModule implements OnApplicationBootstrap, OnApplicationShut
     @Inject(TRANSCRIPT_WATCHER) private readonly watcher: FileTranscriptWatcher,
     @Inject(LIVE_SIGNAL_SERVICE) private readonly liveSignals: LiveSignalService,
     @Inject(SETTINGS_SERVICE) private readonly settings: SettingsService,
+    @Inject(SESSION_SERVICE) private readonly sessions: SessionService,
+    @Inject(ORM) private readonly orm: MikroORM,
   ) {}
 
   async onApplicationBootstrap(): Promise<void> {
     await this.settings.load();
+    await this.sessions.useTaskLinks(new MikroOrmTaskLinkStore(this.orm));
     await this.liveSignals.dropStalePermissions();
     await this.sourceService.resumeWatching();
   }

@@ -4,6 +4,21 @@ import type { JournalEntry, TranscriptEvent } from '../domain/transcript-event.t
 import type { Clock, SessionEvents, SessionRegistry, SessionRepository } from './ports.ts';
 import { DEFAULT_INACTIVITY_DELAY_MS, Session } from '../domain/session.ts';
 
+/** Tâche d'une session du worker (E2c, E2d) : la relecture ou la relance se font depuis la tâche. */
+export interface TaskLink {
+  failure: null | string;
+  id: number;
+  state: string;
+  /** Titre de la tâche : celui de la session, plutôt que la consigne complète transmise à l'agent */
+  title: string;
+}
+
+/** Liens des sessions vers leur tâche, gardés pour l'historique. */
+export interface TaskLinkStore {
+  load(): Promise<Map<string, TaskLink>>;
+  save(sessionId: string, link: TaskLink): Promise<void>;
+}
+
 export interface SessionView {
   branch: null | string;
   /** Fichiers modifiés par l'agent, d'après ses appels d'outils */
@@ -25,6 +40,8 @@ export interface SessionView {
   title: null | string;
   usage: { cacheCreation: number; cacheRead: number; input: number; output: number };
   turns: number;
+  /** Tâche du worker qui a lancé la session ; null pour une session interactive */
+  task: null | TaskLink;
   /** Ce qu'attend la session tant qu'elle t'attend ; rien sinon */
   waiting: null | Waiting;
 }
@@ -37,6 +54,9 @@ export interface SessionDetail {
 
 /** Cas d'usage des sessions : une méthode par intention. */
 export class SessionService {
+  private taskLinks = new Map<string, TaskLink>();
+  private linkStore: null | TaskLinkStore = null;
+
   constructor(
     private readonly sessionRepository: SessionRepository,
     private readonly clock: Clock,
@@ -48,6 +68,22 @@ export class SessionService {
     /** Seuil d'inactivité réglé dans les sources (CA-SESS-59) */
     private readonly inactivityDelayMs: () => number = () => DEFAULT_INACTIVITY_DELAY_MS,
   ) {}
+
+  /** Liens vers les tâches, lus au démarrage, et relus après une remise à zéro des scénarios. */
+  async useTaskLinks(store: TaskLinkStore | null = this.linkStore): Promise<void> {
+    this.linkStore = store;
+    this.taskLinks = store ? await store.load() : new Map<string, TaskLink>();
+  }
+
+  /** Une tâche du worker change : sa session, même pas encore lue, prend son état (À relire, En échec). */
+  async linkTask(sessionId: string, link: TaskLink): Promise<void> {
+    const known = this.taskLinks.get(sessionId);
+    if (known?.state === link.state && known.failure === link.failure && known.title === link.title) return;
+    this.taskLinks.set(sessionId, link);
+    await this.linkStore?.save(sessionId, link);
+    const session = await this.sessionRepository.find(sessionId);
+    if (session) this.sessionEvents.sessionChanged(this.view(session));
+  }
 
   /** Sessions entrées dans le registre des sessions ouvertes, ou sorties : leur état change sans nouvel événement. */
   async refreshSessions(sessionIds: string[]): Promise<void> {
@@ -90,7 +126,10 @@ export class SessionService {
   private view(session: Session): SessionView {
     const snapshot = session.toSnapshot();
     const open = this.registry.isOpen(snapshot.sourceId, snapshot.id);
-    const state = session.stateAt(this.clock.now(), open, this.inactivityDelayMs());
+    const link = this.taskLinks.get(snapshot.id) ?? null;
+    // L'agent d'une tâche qui ne tourne plus a fini : sa session est terminée, sans attendre l'inactivité
+    const state =
+      link && link.state !== 'running' ? 'ended' : session.stateAt(this.clock.now(), open, this.inactivityDelayMs());
     const {
       branch,
       costMicros,
@@ -119,10 +158,11 @@ export class SessionService {
       sourceId,
       startedAt,
       state,
+      task: link,
       waiting: state === 'waiting' ? snapshot.waiting : null,
       turns: snapshot.turns,
       changedFiles: snapshot.changedFiles,
-      title,
+      title: link?.title ?? title,
       usage: {
         input: usage.input,
         output: usage.output,

@@ -4,16 +4,17 @@ import { freemem, userInfo } from 'node:os';
 import { join } from 'node:path';
 import type { Config } from '../config.ts';
 import type { SessionService } from '../sessions/application/session.service.ts';
+import type { SourceService } from '../sessions/application/source.service.ts';
 import type { RepositoryCatalog } from './application/ports.ts';
 import { estimateCostMicros } from '../sessions/domain/model-pricing.ts';
 import { TokenUsage } from '../sessions/domain/token-usage.ts';
 import { SessionsModule } from '../sessions/sessions.module.ts';
-import { SESSION_SERVICE } from '../sessions/tokens.ts';
+import { SESSION_SERVICE, SOURCE_SERVICE } from '../sessions/tokens.ts';
 import { CONFIG, ORM } from '../shared/tokens.ts';
 import { IsolationService } from './application/isolation.service.ts';
 import { ReviewService } from './application/review.service.ts';
 import { RightsService } from './application/rights.service.ts';
-import { TaskService } from './application/task.service.ts';
+import { TaskService, type TaskView } from './application/task.service.ts';
 import { TestEnvironmentService } from './application/test-environment.service.ts';
 import { WorkerService } from './application/worker.service.ts';
 import { AllowListFile } from './infrastructure/isolation/allow-list-file.ts';
@@ -118,15 +119,19 @@ const TICK_MS = 5000;
     },
     {
       provide: AGENT_RUNNER,
-      inject: [CONFIG, ISOLATION_SERVICE],
-      useFactory: (config: Config, isolation: IsolationService) => {
-        if (config.testing) return new ScriptedAgentRunner();
+      inject: [CONFIG, ISOLATION_SERVICE, SOURCE_SERVICE],
+      useFactory: (config: Config, isolation: IsolationService, sources: SourceService) => {
+        const profile = join(config.dataDir, 'worker');
+        // Le profil du worker devient une source dès qu'il garde une session (E2c, E2d)
+        const onSessionSaved = () => void sources.ensureSource(profile).catch(() => undefined);
+        if (config.testing) return new ScriptedAgentRunner({ path: profile, onSessionSaved });
         const { gid, uid } = userInfo();
         return new DockerAgentRunner({
           ...config.worker,
           allowDir: join(config.dataDir, 'worker', 'egress'),
           onRefusal: (refusal) => void isolation.refused(refusal).catch(() => undefined),
-          profile: join(config.dataDir, 'worker'),
+          onSessionSaved,
+          profile,
           user: `${uid}:${gid}`,
         });
       },
@@ -172,10 +177,24 @@ export class TasksModule implements OnApplicationBootstrap, OnApplicationShutdow
     @Inject(TASK_EVENTS) private readonly bus: TaskEventsBus,
     @Inject(AGENT_RUNNER) private readonly runner: DockerAgentRunner | ScriptedAgentRunner,
     @Inject(ISOLATION_SERVICE) private readonly isolation: IsolationService,
+    @Inject(TASK_SERVICE) private readonly tasks: TaskService,
+    @Inject(SESSION_SERVICE) private readonly sessions: SessionService,
   ) {}
 
   async onApplicationBootstrap(): Promise<void> {
     await this.isolation.load();
+    // La session d'un agent suit l'état de sa tâche : À relire, En échec (E2c, E2d)
+    const link = (task: TaskView) =>
+      task.mode === 'worker' && task.outcome.sessionId
+        ? this.sessions.linkTask(task.outcome.sessionId, {
+            id: task.id,
+            state: task.state,
+            failure: task.failure,
+            title: task.title,
+          })
+        : Promise.resolve();
+    for (const task of await this.tasks.list()) await link(task);
+    this.bus.changes.subscribe((task) => void link(task).catch(() => undefined));
     if (this.runner instanceof DockerAgentRunner) await this.runner.cleanup();
     await this.worker.recover();
     this.timer = setInterval(() => void this.worker.tick(), TICK_MS);
