@@ -1,7 +1,8 @@
 import type { DataTable } from 'playwright-bdd';
 import { expect, type Page } from '@playwright/test';
 // Phrases de la vue d'ensemble : horloge du navigateur, sessions qui vivent pendant le scénario, tableau et colonnes.
-import { appendFileSync, readFileSync, writeFileSync } from 'node:fs';
+import { appendFileSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { Given, Then, When } from './fixtures.ts';
 
 const TIMESTAMP = /"timestamp":\s*"([^"]+)"/g;
@@ -36,6 +37,23 @@ Given('la session {texte} a agi il y a quelques secondes', ({ transcripts }, ses
 
 Given('la session {texte} est inactive depuis {int} minutes', ({ transcripts }, sessionId: string, minutes: number) => {
   lastActedAgo(transcriptOf(transcripts, sessionId), minutes * 60_000);
+});
+
+/** Fichier du registre des sessions ouvertes que Claude Code tient dans le profil : <profil>/sessions/<pid>.json */
+function registryEntryOf(transcripts: Map<string, string>, sessionId: string): string {
+  const profile = dirname(dirname(dirname(transcriptOf(transcripts, sessionId))));
+  return join(profile, 'sessions', `${process.pid}.json`);
+}
+
+// Le processus des scénarios tient lieu de processus de Claude Code : il est vivant tant que le scénario tourne.
+Given('la session {texte} est ouverte dans Claude Code', ({ transcripts }, sessionId: string) => {
+  const entry = registryEntryOf(transcripts, sessionId);
+  mkdirSync(dirname(entry), { recursive: true });
+  writeFileSync(entry, JSON.stringify({ pid: process.pid, sessionId, status: 'busy', kind: 'interactive' }));
+});
+
+When('la session {texte} est arrêtée dans Claude Code', ({ transcripts }, sessionId: string) => {
+  rmSync(registryEntryOf(transcripts, sessionId));
 });
 
 When('la session {texte} lance la commande {texte}', ({ transcripts }, sessionId: string, command: string) => {
@@ -75,6 +93,16 @@ async function overviewRows(page: Page): Promise<Record<string, string>[]> {
 
 Then('la vue d’ensemble montre, dans l’ordre :', async ({ page }, table: DataTable) => {
   await expect.poll(() => overviewRows(page)).toEqual(table.hashes());
+});
+
+const titles = async (page: Page) => (await overviewRows(page)).map((row) => row.session);
+
+Then('la vue d’ensemble montre la session {texte}', async ({ page }, title: string) => {
+  await expect.poll(() => titles(page)).toContain(title);
+});
+
+Then('la vue d’ensemble ne montre plus la session {texte}', async ({ page }, title: string) => {
+  await expect.poll(() => titles(page)).not.toContain(title);
 });
 
 Then('l’indicateur {texte} vaut {texte}', async ({ page }, label: string, value: string) => {

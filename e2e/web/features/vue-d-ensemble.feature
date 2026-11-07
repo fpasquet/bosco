@@ -79,3 +79,13 @@ Fonctionnalité: Vue d'ensemble
     Et la carte de la session « Corriger l’indexation des PDF dans Elasticsearch » montre les actions :
       | Bash · yarn lint             |
       | Bash · yarn test --forceExit |
+
+  @CA-SESS-09
+  Scénario: Une session arrêtée quitte la vue d'ensemble d'elle-même
+    Étant donné la session « 5e0a91c3 » a agi il y a quelques secondes
+    Et la session « 5e0a91c3 » est ouverte dans Claude Code
+    Et Bosco surveille les profils « .claude » et « .claude-perso »
+    Quand j'ouvre la page « / »
+    Alors la vue d’ensemble montre la session « Corriger l’indexation des PDF dans Elasticsearch »
+    Quand la session « 5e0a91c3 » est arrêtée dans Claude Code
+    Alors la vue d’ensemble ne montre plus la session « Corriger l’indexation des PDF dans Elasticsearch »
