@@ -19,11 +19,13 @@ export function OverviewSidebar({ selected }: { selected: null | string }) {
       selected={selected}
       liveTracking={sources.sources.some((source) => source.liveTracking)}
       repositories={repositoriesOf(open)}
-      profiles={sources.sources.map((source) => ({
-        label: source.label,
-        path: displayPath(source.path, sources.home),
-        count: open.filter((session) => session.sourceId === source.id).length,
-      }))}
+      profiles={sources.sources
+        .filter((source) => source.watched)
+        .map((source) => ({
+          label: source.label,
+          path: displayPath(source.path, sources.home),
+          count: open.filter((session) => session.sourceId === source.id).length,
+        }))}
     />
   );
 }

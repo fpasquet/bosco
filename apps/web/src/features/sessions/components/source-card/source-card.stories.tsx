@@ -20,6 +20,8 @@ const meta = {
     lastSignalAt: new Date(Date.now() - 40_000),
     now: new Date(),
     onOpenLiveTracking: fn(),
+    onWatchedChange: fn(),
+    watched: true,
   },
 } satisfies Meta<typeof SourceCard>;
 
@@ -31,3 +33,5 @@ export const Installed: Story = {};
 export const NotInstalled: Story = {
   args: { label: 'pro', path: '~/.claude', liveTracking: false, lastSignalAt: null },
 };
+
+export const Paused: Story = { args: { watched: false, liveTracking: false, lastSignalAt: null } };

@@ -3,12 +3,14 @@ import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/rea
 import { useState } from 'react';
 import { APP_NAME, type SourceDto } from '@bosco/domain';
 import { installLiveTracking, liveTrackingQuery, uninstallLiveTracking } from '../../api/live-tracking';
-import { sourcesQuery } from '../../api/sources';
+import { type SettingsDto, settingsQuery, updateSettings } from '../../api/settings';
+import { setSourceWatched, sourcesQuery } from '../../api/sources';
 import { useNow } from '../../hooks/use-now';
 import { displayPath } from '../../lib/format';
 import { useNotices } from '../../lib/notices';
 import { LiveTrackingPanel, type LiveTrackingStep } from '../live-tracking-panel';
 import { Notices } from '../notices';
+import { SettingsPanel } from '../settings-panel';
 import { SourceCard } from '../source-card';
 
 /** Le dernier signal se relit à cet intervalle ; plus souvent pendant la vérification de l'installation. */
@@ -21,7 +23,8 @@ export function SourcesScreen({ title }: { title: string }) {
   const client = useQueryClient();
   const push = useNotices((state) => state.push);
   const { data } = useQuery(sourcesQuery);
-  const sources = data?.sources.filter((source) => source.watched) ?? [];
+  const sources = data?.sources ?? [];
+  const { data: settings } = useQuery(settingsQuery);
   const [selected, setSelected] = useState<null | SourceDto>(null);
   const [step, setStep] = useState<LiveTrackingStep>('intro');
   const statuses = useQueries({
@@ -50,7 +53,17 @@ export function SourcesScreen({ title }: { title: string }) {
       push('Suivi en direct retiré : les réglages d’avant sont remis.', 'info');
     },
   });
+  const saveSettings = useMutation({
+    mutationFn: (changes: Partial<SettingsDto>) => updateSettings(changes),
+    onSuccess: (saved) => client.setQueryData(settingsQuery.queryKey, saved),
+    onError: () => push('Le réglage n’a pas pu être enregistré.', 'warning'),
+  });
+  const switchSource = useMutation({
+    mutationFn: ({ id, watched }: { id: string; watched: boolean }) => setSourceWatched(id, watched),
+    onSuccess: refresh,
+  });
   if (!data) return null;
+  const watchedCount = sources.filter((source) => source.watched).length;
   const statusOf = (id: string) => statuses[sources.findIndex((source) => source.id === id)]?.data;
   const selectedStatus = selected ? statusOf(selected.id) : undefined;
   return (
@@ -65,7 +78,7 @@ export function SourcesScreen({ title }: { title: string }) {
       </p>
       <section aria-labelledby="sources-title" className="rounded-card border border-line bg-surface shadow-card">
         <h2 id="sources-title" className="border-b border-line px-4 py-2.5 text-xs font-semibold text-muted">
-          {sources.length > 1 ? `${sources.length} sources surveillées` : '1 source surveillée'}
+          {watchedCount > 1 ? `${watchedCount} sources surveillées` : `${watchedCount} source surveillée`}
         </h2>
         <ul className="divide-y divide-line">
           {sources.map((source) => {
@@ -76,6 +89,8 @@ export function SourcesScreen({ title }: { title: string }) {
                 label={source.label}
                 path={displayPath(source.path, data.home)}
                 liveTracking={source.liveTracking}
+                watched={source.watched}
+                onWatchedChange={(watched) => switchSource.mutate({ id: source.id, watched })}
                 lastSignalAt={signal ? new Date(signal) : null}
                 now={now}
                 onOpenLiveTracking={() => {
@@ -87,6 +102,13 @@ export function SourcesScreen({ title }: { title: string }) {
           })}
         </ul>
       </section>
+      {settings && (
+        <SettingsPanel
+          settings={settings}
+          busy={saveSettings.isPending}
+          onChange={(changes) => saveSettings.mutate(changes)}
+        />
+      )}
       <LiveTrackingPanel
         source={selected && { label: selected.label, path: displayPath(selected.path, data.home) }}
         status={
