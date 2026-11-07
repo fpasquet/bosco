@@ -3,13 +3,9 @@ import { expect } from '@playwright/test';
 import { cpSync, mkdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { ApiResponse } from './fixtures.ts';
+import { sendHook, settingsOf, sourceIdOf } from '../../shared/hooks.ts';
 import { FEATURES } from '../paths.ts';
 import { Given, Then, When } from './fixtures.ts';
-
-interface HookCall {
-  headers?: { Authorization?: string };
-  url?: string;
-}
 
 /** Demande de hook laissée en attente, que Claude Code peut abandonner (réponse donnée dans le terminal). */
 let pendingHook: AbortController | null = null;
@@ -18,46 +14,14 @@ function fixture(file: string, profilesRoot: string): string {
   return readFileSync(join(FEATURES, file), 'utf8').replaceAll('{{profiles}}', profilesRoot);
 }
 
-function settingsOf(profilesRoot: string, profile: string): { hooks?: Record<string, { hooks?: HookCall[] }[]> } {
-  return JSON.parse(readFileSync(join(profilesRoot, profile, 'settings.json'), 'utf8')) as {
-    hooks?: Record<string, { hooks?: HookCall[] }[]>;
-  };
-}
-
-/** L'appel que Claude Code ferait pour cet événement, tel qu'il est écrit dans les réglages du profil. */
-function hookOf(profilesRoot: string, profile: string, event: string): Required<HookCall> {
-  const call = settingsOf(profilesRoot, profile)
-    .hooks?.[event]?.flatMap((group) => group.hooks ?? [])
-    .find((hook) => hook.url?.includes('/api/hooks/'));
-  if (!call?.url || !call.headers?.Authorization) throw new Error(`No Bosco hook for ${event} in ${profile}`);
-  return { url: call.url, headers: { Authorization: call.headers.Authorization } };
-}
-
-async function sendHook(
+function sendFixture(
   profilesRoot: string,
   profile: string,
   file: string,
-  options: { secret?: boolean; signal?: AbortSignal } = {},
+  options?: { secret?: boolean; signal?: AbortSignal },
 ): Promise<ApiResponse> {
-  const body = fixture(file, profilesRoot);
-  const event = (JSON.parse(body) as { hook_event_name: string }).hook_event_name;
-  const { headers, url } = hookOf(profilesRoot, profile, event);
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', ...(options.secret === false ? {} : headers) },
-    body,
-    signal: options.signal,
-  });
-  const text = await response.text();
-  return { status: response.status, body: text ? (JSON.parse(text) as unknown) : null };
-}
-
-async function sourceIdOf(baseURL: string, profile: string): Promise<string> {
-  const response = await fetch(`${baseURL}/api/sources`);
-  const { sources } = (await response.json()) as { sources: { id: string; path: string }[] };
-  const source = sources.find((candidate) => candidate.path.endsWith(`/${profile}`));
-  if (!source) throw new Error(`The profile ${profile} is not a source`);
-  return source.id;
+  const input = JSON.parse(fixture(file, profilesRoot)) as Record<string, unknown> & { hook_event_name: string };
+  return sendHook(profilesRoot, profile, input, options);
 }
 
 Given('the Claude Code profile {string} has the settings {string}', ({ bosco }, profile: string, file: string) => {
@@ -104,14 +68,14 @@ Then('the settings of the profile {string} should equal {string}', ({ bosco }, p
 When(
   'Claude Code sends the hook {string} of the profile {string}',
   async ({ bosco, last }, file: string, profile: string) => {
-    last.response = await sendHook(bosco.profilesRoot, profile, file);
+    last.response = await sendFixture(bosco.profilesRoot, profile, file);
   },
 );
 
 When(
   'Claude Code sends the hook {string} of the profile {string} without the secret',
   async ({ bosco, last }, file: string, profile: string) => {
-    last.response = await sendHook(bosco.profilesRoot, profile, file, { secret: false });
+    last.response = await sendFixture(bosco.profilesRoot, profile, file, { secret: false });
   },
 );
 
@@ -119,7 +83,7 @@ When(
   'Claude Code sends the hook {string} of the profile {string} without waiting',
   async ({ bosco, last }, file: string, profile: string) => {
     pendingHook = new AbortController();
-    last.pending = sendHook(bosco.profilesRoot, profile, file, { signal: pendingHook.signal });
+    last.pending = sendFixture(bosco.profilesRoot, profile, file, { signal: pendingHook.signal });
     // une demande abandonnée par Claude Code n'est pas une erreur du scénario
     last.pending.catch(() => undefined);
     await new Promise((resolve) => setTimeout(resolve, 200));
