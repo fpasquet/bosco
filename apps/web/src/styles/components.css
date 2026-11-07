@@ -1,0 +1,21 @@
+/*
+ * Classes sémantiques du design system : celles de daisyUI (`btn`, `card`, `badge`…), réglées par son thème
+ * (theme.css), et celles du projet pour ce que daisyUI n'a pas, dans `@layer components`. daisyUI est dans la couche
+ * des utilitaires, sa règle de base dans la sous-couche `daisyui.l1.l2.l3` et ses modificateurs au-dessus : le réglage
+ * global d'une classe de daisyUI, ou une classe du projet posée avec elle, s'écrit dans
+ * `@layer utilities { @layer daisyui.l1.l2.l3 { … } }`, d'où ses modificateurs et le JSX l'emportent encore.
+ * Variantes par classes de modificateur
+ * (`btn-primary`), états par les attributs d'accessibilité, que daisyUI lit aussi (`aria-selected`, `aria-checked`,
+ * `aria-current`) ; Seul `data-state`, posé par Radix, sert aux animations d'ouverture et de fermeture.
+ *
+ * La feuille d'un composant est à côté de lui (src/shared/ui/button/ : button.tsx, button.css s'il règle une classe, son
+ * histoire, index.ts) ; les classes sans composant React sont dans classes/, un fichier par famille. Ce fichier les
+ * rassemble : une nouvelle feuille s'y ajoute (rehome.mjs le fait pour un composant de shadcn). Documentation : Storybook.
+ */
+@import './utilities.css';
+
+/* Classes sans composant React, avant les composants qui peuvent les surcharger */
+@import './classes/overlay.css';
+
+/* Composants */
+@import '../shared/ui/button/button.css';

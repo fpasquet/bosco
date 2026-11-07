@@ -1,0 +1,65 @@
+/*
+ * Copie des tokens des specs (skill specs-ui) : ne pas modifier ici.
+ * Une couleur, une police ou un rayon se change dans les specs, puis tokens.mjs (skill design-system) recopie ce fichier.
+ * Source : fpasquet/specs · bosco/ui/tokens.css · sha256:ab337052b413372e
+ */
+/*
+ * Identité visuelle — Bosco
+ * Source : proposition A « Atelier clair » de propositions.html, retenue le 06/11/2026 (disposition A « Tour de contrôle »).
+ *
+ * Bloc Tailwind v4 à copier tel quel :
+ *   - dans les specs HTML, à l'intérieur de <style type="text/tailwindcss"> ;
+ *   - dans l'application, après @import "tailwindcss"; du CSS principal.
+ *
+ * Noms sémantiques (bg-primary, text-muted, rounded-card, h-control…) partagés par les maquettes et le code.
+ * Contrastes vérifiés (WCAG AA) le 06/11/2026 avec check-contrast.mjs.
+ */
+@theme {
+  /* Polices : Instrument Sans pour le texte et les titres, JetBrains Mono pour les chemins, branches, commandes et chiffres */
+  --font-sans: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  /* Surfaces : neutres légèrement teintés vers le vert d'eau de la marque */
+  --color-canvas: #f3f6f5;
+  --color-surface: #ffffff;
+  --color-surface-alt: #ebf0ef;
+  --color-line: #d9e1df;
+  --color-line-strong: #7f8c88;
+
+  /* Texte */
+  --color-ink: #142321;
+  --color-muted: #52615d;
+
+  /* Navigation principale : barre latérale claire */
+  --color-nav: #ffffff;
+  --color-nav-ink: #142321;
+  --color-nav-muted: #52615d;
+  --color-nav-active: #dfeeeb;
+
+  /* Marque : vert d'eau réservé aux actions et à la sélection */
+  --color-primary: #0d6e66;
+  --color-primary-hover: #0a5751;
+  --color-primary-soft: #dfeeeb;
+  --color-on-primary: #ffffff;
+
+  /* États : T'attend = warning, En cours = info, À relire = primary, Inactive = muted, Terminée = success, En échec = danger */
+  --color-success: #1f7a45;
+  --color-success-soft: #e2f2e8;
+  --color-warning: #8a5300;
+  --color-warning-soft: #fcefd4;
+  --color-danger: #b42318;
+  --color-danger-soft: #fce8e6;
+  --color-on-danger: #ffffff;
+  --color-info: #1d5ba3;
+  --color-info-soft: #e4effb;
+
+  /* Formes, densité, relief */
+  --radius-control: 0.375rem;
+  --radius-card: 0.625rem;
+  --spacing-control: 2.25rem;
+  --spacing-row: 3rem;
+  --shadow-card: 0 1px 2px rgb(20 35 33 / 0.06);
+  --shadow-overlay: 0 12px 32px rgb(20 35 33 / 0.18);
+  --color-overlay: #1423214d;     /* voile sous les fenêtres et panneaux (bg-overlay) : encre à 30 % */
+}

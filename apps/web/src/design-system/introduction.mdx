@@ -1,0 +1,26 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+
+<Meta title="Design system/Introduction" />
+
+# Design system
+
+« Atelier clair » : un fond clair légèrement vert d'eau, un seul accent vert d'eau profond pour l'action principale, et des couleurs d'état réservées aux états (attente, succès, échec). Une densité d'outil de travail (contrôles de 36 px, lignes de 48 px), des formes sobres (rayons de 6 et 10 px), Instrument Sans pour le texte et JetBrains Mono pour les chemins, commandes et montants.
+
+## Trois couches
+
+1. **Tokens** : `apps/web/src/styles/tokens.css`, source unique des couleurs, polices, tailles, rayons et hauteurs (page _Tokens_).
+2. **Classes sémantiques** : celles de daisyUI (`btn`, `btn-primary`, `card`, `badge-success`…), réglées par son thème,
+   lui-même pointé sur les tokens (`src/styles/theme.css`), et celles du projet pour ce que daisyUI n'a pas, dans
+   `src/styles/classes` ou à côté de leur composant (page _Classes_). Les ajustements ponctuels restent en utilitaires
+   Tailwind dans le JSX.
+3. **Composants** : `src/shared/ui`. Leurs variantes typées (CVA) posent les classes de daisyUI :
+   `<Button variant="primary" size="sm">` rend `btn btn-primary btn-sm`.
+
+## Règles
+
+- Un style répété va dans une classe sémantique ; un ajustement ponctuel reste un utilitaire.
+- Les couleurs passent par les tokens (`bg-surface`, `text-muted`), plutôt que par les noms de daisyUI ou de shadcn.
+- Aucune valeur arbitraire (`w-[720px]`, `text-[13px]`) : l'échelle de Tailwind, un token ou une entrée nommée du thème.
+- Le focus clavier est toujours visible (`focus-ring`) ; les rôles et attributs ARIA viennent des primitives Radix.
+
+L'onglet _Accessibility_ contrôle chaque histoire ; quand le mode sombre existe, la barre d'outils bascule de thème.

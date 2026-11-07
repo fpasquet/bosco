@@ -1,0 +1,8 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import '../styles/tokens.css';
+@import '../styles/theme.css';
+@import '../styles/components.css';
+@plugin "daisyui" {
+  themes: false;
+}
