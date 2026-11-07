@@ -13,3 +13,4 @@ export type {
   SourcesDto,
   WaitingDto,
 } from './sessions.ts';
+export type { GuardrailsDto, TaskDraftDto, TaskDto, TaskIssueDto, TaskModeDto, TaskStateDto } from './tasks.ts';
