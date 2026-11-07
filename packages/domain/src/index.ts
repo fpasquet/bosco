@@ -1,5 +1,7 @@
 export { APP_NAME } from './app-name.ts';
 export type {
+  CostReportDto,
+  HistoryDayDto,
   ImportProgressDto,
   JournalEntryDto,
   LiveEventDto,

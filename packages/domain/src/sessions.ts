@@ -84,3 +84,23 @@ export type LiveEventDto =
     }
   | { data: { session: SessionDto }; type: 'session.updated' }
   | { data: { sessions: SessionDto[] }; type: 'sessions.snapshot' };
+
+/** Un jour de l'historique (GET /api/history), avec son total (E3a, CA-SESS-49). */
+export interface HistoryDayDto {
+  costUsd: number;
+  /** Jour local, AAAA-MM-JJ */
+  date: string;
+  sessions: SessionDto[];
+}
+
+/** Coûts de la période (GET /api/history/costs, E3b) ; tous les montants sont des estimations (RF-SESS-05). */
+export interface CostReportDto {
+  averagePerWorkingDayUsd: number;
+  byModel: { model: null | string; share: number; usd: number }[];
+  byRepository: { name: null | string; sessions: number; share: number; usd: number }[];
+  cacheShare: number;
+  days: { date: string; repositories: { name: null | string; sessions: number; usd: number }[] }[];
+  sessions: number;
+  totalUsd: number;
+  workingDays: number;
+}

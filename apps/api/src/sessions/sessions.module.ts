@@ -5,6 +5,7 @@ import { APP_NAME } from '@bosco/domain';
 import type { Config } from '../config.ts';
 import type { Notifier } from './application/ports.ts';
 import { CONFIG, ORM } from '../shared/tokens.ts';
+import { HistoryService } from './application/history.service.ts';
 import { LiveSignalService } from './application/live-signal.service.ts';
 import { LiveTrackingService } from './application/live-tracking.service.ts';
 import { SessionService } from './application/session.service.ts';
@@ -22,12 +23,14 @@ import { MikroOrmSettingsRepository } from './infrastructure/persistence/setting
 import { MikroOrmSourceRepository } from './infrastructure/persistence/source.repository.ts';
 import { TranscriptCursorStore } from './infrastructure/persistence/transcript-cursor.store.ts';
 import { EventsController } from './interface/http/events.controller.ts';
+import { HistoryController } from './interface/http/history.controller.ts';
 import { HooksController } from './interface/http/hooks.controller.ts';
 import { LiveTrackingController } from './interface/http/live-tracking.controller.ts';
 import { SessionsController } from './interface/http/sessions.controller.ts';
 import { SettingsController } from './interface/http/settings.controller.ts';
 import { SourcesController } from './interface/http/sources.controller.ts';
 import {
+  HISTORY_SERVICE,
   HOOK_SECRET,
   LIVE_SIGNAL_SERVICE,
   LIVE_TRACKING_SERVICE,
@@ -51,9 +54,16 @@ const registry = new FileSessionRegistry();
     HooksController,
     LiveTrackingController,
     SettingsController,
+    HistoryController,
   ],
   providers: [
     { provide: SESSION_EVENTS, useValue: new SessionEventsBus() },
+    {
+      provide: HISTORY_SERVICE,
+      inject: [ORM, SESSION_SERVICE],
+      useFactory: (orm: MikroORM, sessionService: SessionService) =>
+        new HistoryService(sessionService, new MikroOrmSessionRepository(orm), () => clock.now()),
+    },
     {
       provide: SETTINGS_SERVICE,
       inject: [ORM],

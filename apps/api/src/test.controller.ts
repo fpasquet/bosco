@@ -31,6 +31,8 @@ export class TestController {
     this.liveSignals.forget();
     this.notifier.sent.splice(0);
     await this.orm.schema.clear();
+    // L'index de recherche n'est pas une entité : il se vide à part
+    await this.orm.em.getConnection().execute('delete from session_search');
     await this.settings.load();
     (globalThis as { boscoReplayReset?: () => void }).boscoReplayReset?.();
   }
