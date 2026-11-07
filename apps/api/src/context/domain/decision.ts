@@ -99,7 +99,7 @@ export class Decision {
       replacedBy: null,
       specifies: [],
       versions: [
-        { ...checkText(text), at, author: taskId ? `agent de T-${taskId}` : 'une session', note: 'Proposition' },
+        { ...checkText(text), at, author: taskId ? `l’agent de T-${taskId}` : 'une session', note: 'Proposition' },
       ],
     });
   }

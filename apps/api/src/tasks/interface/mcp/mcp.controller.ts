@@ -38,6 +38,7 @@ export class McpController {
   }
 
   @Post()
+  @HttpCode(200)
   async handle(
     @Headers('authorization') authorization: string | undefined,
     @Body() body: JsonRpcRequest | JsonRpcRequest[],
