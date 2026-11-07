@@ -14,6 +14,7 @@ import {
 import type { SessionService, SessionView } from '../../application/session.service.ts';
 import type { SessionEventsBus } from '../../infrastructure/events/session-events.bus.ts';
 import { SESSION_EVENTS, SESSION_SERVICE } from '../../tokens.ts';
+import { presentSession } from './session.presenter.ts';
 
 /** Un nouvel instantané à cet intervalle : une session sans événement passe Inactive à l'heure. */
 const SNAPSHOT_INTERVAL_MS = 30_000;
@@ -36,7 +37,9 @@ export class EventsController {
       const pending = new ReplaySubject<SessionView>();
       const subscription = this.bus.changes.subscribe(pending);
       const first = from(this.sessionService.listSessions()).pipe(map(snapshotEvent));
-      const changes = pending.pipe(map((session) => ({ type: 'session.updated', data: { session } })));
+      const changes = pending.pipe(
+        map((session) => ({ type: 'session.updated', data: { session: presentSession(session) } })),
+      );
       const later = interval(SNAPSHOT_INTERVAL_MS).pipe(
         switchMap(() => from(this.sessionService.listSessions())),
         map(snapshotEvent),
@@ -51,5 +54,5 @@ export class EventsController {
 }
 
 function snapshotEvent(sessions: SessionView[]): MessageEvent {
-  return { type: 'sessions.snapshot', data: { sessions } };
+  return { type: 'sessions.snapshot', data: { sessions: sessions.map(presentSession) } };
 }
