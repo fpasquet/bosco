@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "skills": {
+    "design-system": {
+      "source": "fpasquet/skills",
+      "ref": "f8f16d8a154e9720cf342faf83d6c349be7fd63d",
+      "sourceType": "github",
+      "skillPath": "skills/design-system/SKILL.md",
+      "computedHash": "d1c87f9ae4fdadf7e0670d084d41167f3fbd419db2c2a6ba39db6d1722c8db08",
+      "installMode": "copy"
+    },
+    "requirements-doc": {
+      "source": "fpasquet/skills",
+      "ref": "f8f16d8a154e9720cf342faf83d6c349be7fd63d",
+      "sourceType": "github",
+      "skillPath": "skills/requirements-doc/SKILL.md",
+      "computedHash": "a27223b815e04d69788f90f154dbb0a2a514bdc1f5320dd0eb1ac5655ab59f0f",
+      "installMode": "copy"
+    }
+  }
+}
