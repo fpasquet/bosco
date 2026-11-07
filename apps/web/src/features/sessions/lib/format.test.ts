@@ -1,6 +1,17 @@
 // Ce que les scénarios ne voient pas : chaque palier des durées relatives et les chemins hors du dossier personnel.
 import { describe, expect, it } from 'vitest';
-import { dayLabel, displayPath, elapsed, formatCost, formatTokens, repositories, sessions, sinceNow } from './format';
+import {
+  actionLabel,
+  dayLabel,
+  displayPath,
+  elapsed,
+  formatCost,
+  formatTokens,
+  relativePath,
+  repositories,
+  sessions,
+  sinceNow,
+} from './format';
 
 const plain = (text: string) => text.replaceAll(/[\u00a0\u202f]/g, ' ');
 
@@ -64,5 +75,14 @@ describe('sessions and dayLabel', () => {
   it('agrees with the count and writes the day in full', () => {
     expect([sessions(1), sessions(3)]).toEqual(['1 session', '3 sessions']);
     expect(dayLabel(new Date('2026-11-06T12:00:00'))).toBe('vendredi 6 novembre');
+  });
+});
+
+describe('actionLabel and relativePath', () => {
+  it('reads the actions of the agent in French and writes paths from the repository root', () => {
+    expect(actionLabel('Read · src/indexer/pdf.ts')).toBe('Lit src/indexer/pdf.ts');
+    expect(actionLabel('Bash · yarn test --forceExit')).toBe('Bash · yarn test --forceExit');
+    expect(relativePath('/home/dev/labo-ia/src/a.ts', '/home/dev/labo-ia')).toBe('src/a.ts');
+    expect(relativePath('/etc/hosts', '/home/dev/labo-ia')).toBe('/etc/hosts');
   });
 });

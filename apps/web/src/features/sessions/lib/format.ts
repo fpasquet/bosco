@@ -61,3 +61,27 @@ const DAY = new Intl.DateTimeFormat('fr', { day: 'numeric', month: 'long', weekd
 export function dayLabel(now: Date): string {
   return DAY.format(now);
 }
+
+/** Verbes des outils de Claude Code, comme dans les maquettes ; Bash et les autres outils gardent leur nom. */
+const ACTION_VERBS: Record<string, string> = {
+  Edit: 'Modifie',
+  Glob: 'Cherche',
+  Grep: 'Cherche',
+  MultiEdit: 'Modifie',
+  Read: 'Lit',
+  WebFetch: 'Consulte',
+  WebSearch: 'Recherche',
+  Write: 'Écrit',
+};
+
+/** « Read · src/indexer/pdf.ts » devient « Lit src/indexer/pdf.ts » ; « Bash · yarn test » reste tel quel. */
+export function actionLabel(action: string): string {
+  const [tool = '', ...rest] = action.split(' · ');
+  const verb = ACTION_VERBS[tool];
+  return verb ? [verb, rest.join(' · ')].filter(Boolean).join(' ') : action;
+}
+
+/** Chemin écrit depuis la racine du dépôt quand il y est : « src/indexer/pdf.ts ». */
+export function relativePath(path: string, root: null | string | undefined): string {
+  return root && path.startsWith(`${root}/`) ? path.slice(root.length + 1) : path;
+}

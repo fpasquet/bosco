@@ -1,4 +1,5 @@
 import { Check, Eye, Hand, SquareTerminal, X } from 'lucide-react';
+import Link from 'next/link';
 import type { SessionDto } from '@bosco/domain';
 import { Button } from '@/shared/ui/button';
 import { elapsed } from '../../lib/format';
@@ -9,25 +10,33 @@ export interface WaitingActionsProps {
   /** Session dont la réponse part : ses boutons attendent */
   busyId: null | string;
   onAllow: (session: SessionDto) => void;
-  onDeny: (session: SessionDto) => void;
 }
 
-/** « Autoriser » et « Refuser » pour une autorisation ; un tour terminé se répond dans le terminal (RF-SESS-03, 04). */
-export function WaitingActions({ busyId, onAllow, onDeny, session }: WaitingActionsProps & { session: SessionDto }) {
+export const detailOf = (session: SessionDto) => `/sessions/${encodeURIComponent(session.id)}`;
+
+/**
+ * « Autoriser » et « Refuser » pour une autorisation ; « Refuser » ouvre le détail pour écrire un motif (E2b). Un tour
+ * terminé se répond dans le terminal : seulement « Voir la session » (RF-SESS-03, RF-SESS-04).
+ */
+export function WaitingActions({ busyId, onAllow, session }: WaitingActionsProps & { session: SessionDto }) {
   if (session.waiting?.kind !== 'permission') {
     return (
-      <Button variant="outline" size="sm" disabled title="Le détail d’une session arrive avec le prochain incrément">
-        <Eye aria-hidden className="size-3.5" />
-        Voir la session
+      <Button variant="outline" size="sm" asChild>
+        <Link href={detailOf(session)}>
+          <Eye aria-hidden className="size-3.5" />
+          Voir la session
+        </Link>
       </Button>
     );
   }
   const busy = busyId === session.id;
   return (
     <div className="flex gap-2">
-      <Button variant="outline" size="sm" className="max-md:btn-md" disabled={busy} onClick={() => onDeny(session)}>
-        <X aria-hidden className="size-3.5" />
-        Refuser
+      <Button variant="outline" size="sm" className="max-md:btn-md" asChild>
+        <Link href={detailOf(session)}>
+          <X aria-hidden className="size-3.5" />
+          Refuser
+        </Link>
       </Button>
       <Button variant="primary" size="sm" className="max-md:btn-md" disabled={busy} onClick={() => onAllow(session)}>
         <Check aria-hidden className="size-3.5" />
@@ -77,7 +86,9 @@ export function WaitingBanner({
               <SquareTerminal aria-hidden className="size-4" />
             </span>
             <div className="min-w-0 flex-1 md:w-72 md:flex-none">
-              <p className="truncate font-medium">{titleOf(session)}</p>
+              <Link href={detailOf(session)} className="block link truncate font-medium link-hover">
+                {titleOf(session)}
+              </Link>
               <p className="truncate font-mono text-xs text-muted">{placeOf(session)}</p>
             </div>
             <div className="w-full min-w-0 md:w-auto md:flex-1">

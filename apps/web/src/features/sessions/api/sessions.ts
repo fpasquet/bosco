@@ -1,4 +1,4 @@
-import type { ImportProgressDto, SessionDto } from '@bosco/domain';
+import type { ImportProgressDto, SessionDetailDto, SessionDto } from '@bosco/domain';
 
 /** Sessions connues ; le flux en direct (GET /api/events) tient ce cache à jour après le premier chargement. */
 export const sessionsQuery = {
@@ -36,3 +36,13 @@ export async function answerPermission(
   if (!response.ok) throw new Error(`POST /api/sessions/${sessionId}/permission answered ${response.status}`);
   return true;
 }
+
+/** Détail d'une session (E2) : le flux en direct l'invalide à chaque changement de la session. */
+export const sessionDetailQuery = (id: string) => ({
+  queryKey: ['session', id],
+  queryFn: async (): Promise<SessionDetailDto> => {
+    const response = await fetch(`/api/sessions/${encodeURIComponent(id)}`);
+    if (!response.ok) throw new Error(`GET /api/sessions/${id} answered ${response.status}`);
+    return (await response.json()) as SessionDetailDto;
+  },
+});
