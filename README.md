@@ -21,14 +21,13 @@ Données : `~/.local/share/bosco` (`BOSCO_DATA_DIR`). Port : `BOSCO_PORT` (4870 
 
 ## Dépôt
 
-| Dossier            | Contenu                                                                                                                                                  |
-| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `apps/api`         | Application serveur NestJS sur Fastify : un module par contexte (domain, application, infrastructure, interface/http), sert l'interface sur le même port |
-| `apps/web`         | Interface Next.js, design system (tokens des specs, daisyUI, shadcn/ui sur Radix, Storybook)                                                             |
-| `apps/cli`         | Commande `bosco`                                                                                                                                         |
-| `packages/domain`  | Contrats partagés avec le web : nom de l'application, types des vues                                                                                     |
-| `packages/configs` | Configurations partagées : TypeScript, ESLint, Vitest, Prettier                                                                                          |
-| `e2e`              | Scénarios Gherkin de l'API (anglais) et du web (français), module d'enregistrement des appels sortants                                                   |
+| Dossier            | Contenu                                                                                                                                                                                 |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `apps/api`         | Application serveur NestJS sur Fastify : un module par contexte (domain, application, infrastructure, interface/http), sert l'interface sur le même port ; commande `bosco` (`src/cli`) |
+| `apps/web`         | Interface Next.js, design system (tokens des specs, daisyUI, shadcn/ui sur Radix, Storybook)                                                                                            |
+| `packages/domain`  | Contrats partagés avec le web : nom de l'application, types des vues                                                                                                                    |
+| `packages/configs` | Configurations partagées : TypeScript, ESLint, Vitest, Prettier                                                                                                                         |
+| `e2e`              | Scénarios Gherkin de l'API (anglais) et du web (français), module d'enregistrement des appels sortants                                                                                  |
 
 ## Commandes
 
