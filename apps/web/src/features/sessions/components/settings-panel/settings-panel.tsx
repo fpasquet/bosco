@@ -1,4 +1,6 @@
 'use client';
+import { ArrowRight } from 'lucide-react';
+import Link from 'next/link';
 import type { SettingsDto } from '../../api/settings';
 import { PhoneAccess } from '../phone-access';
 
@@ -46,16 +48,14 @@ export function SettingsPanel({ busy, onChange, settings }: SettingsPanelProps) 
             ))}
           </select>
         </Row>
-        <Row label="Notifications du bureau" hint="Une notification quand une session t’attend.">
-          <input
-            type="checkbox"
-            role="switch"
-            aria-label="Notifications du bureau"
-            className="toggle toggle-primary"
-            disabled={busy}
-            checked={settings.desktopNotifications}
-            onChange={(event) => onChange({ desktopNotifications: event.target.checked })}
-          />
+        <Row label="Notifications" hint="Questions qui t’attendent, tâches finies, longs tours.">
+          <Link
+            href="/settings/notifications"
+            className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
+          >
+            Régler<span className="sr-only"> les notifications</span>
+            <ArrowRight aria-hidden className="size-4" />
+          </Link>
         </Row>
         <PhoneAccess />
         <Row

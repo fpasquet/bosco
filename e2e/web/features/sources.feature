@@ -11,18 +11,14 @@ Fonctionnalité: Sources et réglages
     Et Bosco surveille les profils « .claude » et « .claude-perso »
 
   @CA-SESS-59
-  @CA-SESS-61
   @NF-18
   Scénario: Les réglages sont gardés d'une visite à l'autre
     Quand j'ouvre la page « /sources »
     Alors la liste « Seuil d’inactivité » vaut « 15 min »
-    Et l’interrupteur « Notifications du bureau » est « activé »
     Et la page est accessible
     Quand je choisis « 30 min » dans la liste « Seuil d’inactivité »
-    Et je bascule l’interrupteur « Notifications du bureau »
     Et je recharge la page
     Alors la liste « Seuil d’inactivité » vaut « 30 min »
-    Et l’interrupteur « Notifications du bureau » est « désactivé »
 
   @CA-SESS-56
   Scénario: Une source mise en pause n'est plus lue
