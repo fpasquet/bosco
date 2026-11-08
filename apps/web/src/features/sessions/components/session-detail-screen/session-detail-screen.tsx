@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import type { JournalEntryDto, SessionDto } from '@bosco/domain';
 import { PageSkeleton } from '@/shared/components/page-skeleton';
 import { useNow } from '@/shared/hooks/use-now';
+import { answerQuestion, cancelPending } from '../../api/pilot';
 import { sessionConversationQuery, sessionDetailQuery, sessionsQuery } from '../../api/sessions';
 import { sourcesQuery } from '../../api/sources';
 import { useCopy } from '../../hooks/use-copy';
@@ -16,7 +17,10 @@ import { profileMark, waitingSessions } from '../../lib/overview';
 import { useSettlements } from '../../lib/settlements';
 import { AllowDialog } from '../allow-dialog';
 import { ConnectionStatus } from '../connection-status';
+import { PendingMessage } from '../pending-message';
 import { PermissionCard } from '../permission-card';
+import { PilotPanel } from '../pilot-panel';
+import { QuestionCard } from '../question-card';
 import { SessionFeed } from '../session-feed';
 import { SessionHeader } from '../session-header';
 import { SessionSide } from '../session-side';
@@ -91,16 +95,39 @@ export function SessionDetailScreen({ id }: { id: string }) {
             loading={conversationPending}
             now={now}
             tail={
-              <PermissionCard
-                session={session}
-                now={now}
-                agentSays={agentSays(journal, session)}
-                settlement={settlement}
-                busy={answers.busyId === session.id || offline}
-                onAllow={() => answers.onAllow(session)}
-                onDeny={(reason) => answers.deny(session, reason)}
-              />
+              <>
+                <PermissionCard
+                  session={session}
+                  now={now}
+                  agentSays={agentSays(journal, session)}
+                  settlement={settlement}
+                  busy={answers.busyId === session.id || offline}
+                  onAllow={() => answers.onAllow(session)}
+                  onDeny={(reason) => answers.deny(session, reason)}
+                />
+                {session.waiting?.kind === 'question' && (
+                  <QuestionCard
+                    key={session.waiting.requestId}
+                    questions={session.waiting.questions}
+                    since={session.waiting.since}
+                    now={now}
+                    busy={offline}
+                    onAnswer={(answers) => {
+                      if (session.waiting?.kind !== 'question') return;
+                      answerQuestion(session.id, session.waiting.requestId, answers).catch(() => undefined);
+                    }}
+                  />
+                )}
+                {session.pilot?.pending && (
+                  <PendingMessage
+                    {...session.pilot.pending}
+                    busy={offline}
+                    onCancel={() => void cancelPending(session.id).catch(() => undefined)}
+                  />
+                )}
+              </>
             }
+            footer={<PilotPanel key={session.id} session={session} />}
           />
         </div>
         <SessionSide session={session} now={now} resume={resume} onCopy={copy} />

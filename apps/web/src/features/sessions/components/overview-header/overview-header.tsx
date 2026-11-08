@@ -1,5 +1,5 @@
 'use client';
-import { EyeOff, Search, X } from 'lucide-react';
+import { EyeOff, Plus, Search, X } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useRef } from 'react';
 import { cn } from '@/lib/cn';
@@ -106,6 +106,18 @@ export function OverviewHeader(props: OverviewHeaderProps) {
           Masquer les inactives
         </button>
       )}
+      {/* Démarrer une session sans terminal (E16a) : un bouton sur le poste, un bouton rond sur le téléphone */}
+      <Link href="/sessions/new" className="btn hidden h-control btn-primary md:inline-flex">
+        <Plus aria-hidden className="size-4" />
+        Nouvelle session
+      </Link>
+      <Link
+        href="/sessions/new"
+        aria-label="Nouvelle session"
+        className="btn fixed right-4 bottom-24 z-10 btn-circle shadow-overlay btn-lg btn-primary md:hidden"
+      >
+        <Plus aria-hidden className="size-6" />
+      </Link>
     </div>
   );
 }

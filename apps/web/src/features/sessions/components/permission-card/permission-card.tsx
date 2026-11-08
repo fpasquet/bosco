@@ -74,7 +74,9 @@ export function PermissionCard({ agentSays, busy, now, onAllow, onDeny, session,
             <Check aria-hidden className="size-3.5" />
             Autoriser
           </Button>
-          <span className="text-xs text-muted">Tu peux aussi répondre dans le terminal de la session.</span>
+          {!session.pilot && (
+            <span className="text-xs text-muted">Tu peux aussi répondre dans le terminal de la session.</span>
+          )}
         </div>
       </div>
     </section>
