@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { JournalEntryDto, SessionDto } from '@bosco/domain';
-import { sessionDetailQuery, sessionsQuery } from '../../api/sessions';
+import { sessionConversationQuery, sessionDetailQuery, sessionsQuery } from '../../api/sessions';
 import { sourcesQuery } from '../../api/sources';
 import { useCopy } from '../../hooks/use-copy';
 import { useLiveEvents } from '../../hooks/use-live-events';
@@ -41,6 +41,7 @@ export function SessionDetailScreen({ id }: { id: string }) {
   const { data: sources } = useQuery(sourcesQuery);
   const { data: sessions } = useQuery(sessionsQuery);
   const { data, isError } = useQuery(sessionDetailQuery(id));
+  const { data: conversation } = useQuery(sessionConversationQuery(id));
   const settlement = useSettlements((state) => state.settlements[id] ?? null);
   const offline = useOffline();
   const answers = usePermissionAnswers({
@@ -73,11 +74,12 @@ export function SessionDetailScreen({ id }: { id: string }) {
         onCopy={copy}
       />
       <WorkerTaskNotice session={session} />
-      <div className="grid min-h-0 flex-1 gap-4 md:grid-cols-3">
-        <div className="flex min-h-0 flex-col md:col-span-2">
+      <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 md:grid-cols-3">
+        <div className="flex min-h-0 min-w-0 flex-col md:col-span-2">
           <SessionFeed
             session={session}
             journal={journal}
+            conversation={conversation}
             now={now}
             tail={
               <PermissionCard

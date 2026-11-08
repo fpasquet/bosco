@@ -1,5 +1,11 @@
 // Sessions du fil rouge des specs, pour les histoires : les dates suivent l'heure courante.
-import type { JournalEntryDto, SessionDto, SourceDto } from '@bosco/domain';
+import type {
+  ConversationStepDto,
+  JournalEntryDto,
+  SessionConversationDto,
+  SessionDto,
+  SourceDto,
+} from '@bosco/domain';
 
 const ago = (seconds: number) => new Date(Date.now() - seconds * 1000).toISOString();
 const laboIa = (folder: string) => ({ folder, name: 'labo-ia', root: '/home/dev/www/labo-ia' });
@@ -144,5 +150,173 @@ export const STORY_RUNNING: SessionDto = {
   changedFiles: [
     { path: 'src/indexer/pdf.ts', added: 24, removed: 6 },
     { path: 'src/indexer/pdf.test.ts', added: 41, removed: 0 },
+  ],
+};
+
+type ToolStepDto = Extract<ConversationStepDto, { kind: 'tool' }>;
+
+function toolStep(
+  id: string,
+  name: string,
+  input: Record<string, unknown>,
+  start: number,
+  end: null | number,
+  output: null | string,
+  error = false,
+): ToolStepDto {
+  return {
+    at: at(start),
+    endedAt: end === null ? null : at(end),
+    error,
+    id,
+    input,
+    kind: 'tool',
+    name,
+    output,
+    summary: name,
+  };
+}
+
+const PDF_TS = `export function chunkPdf(pages: Page[]): Chunk[] {
+  const chunks: Chunk[] = [];
+  for (const page of pages) chunks.push(...splitBlocks(page.blocks));
+  return chunks;
+}`;
+
+/** Étapes du fil rouge, une par pattern d'AI Elements : outil, terminal, tests, pile d'appels, diff, plan, sous-agent. */
+export const STORY_STEPS = {
+  read: toolStep(
+    't1',
+    'Read',
+    { file_path: '/home/dev/www/labo-ia/packages/rag/src/indexer/pdf.ts' },
+    36,
+    35.99,
+    PDF_TS,
+  ),
+  grep: toolStep('t2', 'Grep', { pattern: 'splitBlocks' }, 35, 34.995, 'src/indexer/pdf.ts\nsrc/indexer/blocks.ts'),
+  edit: toolStep(
+    't3',
+    'Edit',
+    {
+      file_path: '/home/dev/www/labo-ia/packages/rag/src/indexer/pdf.ts',
+      old_string: '  for (const page of pages) chunks.push(...splitBlocks(page.blocks));',
+      new_string:
+        '  for (const page of pages) {\n    // Les lignes d’un même tableau restent dans un seul bloc\n    chunks.push(...splitBlocks(groupTables(page.blocks)));\n  }',
+    },
+    21,
+    20.99,
+    'The file has been updated.',
+  ),
+  terminal: toolStep(
+    't4',
+    'Bash',
+    { command: 'yarn lint', description: 'Vérifie le lint du paquet rag' },
+    16,
+    15.95,
+    'yarn run v1.22.22\n$ eslint src\nDone in 2.84s.',
+  ),
+  tests: toolStep(
+    't5',
+    'Bash',
+    { command: 'yarn test --forceExit', description: 'Lance toute la suite de tests' },
+    12,
+    11.6,
+    ' ✓ src/indexer/blocks.test.ts (6 tests) 41ms\n ✓ keeps a table in one chunk 12ms\n × splits a long table across pages 8ms\n ↓ indexes scanned PDF [skipped]\n\n Tests  1 failed | 2 passed | 1 skipped (4)',
+    true,
+  ),
+  stack: toolStep(
+    't6',
+    'Bash',
+    { command: 'node scripts/reindex.mjs', description: 'Réindexe les PDF de démonstration' },
+    3,
+    2.98,
+    "TypeError: Cannot read properties of undefined (reading 'rows')\n    at groupTables (src/indexer/pdf.ts:14:31)\n    at chunkPdf (src/indexer/pdf.ts:4:47)\n    at parse (node_modules/pdfjs-dist/build/pdf.js:1022:12)\n    at process (node_modules/pdfjs-dist/build/pdf.js:988:5)",
+    true,
+  ),
+  plan: toolStep(
+    't7',
+    'TodoWrite',
+    {
+      todos: [
+        { content: 'Relire le découpage des PDF', status: 'completed' },
+        { content: 'Regrouper les lignes d’un tableau', status: 'completed' },
+        { content: 'Corriger le tableau sur deux pages', status: 'in_progress' },
+        { content: 'Relancer toute la suite', status: 'pending' },
+      ],
+    },
+    1.5,
+    1.49,
+    'Todos have been modified successfully.',
+  ),
+  subagent: toolStep(
+    't8',
+    'Task',
+    { description: 'Chercher les PDF de test', prompt: 'Trouve les PDF de démonstration qui contiennent un tableau.' },
+    30,
+    29.5,
+    'Deux fichiers contiennent un tableau : `fixtures/devis.pdf` et `fixtures/facture.pdf`.',
+  ),
+  mcp: toolStep(
+    't9',
+    'mcp__github__get_issue',
+    { owner: 'labo-ia', repo: 'rag', issue_number: 42 },
+    33,
+    32.99,
+    '{ "title": "Tableaux coupés dans les PDF" }',
+  ),
+  running: toolStep('t10', 'Bash', { command: 'yarn test --forceExit' }, 0.2, null, null),
+};
+
+/** Fil complet du fil rouge : ta demande, puis les réflexions, outils et réponses de l'agent. */
+export const STORY_CONVERSATION: SessionConversationDto = {
+  partial: false,
+  turns: [
+    {
+      at: at(38),
+      id: 'u1',
+      role: 'user',
+      parts: [
+        {
+          at: at(38),
+          kind: 'text',
+          text: 'Les PDF avec des tableaux sont coupés au mauvais endroit, regarde le découpage.',
+        },
+      ],
+    },
+    {
+      at: at(37),
+      id: 'a1',
+      role: 'assistant',
+      parts: [
+        {
+          at: at(37),
+          kind: 'reasoning',
+          seconds: 4,
+          text: 'Le découpage travaille **bloc par bloc** : un tableau sur plusieurs blocs est coupé entre eux.',
+        },
+        { at: at(37), kind: 'text', text: 'Je relis le découpage des PDF, puis j’écris un test avec un tableau.' },
+        STORY_STEPS.read,
+        STORY_STEPS.grep,
+        STORY_STEPS.mcp,
+        STORY_STEPS.subagent,
+        {
+          at: at(22),
+          kind: 'text',
+          text: 'Le découpage coupe au milieu des tableaux. Je regroupe les lignes d’un même tableau :\n\n```ts\nchunks.push(...splitBlocks(groupTables(page.blocks)));\n```\n\n| Fichier | Tableaux |\n| --- | --- |\n| `devis.pdf` | 2 |\n| `facture.pdf` | 1 |',
+        },
+        STORY_STEPS.edit,
+        { at: at(17), kind: 'reasoning', seconds: 2, text: '' },
+        STORY_STEPS.terminal,
+        STORY_STEPS.tests,
+        STORY_STEPS.stack,
+        STORY_STEPS.plan,
+        {
+          at: at(1),
+          kind: 'text',
+          text: 'Le test du tableau sur deux pages échoue encore : `groupTables` ne gère pas une page **sans tableau**. Je corrige, puis je relance toute la suite.',
+        },
+        STORY_STEPS.running,
+      ],
+    },
   ],
 };
