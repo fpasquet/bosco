@@ -83,12 +83,15 @@ export class RepositoryDiscovery {
     home: string,
     /** Dépôt d'origine d'un worktree git, ou null pour un dépôt ordinaire */
     private readonly originOf: (root: string) => null | string,
+    /** Racine git d'un dossier, pour une session lue avant que Bosco la note */
+    private readonly gitRootOf: (path: string) => null | string = () => null,
   ) {
     this.excluded = settings.excluded.map((folder) => expandHome(folder, home));
     this.roots = settings.roots.map((folder) => expandHome(folder, home));
   }
 
-  placeOf(gitRoot: null | string, path: null | string): null | RepositoryPlace {
+  placeOf(noted: null | string, path: null | string): null | RepositoryPlace {
+    const gitRoot = noted ?? (path ? this.gitRootOf(path) : null);
     const workRoot = gitRoot ?? (this.settings.gitOnly ? null : path);
     if (!workRoot) return null;
     const root = gitRoot && this.settings.attachWorktrees ? (this.originOf(gitRoot) ?? gitRoot) : workRoot;

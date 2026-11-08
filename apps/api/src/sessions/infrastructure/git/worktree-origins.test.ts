@@ -26,4 +26,15 @@ describe('GitWorktreeOrigins', () => {
       null,
     ]);
   });
+
+  it('finds the git root of a folder', () => {
+    const repository = join(dir, 'api-voix');
+    mkdirSync(join(repository, '.git'), { recursive: true });
+    mkdirSync(join(repository, 'src'), { recursive: true });
+    const origins = new GitWorktreeOrigins();
+    expect([origins.rootOf(join(repository, 'src')), origins.rootOf(join(dir, 'ailleurs'))]).toEqual([
+      repository,
+      null,
+    ]);
+  });
 });

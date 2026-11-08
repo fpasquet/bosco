@@ -132,8 +132,11 @@ const worktrees = new GitWorktreeOrigins();
           registry,
           () => settings.inactivityDelayMs(),
           (gitRoot, path) =>
-            new RepositoryDiscovery(settings.repositories(), config.profilesRoot, (root) =>
-              worktrees.originOf(root),
+            new RepositoryDiscovery(
+              settings.repositories(),
+              config.profilesRoot,
+              (root) => worktrees.originOf(root),
+              (folder) => worktrees.rootOf(folder),
             ).placeOf(gitRoot, path),
         ),
     },

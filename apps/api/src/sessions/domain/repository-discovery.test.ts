@@ -51,6 +51,13 @@ describe('RepositoryDiscovery', () => {
     expect(placeOf(scratch, '/srv/scratchpad/essai', '/srv/scratchpad/essai')).not.toBeNull();
   });
 
+  it('finds the git root of a session read before Bosco noted it', () => {
+    const rootOf = (path: string) => (path.startsWith('/home/dev/www/api-voix') ? '/home/dev/www/api-voix' : null);
+    const discovery = new RepositoryDiscovery(DEFAULT_DISCOVERY, HOME, () => null, rootOf);
+    expect(discovery.placeOf(null, '/home/dev/www/api-voix/src')).toMatchObject({ folder: 'src', name: 'api-voix' });
+    expect(discovery.placeOf(null, '/home/dev')).toBeNull();
+  });
+
   it('marks a hidden repository without removing it (CA-SESS-80)', () => {
     const hidden = { hidden: ['/home/dev/www/rules-sandbox'] };
     expect(placeOf(hidden, '/home/dev/www/rules-sandbox', '/home/dev/www/rules-sandbox')).toMatchObject({
