@@ -14,7 +14,7 @@ export function clockOf(iso: string): string {
  */
 export function resumeCommand(session: SessionDto, sources: readonly SourceDto[], home: string): null | string {
   // Une session pilotée par Bosco se reprend aussi dans un terminal entre deux tours (règle 9)
-  const betweenTurns = session.pilot !== null && !session.pilot.running;
+  const betweenTurns = !!session.pilot && !session.pilot.running;
   if (session.state !== 'ended' && !betweenTurns) return null;
   const source = sources.find((candidate) => candidate.id === session.sourceId);
   // Une session du worker se réinstalle d'abord dans ton profil (E2c, E2d)
