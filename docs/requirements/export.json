@@ -1,11 +1,11 @@
 {
   "generator": "requirements-doc/scripts/export.mjs",
   "title": "Bosco · Cahier des charges",
-  "version": "0.16 · 08/11/2026",
+  "version": "0.17 · 08/11/2026",
   "source": {
     "repository": "fpasquet/specs",
     "path": "bosco/requirements",
-    "commit": "01a0993"
+    "commit": "1473b82"
   },
   "artifacts": {
     "specs": "https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1",
@@ -28,15 +28,15 @@
     "e14": "doing"
   },
   "files": {
-    "README.md": "5bdc298e24ab8fd7",
+    "README.md": "a06624551b6f8f87",
     "presentation.md": "3e8a2c6be5d9319b",
     "utilisateurs.md": "e24eac95cdde3821",
-    "lots/sessions.md": "98293349783352a2",
+    "lots/sessions.md": "2578891939b4144b",
     "lots/taches.md": "5407331f99ea4cfe",
     "lots/contexte.md": "85081a0428dde415",
     "interface.md": "e373884cd9e66b55",
     "exigences-non-fonctionnelles.md": "5e997e7690c6d7cc",
-    "architecture.md": "b3d18b5d9b99fd2f",
+    "architecture.md": "f9cdbf28dd981649",
     "stack.md": "fa89f6a6355752c4",
     "infrastructure.md": "5ff6c2480219dfe2"
   }

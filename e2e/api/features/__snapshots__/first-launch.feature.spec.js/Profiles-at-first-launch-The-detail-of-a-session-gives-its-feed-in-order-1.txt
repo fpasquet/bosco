@@ -15,9 +15,10 @@
     ],
     "repoPath": "<profiles>/labo-ia/packages/bosco",
     "repository": {
+      "folder": "packages/bosco",
+      "hidden": false,
       "name": "labo-ia",
-      "root": "<profiles>/labo-ia",
-      "folder": "packages/bosco"
+      "root": "<profiles>/labo-ia"
     },
     "sourceId": "<masked>",
     "startedAt": "2026-11-06T14:02:00.000Z",

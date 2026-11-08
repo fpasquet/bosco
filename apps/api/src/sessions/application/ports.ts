@@ -1,7 +1,7 @@
 import type { Conversation } from '../domain/conversation.ts';
 import type { ProfileCandidate } from '../domain/profile-candidate.ts';
 import type { Session } from '../domain/session.ts';
-import type { SettingsSnapshot } from '../domain/settings.ts';
+import type { SettingsChanges, SettingsSnapshot } from '../domain/settings.ts';
 import type { Source } from '../domain/source.ts';
 import type { JournalEntry } from '../domain/transcript-event.ts';
 import type { SessionView } from './session.service.ts';
@@ -35,7 +35,7 @@ export interface TranscriptWatcher {
 }
 
 export interface SettingsRepository {
-  load(): Promise<null | SettingsSnapshot>;
+  load(): Promise<null | SettingsChanges>;
   save(settings: SettingsSnapshot): Promise<void>;
 }
 

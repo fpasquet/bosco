@@ -118,6 +118,7 @@ export function SourcesScreen({ title }: { title: string }) {
       >
         {[
           { href: '/settings/integrations', label: 'Intégrations' },
+          { href: '/settings/repositories', label: 'Dépôts' },
           { href: '/settings/isolation', label: 'Isolation du worker' },
           { href: '/settings/test-environments', label: 'Environnements de test' },
         ].map(({ href, label }) => (

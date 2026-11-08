@@ -42,7 +42,11 @@ export function HistoryScreen({
   const days = useQuery({ ...historyQuery(deferred), enabled: tab === 'list', placeholderData: keepPreviousData });
   const costs = useQuery({ ...costsQuery(deferred), enabled: tab === 'costs', placeholderData: keepPreviousData });
   const repositories = [
-    ...new Set((sessions ?? []).flatMap((session) => (session.repository ? [session.repository.name] : []))),
+    ...new Set(
+      (sessions ?? []).flatMap((session) =>
+        session.repository && !session.repository.hidden ? [session.repository.name] : [],
+      ),
+    ),
   ].toSorted((a, b) => a.localeCompare(b, 'fr'));
   const profiles = (sources?.sources ?? []).map(({ id, label }) => ({ id, label }));
   const profileOf = (session: SessionDto) => profiles.find((profile) => profile.id === session.sourceId)?.label ?? null;

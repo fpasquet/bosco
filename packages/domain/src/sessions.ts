@@ -43,8 +43,11 @@ export interface SessionDto {
   /** Trois dernières actions de l'agent, la plus récente en premier */
   recentActions: string[];
   repoPath: null | string;
-  /** Dépôt : nom de la racine git et dossier de travail à l'intérieur (« labo-ia », « packages/bosco ») */
-  repository: { folder: string; name: string; root: string } | null;
+  /**
+   * Dépôt : nom de la racine git et dossier de travail à l'intérieur (« labo-ia », « packages/bosco ») ; hidden : masqué
+   * des listes dans les réglages (E4d), ses sessions restent visibles
+   */
+  repository: { folder: string; hidden: boolean; name: string; root: string } | null;
   sourceId: string;
   startedAt: string;
   state: SessionStateDto;
@@ -161,4 +164,22 @@ export interface CostReportDto {
   sessions: number;
   totalUsd: number;
   workingDays: number;
+}
+
+/** Réglages des dépôts découverts (E4d). */
+export interface DiscoverySettingsDto {
+  attachWorktrees: boolean;
+  excluded: string[];
+  gitOnly: boolean;
+  /** Racines des dépôts masqués */
+  hidden: string[];
+  roots: string[];
+}
+
+/** Réglages › Dépôts (E4d) : réglages, dépôts trouvés (les plus récents d'abord) et sessions hors dépôt git. */
+export interface RepositorySettingsDto {
+  home: string;
+  outside: number;
+  repositories: { git: boolean; hidden: boolean; lastActivityAt: string; name: string; root: string }[];
+  settings: DiscoverySettingsDto;
 }
