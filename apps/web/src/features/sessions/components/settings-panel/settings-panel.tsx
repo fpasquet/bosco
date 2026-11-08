@@ -1,5 +1,6 @@
 'use client';
 import type { SettingsDto } from '../../api/settings';
+import { PhoneAccess } from '../phone-access';
 
 /** Pas proposés pour le seuil d'inactivité : de 5 à 60 minutes (CA-SESS-59). */
 const THRESHOLDS = [5, 10, 15, 20, 30, 45, 60];
@@ -56,6 +57,7 @@ export function SettingsPanel({ busy, onChange, settings }: SettingsPanelProps) 
             onChange={(event) => onChange({ desktopNotifications: event.target.checked })}
           />
         </Row>
+        <PhoneAccess />
         <Row
           label="Historique conservé"
           hint="Bosco garde sa propre copie des sessions, même quand Claude Code efface les siennes après 30 jours."
