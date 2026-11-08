@@ -25,8 +25,13 @@ export interface ChangesReader {
 /** Pousse une branche et ouvre une PR en brouillon, avec git et GitHub CLI du poste (E7c). */
 export interface PullRequestPublisher {
   /** null si l'envoi est possible ; sinon pourquoi seule « Valider sans pousser » reste proposée */
-  availability(root: string): Promise<null | string>;
-  publish(root: string, request: { body: string; branch: string; from: string; title: string }): Promise<string>;
+  /** null si la branche peut partir avec ce compte (null : le compte actif de gh), sinon pourquoi */
+  availability(root: string, account: null | string): Promise<null | string>;
+  publish(
+    root: string,
+    request: { body: string; branch: string; from: string; title: string },
+    account: null | string,
+  ): Promise<string>;
 }
 
 export class ReviewError extends DomainError {
@@ -63,6 +68,8 @@ export class ReviewService {
     private readonly changes: ChangesReader,
     private readonly publisher: PullRequestPublisher,
     private readonly rights: RightsReader,
+    /** Compte GitHub du dépôt (E8a) ; null : le compte actif de gh */
+    private readonly githubAccountOf: (repository: string) => Promise<null | string> = () => Promise.resolve(null),
   ) {}
 
   async changesOf(id: number): Promise<TaskChanges> {
@@ -77,9 +84,10 @@ export class ReviewService {
     const rights = await this.rights.rightsOf(task.repository.name);
     const { base, branch } = task.outcome;
     const commits = base && branch ? await this.changes.commits(task.repository.root, base, branch) : 0;
+    const account = await this.githubAccountOf(task.repository.name);
     const blocked =
       branch && task.outcome.from
-        ? await this.publisher.availability(task.repository.root)
+        ? await this.publisher.availability(task.repository.root, account)
         : 'La tâche n’a pas de branche à pousser.';
     return { pullRequest: rights.pullRequest, blocked, commits };
   }
@@ -97,12 +105,17 @@ export class ReviewService {
         : null;
     if (!wanted || !task.outcome.branch || !task.outcome.from) return { task, pullRequestError: null };
     try {
-      const url = await this.publisher.publish(task.repository.root, {
-        branch: task.outcome.branch,
-        from: task.outcome.from,
-        title: wanted.title.trim() || task.title,
-        body: wanted.body,
-      });
+      const account = await this.githubAccountOf(task.repository.name);
+      const url = await this.publisher.publish(
+        task.repository.root,
+        {
+          branch: task.outcome.branch,
+          from: task.outcome.from,
+          title: wanted.title.trim() || task.title,
+          body: wanted.body,
+        },
+        account,
+      );
       return { task: await this.tasks.attachPullRequest(id, url), pullRequestError: null };
     } catch (error) {
       return { task, pullRequestError: error instanceof Error ? error.message : String(error) };
@@ -115,11 +128,12 @@ export class ReviewService {
     if (task.state !== 'validated' || !task.outcome.branch || !task.outcome.from)
       throw new ReviewError('Seule une tâche validée avec sa branche peut ouvrir une PR.');
     try {
-      const url = await this.publisher.publish(task.repository.root, {
-        branch: task.outcome.branch,
-        from: task.outcome.from,
-        ...pullRequest,
-      });
+      const account = await this.githubAccountOf(task.repository.name);
+      const url = await this.publisher.publish(
+        task.repository.root,
+        { branch: task.outcome.branch, from: task.outcome.from, ...pullRequest },
+        account,
+      );
       return { task: await this.tasks.attachPullRequest(id, url), pullRequestError: null };
     } catch (error) {
       return { task, pullRequestError: error instanceof Error ? error.message : String(error) };

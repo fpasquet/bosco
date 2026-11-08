@@ -16,7 +16,11 @@ import { ISOLATION_SERVICE } from '../../tokens.ts';
 const domainSchema = z.object({ domain: z.string().max(253) });
 const capacitySchema = z.object({ maxAgents: z.number().int() });
 const secretsSchema = z
-  .object({ npmrc: z.string().max(1024).nullable(), profile: z.string().max(4096).nullable() })
+  .object({
+    github: z.string().max(100).nullable(),
+    npmrc: z.string().max(1024).nullable(),
+    profile: z.string().max(4096).nullable(),
+  })
   .partial()
   .strict();
 

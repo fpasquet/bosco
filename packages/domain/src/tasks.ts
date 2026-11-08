@@ -141,6 +141,8 @@ export type RightsFieldDto = keyof RightsValuesDto;
 
 /** Droits des agents (E8a) : le général, les valeurs du dépôt, et ce qui s'applique vraiment avec son origine. */
 export interface RightsDto {
+  /** Abonnement Claude et compte GitHub (E8a, lignes 8 et 9) */
+  accounts: RepositoryAccountsDto;
   effective: RightsValuesDto;
   general: RightsValuesDto;
   models: string[];
@@ -181,5 +183,32 @@ export interface WorkerSecretsDto {
     label: null | string;
     profile: null | string;
   };
+  /** Compte GitHub par défaut : celui choisi, sinon le compte actif de GitHub CLI */
+  github: { account: null | string; choices: string[] };
   npmrc: { exists: boolean; path: string; registries: { host: string; scope: null | string }[] };
+}
+
+/** Profil Claude Code qui a un accès à l'abonnement, avec son compte. */
+export interface ClaudeProfileDto {
+  account: null | string;
+  label: string;
+  path: string;
+}
+
+/** Comptes d'un dépôt (E8a) : celui par défaut (E11b), celui du dépôt, l'effectif et son origine. */
+export interface RepositoryAccountsDto {
+  claude: {
+    choices: ClaudeProfileDto[];
+    effective: ClaudeProfileDto | null;
+    general: ClaudeProfileDto | null;
+    origin: 'dépôt' | 'général';
+    repository: ClaudeProfileDto | null;
+  };
+  github: {
+    choices: string[];
+    effective: null | string;
+    general: null | string;
+    origin: 'dépôt' | 'général';
+    repository: null | string;
+  };
 }

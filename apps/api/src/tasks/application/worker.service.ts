@@ -33,6 +33,8 @@ export interface WorkerDeps {
   /** Coût estimé d'un message de l'agent au tarif public (RF-SESS-05), en dollars ; null si le modèle n'a pas de tarif */
   priceOf: (model: null | string, usage: AgentUsage) => null | number;
   rightsOf: (repository: string) => Promise<RepositoryRights>;
+  /** Abonnement Claude propre au dépôt (E8a) ; null : celui par défaut */
+  claudeProfileOf: (repository: string) => Promise<null | string>;
   runner: AgentRunner;
   /** Dernier lancement des services d'un dépôt, montré dans l'environnement de test ; removed à la fin de la tâche */
   servicesLaunched: (task: TaskView, launches: ServiceLaunch[] | 'removed') => Promise<void>;
@@ -163,7 +165,9 @@ export class WorkerService {
       const context = await this.deps.contextOf(task);
       if (context.versions) await this.deps.tasks.record(task.id, 'Contexte transmis', context.versions);
       if (environment.services.length > 0) servicesStarted = true;
+      const claudeProfile = await this.deps.claudeProfileOf(task.repository.name);
       const run = await this.deps.runner.start({
+        claudeProfile,
         taskId: task.id,
         workspace,
         folder: task.folder,

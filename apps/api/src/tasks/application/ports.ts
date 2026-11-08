@@ -54,6 +54,8 @@ export interface AgentSpec {
   /** Résultat du lancement des services de test, avant que l'agent démarre */
   onServices: (launches: ServiceLaunch[]) => void;
   prompt: string;
+  /** Profil dont la tâche prend l'abonnement Claude (E8a) ; null : celui par défaut (E11b) */
+  claudeProfile: null | string;
   /** Racine du dépôt sur le poste : la session de l'agent y est rattachée, pour l'historique et la reprise */
   repositoryRoot: string;
   /** Services de test lancés autour de l'agent, sur son réseau privé (E12a) */

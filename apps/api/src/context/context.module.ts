@@ -4,6 +4,7 @@ import type { Config } from '../config.ts';
 import type { SessionService } from '../sessions/application/session.service.ts';
 import { SessionsModule } from '../sessions/sessions.module.ts';
 import { SESSION_SERVICE } from '../sessions/tokens.ts';
+import { GhAccounts } from '../shared/infrastructure/github/gh-accounts.ts';
 import { CONFIG, ORM } from '../shared/tokens.ts';
 import { ContextService } from './application/context.service.ts';
 import { LinksService, REFRESH_MS } from './application/links.service.ts';
@@ -51,7 +52,9 @@ const clock = { now: () => new Date() };
       provide: LINKS_SERVICE,
       inject: [CONFIG, ORM, CONTEXT_SERVICE],
       useFactory: (config: Config, orm: MikroORM, context: ContextService) => {
-        const github = config.testing ? scriptedReaders : new GithubReader(config.worker.gh);
+        const github = config.testing
+          ? scriptedReaders
+          : new GithubReader(config.worker.gh, new GhAccounts(config.worker.gh));
         const readers = config.testing
           ? { ...scriptedReaders, decision: decisionReader(context) }
           : {

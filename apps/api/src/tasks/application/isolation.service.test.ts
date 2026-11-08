@@ -13,7 +13,7 @@ import {
 function memoryStore(): IsolationStore {
   let domains: string[] = [];
   let agents: null | number = null;
-  let secrets: SecretsChoice = { npmrc: null, profile: null };
+  let secrets: SecretsChoice = { github: null, npmrc: null, profile: null };
   const refusals: EgressRefusal[] = [];
   return {
     secrets: () => Promise.resolve(secrets),
@@ -86,6 +86,7 @@ describe('IsolationService', () => {
           credentials: files[`${profile}/.credentials.json`] ? `${profile}/.credentials.json` : null,
         }),
       exists: (path) => Promise.resolve(path in files),
+      githubAccounts: () => Promise.resolve([{ active: true, login: 'camille-dev' }]),
       npmrc: (path) => Promise.resolve(files[path] ?? null),
     };
     const defaults = { credentials: '/home/dev/.claude/.credentials.json', home: '/home/dev', npmrc: '~/.npmrc' };

@@ -3,6 +3,7 @@
 import { execFile } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { promisify } from 'node:util';
+import type { GithubAccounts } from '../../../shared/infrastructure/github/gh-accounts.ts';
 import type { GithubCheck, IntegrationSettings, LinkReader } from '../../application/links.service.ts';
 import type { LinkReading } from '../../domain/link.ts';
 
@@ -15,7 +16,10 @@ const nested = (value: unknown, key: string) => (value && typeof value === 'obje
 
 /** GitHub : PR, ticket, commit ou branche, par l'API avec l'accès de GitHub CLI. */
 export class GithubReader implements LinkReader, GithubCheck {
-  constructor(private readonly gh: string) {}
+  constructor(
+    private readonly gh: string,
+    private readonly accounts: GithubAccounts,
+  ) {}
 
   async status(): Promise<null | string> {
     if (!existsSync(this.gh)) return 'GitHub CLI n’est pas installé sur le poste';
@@ -25,7 +29,7 @@ export class GithubReader implements LinkReader, GithubCheck {
     );
   }
 
-  async read(link: { url: string }): Promise<LinkReading> {
+  async read(link: { url: string }, settings?: IntegrationSettings): Promise<LinkReading> {
     const match = /github\.com\/([^/]+)\/([^/]+)\/(pull|issues|commit|tree)\/([^/?#]+)/.exec(link.url);
     if (!match) throw new Error('Adresse GitHub non reconnue');
     const [, owner, repo, kind, ref] = match;
@@ -35,7 +39,10 @@ export class GithubReader implements LinkReader, GithubCheck {
       commit: `repos/${owner}/${repo}/commits/${ref}`,
       tree: `repos/${owner}/${repo}/branches/${ref}`,
     };
-    const { stdout } = await run(this.gh, ['api', paths[kind ?? ''] ?? ''], { timeout: TIMEOUT_MS }).catch(
+    // Avec le compte du dépôt de la tâche, le temps de la commande (E8a)
+    const token = await this.accounts.envOf(settings?.githubAccount ?? null);
+    const env = { ...process.env, ...token };
+    const { stdout } = await run(this.gh, ['api', paths[kind ?? ''] ?? ''], { env, timeout: TIMEOUT_MS }).catch(
       (error: unknown) => {
         throw new Error((error as { stderr?: string }).stderr?.trim().split('\n').at(-1) ?? 'GitHub ne répond pas', {
           cause: error,
