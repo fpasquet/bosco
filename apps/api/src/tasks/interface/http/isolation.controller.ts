@@ -15,6 +15,10 @@ import { ISOLATION_SERVICE } from '../../tokens.ts';
 
 const domainSchema = z.object({ domain: z.string().max(253) });
 const capacitySchema = z.object({ maxAgents: z.number().int() });
+const secretsSchema = z
+  .object({ npmrc: z.string().max(1024).nullable(), profile: z.string().max(4096).nullable() })
+  .partial()
+  .strict();
 
 function present(snapshot: IsolationSnapshot): IsolationDto {
   return {
@@ -26,7 +30,8 @@ function present(snapshot: IsolationSnapshot): IsolationDto {
       freeMemory: freemem(),
     },
     image: AGENT_IMAGE,
-    domains: { locked: snapshot.locked, added: snapshot.added },
+    domains: { locked: snapshot.locked, added: snapshot.added, registries: snapshot.registries },
+    secrets: snapshot.secrets,
     refusals: snapshot.refusals.map(({ at, host, taskId }) => ({ at: at.toISOString(), host, taskId })),
   };
 }
@@ -61,6 +66,12 @@ export class IsolationController {
   @Post('domains')
   add(@Body() body: unknown): Promise<IsolationDto> {
     return settle(this.isolation.addDomain(parseBody(domainSchema, body).domain));
+  }
+
+  /** Profil de l'abonnement Claude et .npmrc transmis aux tâches suivantes (E11b). */
+  @Put('secrets')
+  secrets(@Body() body: unknown): Promise<IsolationDto> {
+    return settle(this.isolation.setSecrets(parseBody(secretsSchema, body)));
   }
 
   @Delete('domains/:domain')

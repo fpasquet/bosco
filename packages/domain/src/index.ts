@@ -38,6 +38,7 @@ export type {
   TestEnvironmentDto,
   TestServicesModeDto,
   ValidationDto,
+  WorkerSecretsDto,
   WorkerStatusDto,
 } from './tasks.ts';
 export type {
