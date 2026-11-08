@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { JournalEntryDto, SessionConversationDto, SessionDto } from '@bosco/domain';
 import { cn } from '@/lib/cn';
 import { Button } from '@/shared/ui/button';
+import { Skeleton } from '@/shared/ui/skeleton';
 import { clockOf } from '../../lib/detail';
 import { actionLabel, elapsed } from '../../lib/format';
 import { ConversationView } from '../conversation-view';
@@ -13,6 +14,8 @@ export interface SessionFeedProps {
   /** Fil complet lu dans le transcript ; sans lui (transcript effacé, encore en chargement), le journal */
   conversation?: null | SessionConversationDto;
   journal: JournalEntryDto[];
+  /** Le fil complet se lit encore : des lignes animées plutôt que le journal, remplacé ensuite */
+  loading?: boolean;
   now: Date;
   session: SessionDto;
   /** Carte affichée à la fin du fil, quand l'agent attend une autorisation (E2b) */
@@ -60,7 +63,18 @@ function FeedContent({
   conversation,
   journal,
   live,
-}: Pick<SessionFeedProps, 'conversation' | 'journal'> & { live: boolean }) {
+  loading,
+}: Pick<SessionFeedProps, 'conversation' | 'journal' | 'loading'> & { live: boolean }) {
+  if (loading)
+    return (
+      <div role="status" aria-busy className="flex flex-col gap-3">
+        <span className="sr-only">Chargement du fil…</span>
+        <Skeleton className="ml-auto h-12 w-2/3" />
+        {['w-1/3', 'w-5/6', 'w-1/2', 'w-4/6', 'w-2/5'].map((width) => (
+          <Skeleton key={width} className={`h-4 ${width}`} />
+        ))}
+      </div>
+    );
   if (conversation && conversation.turns.length > 0)
     return <ConversationView conversation={conversation} live={live} />;
   if (journal.length === 0) return <p className="text-muted">Rien à montrer pour l’instant.</p>;
@@ -78,7 +92,7 @@ function FeedContent({
  * Fil d'une session (E2a) : le plus récent en bas, mis à jour sans recharger. Il suit les nouveaux événements tant
  * qu'on est en bas ; si on remonte, « Revenir au direct » ramène au dernier (CA-SESS-27, CA-SESS-28).
  */
-export function SessionFeed({ conversation, journal, now, session, tail }: SessionFeedProps) {
+export function SessionFeed({ conversation, journal, loading = false, now, session, tail }: SessionFeedProps) {
   const scroller = useRef<HTMLDivElement>(null);
   const [following, setFollowing] = useState(true);
   const last = journal.at(-1);
@@ -117,7 +131,7 @@ export function SessionFeed({ conversation, journal, now, session, tail }: Sessi
           setFollowing(element.scrollHeight - element.scrollTop - element.clientHeight < BOTTOM_SLACK_PX);
         }}
       >
-        <FeedContent conversation={conversation} journal={journal} live={live} />
+        <FeedContent conversation={conversation} journal={journal} live={live} loading={loading} />
         {tail}
       </div>
       {!following && (

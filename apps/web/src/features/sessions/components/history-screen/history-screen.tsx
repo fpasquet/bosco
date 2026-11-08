@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useDeferredValue, useState } from 'react';
 import type { SessionDto } from '@bosco/domain';
 import { cn } from '@/lib/cn';
+import { SectionSkeleton } from '@/shared/components/section-skeleton';
 import { costsQuery, type HistoryFilters as Filters, historyQuery } from '../../api/history';
 import { sessionsQuery } from '../../api/sessions';
 import { sourcesQuery } from '../../api/sources';
@@ -70,6 +71,7 @@ export function HistoryScreen({
       <HistoryFilters filters={filters} onChange={setFilters} profiles={profiles} repositories={repositories} />
       {tab === 'list' && days.data && <HistoryList days={days.data} now={now} profileOf={profileOf} />}
       {tab === 'costs' && costs.data && <CostReport report={costs.data} now={now} />}
+      {((tab === 'list' && !days.data) || (tab === 'costs' && !costs.data)) && <SectionSkeleton rows={6} />}
     </div>
   );
 }

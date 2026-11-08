@@ -1,6 +1,7 @@
 'use client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
+import { PageSkeleton } from '@/shared/components/page-skeleton';
 import { Button } from '@/shared/ui/button';
 import {
   addLink,
@@ -73,7 +74,7 @@ export function TaskDetailScreen({ id }: { id: number }) {
     mutationFn: (values: { reason: string; relaunch: boolean }) => rejectTask(id, values),
     onSuccess: () => setDialog(null),
   });
-  if (!tasks) return null;
+  if (!tasks) return <PageSkeleton variant="detail" rows={6} />;
   if (!task) return <p className="p-4 md:px-8 md:pt-6">Tâche introuvable.</p>;
   const followers = tasks.filter((other) => other.waitingFor.some((prerequisite) => prerequisite.id === id));
   const busy = cancel.isPending || relaunch.isPending || validate.isPending || reject.isPending || retry.isPending;

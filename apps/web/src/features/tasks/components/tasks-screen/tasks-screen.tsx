@@ -4,6 +4,7 @@ import { Plus } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 import { cn } from '@/lib/cn';
+import { PageSkeleton } from '@/shared/components/page-skeleton';
 import { Button } from '@/shared/ui/button';
 import { checkWorker, workerQuery } from '../../api/tasks';
 import { useLiveTasks } from '../../hooks/use-live-tasks';
@@ -31,7 +32,7 @@ export function TasksScreen({ title }: { title: string }) {
   const [tab, setTab] = useState<TaskTab>('active');
   const [repository, setRepository] = useState('');
   const [mode, setMode] = useState('');
-  if (!tasks) return null;
+  if (!tasks) return <PageSkeleton variant="list" rows={5} />;
   const running = worker?.running ?? tasks.filter((task) => task.state === 'running' && task.mode === 'worker').length;
   const filtered = tasks.filter(
     (task) => (!repository || task.repository.name === repository) && (!mode || task.mode === mode),

@@ -2,6 +2,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import type { SessionDto, SourcesDto } from '@bosco/domain';
+import { PageSkeleton } from '@/shared/components/page-skeleton';
 import { importProgressQuery, sessionsQuery } from '../../api/sessions';
 import { sourcesQuery } from '../../api/sources';
 import { useLiveEvents } from '../../hooks/use-live-events';
@@ -119,7 +120,7 @@ export function OverviewScreen({ repository, title }: OverviewProps) {
   const { data } = useQuery(sourcesQuery);
   const watching = (data?.sources.length ?? 0) > 0;
   useLiveEvents(watching);
-  if (!data) return null;
+  if (!data) return <PageSkeleton variant="list" indicators />;
   if (!watching) {
     return (
       <div className="mx-auto flex max-w-2xl flex-col items-center gap-6 px-4 py-6 md:px-8">

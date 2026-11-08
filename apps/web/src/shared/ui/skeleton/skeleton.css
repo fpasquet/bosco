@@ -1,0 +1,17 @@
+/*
+ * Skeleton (daisyUI) : le fond des blocs en chargement est celui des surfaces secondaires, comme dans les maquettes
+ * (E1e), réglé dans la sous-couche de base de daisyUI. Sans animation quand le système demande moins de mouvement.
+ */
+@layer utilities {
+  @layer daisyui.l1.l2.l3 {
+    .skeleton {
+      @apply rounded-control bg-surface-alt;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
+}
