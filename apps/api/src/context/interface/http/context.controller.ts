@@ -20,11 +20,12 @@ import type {
   DecisionDto,
   SocleDto,
 } from '@bosco/domain';
+import type { LinksService } from '../../application/links.service.ts';
 import type { DecisionSnapshot } from '../../domain/decision.ts';
 import { DomainError } from '../../../shared/domain/domain-error.ts';
 import { parseBody } from '../../../shared/interface/http/parse-body.ts';
 import { type ContextService, UnknownDecision } from '../../application/context.service.ts';
-import { CONTEXT_SERVICE } from '../../tokens.ts';
+import { CONTEXT_SERVICE, LINKS_SERVICE } from '../../tokens.ts';
 
 const textSchema = z.object({
   title: z.string().max(300),
@@ -76,7 +77,10 @@ async function settle<T>(work: () => Promise<T>): Promise<T> {
 /** Contexte des agents (E9, E14), réservé à toi : le téléphone lit, accepte ou refuse seulement. */
 @Controller('api')
 export class ContextController {
-  constructor(@Inject(CONTEXT_SERVICE) private readonly context: ContextService) {}
+  constructor(
+    @Inject(CONTEXT_SERVICE) private readonly context: ContextService,
+    @Inject(LINKS_SERVICE) private readonly links: LinksService,
+  ) {}
 
   @Get('context')
   async overview(@Query('repository') repository: string): Promise<ContextDto> {
@@ -95,8 +99,10 @@ export class ContextController {
   }
 
   @Get('context/preview')
-  async preview(@Query('repository') repository: string): Promise<ContextPreviewDto> {
-    const preview = await this.context.preview(repository);
+  async preview(@Query('repository') repository: string, @Query('task') task?: string): Promise<ContextPreviewDto> {
+    // Pour une tâche choisie, ses liens comptent aussi (E9f, annotation 3)
+    const links = task ? await this.links.contextLinks(Number(task)) : [];
+    const preview = await this.context.preview(repository, links);
     return {
       text: preview.text,
       tokens: preview.tokens,

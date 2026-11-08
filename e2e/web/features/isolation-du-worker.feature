@@ -12,6 +12,7 @@ Fonctionnalité: Isolation du worker
   @NF-18
   Scénario: Les limites de chaque agent et la capacité du worker
     Quand j'ouvre la page « /settings »
+    Et je clique sur le lien « Isolation du worker »
     Alors je suis sur la page « /settings/isolation »
     Et je vois le titre « Isolation du worker »
     Et je vois le texte « sans droits d’administration »

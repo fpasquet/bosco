@@ -116,6 +116,7 @@ export function SourcesScreen({ title }: { title: string }) {
         className="flex flex-col divide-y divide-line rounded-card border border-line bg-surface shadow-card md:hidden"
       >
         {[
+          { href: '/settings/integrations', label: 'Intégrations' },
           { href: '/settings/isolation', label: 'Isolation du worker' },
           { href: '/settings/test-environments', label: 'Environnements de test' },
         ].map(({ href, label }) => (

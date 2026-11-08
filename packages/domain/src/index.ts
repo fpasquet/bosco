@@ -43,5 +43,9 @@ export type {
   DecisionTargetDto,
   DecisionTextDto,
   DecisionVersionDto,
+  IntegrationDto,
+  IntegrationsDto,
+  LinkDto,
+  LinkServiceDto,
   SocleDto,
 } from './context.ts';

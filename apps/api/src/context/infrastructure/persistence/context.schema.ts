@@ -49,3 +49,34 @@ export const SocleSchema = new EntitySchema<SocleRow>({
     repositories: { type: 'json' },
   },
 });
+
+export interface LinkRow {
+  error: null | string;
+  id: number;
+  kind: string;
+  person: null | string;
+  readAt: Date | null;
+  service: string;
+  state: null | string;
+  taskId: number;
+  title: string;
+  url: string;
+}
+
+/** Liens des tâches (RF-CONT-04) : l'adresse et ce que Bosco en a lu, jamais le contenu. */
+export const LinkSchema = new EntitySchema<LinkRow>({
+  name: 'Link',
+  tableName: 'link',
+  properties: {
+    id: { type: 'integer', primary: true, autoincrement: false },
+    taskId: { type: 'integer', fieldName: 'task_id', index: true },
+    url: { type: 'text' },
+    service: { type: 'string' },
+    kind: { type: 'string' },
+    title: { type: 'text' },
+    state: { type: 'string', nullable: true },
+    person: { type: 'string', nullable: true },
+    readAt: { type: 'datetime', nullable: true, fieldName: 'read_at' },
+    error: { type: 'text', nullable: true },
+  },
+});

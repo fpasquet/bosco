@@ -4,12 +4,13 @@ import { freemem, userInfo } from 'node:os';
 import { join } from 'node:path';
 import type { Config } from '../config.ts';
 import type { ContextService } from '../context/application/context.service.ts';
+import type { LinksService } from '../context/application/links.service.ts';
 import type { SessionService } from '../sessions/application/session.service.ts';
 import type { SourceService } from '../sessions/application/source.service.ts';
 import type { RepositoryCatalog } from './application/ports.ts';
 import { ContextModule } from '../context/context.module.ts';
 import { parseProposal, PROPOSAL_HELP } from '../context/domain/proposal.ts';
-import { CONTEXT_SERVICE } from '../context/tokens.ts';
+import { CONTEXT_SERVICE, LINKS_SERVICE } from '../context/tokens.ts';
 import { estimateCostMicros } from '../sessions/domain/model-pricing.ts';
 import { TokenUsage } from '../sessions/domain/token-usage.ts';
 import { SessionsModule } from '../sessions/sessions.module.ts';
@@ -143,6 +144,7 @@ const TICK_MS = 5000;
         TEST_ENVIRONMENT_SERVICE,
         RIGHTS_SERVICE,
         CONTEXT_SERVICE,
+        LINKS_SERVICE,
       ],
       useFactory: (
         config: Config,
@@ -152,10 +154,12 @@ const TICK_MS = 5000;
         environments: TestEnvironmentService,
         rights: RightsService,
         context: ContextService,
+        links: LinksService,
       ) =>
         new WorkerService({
           contextOf: async (task) => {
-            const sent = await context.sentTo(task.repository.name);
+            const taskLinks = await links.contextLinks(task.id);
+            const sent = await context.sentTo(task.repository.name, taskLinks);
             return { text: `${sent.text}\n\n${PROPOSAL_HELP}`, versions: sent.versions };
           },
           propose: async (task, markdown) => {

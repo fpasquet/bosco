@@ -3,11 +3,16 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Button } from '@/shared/ui/button';
 import {
+  addLink,
   cancellationQuery,
   cancelTask,
   changesQuery,
+  LinkRefused,
+  linksQuery,
+  recognizeQuery,
   rejectTask,
   relaunchTask,
+  removeLink,
   retryPullRequest,
   reviewQuery,
   validateTask,
@@ -15,6 +20,7 @@ import {
 import { useLiveTasks } from '../../hooks/use-live-tasks';
 import { RejectDialog } from '../reject-dialog';
 import { TaskDetail } from '../task-detail';
+import { TaskLinks } from '../task-links';
 import { TaskReview } from '../task-review';
 import { ValidateDialog } from '../validate-dialog';
 
@@ -29,6 +35,22 @@ export function TaskDetailScreen({ id }: { id: number }) {
   const { data: changes } = useQuery({ ...changesQuery(id), enabled: toReview && Boolean(task?.outcome.base) });
   const { data: review } = useQuery({ ...reviewQuery(id), enabled: toReview || task?.state === 'validated' });
   const [dialog, setDialog] = useState<'reject' | 'validate' | null>(null);
+  const { data: links } = useQuery({ ...linksQuery(id), enabled: Boolean(task) });
+  const [typed, setTyped] = useState('');
+  const { data: recognized } = useQuery({ ...recognizeQuery(typed.trim()), enabled: typed.trim().length > 8 });
+  const [linkError, setLinkError] = useState<null | string>(null);
+  const linked = () => client.invalidateQueries({ queryKey: ['task-links', id] });
+  const add = useMutation({
+    mutationFn: (url: string) => addLink(id, url),
+    onSuccess: async () => {
+      setLinkError(null);
+      setTyped('');
+      await linked();
+    },
+    onError: (failure) =>
+      setLinkError(failure instanceof LinkRefused ? failure.message : 'Le lien n’a pas pu être ajouté.'),
+  });
+  const remove = useMutation({ mutationFn: (link: number) => removeLink(id, link), onSuccess: linked });
   const [pullRequestError, setPullRequestError] = useState<null | string>(null);
   const cancel = useMutation({ mutationFn: () => cancelTask(id) });
   const relaunch = useMutation({
@@ -91,6 +113,16 @@ export function TaskDetailScreen({ id }: { id: number }) {
           onRelaunch={(changes) => relaunch.mutate(changes)}
         />
       )}
+      <TaskLinks
+        taskId={id}
+        links={links ?? []}
+        recognized={recognized ?? null}
+        busy={add.isPending || remove.isPending}
+        error={linkError}
+        onUrlChange={setTyped}
+        onAdd={(url) => add.mutate(url)}
+        onRemove={(link) => remove.mutate(link.id)}
+      />
       {toReview && (
         <RejectDialog
           open={dialog === 'reject'}

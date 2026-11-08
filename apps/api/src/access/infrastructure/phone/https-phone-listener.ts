@@ -23,6 +23,9 @@ const SETTINGS = [
   /^\/api\/socles/,
   // Sur le téléphone, une décision proposée s'accepte ou se refuse ; le reste s'écrit sur le poste (E9b mobile)
   /^\/api\/decisions(\/\d+\/(versions|abandon))?$/,
+  /^\/api\/integrations/,
+  // Un lien s'ajoute depuis le téléphone ; il se retire sur le poste (E10b mobile)
+  /^\/api\/tasks\/\d+\/links\/\d+$/,
 ];
 
 function workstationOnly(request: IncomingMessage, path: string): boolean {

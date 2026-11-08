@@ -1,4 +1,6 @@
 import type {
+  LinkDto,
+  LinkServiceDto,
   RightsDto,
   RightsFieldDto,
   TaskChangesDto,
@@ -128,3 +130,36 @@ export const retryPullRequest = (id: number, pullRequest: { body: string; title:
 
 export const rejectTask = (id: number, values: { reason: string; relaunch: boolean }) =>
   post<TaskDto>(`/api/tasks/${id}/reject`, values);
+
+export const linksQuery = (id: number) => ({
+  queryKey: ['task-links', id],
+  queryFn: async () => (await read<{ links: LinkDto[] }>(`/api/tasks/${id}/links`)).links,
+});
+
+/** Service reconnu d'une adresse collée, avant l'ajout (CA-CONT-34). */
+export const recognizeQuery = (url: string) => ({
+  queryKey: ['recognize', url],
+  queryFn: () => read<{ kind: string; service: LinkServiceDto }>(`/api/links/recognize?url=${encodeURIComponent(url)}`),
+});
+
+/** Lien refusé (400) : le message s'affiche sous le champ. */
+export class LinkRefused extends Error {}
+
+export async function addLink(id: number, url: string): Promise<LinkDto> {
+  const response = await fetch(`/api/tasks/${id}/links`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ url }),
+  });
+  if (response.status === 400) {
+    const { message } = (await response.json()) as { message?: string };
+    throw new LinkRefused(message ?? 'Lien refusé.');
+  }
+  if (!response.ok) throw new Error(`POST links answered ${response.status}`);
+  return (await response.json()) as LinkDto;
+}
+
+export async function removeLink(id: number, link: number): Promise<void> {
+  const response = await fetch(`/api/tasks/${id}/links/${link}`, { method: 'DELETE' });
+  if (!response.ok) throw new Error(`DELETE link answered ${response.status}`);
+}

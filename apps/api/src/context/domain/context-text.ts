@@ -12,6 +12,7 @@ export interface ContextLink {
   kind: string;
   state: null | string;
   title: string;
+  url: string;
 }
 
 export interface RepositoryContext {
@@ -106,7 +107,7 @@ function linksSection(links: readonly ContextLink[]): string[] {
   return [
     '',
     '## Liens de la tâche',
-    ...links.map((link) => `- ${[link.title, link.kind, link.state].filter(Boolean).join(' · ')}`),
+    ...links.map((link) => `- ${[link.title, link.kind, link.state].filter(Boolean).join(' · ')} · ${link.url}`),
   ];
 }
 

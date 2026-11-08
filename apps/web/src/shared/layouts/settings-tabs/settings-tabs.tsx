@@ -1,6 +1,7 @@
 import Link from 'next/link';
 
 const TABS = [
+  { href: '/settings/integrations', label: 'Intégrations' },
   { href: '/settings/isolation', label: 'Isolation du worker' },
   { href: '/settings/test-environments', label: 'Environnements de test' },
 ] as const;

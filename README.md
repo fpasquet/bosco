@@ -15,6 +15,7 @@ make install          # dépendances et skills épinglés
 make dev              # développement : http://127.0.0.1:4880, rechargement de l'interface, données dans .data/
 make start            # le service sur http://127.0.0.1:4870, ouvre la vue d'ensemble
 make service-install  # service systemd de l'utilisateur
+make mcp-install      # « Ma session » : ajoute le serveur MCP de Bosco à ~/.claude (mcp-install-dev pour make dev, PROFILE=… pour un autre profil)
 ```
 
 Données : `~/.local/share/bosco` (`BOSCO_DATA_DIR`). Port : `BOSCO_PORT` (4870 par défaut), toujours sur la boucle locale.
