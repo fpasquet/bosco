@@ -1,6 +1,6 @@
 'use client';
 import { Check, Hand, X } from 'lucide-react';
-import { useState } from 'react';
+import { useForm } from 'react-hook-form';
 import type { SessionDto } from '@bosco/domain';
 import { Button } from '@/shared/ui/button';
 import type { Settlement } from '../../lib/settlements';
@@ -21,7 +21,7 @@ export interface PermissionCardProps {
 
 /** Carte d'autorisation au bout du fil (E2b) : tout ce qu'il faut pour décider, sans quitter Bosco. */
 export function PermissionCard({ agentSays, busy, now, onAllow, onDeny, session, settlement }: PermissionCardProps) {
-  const [reason, setReason] = useState('');
+  const { getValues, register } = useForm({ defaultValues: { reason: '' } });
   const waiting = session.waiting?.kind === 'permission' ? session.waiting : null;
   if (!waiting) {
     if (settlement?.outcome !== 'elsewhere') return null;
@@ -55,8 +55,7 @@ export function PermissionCard({ agentSays, busy, now, onAllow, onDeny, session,
           <textarea
             className="textarea w-full"
             rows={2}
-            value={reason}
-            onChange={(event) => setReason(event.target.value)}
+            {...register('reason')}
             placeholder="Utilise la base de test docker, pas la base locale."
           />
         </label>
@@ -66,7 +65,7 @@ export function PermissionCard({ agentSays, busy, now, onAllow, onDeny, session,
             className="max-md:btn-md"
             size="sm"
             disabled={busy}
-            onClick={() => onDeny(reason.trim() || null)}
+            onClick={() => onDeny(getValues('reason').trim() || null)}
           >
             <X aria-hidden className="size-3.5" />
             Refuser

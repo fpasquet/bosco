@@ -1,7 +1,7 @@
 'use client';
 import { CircleCheck, CircleX, Network } from 'lucide-react';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useForm } from 'react-hook-form';
 import type { TestEnvironmentDto, TestServicesModeDto } from '@bosco/domain';
 import { Button } from '@/shared/ui/button';
 import type { EnvironmentChanges } from '../../api/test-environment';
@@ -38,7 +38,7 @@ function Card({ children, id, title }: { children: React.ReactNode; id: string; 
  * de test à la branche de départ, ce qui est écarté et pourquoi, l'image de l'agent et le dernier lancement.
  */
 export function TestEnvironment({ busy, environment, error, now, onChange }: TestEnvironmentProps) {
-  const [image, setImage] = useState(environment.image ?? '');
+  const { handleSubmit, register } = useForm({ defaultValues: { image: environment.image ?? '' } });
   const { limits } = environment;
   const perService = `${gigabytes(limits.memory)} · ${limits.cpus} processeur${limits.cpus > 1 ? 's' : ''}`;
   // En « Choisir », les services non cochés se cochent ; les autres écartés restent écartés
@@ -173,10 +173,7 @@ export function TestEnvironment({ busy, environment, error, now, onChange }: Tes
             </p>
             <form
               className="hidden flex-col gap-1 md:flex"
-              onSubmit={(event) => {
-                event.preventDefault();
-                onChange({ image: image.trim() || null });
-              }}
+              onSubmit={(event) => void handleSubmit(({ image }) => onChange({ image: image.trim() || null }))(event)}
             >
               <label htmlFor="environment-image-name" className="text-xs font-medium">
                 Image
@@ -188,8 +185,7 @@ export function TestEnvironment({ busy, environment, error, now, onChange }: Tes
                   placeholder={`${environment.defaultImage} (par défaut)`}
                   aria-describedby="environment-image-hint"
                   aria-invalid={error ? true : undefined}
-                  value={image}
-                  onChange={(event) => setImage(event.target.value)}
+                  {...register('image')}
                 />
                 <Button type="submit" size="sm" variant="outline" disabled={busy}>
                   Enregistrer
