@@ -224,14 +224,16 @@ export class WorkerService {
       );
       return true;
     }
-    const changes = await this.deps.workspaces.collect(workspace, {
+    const { base, changes, from } = await this.deps.workspaces.collect(workspace, {
       id: task.id,
       repositoryRoot: task.repository.root,
       title: task.title,
     });
     await this.deps.tasks.finish(task.id, progress.spent, {
+      base,
       branch: workspace.branch,
       changes,
+      from,
       report: event.report,
       sessionId: progress.sessionId,
       turns: event.turns,

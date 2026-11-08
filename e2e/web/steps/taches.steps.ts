@@ -62,3 +62,28 @@ Then('la liste {texte} ne contient plus {texte}', async ({ page }, label: string
   await expect(page.getByRole('listitem').filter({ hasText: item })).toHaveCount(0);
   await expect(page.getByRole('list', { name: label })).toBeHidden();
 });
+
+Given('la tâche {int} est à relire', async ({ bosco }, id: number) => {
+  await expect
+    .poll(
+      async () => {
+        const response = await fetch(`${bosco.url}/api/tasks/${id}`);
+        return ((await response.json()) as { state: string }).state;
+      },
+      { timeout: 10_000 },
+    )
+    .toBe('to_review');
+});
+
+Given('le dépôt {texte} demande une PR à chaque validation', async ({ bosco }, repository: string) => {
+  const response = await fetch(`${bosco.url}/api/rights/repositories/${repository}`, {
+    method: 'PUT',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ pullRequest: 'ask' }),
+  });
+  expect(response.status).toBe(200);
+});
+
+When('je décoche {texte}', async ({ page }, label: string) => {
+  await page.getByRole('checkbox', { name: label }).uncheck();
+});

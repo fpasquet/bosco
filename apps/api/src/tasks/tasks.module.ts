@@ -11,6 +11,7 @@ import { SessionsModule } from '../sessions/sessions.module.ts';
 import { SESSION_SERVICE } from '../sessions/tokens.ts';
 import { CONFIG, ORM } from '../shared/tokens.ts';
 import { IsolationService } from './application/isolation.service.ts';
+import { ReviewService } from './application/review.service.ts';
 import { RightsService } from './application/rights.service.ts';
 import { TaskService } from './application/task.service.ts';
 import { TestEnvironmentService } from './application/test-environment.service.ts';
@@ -20,12 +21,14 @@ import { MikroOrmIsolationStore } from './infrastructure/persistence/isolation.s
 import { MikroOrmRightsStore } from './infrastructure/persistence/rights.store.ts';
 import { MikroOrmTaskRepository } from './infrastructure/persistence/task.repository.ts';
 import { MikroOrmTestEnvironmentStore } from './infrastructure/persistence/test-environment.store.ts';
+import { GhPublisher, GitChanges, scriptedReview } from './infrastructure/review/git-review.ts';
 import { TaskEventsBus } from './infrastructure/task-events.bus.ts';
 import { FileComposeSource, GitComposeSource, servicesFile } from './infrastructure/test-services/compose-file.ts';
 import { DockerAgentRunner } from './infrastructure/worker/docker-agent-runner.ts';
 import { GitWorkspaces } from './infrastructure/worker/git-workspaces.ts';
 import { ScriptedAgentRunner, scriptedWorkspaces } from './infrastructure/worker/scripted-agent.ts';
 import { IsolationController } from './interface/http/isolation.controller.ts';
+import { ReviewController } from './interface/http/review.controller.ts';
 import { RightsController } from './interface/http/rights.controller.ts';
 import { TasksController } from './interface/http/tasks.controller.ts';
 import { TestEnvironmentController } from './interface/http/test-environment.controller.ts';
@@ -34,6 +37,7 @@ import {
   AGENT_RUNNER,
   ISOLATION_SERVICE,
   REPOSITORY_CATALOG,
+  REVIEW_SERVICE,
   RIGHTS_SERVICE,
   TASK_EVENTS,
   TASK_SERVICE,
@@ -49,7 +53,14 @@ const TICK_MS = 5000;
 /** Contexte des tâches (RF-TACH) ; les dépôts viennent des sessions, par le point de composition. */
 @Module({
   imports: [SessionsModule],
-  controllers: [TasksController, WorkerController, IsolationController, TestEnvironmentController, RightsController],
+  controllers: [
+    TasksController,
+    WorkerController,
+    IsolationController,
+    TestEnvironmentController,
+    RightsController,
+    ReviewController,
+  ],
   providers: [
     { provide: TASK_EVENTS, useValue: new TaskEventsBus() },
     {
@@ -76,6 +87,14 @@ const TICK_MS = 5000;
       inject: [ORM, REPOSITORY_CATALOG, TASK_EVENTS, RIGHTS_SERVICE],
       useFactory: (orm: MikroORM, catalog: RepositoryCatalog, bus: TaskEventsBus, rights: RightsService) =>
         new TaskService(new MikroOrmTaskRepository(orm), catalog, rights, bus, clock),
+    },
+    {
+      provide: REVIEW_SERVICE,
+      inject: [CONFIG, TASK_SERVICE, RIGHTS_SERVICE],
+      useFactory: (config: Config, tasks: TaskService, rights: RightsService) =>
+        config.testing
+          ? new ReviewService(tasks, scriptedReview, scriptedReview, rights)
+          : new ReviewService(tasks, new GitChanges(), new GhPublisher(config.worker.gh), rights),
     },
     {
       provide: TEST_ENVIRONMENT_SERVICE,

@@ -235,6 +235,28 @@ export class TaskService {
     return this.commit(tasks, [task, ...failed], id);
   }
 
+  /** Rejet avec relance (E7b) : le motif rejoint la consigne, la tâche repart de sa branche, les suivantes attendent. */
+  async rejectAndRelaunch(id: number, reason: string): Promise<TaskView> {
+    const tasks = await this.tasks.list();
+    const task = this.find(tasks, id);
+    const at = this.clock.now();
+    task.reject(reason, at);
+    const snapshot = task.toSnapshot();
+    task.relaunch(snapshot.guardrails, at, 'depuis sa branche');
+    task.edit({ instruction: `${snapshot.instruction}\n\nRelecture : ${reason}` }, at);
+    const revived = new TaskBoard(tasks).revive(id, at);
+    return this.commit(tasks, [task, ...revived], id);
+  }
+
+  /** La PR brouillon ouverte à la validation rejoint la tâche (E7c). */
+  async attachPullRequest(id: number, url: string): Promise<TaskView> {
+    const tasks = await this.tasks.list();
+    const task = this.find(tasks, id);
+    const snapshot = task.toSnapshot();
+    task.progress(snapshot.spentUsd, { pullRequest: url }, this.clock.now());
+    return this.commit(tasks, [task], id);
+  }
+
   /** Enregistre les tâches touchées, recalcule ce qui part ou attend, et publie les changements. */
   private async commit(tasks: Task[], touched: Task[], id: number): Promise<TaskView> {
     const settled = new TaskBoard(tasks).settleAll(this.clock.now());

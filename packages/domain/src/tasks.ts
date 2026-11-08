@@ -34,7 +34,10 @@ export interface TaskDto {
   mode: TaskModeDto;
   /** Ce que le worker a produit : branche, compte rendu, modifications, session, tours (E7a) */
   outcome: {
+    base: null | string;
     branch: null | string;
+    from: null | string;
+    pullRequest: null | string;
     changes: { added: number; files: number; removed: number } | null;
     report: null | string;
     sessionId: null | string;
@@ -143,4 +146,25 @@ export interface RightsDto {
   pending: { id: number; state: TaskStateDto; title: string }[];
   /** null pour les réglages généraux */
   repository: null | Partial<RightsValuesDto>;
+}
+
+/** Diff d'une tâche depuis le point de départ de sa branche (E7a). */
+export interface TaskChangesDto {
+  diff: string;
+  files: { added: number; path: string; removed: number }[];
+  truncated: boolean;
+}
+
+/** Ce que la relecture propose à la validation (E7c). */
+export interface TaskReviewDto {
+  /** null si Bosco peut pousser ; sinon pourquoi seule « Valider sans pousser » reste proposée */
+  blocked: null | string;
+  commits: number;
+  proposal: { body: string; title: string };
+  pullRequest: PullRequestModeDto;
+}
+
+export interface ValidationDto {
+  pullRequestError: null | string;
+  task: TaskDto;
 }
