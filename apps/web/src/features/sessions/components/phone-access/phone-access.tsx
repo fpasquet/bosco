@@ -72,7 +72,8 @@ export function PhoneAccess() {
   return (
     <div className="flex flex-col gap-3 px-4 py-3">
       <div className="flex flex-wrap items-center gap-4">
-        <div className="min-w-0 flex-1">
+        {/* Dans une fenêtre étroite, les boutons passent à la ligne plutôt que d'écraser le texte */}
+        <div className="min-w-0 flex-1 basis-60">
           <p className="font-medium">Accès depuis le téléphone</p>
           <p className="text-xs text-muted">
             {access.enabled
