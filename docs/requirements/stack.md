@@ -17,6 +17,7 @@
 | Données serveur | TanStack Query, dernière version | Choix du porteur du projet ; cache, invalidation et synchronisation avec les flux SSE | SWR, Redux |
 | État client | Zustand, dernière version | Choix du porteur du projet ; état propre à l'interface : regroupement, filtres, panneaux ouverts, sélection (DT-17) | Redux, Context React |
 | Formulaires | React Hook Form, dernière version, avec son résolveur zod | Choix du porteur du projet ; valeurs, erreurs par champ et soumission gérées par la bibliothèque, schémas zod partagés avec l'API ; les erreurs renvoyées par l'API se posent sur leur champ | État local à la main, Formik |
+| Fil d'un agent | Patterns d'AI Elements (composants shadcn/ui `trace`, `code-block`, `message`, `bubble`), Streamdown pour le Markdown, Shiki pour le code (DT-26) | Choix du porteur du projet ; réflexions, outils, sorties et réponses rendus comme dans les outils d'agents, sur les classes du projet | Rendu Markdown maison, react-markdown |
 | Icônes | `lucide-react` | Mêmes icônes que les maquettes | Autres jeux |
 | MCP | SDK MCP officiel | Serveur HTTP | Implémentation maison |
 | Agents | Claude Agent SDK | DT-09 | Lancer la CLI |
