@@ -22,6 +22,13 @@ Feature: Task review
     Then the response property "task.state" should equal "validated"
     And the response property "task.outcome.pullRequest" should equal "https://github.com/exemple/depot/pull/50"
 
+  @CA-TACH-72
+  Scenario: The draft PR is opened with the GitHub account of the repository
+    When I send PUT request to "/api/rights/repositories/labo-ia" with the JSON "fixtures/review/ask.json"
+    And I send PUT request to "/api/rights/repositories/labo-ia/accounts" with the JSON "fixtures/rights/labo-ia-github.json"
+    And I send POST request to "/api/tasks/1/validate" with the JSON "fixtures/review/with-pull-request.json"
+    Then the response property "task.outcome.pullRequest" should equal "https://github.com/camille-pro/depot/pull/50"
+
   Scenario: By default, validating pushes nothing
     When I send POST request to "/api/tasks/1/validate" with the JSON "fixtures/review/with-pull-request.json"
     Then the response property "task.state" should equal "validated"

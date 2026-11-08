@@ -35,3 +35,26 @@ Feature: Secrets of the worker tasks
     And the response property "secrets.npmrc.registries.0.scope" should equal "@interne"
     And the response property "domains.registries" should equal "npm.registre.exemple.dev"
     And the response should not contain "jeton-de-lecture"
+
+  @CA-CONT-69
+  Scenario: The default GitHub account is the active one of GitHub CLI, or one chosen among the connected ones
+    When I send GET request to "/api/isolation"
+    Then the response property "secrets.github.account" should equal "camille-dev"
+    And the response property "secrets.github.choices" should equal "camille-dev,camille-pro"
+    When I send PUT request to "/api/isolation/secrets" with the JSON "fixtures/isolation/github-unknown.json"
+    Then the response code should be 400
+    When I send PUT request to "/api/isolation/secrets" with the JSON "fixtures/isolation/github-pro.json"
+    Then the response property "secrets.github.account" should equal "camille-pro"
+
+  @CA-TACH-72
+  Scenario: A repository takes its own Claude subscription and GitHub account, or comes back to the defaults
+    Given the Claude Code profile ".claude" has an access to the Claude subscription of "camille@exemple.dev"
+    And the Claude Code profile ".claude-perso" has an access to the Claude subscription of "camille.perso@exemple.dev"
+    When I send GET request to "/api/rights?repository=api-voix"
+    Then the response property "accounts.claude.effective.account" should equal "camille@exemple.dev"
+    And the response property "accounts.github.origin" should equal "général"
+    When I send PUT request to "/api/rights/repositories/api-voix/accounts" with the JSON "fixtures/rights/api-voix-accounts.json"
+    Then the response property "accounts.claude.effective.account" should equal "camille.perso@exemple.dev"
+    And the response property "accounts.claude.origin" should equal "dépôt"
+    And the response property "accounts.github.effective" should equal "camille-dev"
+    And the response property "accounts.github.origin" should equal "dépôt"
