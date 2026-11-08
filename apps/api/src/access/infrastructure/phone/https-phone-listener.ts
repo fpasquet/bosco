@@ -2,6 +2,7 @@
 // passe chaque requête au même serveur que le poste, après le contrôle du jeton de l'appareil (NF-14).
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { Duplex } from 'node:stream';
+import { X509Certificate } from 'node:crypto';
 import { createServer, type Server } from 'node:https';
 import { networkInterfaces } from 'node:os';
 import type { PhoneListener } from '../../application/ports.ts';
@@ -70,10 +71,15 @@ export function tokenOf(request: IncomingMessage): null | string {
 }
 
 export class HttpsPhoneListener implements PhoneListener {
+  private certificateFingerprint: null | string = null;
   private server: null | Server = null;
   private hosts: string[] = [];
 
   constructor(private readonly options: PhoneListenerOptions) {}
+
+  fingerprint(): null | string {
+    return this.server ? this.certificateFingerprint : null;
+  }
 
   urls(): string[] {
     return this.server ? this.hosts.map((host) => `https://${host}:${this.options.port}`) : [];
@@ -85,6 +91,7 @@ export class HttpsPhoneListener implements PhoneListener {
     const host = this.hosts[0];
     if (!host) throw new Error('No local network address: the phone cannot reach this workstation');
     const certificate = await certificateFor(this.options.dataDir, this.hosts);
+    this.certificateFingerprint = new X509Certificate(certificate.cert).fingerprint256;
     const server = createServer(certificate, (request, response) => void this.gate(request, response));
     server.on('upgrade', (request: IncomingMessage, socket: Duplex, head: Buffer) => {
       const upgrade = this.options.upgrade;
