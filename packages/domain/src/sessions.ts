@@ -65,6 +65,45 @@ export interface JournalEntryDto {
   text: string;
 }
 
+/**
+ * Étape d'un tour de l'agent : une réflexion (texte vide quand le modèle la garde pour lui), ou un appel d'outil avec
+ * son entrée et son résultat. Un outil sans résultat est en cours, ou interrompu si la session ne tourne plus.
+ */
+export type ConversationStepDto =
+  | { at: string; kind: 'reasoning'; seconds: null | number; text: string }
+  | {
+      at: string;
+      /** Fin de l'outil ; null tant qu'il n'a pas rendu son résultat */
+      endedAt: null | string;
+      error: boolean;
+      id: string;
+      /** Entrée de l'outil, chaque texte coupé au-delà de quelques milliers de caractères */
+      input: Record<string, unknown>;
+      kind: 'tool';
+      name: string;
+      output: null | string;
+      /** Résumé d'une ligne, celui du journal : « Bash · yarn lint » */
+      summary: string;
+    };
+
+/** Partie d'un tour : du texte en Markdown, ou une étape. */
+export type ConversationPartDto = ConversationStepDto | { at: string; kind: 'text'; text: string };
+
+/** Tour d'une conversation : ta demande, ou tout ce que l'agent a fait jusqu'à la suivante. */
+export interface ConversationTurnDto {
+  at: string;
+  id: string;
+  parts: ConversationPartDto[];
+  role: 'assistant' | 'user';
+}
+
+/** Conversation complète d'une session, lue dans son transcript (GET /api/sessions/:id/conversation). */
+export interface SessionConversationDto {
+  /** Vrai quand le début d'une longue session n'est pas lu : seuls ses derniers échanges sont rendus */
+  partial: boolean;
+  turns: ConversationTurnDto[];
+}
+
 /** Détail d'une session (GET /api/sessions/:id). */
 export interface SessionDetailDto {
   journal: JournalEntryDto[];
