@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import type { LiveEventDto } from '@bosco/domain';
+import { postToAndroidApp } from '@/shared/hooks/use-android-app';
 import { useNotices } from '@/shared/hooks/use-notices';
 import { reportPresence } from '../api/notifications';
 import { ASKING, hrefOf, kindLabel } from '../lib/notifications';
@@ -29,9 +30,18 @@ export function useNotificationsLive(): void {
     source.addEventListener('notification.created', (message: MessageEvent<string>) => {
       refresh();
       const event = JSON.parse(message.data) as Extract<LiveEventDto, { type: 'notification.created' }>['data'];
-      if (!event.inApp) return;
       const { notification } = event;
       const asking = ASKING.includes(notification.kind);
+      // Dans l'application Android, la notification part au téléphone, sans service de push (CA-APPS-06)
+      const subject = notification.place ?? notification.title;
+      const sent = postToAndroidApp({
+        type: 'notification',
+        title: `${kindLabel(notification)} · ${subject}`,
+        body: [notification.place ? notification.title : null, notification.excerpt].filter(Boolean).join('\n'),
+        path: hrefOf(notification),
+        urgent: asking,
+      });
+      if (sent || !event.inApp) return;
       push(
         `${kindLabel(notification)} · ${notification.title}`,
         asking ? 'warning' : 'info',

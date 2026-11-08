@@ -4,6 +4,7 @@ import { ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useSyncExternalStore } from 'react';
 import { PageSkeleton } from '@/shared/components/page-skeleton';
+import { postToAndroidApp, useAndroidApp } from '@/shared/hooks/use-android-app';
 import { useNotices } from '@/shared/hooks/use-notices';
 import { useNow } from '@/shared/hooks/use-now';
 import { APP_NAME, type SourceDto } from '@bosco/domain';
@@ -77,6 +78,7 @@ export function SourcesScreen({ title }: { title: string }) {
     () => null,
   );
   const copy = useCopy();
+  const androidApp = useAndroidApp();
   const linked = sources.find((source) => source.id === fromLink)?.path ?? null;
   const openPath = channelPath ?? (linkDismissed ? null : linked);
   const channelChange = useMutation({
@@ -166,6 +168,17 @@ export function SourcesScreen({ title }: { title: string }) {
             <ChevronRight aria-hidden className="size-4 text-muted" />
           </Link>
         ))}
+        {androidApp && (
+          // Réglages propres à l'application Android : poste appairé, arrière-plan (E18d)
+          <button
+            type="button"
+            className="flex items-center justify-between px-4 py-3 text-left"
+            onClick={() => postToAndroidApp({ type: 'app-settings' })}
+          >
+            <span className="font-medium">Réglages de l’application</span>
+            <ChevronRight aria-hidden className="size-4 text-muted" />
+          </button>
+        )}
       </nav>
       <ChannelPanel
         profile={(openPath && channelOf(openPath)) || null}
