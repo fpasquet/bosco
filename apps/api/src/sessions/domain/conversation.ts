@@ -14,8 +14,26 @@ export type ConversationStep =
       kind: 'tool';
       name: string;
       output: null | string;
+      /** Sous-agent lancé par cet appel (Agent, Task), lu dans son propre transcript */
+      subagent?: Subagent;
       summary: string;
     };
+
+/** Sous-agent : sa consigne, son modèle, ses étapes et son résultat (pattern Subagent). */
+export interface Subagent {
+  agentType: null | string;
+  description: null | string;
+  endedAt: Date | null;
+  finished: boolean;
+  model: null | string;
+  /** Ses réflexions, outils et textes, dans l'ordre ; les plus anciens laissés de côté au-delà de la limite */
+  parts: ConversationPart[];
+  partial: boolean;
+  prompt: null | string;
+  /** Son dernier texte, une fois fini */
+  result: null | string;
+  startedAt: Date | null;
+}
 
 export type ConversationPart = ConversationStep | { at: Date; kind: 'text'; text: string };
 

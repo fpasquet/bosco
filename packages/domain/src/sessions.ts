@@ -82,9 +82,26 @@ export type ConversationStepDto =
       kind: 'tool';
       name: string;
       output: null | string;
+      /** Sous-agent lancé par cet appel (Agent, Task), lu dans son propre transcript */
+      subagent?: SubagentDto;
       /** Résumé d'une ligne, celui du journal : « Bash · yarn lint » */
       summary: string;
     };
+
+/** Sous-agent : sa consigne, son modèle, ses étapes et son résultat, une fois fini. */
+export interface SubagentDto {
+  agentType: null | string;
+  description: null | string;
+  endedAt: null | string;
+  finished: boolean;
+  model: null | string;
+  parts: ConversationPartDto[];
+  /** Ses premières étapes ne sont pas rendues : seules les dernières le sont */
+  partial: boolean;
+  prompt: null | string;
+  result: null | string;
+  startedAt: null | string;
+}
 
 /** Partie d'un tour : du texte en Markdown, ou une étape. */
 export type ConversationPartDto = ConversationStepDto | { at: string; kind: 'text'; text: string };

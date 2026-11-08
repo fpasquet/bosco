@@ -15,6 +15,7 @@ export type {
   SessionStateDto,
   SourceDto,
   SourcesDto,
+  SubagentDto,
   WaitingDto,
 } from './sessions.ts';
 export type {

@@ -97,6 +97,7 @@ describe('promptText', () => {
     expect(promptText('<command-name>/review</command-name><command-args>12</command-args>')).toBe('/review 12');
     expect(promptText('Corrige.<system-reminder>rappel</system-reminder>')).toBe('Corrige.');
     expect(promptText('<local-command-stdout>ok</local-command-stdout>')).toBeNull();
+    expect(promptText('<task-notification>\n<status>completed</status>\n</task-notification>')).toBeNull();
     expect(promptText('<system-reminder>seul</system-reminder>')).toBeNull();
   });
 });

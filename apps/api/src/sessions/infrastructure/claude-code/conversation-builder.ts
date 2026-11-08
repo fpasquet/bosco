@@ -23,19 +23,34 @@ export class ConversationBuilder {
   private readonly openTools = new Map<string, ToolStep>();
   private lastAt: Date | null = null;
   private count = 0;
+  private lastModel: null | string = null;
 
-  /** partial : la lecture commence au milieu du transcript, ses premiers échanges manquent. */
-  constructor(private readonly partial = false) {}
+  /**
+   * partial : la lecture commence au milieu du transcript, ses premiers échanges manquent. sidechain : le transcript
+   * est celui d'un sous-agent, dont toutes les lignes sont marquées comme une branche à part.
+   */
+  constructor(
+    private readonly partial = false,
+    private readonly sidechain = false,
+  ) {}
+
+  /** Dernier modèle qui a répondu (« claude-sonnet-5-5 »). */
+  get model(): null | string {
+    return this.lastModel;
+  }
 
   add(line: string): void {
     const record = parseJson(line);
-    if (!record || record.isSidechain === true || record.isMeta === true || record.isCompactSummary === true) return;
+    if (!record || record.isMeta === true || record.isCompactSummary === true) return;
+    if ((record.isSidechain === true) !== this.sidechain) return;
     const at = date(record.timestamp);
     if (!at) return;
     const message = isRecord(record.message) ? record.message : null;
     if (record.type === 'user' && message) this.user(message.content, at);
-    else if (record.type === 'assistant' && message) this.assistant(message.content, at);
-    else return;
+    else if (record.type === 'assistant' && message) {
+      if (typeof message.model === 'string' && !message.model.startsWith('<')) this.lastModel = message.model;
+      this.assistant(message.content, at);
+    } else return;
     this.lastAt = at;
   }
 
@@ -134,10 +149,13 @@ export class ConversationBuilder {
 
 /**
  * Texte d'une demande, tel que la personne l'a écrit : sans les rappels ajoutés par Claude Code, et une commande
- * (« /review 12 ») plutôt que ses balises. La sortie d'une commande locale n'est pas une demande.
+ * (« /review 12 ») plutôt que ses balises. La sortie d'une commande locale et la notification d'une tâche de fond ne
+ * sont pas des demandes.
  */
 export function promptText(raw: string): null | string {
   if (raw.includes('<local-command-stdout>') || raw.includes('<local-command-stderr>')) return null;
+  // La fin d'une tâche de fond (sous-agent, commande) est une notification de Claude Code, pas une demande
+  if (raw.trimStart().startsWith('<task-notification>')) return null;
   const command = /<command-name>([^<]*)<\/command-name>/.exec(raw)?.[1]?.trim();
   if (command) {
     const args = /<command-args>([^<]*)<\/command-args>/.exec(raw)?.[1]?.trim();
