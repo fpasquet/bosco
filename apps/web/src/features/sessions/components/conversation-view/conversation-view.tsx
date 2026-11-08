@@ -1,10 +1,12 @@
 import type { ConversationTurnDto, SessionConversationDto } from '@bosco/domain';
-import { Markdown } from '@/shared/components/markdown';
 import { Bubble, BubbleContent } from '@/shared/ui/bubble';
 import { Message, MessageContent, MessageHeader } from '@/shared/ui/message';
-import { groupParts } from '../../lib/conversation';
+import type { Todo } from '../../lib/conversation';
+import { planOf, sourcesOf } from '../../lib/conversation';
 import { clockOf } from '../../lib/detail';
-import { StepGroup } from '../step-group';
+import { AgentParts } from '../agent-parts';
+import { PlanQueue } from '../plan-queue';
+import { SourcesList } from '../sources-list';
 
 export interface ConversationViewProps {
   conversation: SessionConversationDto;
@@ -37,29 +39,29 @@ function UserTurn({ turn }: { turn: ConversationTurnDto }) {
   );
 }
 
-/** Le tour de l'agent : ses réponses en Markdown, et entre elles ses étapes (réflexions, outils). */
-function AgentTurn({ current, live, turn }: { current: boolean; live: boolean; turn: ConversationTurnDto }) {
-  const groups = groupParts(turn.parts);
+/** Le tour de l'agent : ses réponses en Markdown, entre elles ses étapes, puis les pages consultées (Sources). */
+function AgentTurn({
+  current,
+  live,
+  plan,
+  turn,
+}: {
+  current: boolean;
+  live: boolean;
+  /** État du plan de l'agent à la fin de ce tour, quand il l'a changé (Queue) */
+  plan?: Todo[];
+  turn: ConversationTurnDto;
+}) {
+  const sources = sourcesOf(turn.parts);
   return (
     <Message>
       <MessageContent>
         <MessageHeader className="gap-1.5 px-0">
           Agent · <Time at={turn.at} />
         </MessageHeader>
-        {groups.map((group, index) =>
-          group.kind === 'text' ? (
-            // les parties d'un tour ne changent pas d'ordre
-            <Markdown key={index}>{group.text}</Markdown>
-          ) : (
-            <StepGroup
-              // les parties d'un tour ne changent pas d'ordre
-              key={index}
-              steps={group.steps}
-              live={live}
-              current={current && index === groups.length - 1}
-            />
-          ),
-        )}
+        <AgentParts parts={turn.parts} live={live} current={current} />
+        {plan && plan.length > 0 && <PlanQueue todos={plan} live={live && current} />}
+        {sources.length > 0 && <SourcesList sources={sources} />}
       </MessageContent>
     </Message>
   );
@@ -70,17 +72,18 @@ function AgentTurn({ current, live, turn }: { current: boolean; live: boolean; t
  * l'agent en Markdown, ses réflexions (Reasoning) et ses outils (Tool, Terminal, Test Results, Stack Trace, Task).
  */
 export function ConversationView({ conversation, live }: ConversationViewProps) {
-  const last = conversation.turns.at(-1);
+  const { plans, turns } = planOf(conversation.turns);
+  const last = turns.at(-1);
   return (
     <div className="flex flex-col gap-5">
       {conversation.partial && (
         <p className="text-xs text-muted">Longue session : seuls ses derniers échanges sont affichés.</p>
       )}
-      {conversation.turns.map((turn) =>
+      {turns.map((turn) =>
         turn.role === 'user' ? (
           <UserTurn key={turn.id} turn={turn} />
         ) : (
-          <AgentTurn key={turn.id} turn={turn} live={live} current={live && turn === last} />
+          <AgentTurn key={turn.id} turn={turn} live={live} current={live && turn === last} plan={plans.get(turn.id)} />
         ),
       )}
     </div>

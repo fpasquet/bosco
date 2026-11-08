@@ -1,6 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import type { ToolStepDto } from './conversation';
-import { diffLines, groupParts, parseStack, parseTests, stepView, summarizeSteps, toolName } from './conversation';
+import {
+  diffLines,
+  groupParts,
+  parseStack,
+  parseTests,
+  planOf,
+  searchLinks,
+  sourcesOf,
+  stepView,
+  summarizeSteps,
+  toolName,
+} from './conversation';
 
 const tool = (name: string, input: Record<string, unknown>, result: Partial<ToolStepDto> = {}): ToolStepDto => ({
   at: '2026-11-08T09:00:00Z',
@@ -24,7 +35,7 @@ describe('stepView', () => {
       title: 'Lance yarn lint',
     });
     expect(stepView(step, false)).toMatchObject({
-      body: { kind: 'terminal', output: '$ yarn lint\nDone in 1.2s' },
+      body: { command: 'yarn lint', kind: 'terminal', output: 'Done in 1.2s' },
       duration: '2 s',
       status: 'done',
       title: 'A lancé yarn lint',
@@ -124,5 +135,98 @@ describe('groupParts', () => {
     expect(groups.map((group) => group.kind)).toEqual(['text', 'steps', 'text']);
     const steps = groups[1]?.kind === 'steps' ? groups[1].steps : [];
     expect(summarizeSteps(steps)).toBe('1 réflexion, 2 commandes, 1 lecture');
+  });
+});
+
+describe('subagents', () => {
+  const subagent = {
+    agentType: 'Explore',
+    description: 'PDF de test',
+    endedAt: '2026-11-08T09:00:48Z',
+    finished: true,
+    model: 'claude-sonnet-5-5',
+    parts: [],
+    partial: false,
+    prompt: 'Trouve les PDF avec un tableau.',
+    result: 'Un PDF : `devis.pdf`.',
+    startedAt: '2026-11-08T09:00:00Z',
+  };
+
+  it('shows a finished subagent with its model, prompt, result and run time', () => {
+    const view = stepView(tool('Agent', { description: 'PDF de test' }, { subagent }), true);
+    expect(view).toMatchObject({
+      body: { agentType: 'Explore', kind: 'subagent', model: 'claude-sonnet-5-5', result: 'Un PDF : `devis.pdf`.' },
+      duration: '48 s',
+      status: 'done',
+      title: 'Sous-agent · PDF de test',
+    });
+  });
+
+  it('keeps a background subagent running until it finishes, interrupted once the session stopped', () => {
+    const running = { ...subagent, endedAt: null, finished: false, result: null };
+    const step = tool('Agent', { description: 'PDF de test' }, { subagent: running });
+    expect(stepView(step, true)).toMatchObject({ status: 'running', title: 'Sous-agent en cours · PDF de test' });
+    expect(stepView(step, false).status).toBe('interrupted');
+  });
+
+  it('falls back on the call result without the subagent transcript', () => {
+    const view = stepView(tool('Task', { description: 'PDF de test', prompt: 'Cherche.' }, { output: 'Rien.' }), false);
+    expect(view.body).toMatchObject({ kind: 'subagent', parts: [], prompt: 'Cherche.', result: 'Rien.' });
+  });
+});
+
+describe('sources', () => {
+  const output =
+    'Web search results for query: "pdf.js tables"\n\nLinks: [{"title":"pdf.js [docs]","url":"https://mozilla.github.io/pdf.js/"},{"title":"Tables","url":"https://example.com/tables"}]\n\nRésumé.';
+
+  it('reads the links of a web search, even with a bracket in a title', () => {
+    expect(searchLinks(output)).toEqual([
+      { title: 'pdf.js [docs]', url: 'https://mozilla.github.io/pdf.js/' },
+      { title: 'Tables', url: 'https://example.com/tables' },
+    ]);
+    expect(searchLinks('No links here')).toEqual([]);
+  });
+
+  it('gathers the pages read and found in a turn, once each', () => {
+    const sources = sourcesOf([
+      tool('WebSearch', { query: 'pdf.js tables' }, { output }),
+      tool('WebFetch', { url: 'https://mozilla.github.io/pdf.js/' }),
+      tool('WebFetch', { url: 'https://broken.example' }, { error: true }),
+    ]);
+    expect(sources.map((source) => source.url)).toEqual([
+      'https://mozilla.github.io/pdf.js/',
+      'https://example.com/tables',
+    ]);
+    expect(stepView(tool('WebSearch', { query: 'pdf.js tables' }, { output }), false).body).toMatchObject({
+      kind: 'search',
+    });
+  });
+});
+
+describe('planOf', () => {
+  it('rebuilds the plan from TaskCreate and TaskUpdate, and names each update after its task', () => {
+    const at = '2026-11-08T09:00:00Z';
+    const create = (id: string, subject: string) =>
+      tool('TaskCreate', { subject }, { id: `c${id}`, output: `Task #${id} created successfully: ${subject}` });
+    const update = (id: string, status: string) =>
+      tool('TaskUpdate', { taskId: id, status }, { id: `u${id}${status}` });
+    const { plans, turns } = planOf([
+      { at, id: 'u1', parts: [{ at, kind: 'text', text: 'Revue du projet' }], role: 'user' },
+      {
+        at,
+        id: 'a1',
+        parts: [create('1', 'Lister les applications'), create('2', 'Rédiger le résumé'), update('1', 'completed')],
+        role: 'assistant',
+      },
+    ]);
+    expect(plans.get('a1')).toEqual([
+      { content: 'Lister les applications', status: 'completed' },
+      { content: 'Rédiger le résumé', status: 'pending' },
+    ]);
+    expect(plans.has('u1')).toBe(false);
+    const named = turns[1]?.parts[2];
+    expect(named?.kind === 'tool' ? stepView(named, false).title : null).toBe(
+      'Termine la tâche : Lister les applications',
+    );
   });
 });

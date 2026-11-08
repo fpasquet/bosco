@@ -5,7 +5,7 @@ import { stepView } from '../../lib/conversation';
 import { StepBody } from './step-body';
 
 const bodyOf = (step: (typeof STORY_STEPS)[keyof typeof STORY_STEPS]): StepBodyView =>
-  stepView(step, true).body ?? { kind: 'terminal', output: '' };
+  stepView(step, true).body ?? { command: '', kind: 'terminal', output: '' };
 
 const meta = {
   title: 'Features/Sessions/StepBody',
@@ -30,3 +30,4 @@ export const Diff: Story = { args: { body: bodyOf(STORY_STEPS.edit) } };
 export const File: Story = { args: { body: bodyOf(STORY_STEPS.read) } };
 export const Plan: Story = { args: { body: bodyOf(STORY_STEPS.plan) } };
 export const Subagent: Story = { args: { body: bodyOf(STORY_STEPS.subagent) } };
+export const SearchResults: Story = { args: { body: bodyOf(STORY_STEPS.search) } };

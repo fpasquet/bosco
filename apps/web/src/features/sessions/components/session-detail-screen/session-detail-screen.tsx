@@ -23,6 +23,9 @@ import { SessionSide } from '../session-side';
 import { WorkerTaskNotice } from '../worker-task-notice';
 
 /** Ce que l'agent a dit juste avant de demander l'autorisation. */
+/** Relecture du fil d'une session qui tourne : seules les lignes ajoutées au transcript sont lues. */
+const CONVERSATION_REFRESH_MS = 5000;
+
 function agentSays(journal: JournalEntryDto[], session: SessionDto): null | string {
   const since = session.waiting?.since;
   if (!since) return null;
@@ -41,7 +44,12 @@ export function SessionDetailScreen({ id }: { id: string }) {
   const { data: sources } = useQuery(sourcesQuery);
   const { data: sessions } = useQuery(sessionsQuery);
   const { data, isError } = useQuery(sessionDetailQuery(id));
-  const { data: conversation } = useQuery(sessionConversationQuery(id));
+  // Un sous-agent de fond avance sans que la session change : le fil se relit tant qu'elle tourne
+  const running = data?.session.state === 'running';
+  const { data: conversation } = useQuery({
+    ...sessionConversationQuery(id),
+    refetchInterval: running ? CONVERSATION_REFRESH_MS : false,
+  });
   const settlement = useSettlements((state) => state.settlements[id] ?? null);
   const offline = useOffline();
   const answers = usePermissionAnswers({

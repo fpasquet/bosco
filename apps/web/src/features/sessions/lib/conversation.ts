@@ -1,4 +1,4 @@
-import type { ConversationPartDto, ConversationStepDto } from '@bosco/domain';
+import type { ConversationPartDto, ConversationStepDto, ConversationTurnDto } from '@bosco/domain';
 
 /**
  * Lecture du fil complet d'une session (E2a) : ce que montre chaque étape de l'agent, son titre et son état. Les
@@ -15,9 +15,18 @@ export type StepBody =
   | { kind: 'diff'; language: string; lines: DiffLine[] }
   | { kind: 'plan'; todos: Todo[] }
   | { kind: 'stack'; error: string; frames: { internal: boolean; line: string }[] }
-  | { kind: 'subagent'; prompt: string; result: null | string }
-  | { kind: 'terminal'; output: string }
-  | { kind: 'tests'; output: string; tests: TestCase[] };
+  | { kind: 'search'; links: Source[] }
+  | {
+      agentType: null | string;
+      kind: 'subagent';
+      model: null | string;
+      parts: ConversationPartDto[];
+      partial: boolean;
+      prompt: string;
+      result: null | string;
+    }
+  | { command: string; kind: 'terminal'; output: string }
+  | { command: string; kind: 'tests'; output: string; tests: TestCase[] };
 
 export interface StepView {
   body: null | StepBody;
@@ -29,6 +38,12 @@ export interface StepView {
 }
 
 export type StepIcon = 'edit' | 'file' | 'plan' | 'search' | 'subagent' | 'terminal' | 'tests' | 'tool' | 'web';
+
+/** Une page lue ou trouvée par l'agent (pattern Sources) ; son titre manque pour une page lue. */
+export interface Source {
+  title: null | string;
+  url: string;
+}
 
 export interface DiffLine {
   text: string;
@@ -63,25 +78,38 @@ const DURATION = /^\d+(?:\.\d+)?m?s$/;
 const STACK_FRAME = /^\s+at\s+\S/;
 
 const LANGUAGES: Record<string, string> = {
+  cjs: 'javascript',
   css: 'css',
   diff: 'diff',
+  go: 'go',
+  graphql: 'graphql',
   html: 'html',
+  ini: 'ini',
+  java: 'java',
   js: 'javascript',
   json: 'json',
   jsx: 'jsx',
   md: 'markdown',
   mjs: 'javascript',
+  mts: 'typescript',
+  php: 'php',
   py: 'python',
+  rb: 'ruby',
+  rs: 'rust',
+  scss: 'scss',
   sh: 'bash',
   sql: 'sql',
+  toml: 'toml',
   ts: 'typescript',
   tsx: 'tsx',
+  xml: 'xml',
   yaml: 'yaml',
   yml: 'yaml',
 };
 
 /** Langage de coloration d'un fichier, d'après son extension. */
 export function languageOf(path: string): string {
+  if (/(?:^|\/)Dockerfile$/.test(path)) return 'docker';
   const extension = /\.([a-z0-9]+)$/i.exec(path)?.[1]?.toLowerCase() ?? '';
   return LANGUAGES[extension] ?? '';
 }
@@ -112,7 +140,10 @@ export function durationOf(start: string, end: null | string): null | string {
 
 /** État d'un outil : en cours tant que la session tourne, interrompu si elle s'est arrêtée sans son résultat. */
 export function statusOf(step: ToolStepDto, live: boolean): StepStatus {
-  if (step.endedAt) return step.error ? 'error' : 'done';
+  if (step.error) return 'error';
+  // Un sous-agent lancé en arrière-plan rend la main tout de suite : il tourne tant qu'il n'a pas fini
+  if (step.subagent && !step.subagent.finished) return live ? 'running' : 'interrupted';
+  if (step.endedAt) return 'done';
   return live ? 'running' : 'interrupted';
 }
 
@@ -237,8 +268,6 @@ function commandView(step: ToolStepDto, status: StepStatus): Omit<StepView, 'dur
   const output = step.output ?? '';
   const stack = step.error ? parseStack(output) : null;
   if (stack) return { body: { kind: 'stack', ...stack }, icon: 'terminal', title: `Échec : ${stack.error}` };
-  // La sortie d'un terminal commence par la commande complète, comme dans le terminal
-  const transcript = `$ ${full}\n${output}`;
   const title = commandTitle(step, status, command);
   if (TEST_COMMAND.test(withoutHeredocs(full))) {
     const tests = parseTests(output);
@@ -247,12 +276,12 @@ function commandView(step: ToolStepDto, status: StepStatus): Omit<StepView, 'dur
     const noun = tests.length > 1 ? 'tests' : 'test';
     const counts = tests.length ? ` · ${tests.length} ${noun}${failures}` : '';
     return {
-      body: step.output === null ? null : { kind: 'tests', output: transcript, tests },
+      body: step.output === null ? null : { command: full, kind: 'tests', output, tests },
       icon: 'tests',
       title: `${title}${counts}`,
     };
   }
-  return { body: step.output === null ? null : { kind: 'terminal', output: transcript }, icon: 'terminal', title };
+  return { body: step.output === null ? null : { command: full, kind: 'terminal', output }, icon: 'terminal', title };
 }
 
 function verb(status: StepStatus, running: string, done: string): string {
@@ -286,29 +315,121 @@ function toolView(step: ToolStepDto, status: StepStatus): Omit<StepView, 'durati
         title: `${verb(status, 'Cherche', 'A cherché')} « ${text(step.input, 'pattern')} »`,
       };
     case 'WebFetch':
+      return {
+        body: result('markdown'),
+        icon: 'web',
+        title: `${verb(status, 'Consulte', 'A consulté')} ${text(step.input, 'url')}`,
+      };
     case 'WebSearch': {
-      const query = text(step.input, 'query');
-      const target = text(step.input, 'url') || `« ${query} »`;
-      return { body: result('markdown'), icon: 'web', title: `${verb(status, 'Consulte', 'A consulté')} ${target}` };
+      const links = searchLinks(output);
+      return {
+        body: links.length ? { kind: 'search', links } : result('markdown'),
+        icon: 'search',
+        title: `${verb(status, 'Cherche', 'A cherché')} « ${text(step.input, 'query')} » sur le Web`,
+      };
     }
     case 'TodoWrite': {
       const todos = todosOf(step.input);
       const done = todos.filter((todo) => todo.status === 'completed').length;
       return { body: { kind: 'plan', todos }, icon: 'plan', title: `Plan · ${done} sur ${todos.length} faites` };
     }
+    case 'TaskCreate':
+      return { body: null, icon: 'plan', title: `Ajoute au plan : ${text(step.input, 'subject')}` };
+    case 'TaskUpdate':
+      return { body: null, icon: 'plan', title: taskUpdateTitle(step.input) };
+    case 'TaskList': {
+      const todos = listedTasks(output);
+      return { body: todos.length ? { kind: 'plan', todos } : result(), icon: 'plan', title: 'Consulte le plan' };
+    }
     case 'Agent':
     case 'Task':
-      return {
-        body: { kind: 'subagent', prompt: text(step.input, 'prompt'), result: step.output },
-        icon: 'subagent',
-        title: `Sous-agent · ${text(step.input, 'description') || text(step.input, 'subagent_type') || 'tâche'}`,
-      };
+      return subagentView(step, status);
     default:
       return {
         body: { kind: 'code', code: inputAndOutput(step), language: 'json' },
         icon: 'tool',
         title: `${verb(status, 'Utilise', 'A utilisé')} ${toolName(step.name)}`,
       };
+  }
+}
+
+/** Les étapes d'un sous-agent fini, sans son dernier texte, rendu à part comme son résultat. */
+function withoutResult(parts: ConversationPartDto[], result: null | string): ConversationPartDto[] {
+  const last = parts.at(-1);
+  return result && last?.kind === 'text' && last.text === result ? parts.slice(0, -1) : parts;
+}
+
+/** Sous-agent (pattern Subagent) : sa consigne, son modèle et ses étapes, puis son résultat une fois fini. */
+function subagentView(step: ToolStepDto, status: StepStatus): Omit<StepView, 'duration' | 'status'> {
+  const subagent = step.subagent;
+  const name =
+    subagent?.description ?? (text(step.input, 'description') || text(step.input, 'subagent_type') || 'tâche');
+  const titles = {
+    done: 'Sous-agent',
+    error: 'Sous-agent en échec',
+    interrupted: 'Sous-agent',
+    running: 'Sous-agent en cours',
+  };
+  return {
+    body: {
+      agentType: subagent?.agentType ?? (text(step.input, 'subagent_type') || null),
+      kind: 'subagent',
+      model: subagent?.model ?? null,
+      parts: subagent ? withoutResult(subagent.parts, subagent.result) : [],
+      partial: subagent?.partial ?? false,
+      prompt: subagent?.prompt ?? text(step.input, 'prompt'),
+      // Sans son transcript, le résultat est celui que l'appel a rendu
+      result: subagent ? subagent.result : step.output,
+    },
+    icon: 'subagent',
+    title: `${titles[status]} · ${name}`,
+  };
+}
+
+/** Liens d'une recherche web, lus dans sa sortie (« Links: [{"title":…,"url":…}] »). */
+export function searchLinks(output: string): Source[] {
+  const start = output.indexOf('Links: [');
+  if (start < 0) return [];
+  const from = start + 'Links: '.length;
+  // La liste finit au premier crochet fermant qui donne un JSON valide
+  for (let end = output.indexOf(']', from); end > 0; end = output.indexOf(']', end + 1)) {
+    try {
+      const links: unknown = JSON.parse(output.slice(from, end + 1));
+      if (!Array.isArray(links)) return [];
+      return links.flatMap((link: unknown) => {
+        const { title, url } = (link ?? {}) as Record<string, unknown>;
+        return typeof url === 'string' ? [{ title: typeof title === 'string' ? title : null, url }] : [];
+      });
+    } catch {
+      // Crochet d'un titre : on cherche le suivant
+    }
+  }
+  return [];
+}
+
+/** Pages d'un outil : celle qu'une lecture web a ouverte, ou les liens d'une recherche. */
+function sourcesOfStep(part: ConversationPartDto): Source[] {
+  if (part.kind !== 'tool' || part.error) return [];
+  if (part.name === 'WebFetch' && part.endedAt) {
+    const url = text(part.input, 'url');
+    return url ? [{ title: null, url }] : [];
+  }
+  return part.name === 'WebSearch' ? searchLinks(part.output ?? '') : [];
+}
+
+/** Sources d'un tour de l'agent : pages lues et liens trouvés, chacun une fois. */
+export function sourcesOf(parts: ConversationPartDto[]): Source[] {
+  const sources = new Map<string, Source>();
+  for (const source of parts.flatMap(sourcesOfStep)) if (!sources.has(source.url)) sources.set(source.url, source);
+  return [...sources.values()];
+}
+
+/** Nom d'hôte d'une adresse, ou l'adresse elle-même si elle ne se lit pas. */
+export function hostOf(url: string): string {
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return url;
   }
 }
 
@@ -329,7 +450,10 @@ function inputAndOutput(step: ToolStepDto): string {
 export function stepView(step: ToolStepDto, live: boolean): StepView {
   const status = statusOf(step, live);
   const view = toolView(step, status);
-  return { ...view, duration: durationOf(step.at, step.endedAt), status };
+  const duration = step.subagent
+    ? durationOf(step.subagent.startedAt ?? step.at, step.subagent.endedAt)
+    : durationOf(step.at, step.endedAt);
+  return { ...view, duration, status };
 }
 
 /** Parties d'un tour de l'agent : un texte, ou une suite d'étapes rendue dans une même trace. */
@@ -361,12 +485,89 @@ export function summarizeSteps(steps: ConversationStepDto[]): string {
     else if (step.name === 'Bash') add('commande');
     else if (step.name === 'Read') add('lecture');
     else if (['Edit', 'MultiEdit', 'Write'].includes(step.name)) add('modification');
-    else if (['Glob', 'Grep'].includes(step.name)) add('recherche');
+    else if (['Glob', 'Grep', 'WebSearch'].includes(step.name)) add('recherche');
+    else if (PLAN_TOOLS.has(step.name)) add('mise à jour du plan');
     else add('outil');
   }
   return [...counts].map(([label, count]) => `${count} ${count > 1 ? plural(label) : label}`).join(', ');
 }
 
 function plural(label: string): string {
+  if (label === 'mise à jour du plan') return 'mises à jour du plan';
   return label === 'réflexion' ? 'réflexions' : `${label}s`;
+}
+
+/** Outils du plan de l'agent : la liste entière (TodoWrite), ou une tâche à la fois (TaskCreate, TaskUpdate). */
+const PLAN_TOOLS = new Set(['TaskCreate', 'TaskList', 'TaskUpdate', 'TodoWrite']);
+
+const UPDATE_VERBS: Record<string, string> = {
+  completed: 'Termine',
+  deleted: 'Retire',
+  in_progress: 'Commence',
+};
+
+/** « Termine la tâche : Rédiger le résumé » ; le nom de la tâche vient de sa création (planOf). */
+function taskUpdateTitle(input: Record<string, unknown>): string {
+  const verb = UPDATE_VERBS[text(input, 'status')] ?? 'Met à jour';
+  const subject = text(input, 'subject');
+  return subject ? `${verb} la tâche : ${subject}` : `${verb} la tâche n° ${text(input, 'taskId')}`;
+}
+
+/** Tâches listées par TaskList : « #1 [in_progress] Rédiger le résumé ». */
+function listedTasks(output: string): Todo[] {
+  return output.split('\n').flatMap((line) => {
+    const [, status, content] = /^#\w+ \[(\w+)\] (.+)$/.exec(line.trim()) ?? [];
+    if (!status || !content) return [];
+    return [{ content, status: status === 'completed' || status === 'in_progress' ? status : 'pending' }];
+  });
+}
+
+/**
+ * Le plan de l'agent au fil de la conversation : l'état de ses tâches à la fin de chaque tour qui l'a changé (Queue),
+ * et les mises à jour nommées d'après leur tâche. TodoWrite remplace toute la liste, TaskCreate et TaskUpdate une
+ * tâche à la fois.
+ */
+export function planOf(turns: ConversationTurnDto[]): { plans: Map<string, Todo[]>; turns: ConversationTurnDto[] } {
+  const tasks = new Map<string, Todo>();
+  const plans = new Map<string, Todo[]>();
+  const named = turns.map((turn) => {
+    let changed = false;
+    const parts = turn.parts.map((part) => {
+      if (part.kind !== 'tool' || !PLAN_TOOLS.has(part.name) || part.error) return part;
+      // Le nom de la tâche se lit avant la mise à jour : une tâche retirée n'est plus dans le plan après
+      const subject = part.name === 'TaskUpdate' ? tasks.get(text(part.input, 'taskId'))?.content : undefined;
+      changed = applyPlan(tasks, part) || changed;
+      return subject && !text(part.input, 'subject') ? { ...part, input: { ...part.input, subject } } : part;
+    });
+    if (changed) plans.set(turn.id, [...tasks.values()]);
+    return { ...turn, parts };
+  });
+  return { plans, turns: named };
+}
+
+/** Applique un appel du plan ; vrai quand l'état des tâches a changé. */
+function applyPlan(tasks: Map<string, Todo>, step: ToolStepDto): boolean {
+  if (step.name === 'TodoWrite') {
+    tasks.clear();
+    for (const [index, todo] of todosOf(step.input).entries()) tasks.set(String(index + 1), todo);
+    return true;
+  }
+  if (step.name === 'TaskCreate') {
+    const id = /Task #(\w+) created/.exec(step.output ?? '')?.[1];
+    if (!id) return false;
+    tasks.set(id, { content: text(step.input, 'subject'), status: 'pending' });
+    return true;
+  }
+  if (step.name !== 'TaskUpdate') return false;
+  const id = text(step.input, 'taskId');
+  const task = tasks.get(id);
+  if (!task) return false;
+  const status = text(step.input, 'status');
+  if (status === 'deleted') tasks.delete(id);
+  else
+    tasks.set(id, {
+      content: text(step.input, 'subject') || task.content,
+      status: status === 'completed' || status === 'in_progress' || status === 'pending' ? status : task.status,
+    });
+  return true;
 }

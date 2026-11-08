@@ -19,3 +19,5 @@ export const TestResults: Story = { args: { view: stepView(STORY_STEPS.tests, fa
 export const StackTrace: Story = { args: { view: stepView(STORY_STEPS.stack, false) } };
 export const Edit: Story = { args: { view: stepView(STORY_STEPS.edit, false) } };
 export const McpTool: Story = { args: { view: stepView(STORY_STEPS.mcp, false) } };
+export const Subagent: Story = { args: { view: stepView(STORY_STEPS.subagent, false) } };
+export const WebSearch: Story = { args: { view: stepView(STORY_STEPS.search, false) } };

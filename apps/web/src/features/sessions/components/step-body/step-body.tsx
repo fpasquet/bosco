@@ -1,15 +1,6 @@
-import {
-  CheckIcon,
-  CircleCheckIcon,
-  CircleDashedIcon,
-  CircleIcon,
-  FileCodeIcon,
-  LayersIcon,
-  LoaderCircleIcon,
-  XIcon,
-} from 'lucide-react';
+import { CheckIcon, CircleDashedIcon, FileCodeIcon, LayersIcon, XIcon } from 'lucide-react';
 import { HighlightedCode } from '@/shared/components/highlighted-code';
-import { Markdown } from '@/shared/components/markdown';
+import { TerminalOutput } from '@/shared/components/terminal-output';
 import {
   Trace,
   TraceCollapsible,
@@ -19,7 +10,10 @@ import {
   TraceLine,
   TraceTitle,
 } from '@/shared/ui/trace';
-import type { StepBody as StepBodyView, TestCase, Todo } from '../../lib/conversation';
+import type { StepBody as StepBodyView, TestCase } from '../../lib/conversation';
+import { PlanQueue } from '../plan-queue';
+import { SearchResults } from '../search-results';
+import { SubagentWork } from '../subagent-work';
 
 const OUTPUT = 'max-h-64';
 
@@ -36,7 +30,7 @@ function TestLine({ test }: { test: TestCase }) {
 }
 
 /** Test Results : les cas lus dans la sortie, en échec d'abord, puis la sortie complète. */
-function TestsBody({ output, tests }: { output: string; tests: TestCase[] }) {
+function TestsBody({ command, output, tests }: { command: string; output: string; tests: TestCase[] }) {
   const ordered = [...tests].sort((a, b) => Number(b.status === 'failed') - Number(a.status === 'failed'));
   return (
     <div className="flex flex-col gap-3">
@@ -48,7 +42,7 @@ function TestsBody({ output, tests }: { output: string; tests: TestCase[] }) {
           ))}
         </Trace>
       )}
-      <HighlightedCode code={output} size="sm" wrap className={OUTPUT} />
+      <TerminalOutput command={command} output={output} className={OUTPUT} />
     </div>
   );
 }
@@ -97,35 +91,6 @@ function StackBody({ error, frames }: { error: string; frames: { internal: boole
   );
 }
 
-function TodoLine({ live, todo }: { live: boolean; todo: Todo }) {
-  if (todo.status === 'completed')
-    return (
-      <TraceLine>
-        <TraceIcon>
-          <CircleCheckIcon />
-        </TraceIcon>
-        <TraceTitle className="line-through">{todo.content}</TraceTitle>
-      </TraceLine>
-    );
-  if (todo.status === 'in_progress')
-    return (
-      <TraceLine status={live ? 'running' : undefined}>
-        <TraceIcon>
-          {live ? <LoaderCircleIcon className="animate-spin motion-reduce:animate-none" /> : <CircleIcon />}
-        </TraceIcon>
-        <TraceTitle className="text-ink">{todo.content}</TraceTitle>
-      </TraceLine>
-    );
-  return (
-    <TraceLine status="pending">
-      <TraceIcon>
-        <CircleIcon />
-      </TraceIcon>
-      <TraceTitle>{todo.content}</TraceTitle>
-    </TraceLine>
-  );
-}
-
 export interface StepBodyProps {
   body: StepBodyView;
   /** La session tourne : la tâche en cours du plan tourne aussi */
@@ -136,9 +101,9 @@ export interface StepBodyProps {
 export function StepBody({ body, live }: StepBodyProps) {
   switch (body.kind) {
     case 'terminal':
-      return <HighlightedCode code={body.output || '(aucune sortie)'} size="sm" wrap className={OUTPUT} />;
+      return <TerminalOutput command={body.command} output={body.output} className={OUTPUT} />;
     case 'tests':
-      return <TestsBody output={body.output} tests={body.tests} />;
+      return <TestsBody command={body.command} output={body.output} tests={body.tests} />;
     case 'stack':
       return <StackBody error={body.error} frames={body.frames} />;
     case 'diff':
@@ -154,20 +119,20 @@ export function StepBody({ body, live }: StepBodyProps) {
     case 'code':
       return <HighlightedCode code={body.code} language={body.language} size="sm" className={OUTPUT} />;
     case 'plan':
-      return (
-        <Trace>
-          {body.todos.map((todo, index) => (
-            // le plan garde l'ordre de ses tâches
-            <TodoLine key={index} todo={todo} live={live} />
-          ))}
-        </Trace>
-      );
+      return <PlanQueue todos={body.todos} live={live} />;
+    case 'search':
+      return <SearchResults links={body.links} />;
     case 'subagent':
       return (
-        <div className="flex flex-col gap-2">
-          <p className="line-clamp-3 whitespace-pre-line">{body.prompt}</p>
-          {body.result && <Markdown>{body.result}</Markdown>}
-        </div>
+        <SubagentWork
+          agentType={body.agentType}
+          live={live}
+          model={body.model}
+          parts={body.parts}
+          partial={body.partial}
+          prompt={body.prompt}
+          result={body.result}
+        />
       );
   }
 }
