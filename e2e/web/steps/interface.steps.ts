@@ -61,3 +61,20 @@ Then('je vois le lien {texte}', async ({ page }, name: string) => {
 Then('je vois le titre {texte}', async ({ page }, name: string) => {
   await expect(page.getByRole('heading', { name })).toBeVisible();
 });
+
+When('je choisis {texte} dans la liste {texte}', async ({ page }, option: string, label: string) => {
+  await page.getByLabel(label).selectOption({ label: option });
+});
+
+When('je bascule l’interrupteur {texte}', async ({ page }, label: string) => {
+  await page.getByRole('switch', { name: label }).click();
+});
+
+Then('la liste {texte} vaut {texte}', async ({ page }, label: string, option: string) => {
+  await expect(page.getByLabel(label).locator('option:checked')).toHaveText(option);
+});
+
+Then('l’interrupteur {texte} est {texte}', async ({ page }, label: string, state: string) => {
+  const toggle = page.getByRole('switch', { name: label });
+  await (state === 'activé' ? expect(toggle).toBeChecked() : expect(toggle).not.toBeChecked());
+});

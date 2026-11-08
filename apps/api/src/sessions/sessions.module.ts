@@ -1,11 +1,14 @@
 import type { MikroORM } from '@mikro-orm/sqlite';
 import { Inject, Module, type OnApplicationBootstrap, type OnApplicationShutdown } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
+import { APP_NAME } from '@bosco/domain';
 import type { Config } from '../config.ts';
+import type { Notifier } from './application/ports.ts';
 import { CONFIG, ORM } from '../shared/tokens.ts';
 import { LiveSignalService } from './application/live-signal.service.ts';
 import { LiveTrackingService } from './application/live-tracking.service.ts';
 import { SessionService } from './application/session.service.ts';
+import { SettingsService } from './application/settings.service.ts';
 import { SourceService } from './application/source.service.ts';
 import { FileProfileFinder } from './infrastructure/claude-code/profile-finder.ts';
 import { FileProfileSettings } from './infrastructure/claude-code/profile-settings.ts';
@@ -13,20 +16,25 @@ import { FileSessionRegistry } from './infrastructure/claude-code/session-regist
 import { FileTranscriptWatcher } from './infrastructure/claude-code/transcript-watcher.ts';
 import { SessionEventsBus } from './infrastructure/events/session-events.bus.ts';
 import { loadHookSecret } from './infrastructure/hooks/hook-secret.ts';
+import { DesktopNotifier, RecordingNotifier } from './infrastructure/notifications/desktop-notifier.ts';
 import { MikroOrmSessionRepository } from './infrastructure/persistence/session.repository.ts';
+import { MikroOrmSettingsRepository } from './infrastructure/persistence/settings.repository.ts';
 import { MikroOrmSourceRepository } from './infrastructure/persistence/source.repository.ts';
 import { TranscriptCursorStore } from './infrastructure/persistence/transcript-cursor.store.ts';
 import { EventsController } from './interface/http/events.controller.ts';
 import { HooksController } from './interface/http/hooks.controller.ts';
 import { LiveTrackingController } from './interface/http/live-tracking.controller.ts';
 import { SessionsController } from './interface/http/sessions.controller.ts';
+import { SettingsController } from './interface/http/settings.controller.ts';
 import { SourcesController } from './interface/http/sources.controller.ts';
 import {
   HOOK_SECRET,
   LIVE_SIGNAL_SERVICE,
   LIVE_TRACKING_SERVICE,
+  NOTIFIER,
   SESSION_EVENTS,
   SESSION_SERVICE,
+  SETTINGS_SERVICE,
   SOURCE_SERVICE,
   TRANSCRIPT_WATCHER,
 } from './tokens.ts';
@@ -36,15 +44,47 @@ const registry = new FileSessionRegistry();
 
 /** Contexte des sessions : chaque port du domaine relié à son adaptateur. */
 @Module({
-  controllers: [SourcesController, SessionsController, EventsController, HooksController, LiveTrackingController],
+  controllers: [
+    SourcesController,
+    SessionsController,
+    EventsController,
+    HooksController,
+    LiveTrackingController,
+    SettingsController,
+  ],
   providers: [
     { provide: SESSION_EVENTS, useValue: new SessionEventsBus() },
+    {
+      provide: SETTINGS_SERVICE,
+      inject: [ORM],
+      useFactory: (orm: MikroORM) => new SettingsService(new MikroOrmSettingsRepository(orm)),
+    },
+    {
+      provide: NOTIFIER,
+      inject: [CONFIG],
+      useFactory: (config: Config) => (config.testing ? new RecordingNotifier() : new DesktopNotifier(APP_NAME)),
+    },
     { provide: HOOK_SECRET, inject: [CONFIG], useFactory: (config: Config) => loadHookSecret(config.dataDir) },
     {
       provide: LIVE_SIGNAL_SERVICE,
-      inject: [ORM, SESSION_SERVICE, SESSION_EVENTS],
-      useFactory: (orm: MikroORM, sessionService: SessionService, bus: SessionEventsBus) =>
-        new LiveSignalService(new MikroOrmSessionRepository(orm), sessionService, bus, clock, { next: randomUUID }),
+      inject: [ORM, SESSION_SERVICE, SESSION_EVENTS, SETTINGS_SERVICE, NOTIFIER],
+      useFactory: (
+        orm: MikroORM,
+        sessionService: SessionService,
+        bus: SessionEventsBus,
+        settings: SettingsService,
+        notifier: Notifier,
+      ) =>
+        new LiveSignalService(
+          new MikroOrmSessionRepository(orm),
+          sessionService,
+          bus,
+          clock,
+          { next: randomUUID },
+          (title, body) => {
+            if (settings.desktopNotifications()) notifier.notify(title, body);
+          },
+        ),
     },
     {
       provide: LIVE_TRACKING_SERVICE,
@@ -59,9 +99,11 @@ const registry = new FileSessionRegistry();
     },
     {
       provide: SESSION_SERVICE,
-      inject: [ORM, SESSION_EVENTS],
-      useFactory: (orm: MikroORM, bus: SessionEventsBus) =>
-        new SessionService(new MikroOrmSessionRepository(orm), clock, bus, registry),
+      inject: [ORM, SESSION_EVENTS, SETTINGS_SERVICE],
+      useFactory: (orm: MikroORM, bus: SessionEventsBus, settings: SettingsService) =>
+        new SessionService(new MikroOrmSessionRepository(orm), clock, bus, registry, () =>
+          settings.inactivityDelayMs(),
+        ),
     },
     {
       provide: TRANSCRIPT_WATCHER,
@@ -85,16 +127,18 @@ const registry = new FileSessionRegistry();
         ),
     },
   ],
-  exports: [TRANSCRIPT_WATCHER, LIVE_SIGNAL_SERVICE],
+  exports: [TRANSCRIPT_WATCHER, LIVE_SIGNAL_SERVICE, NOTIFIER, SETTINGS_SERVICE],
 })
 export class SessionsModule implements OnApplicationBootstrap, OnApplicationShutdown {
   constructor(
     @Inject(SOURCE_SERVICE) private readonly sourceService: SourceService,
     @Inject(TRANSCRIPT_WATCHER) private readonly watcher: FileTranscriptWatcher,
     @Inject(LIVE_SIGNAL_SERVICE) private readonly liveSignals: LiveSignalService,
+    @Inject(SETTINGS_SERVICE) private readonly settings: SettingsService,
   ) {}
 
   async onApplicationBootstrap(): Promise<void> {
+    await this.settings.load();
     await this.liveSignals.dropStalePermissions();
     await this.sourceService.resumeWatching();
   }

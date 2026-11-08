@@ -1,5 +1,6 @@
 import type { ProfileCandidate } from '../domain/profile-candidate.ts';
 import type { Session } from '../domain/session.ts';
+import type { SettingsSnapshot } from '../domain/settings.ts';
 import type { Source } from '../domain/source.ts';
 import type { JournalEntry } from '../domain/transcript-event.ts';
 import type { SessionView } from './session.service.ts';
@@ -25,7 +26,19 @@ export interface ProfileFinder {
 
 /** Lit les transcripts d'un profil depuis une date, puis suit leurs ajouts, sans jamais les modifier. */
 export interface TranscriptWatcher {
+  /** Arrête la lecture d'un profil ; rien n'est effacé (CA-SESS-56) */
+  unwatch(sourceId: string): Promise<void>;
   watch(source: Source, since: Date): Promise<void>;
+}
+
+export interface SettingsRepository {
+  load(): Promise<null | SettingsSnapshot>;
+  save(settings: SettingsSnapshot): Promise<void>;
+}
+
+/** Notification du bureau, envoyée par le service même quand Bosco n'est pas au premier plan (RF-SESS-08). */
+export interface Notifier {
+  notify(title: string, body: string): void;
 }
 
 /**
@@ -35,6 +48,7 @@ export interface TranscriptWatcher {
 export interface SessionRegistry {
   /** null : le profil ne tient pas de registre, l'état se déduit alors de l'activité seule */
   isOpen(sourceId: string, sessionId: string): boolean | null;
+  unwatch(sourceId: string): void;
   watch(source: Source, changed: (sessionIds: string[]) => void): Promise<void>;
 }
 

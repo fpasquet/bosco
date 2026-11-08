@@ -25,6 +25,10 @@ interface PendingPermission {
   resolve: (answer: null | PermissionAnswer) => void;
 }
 
+function titleOf(session: Session): string {
+  return session.toSnapshot().title ?? `Session ${session.id.slice(0, 8)}`;
+}
+
 /** L'autorisation a déjà reçu sa réponse, ici ou dans le terminal : la première réponse l'emporte (RF-SESS-03). */
 export class PermissionAlreadySettled extends DomainError {
   constructor(sessionId: string) {
@@ -46,6 +50,8 @@ export class LiveSignalService {
     private readonly sessionEvents: SessionEvents,
     private readonly clock: Clock,
     private readonly idGenerator: IdGenerator,
+    /** Notification du bureau d'une nouvelle attente ; le point de composition y applique le réglage (RF-SESS-08) */
+    private readonly notify: (title: string, body: string) => void = () => undefined,
   ) {}
 
   /** Dernier signal reçu d'un profil : la vérification de l'installation repose sur un vrai signal (CA-SESS-64). */
@@ -56,8 +62,10 @@ export class LiveSignalService {
   async receive(origin: SignalOrigin, signal: LiveSignal): Promise<void> {
     const at = this.clock.now();
     const session = await this.sessionOf(origin, at);
-    if (signal.kind === 'stop') session.endTurn(signal.message, at);
-    else if (signal.kind === 'end') session.end(at);
+    if (signal.kind === 'stop') {
+      session.endTurn(signal.message, at);
+      this.notify(`${titleOf(session)} t’attend`, signal.message ?? 'Tour terminé : l’agent a rendu la main.');
+    } else if (signal.kind === 'end') session.end(at);
     else session.resume(at);
     await this.publish(session);
   }
@@ -78,6 +86,10 @@ export class LiveSignalService {
     this.pending.get(origin.sessionId)?.resolve(null);
     session.awaitPermission(requestId, action.tool, action.detail, at);
     await this.publish(session);
+    this.notify(
+      `${titleOf(session)} t’attend`,
+      `Autorisation demandée : ${[action.tool, action.detail].filter(Boolean).join(' · ')}`,
+    );
     return new Promise((resolve) => {
       this.pending.set(origin.sessionId, { requestId, resolve });
       abandoned(() => void this.abandon(origin.sessionId, requestId));

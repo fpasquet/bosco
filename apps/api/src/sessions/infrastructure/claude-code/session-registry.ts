@@ -88,6 +88,12 @@ export class FileSessionRegistry implements SessionRegistry {
     this.timers.set(source.id, timer);
   }
 
+  unwatch(sourceId: string): void {
+    clearInterval(this.timers.get(sourceId));
+    this.timers.delete(sourceId);
+    this.open.delete(sourceId);
+  }
+
   close(): void {
     for (const timer of this.timers.values()) clearInterval(timer);
     this.timers.clear();

@@ -1,3 +1,4 @@
+import type { DataTable } from 'playwright-bdd';
 // Phrases du suivi en direct : réglages des profils, et hooks envoyés à Bosco comme le fait Claude Code.
 import { expect } from '@playwright/test';
 import { cpSync, mkdirSync, readFileSync } from 'node:fs';
@@ -110,3 +111,20 @@ When(
     last.response = { status: response.status(), body: text ? (JSON.parse(text) as unknown) : null };
   },
 );
+
+When(
+  'I switch {word} the source of the profile {string}',
+  async ({ bosco, last, request }, state: string, profile: string) => {
+    const id = await sourceIdOf(bosco.url, profile);
+    const response = await request.patch(`/api/sources/${id}`, { data: { watched: state === 'on' } });
+    last.response = { status: response.status(), body: (await response.json()) as unknown };
+    // laisse le temps à la lecture de s'arrêter ou de reprendre
+    await new Promise((resolve) => setTimeout(resolve, 300));
+  },
+);
+
+Then('the desktop notifications should be:', async ({ request }, table: DataTable) => {
+  const response = await request.get('/__test/notifications');
+  const { notifications } = (await response.json()) as { notifications: { body: string; title: string }[] };
+  expect(notifications).toEqual(table.hashes());
+});
