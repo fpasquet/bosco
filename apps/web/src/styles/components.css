@@ -26,3 +26,6 @@
 @import '../shared/ui/message/message.css';
 @import '../shared/ui/skeleton/skeleton.css';
 @import '../shared/ui/trace/trace.css';
+
+/* Composants d'une fonctionnalité qui posent une classe du projet */
+@import '../features/sessions/components/composer/composer.css';
