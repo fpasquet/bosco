@@ -23,6 +23,13 @@ When('le téléphone ouvre l’adresse du poste', async ({ bosco, browser }) => 
   await phone.goto(bosco.phoneUrl);
 });
 
+/** Le QR code de la fenêtre d'appairage porte la page d'appairage du téléphone et le code (pairingLink). */
+When('le téléphone scanne le QR code du poste', async ({ bosco, browser }) => {
+  const context = await browser.newContext({ ...devices['Pixel 7'], ignoreHTTPSErrors: true });
+  phone = await context.newPage();
+  await phone.goto(`${bosco.phoneUrl}/pair?code=${code}`);
+});
+
 When('le téléphone saisit le code', async () => {
   await phone?.getByLabel('Code à 6 chiffres').fill(code);
   await phone?.getByRole('button', { name: 'Appairer' }).click();

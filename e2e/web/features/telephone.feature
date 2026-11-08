@@ -17,10 +17,17 @@ Fonctionnalité: Accès depuis le téléphone
     Alors je vois le texte « Désactivé : aucun accès en dehors de ce poste. »
     Quand je clique sur le bouton « Activer et appairer un téléphone »
     Alors je vois le texte « à usage unique »
+    Et je vois le texte « scanne ce QR code »
     Et je vois le texte « Accepte l’avertissement du navigateur »
     Et la page est accessible
     Quand je clique sur le bouton « Annuler » de la fenêtre
     Alors je ne vois plus le texte « à usage unique »
+
+  @CA-SESS-75
+  Scénario: Le QR code ouvre la page d'appairage avec le code, et le téléphone s'appaire seul
+    Étant donné l’accès depuis le téléphone est activé avec un code affiché sur le poste
+    Quand le téléphone scanne le QR code du poste
+    Alors le téléphone voit la page « / »
 
   @CA-SESS-68
   Scénario: Le téléphone s'appaire avec le code puis accède à Bosco
