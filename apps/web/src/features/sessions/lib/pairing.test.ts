@@ -5,6 +5,9 @@ describe('pairing', () => {
   it('links the QR code to the pairing page with the code, or to the address alone', () => {
     expect(pairingLink('https://192.168.1.20:4871', '482913')).toBe('https://192.168.1.20:4871/pair?code=482913');
     expect(pairingLink('https://192.168.1.20:4871/', null)).toBe('https://192.168.1.20:4871');
+    expect(pairingLink('https://192.168.1.20:4871', '482913', '9F:3A:C2')).toBe(
+      'https://192.168.1.20:4871/pair?code=482913&fp=9F%3A3A%3AC2',
+    );
   });
 
   it('reads the six digits of a code, spaces allowed', () => {

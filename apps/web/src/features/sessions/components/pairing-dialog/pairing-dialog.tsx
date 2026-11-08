@@ -9,6 +9,8 @@ import { pairingLink } from '../../lib/pairing';
 
 export interface PairingDialogProps {
   code: null | PairingCodeDto;
+  /** Empreinte du certificat, ajoutée au QR code pour l'application Android */
+  fingerprint?: null | string;
   now: Date;
   onCancel: () => void;
   onCopy: (text: string, label: string) => void;
@@ -31,7 +33,16 @@ function remaining(expiresAt: string, now: Date): string {
  * Appairage d'un téléphone (E4c) : l'adresse sur le réseau local, l'avertissement du certificat à accepter une fois,
  * et un code valable 5 minutes, à usage unique, avec 5 essais au plus (CA-SESS-66).
  */
-export function PairingDialog({ code, now, onCancel, onCopy, onNewCode, open, url }: PairingDialogProps) {
+export function PairingDialog({
+  code,
+  fingerprint = null,
+  now,
+  onCancel,
+  onCopy,
+  onNewCode,
+  open,
+  url,
+}: PairingDialogProps) {
   const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     const element = dialog.current;
@@ -55,7 +66,7 @@ export function PairingDialog({ code, now, onCancel, onCopy, onNewCode, open, ur
             {url && (
               <div className="flex items-center gap-4">
                 <QRCodeSVG
-                  value={pairingLink(url, current?.code ?? null)}
+                  value={pairingLink(url, current?.code ?? null, fingerprint)}
                   size={144}
                   marginSize={2}
                   level="M"

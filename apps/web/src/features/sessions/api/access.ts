@@ -1,6 +1,8 @@
 /** Accès depuis le téléphone (E4c). */
 export interface PhoneAccessDto {
   enabled: boolean;
+  /** Empreinte du certificat, portée par le QR code pour l'application Android */
+  fingerprint: null | string;
   urls: string[];
 }
 

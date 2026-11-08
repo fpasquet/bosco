@@ -8,7 +8,10 @@ export function pairingDigits(value: string): null | string {
  * Lien du QR code d'appairage (E4c) : la page d'appairage du téléphone, avec le code tant qu'il vaut. Scanné, il ouvre
  * la page avec le code rempli ; sans code valable, il ouvre seulement l'adresse.
  */
-export function pairingLink(url: string, code: null | string): string {
+export function pairingLink(url: string, code: null | string, fingerprint: null | string = null): string {
   const base = url.endsWith('/') ? url.slice(0, -1) : url;
-  return code ? `${base}/pair?code=${encodeURIComponent(code)}` : base;
+  if (!code) return base;
+  // L'empreinte du certificat : l'application Android ne fait confiance qu'à lui ; le navigateur l'ignore (CA-APPS-05)
+  const pin = fingerprint ? `&fp=${encodeURIComponent(fingerprint)}` : '';
+  return `${base}/pair?code=${encodeURIComponent(code)}${pin}`;
 }

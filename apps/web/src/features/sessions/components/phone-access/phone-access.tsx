@@ -123,6 +123,7 @@ export function PhoneAccess() {
         code={code}
         now={now}
         url={access.urls[0] ?? null}
+        fingerprint={access.fingerprint}
         onCopy={copy}
         onNewCode={() => newCode.mutate()}
         onCancel={() => setCode(null)}
