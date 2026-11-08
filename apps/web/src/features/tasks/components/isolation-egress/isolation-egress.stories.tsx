@@ -14,6 +14,7 @@ const meta = {
     now: new Date('2026-11-06T15:30:00'),
     onAdd: fn(),
     onRemove: fn(),
+    onSecrets: fn(),
   },
 } satisfies Meta<typeof IsolationEgress>;
 
