@@ -29,10 +29,13 @@ de chaque étape, sous 120 lignes. Les conventions sont dans `.claude/rules/desi
 - 2026-11-07 · Un composant par fichier : `react/no-multi-comp` non branché (eslint-plugin-react ne déclare pas ESLint 10) ; convention gardée en relecture.
 - 2026-11-07 · Commentaire de `theme.css` reformulé : il citait `--spacing-*: initial`, que l'audit prenait pour une restriction réelle de l'échelle.
 
+- 2026-11-08 · Fil des sessions sur les patterns d'AI Elements (Reasoning, Tool, Terminal, Test Results, Stack Trace, Task) : composants shadcn `trace`, `code-block`, `message`, `bubble` et `collapsible` (style `radix-nova`, `components.json`), rangés par `rehome.mjs` sous des classes du projet. États par classes de modificateur (`trace-line-error`, `message-end`, `code-block-sm`) au lieu des `data-*` de shadcn ; `shimmer`, `scroll-fade` et `scrollbar-thin` de shadcn remplacés par `animate-pulse` et du CSS standard.
+- 2026-11-08 · Markdown des agents par Streamdown (`shared/components/markdown`), mis en forme par la classe `markdown` : ses éléments sont rendus sans les classes de Streamdown, dont certaines (`text-3xl`) seraient compilées par ailleurs et l'emporteraient ; blocs de code par `HighlightedCode` (CodeBlock + Shiki). Thèmes Shiki `github-light-high-contrast` et `github-dark-high-contrast` : `github-light` échoue au contraste AA sur les lignes ajoutées ou retirées.
+
 ## Migration
 
 Aucune : création. Lint en `error`.
 
 ## Versions
 
-shadcn CLI 4.23.0 · Storybook 10.6.5 · Tailwind 4.3.3 · eslint-plugin-better-tailwindcss 4.9.1 · daisyUI 5.7.50 · radix-ui 1.8.1 · Vitest 5.1.0 et Playwright 1.65.0 (au lieu de 5.0.5 et 1.64.1 testés par le skill : versions du monorepo).
+shadcn CLI 4.23.0 · Streamdown 2.7.1 · Shiki 4.5.0 · Storybook 10.6.5 · Tailwind 4.3.3 · eslint-plugin-better-tailwindcss 4.9.1 · daisyUI 5.7.50 · radix-ui 1.8.1 · Vitest 5.1.0 et Playwright 1.65.0 (au lieu de 5.0.5 et 1.64.1 testés par le skill : versions du monorepo).

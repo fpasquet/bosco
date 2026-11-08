@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite';
-import { STORY_JOURNAL, STORY_RUNNING } from '../../fixtures';
+import { STORY_CONVERSATION, STORY_JOURNAL, STORY_RUNNING } from '../../fixtures';
 import { SessionFeed } from './session-feed';
 
 const meta = {
@@ -22,3 +22,5 @@ type Story = StoryObj<typeof meta>;
 export const Running: Story = {};
 
 export const Empty: Story = { args: { journal: [] } };
+
+export const Conversation: Story = { args: { conversation: STORY_CONVERSATION } };

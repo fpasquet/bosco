@@ -110,6 +110,10 @@ size="sm">` rend `btn btn-primary btn-sm`.
   (version épinglée), puis se range avec `rehome.mjs` du skill `design-system`, sous des classes du projet qui ne
   reprennent aucun nom de daisyUI.
 - Les textes visibles (« Fermer » des fenêtres) passent par les messages du projet.
+- Le fil d'un agent suit les patterns d'AI Elements de shadcn, assemblés sur `trace`, `code-block`, `message` et
+  `bubble` : une étape est une `TraceLine` (dépliable par `TraceCollapsible`), une sortie un `CodeBlock`. Le Markdown
+  d'un agent passe par `Markdown` (`apps/web/src/shared/components/markdown`, Streamdown), jamais par un rendu maison,
+  et le code par `HighlightedCode` (Shiki).
 - `cn` vient d'un seul endroit (`@/lib/utils`) ; CVA reste pour les variantes typées.
 
 ## Storybook

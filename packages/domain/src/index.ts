@@ -1,16 +1,21 @@
 export { APP_NAME } from './app-name.ts';
 export type {
+  ConversationPartDto,
+  ConversationStepDto,
+  ConversationTurnDto,
   CostReportDto,
   HistoryDayDto,
   ImportProgressDto,
   JournalEntryDto,
   LiveEventDto,
   ProfileCandidateDto,
+  SessionConversationDto,
   SessionDetailDto,
   SessionDto,
   SessionStateDto,
   SourceDto,
   SourcesDto,
+  SubagentDto,
   WaitingDto,
 } from './sessions.ts';
 export type {

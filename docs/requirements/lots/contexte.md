@@ -19,7 +19,7 @@
 
 ## <a id="e9"></a>E9 · Contexte transmis aux agents
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e9.html` · implémentation : **À développer**
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e9.html` · implémentation : **Livré (Contexte des agents développé (E9a à E9f) : décisions d'un dépôt ou d'un socle, au format contexte, décision, conséquences, alternatives écartées ; proposées par un agent (fichier relevé à la fin d'une tâche du worker, ou outil MCP d'une session), acceptées, modifiées avant, ou refusées avec un motif par toi seul ; nouvelle décision gardée en proposition ou acceptée, avec « fait exception à » une décision d'un socle ; versions avec auteur, date et note obligatoire ; remplacer, abandonner ; place du dépôt dans l'architecture ; aperçu du texte exact transmis, avec ce qui en est absent et l'estimation des tokens. Chaque agent du worker reçoit ce texte au lancement, noté dans le journal de sa tâche avec les versions transmises ; une session le lit par MCP. Vérifié sur une vraie tâche : contexte reçu, décision proposée par fichier, sans trace dans la branche. Écarts : le compteur des décisions à valider n'est pas repris sur l'entrée « Contexte » ; les relations ne montrent pas encore les tâches qui ont reçu une décision.)**
 
 ### <a id="e9a"></a>E9a · Contexte d'un dépôt
 
@@ -123,7 +123,7 @@ Règles de l'écran :
 
 ## <a id="e10"></a>E10 · Intégrations
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e10.html` · implémentation : **À développer**
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e10.html` · implémentation : **Livré (Intégrations développées (E10a, E10b) : une adresse collée sur une tâche est reconnue avant l'ajout (GitHub, Jira, Confluence, décision Bosco, toute autre page) ; GitHub se lit avec GitHub CLI du poste, sans jeton gardé ; Jira et Confluence avec un compte et un jeton d'API gardés dans Bosco ; toute autre adresse avec le titre de sa page ; titre, état et auteur ou responsable relus toutes les heures, et « Rafraîchir maintenant » ; un lien illisible reste, « Non rafraîchi », avec ses dernières informations, et son intégration passe en erreur avec la cause ; retirer un lien ne le supprime que de la tâche. L'agent reçoit titre, nature, état et adresse de chaque lien, jamais le contenu ni les accès ; l'aperçu du texte transmis se calcule pour une tâche. Vérifié avec de vraies lectures (PR et ticket GitHub publics, page, décision). Écarts : les liens s'ajoutent aux tâches seulement, pas encore aux sessions ni aux décisions ; Jira et Confluence n'ont pas été vérifiés sur un vrai site.)**
 
 ### <a id="e10a"></a>E10a · Intégrations : connexions
 
@@ -161,7 +161,7 @@ Règles de l'écran :
 
 ## <a id="e11"></a>E11 · Isolation du worker
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e11.html` · implémentation : **À développer**
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e11.html` · implémentation : **En cours (Isolation développée, écran compris (E11a, E11b) : un conteneur jetable par tâche, seul sur un réseau privé sans Internet ; sa seule sortie est un proxy propre à la tâche, qui ne laisse passer que les domaines de la liste, relue à chaque connexion. Liste par défaut verrouillée, domaines ajoutés et retirés d'un clic, refus récents avec l'heure, la tâche et le domaine, « Autoriser ce domaine » sans relancer la tâche ; plafond d'agents réglable de 1 à 8 ; lecture seule sur le téléphone, ouvert depuis Sources. Vérifié sur deux vraies tâches : github.com refusé puis autorisé. Écarts : seul l'accès à l'abonnement Claude est transmis (copie temporaire supprimée à la fin) ; le jeton Bosco de la tâche, le jeton npm temporaire et les registres privés ne sont pas encore développés ; le compte de l'abonnement du profil choisi n'est pas encore affiché ; une session du poste peut lire ces réglages, comme tout ce que Bosco sert sur le poste.)**
 
 ### <a id="e11a"></a>E11a · Isolation du worker : mode et ressources
 
@@ -200,7 +200,7 @@ Règles de l'écran :
 
 ## <a id="e12"></a>E12 · Environnement de test
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e12.html` · implémentation : **À développer**
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e12.html` · implémentation : **Livré (Environnement de test développé, écran compris (E12a) : services lus dans le fichier des services de test du dépôt, à sa branche courante, jamais dans une branche d'agent ; modes Automatique, Choisir et Aucun ; l'application elle-même et les images node écartées ; seules l'image, les variables, la commande et la vérification d'état sont gardées, le reste est retiré et nommé (ports publiés, volumes nommés, dossiers du poste, droits étendus) ; services sur le réseau privé de la tâche, joints par leur nom, 1 Go et 1 processeur chacun, attente de 180 s au plus, échec non bloquant et agent prévenu ; image de l'agent par dépôt ; dernier lancement avec le temps de chaque service et l'heure de suppression. Vérifié sur de vraies tâches : Redis joint par son nom, puis un service introuvable sans bloquer la tâche. Écart : les options gardées se limitent à celles-ci ; un service qui dépend d'un fichier du dépôt monté ne démarre pas.)**
 
 ### <a id="e12a"></a>E12a · Environnement de test d'un dépôt
 
@@ -222,7 +222,7 @@ Règles de l'écran :
 
 ## <a id="e14"></a>E14 · Socles
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e14.html` · implémentation : **À développer**
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e14.html` · implémentation : **En cours (Socles développés (E14a, E14b) : socle global ou partagé, héritage d'un autre socle sans boucle, dépôts cochés ; liste des socles avec leurs décisions, leurs dépôts et les exceptions locales ; les socles s'empilent dans le contexte d'un dépôt. Écart : un socle existant ne se modifie pas encore depuis l'écran (dépôts, portée), et la confirmation du nombre de dépôts concernés n'est pas développée.)**
 
 ### <a id="e14a"></a>E14a · Socles : liste et héritages
 

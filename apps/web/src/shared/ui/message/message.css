@@ -1,0 +1,37 @@
+/*
+ * Message (shadcn, AI Elements) : un tour de la conversation, avec avatar, en-tête, contenu et pied. message-end aligne
+ * le tour à droite (les messages de la personne) ; le contenu empile bulles, étapes et réponse.
+ */
+@layer components {
+  .message-group {
+    @apply flex min-w-0 flex-col gap-2;
+  }
+  .message {
+    @apply relative flex w-full min-w-0 gap-2 text-sm;
+  }
+  .message-end {
+    @apply flex-row-reverse;
+  }
+  .message-avatar {
+    @apply flex w-fit min-w-8 shrink-0 items-center justify-center self-end overflow-hidden rounded-full bg-surface-alt;
+  }
+  .message:has(.message-footer) .message-avatar {
+    @apply -translate-y-8;
+  }
+  .message-content {
+    @apply flex w-full min-w-0 flex-col gap-2.5 wrap-break-word;
+  }
+  .message-end .message-content > * {
+    @apply self-end;
+  }
+  .message-header,
+  .message-footer {
+    @apply flex max-w-full min-w-0 items-center px-3 text-xs font-medium text-muted;
+  }
+  .message:has(.bubble-ghost) :is(.message-header, .message-footer) {
+    @apply px-0;
+  }
+  .message-end .message-footer {
+    @apply justify-end;
+  }
+}

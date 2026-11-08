@@ -1,0 +1,86 @@
+/*
+ * Trace (shadcn, AI Elements) : les étapes d'un agent, une ligne par étape (réflexion, outil), qui se déplie sur son
+ * détail. L'état d'une ligne est une classe de modificateur : trace-line-running, trace-line-error, trace-line-pending.
+ */
+@layer components {
+  .trace {
+    @apply flex w-full min-w-0 flex-col gap-2;
+  }
+  .trace > *:has(> .trace-line) {
+    @apply flex w-fit max-w-full min-w-0 rounded-control text-left focus-ring;
+  }
+  .trace-line {
+    @apply flex w-fit max-w-full min-w-0 items-center gap-2 text-sm text-muted transition-colors;
+  }
+  :is(a, button) .trace-line {
+    cursor: pointer;
+  }
+  :is(a, button):hover .trace-line {
+    @apply text-ink;
+  }
+  .trace-line-error,
+  :is(a, button):hover .trace-line-error {
+    @apply text-danger;
+  }
+  /* Une étape à venir : l'icône s'efface, le texte garde son contraste */
+  .trace-line-pending > .trace-icon {
+    @apply opacity-60;
+  }
+  .trace-line-running > .trace-title {
+    @apply animate-pulse;
+  }
+  .trace-icon {
+    @apply flex size-4 shrink-0 items-center justify-center;
+  }
+  .trace-title ~ .trace-icon {
+    margin-inline-start: calc(var(--spacing) * -1);
+  }
+  .trace-icon svg {
+    @apply pointer-events-none;
+  }
+  .trace-icon svg:not([class*='size-']) {
+    @apply size-4;
+  }
+  .trace-title {
+    @apply min-w-0 truncate;
+  }
+  .trace-description {
+    @apply shrink-0 text-muted tabular-nums;
+  }
+  .trace-collapsible {
+    @apply flex w-full min-w-0 flex-col;
+  }
+  .trace-collapsible-trigger {
+    @apply flex w-fit max-w-full min-w-0 cursor-pointer items-center gap-1 rounded-control text-left text-muted transition-colors focus-ring hover:text-ink;
+  }
+  .trace-collapsible-trigger:has(.trace-line-error) {
+    @apply text-danger;
+  }
+  .trace-chevron {
+    @apply transition-transform;
+  }
+  .trace-collapsible-trigger[aria-expanded='true'] .trace-chevron {
+    @apply rotate-90;
+  }
+  .trace-panel {
+    @apply min-w-0 overflow-hidden;
+  }
+  .trace-panel[data-state='open'] {
+    @apply animate-collapsible-down;
+  }
+  .trace-panel[data-state='closed'] {
+    @apply animate-collapsible-up;
+  }
+  .trace-body {
+    margin-inline-start: calc(var(--spacing) * 2 - 1px);
+    @apply mt-2 mb-1 min-w-0 border-l border-line pr-1 pl-4 leading-relaxed wrap-break-word text-muted;
+  }
+}
+
+/* Moins de mouvement demandé par le système : ni dépliage animé, ni pulsation de l'étape en cours. */
+@media (prefers-reduced-motion: reduce) {
+  .trace-panel,
+  .trace-line-running > .trace-title {
+    animation: none;
+  }
+}

@@ -15,7 +15,7 @@
 
 ## <a id="e5"></a>E5 · File de tâches
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `taches/e5.html` · implémentation : **À développer**
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `taches/e5.html` · implémentation : **Livré (File de tâches développée (E5a, E5b, E5c) : file vide, file triée par urgence en trois onglets, filtres, enchaînement, raison de l'attente ; indicateur du worker (agents au travail) et bandeau « Worker indisponible » avec « Réessayer » quand Docker ou l'abonnement manque, les tâches restant en file.)**
 
 ### <a id="e5a"></a>E5a · File de tâches : vide
 
@@ -68,7 +68,7 @@ Règles de l'écran :
 
 ## <a id="e6"></a>E6 · Nouvelle tâche
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `taches/e6.html` · implémentation : **À développer**
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `taches/e6.html` · implémentation : **Livré (Formulaire de tâche développé (E6a, E6b) : dépôt des sources surveillées, dossier, consigne, mode, préalables, branche de départ, contexte, garde-fous plafonnés par les droits du dépôt choisi, récapitulatif ; erreurs liées à leur champ avec un bandeau qui y renvoie. Mode « Ma session » : une session Claude Code interactive prend la tâche avec « prends la prochaine tâche Bosco », par le serveur MCP de Bosco (installé dans un profil avec bosco mcp install), signale ses étapes dans le journal et la termine avec son compte rendu ; elle passe alors « À relire » ; une session peut aussi préparer une tâche. Vérifié avec une vraie session. Écart : modèle et effort ne se choisissent pas encore.)**
 
 ### <a id="e6a"></a>E6a · Nouvelle tâche : formulaire
 
@@ -107,7 +107,7 @@ Règles de l'écran :
 
 ## <a id="e7"></a>E7 · Revue d'une tâche
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `taches/e7.html` · implémentation : **À développer**
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `taches/e7.html` · implémentation : **Livré (Relecture développée (E7a, E7b, E7c) : consigne et compte rendu côte à côte, fichiers modifiés et diff depuis le départ de la branche, consommation au regard du budget et des tours, tâches débloquées par la validation, commande de fusion à copier ; rejet avec motif obligatoire, relance cochée par défaut (le motif rejoint la consigne, la tâche repart de sa branche, les suivantes attendent), sans relance les suivantes échouent en cascade ; validation selon le réglage du dépôt : jamais, sur demande avec titre et description préremplis, ou toujours ; seule la branche de la tâche est poussée, la PR s'ouvre en brouillon vers la branche de départ, avec git et GitHub CLI du poste ; un envoi en échec laisse la tâche validée avec la cause et « Réessayer » ; le lien de la PR rejoint la tâche. Vérifié sur une vraie tâche, avec un dépôt distant local. Écarts : sur le téléphone, la revue se lit en une colonne, sans les trois onglets ; « Liens » viendra avec les intégrations (E10b) ; le lien de la PR ne rejoint pas encore la session. Une tâche « Ma session » se relit sans diff : son travail est déjà dans le dépôt.)**
 
 ### <a id="e7a"></a>E7a · Revue d'une tâche : à relire
 
@@ -162,7 +162,7 @@ Règles de l'écran :
 
 ## <a id="e8"></a>E8 · Droits des agents
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `taches/e8.html` · implémentation : **À développer**
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `taches/e8.html` · implémentation : **Livré (Droits des agents développés (E8a) : réglages généraux et valeurs propres à chaque dépôt, droits effectifs avec leur origine (dépôt, général, général + dépôt), « Modifier » et « Revenir au général » ; un dépôt resserre le général, jamais ne le dépasse ; les outils interdits s'additionnent et sont refusés à l'agent ; le formulaire de tâche suit les plafonds du dépôt choisi ; tâches pas encore lancées qui appliqueront ces droits ; lecture seule sur le téléphone. Vérifié sur une vraie tâche : un outil interdit est retiré à l'agent. Écarts : l'effort n'est pas réglable ; la PR brouillon à la validation se règle ici et s'applique à la relecture (E7).)**
 
 ### <a id="e8a"></a>E8a · Droits des agents d'un dépôt
 
@@ -185,7 +185,7 @@ Règles de l'écran :
 
 ## <a id="e13"></a>E13 · Détail d'une tâche
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `taches/e13.html` · implémentation : **À développer**
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `taches/e13.html` · implémentation : **En cours (Détail d'une tâche développé (E13a, E13b, E13c) : consigne, préalables et leur état, branche de départ, garde-fous, journal ; modifier avant le départ ; annuler avec la confirmation qui nomme les tâches en cascade ; relancer un échec depuis la branche ou de zéro, budget revu. « Voir la session » ouvre la session de la tâche. Écart : pas d'« Annuler l'annulation ».)**
 
 ### <a id="e13a"></a>E13a · Détail d'une tâche : bloquée
 

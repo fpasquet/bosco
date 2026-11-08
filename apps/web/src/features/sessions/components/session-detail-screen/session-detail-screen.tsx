@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { JournalEntryDto, SessionDto } from '@bosco/domain';
-import { sessionDetailQuery, sessionsQuery } from '../../api/sessions';
+import { sessionConversationQuery, sessionDetailQuery, sessionsQuery } from '../../api/sessions';
 import { sourcesQuery } from '../../api/sources';
 import { useCopy } from '../../hooks/use-copy';
 import { useLiveEvents } from '../../hooks/use-live-events';
@@ -23,6 +23,9 @@ import { SessionSide } from '../session-side';
 import { WorkerTaskNotice } from '../worker-task-notice';
 
 /** Ce que l'agent a dit juste avant de demander l'autorisation. */
+/** Relecture du fil d'une session qui tourne : seules les lignes ajoutées au transcript sont lues. */
+const CONVERSATION_REFRESH_MS = 5000;
+
 function agentSays(journal: JournalEntryDto[], session: SessionDto): null | string {
   const since = session.waiting?.since;
   if (!since) return null;
@@ -41,6 +44,12 @@ export function SessionDetailScreen({ id }: { id: string }) {
   const { data: sources } = useQuery(sourcesQuery);
   const { data: sessions } = useQuery(sessionsQuery);
   const { data, isError } = useQuery(sessionDetailQuery(id));
+  // Un sous-agent de fond avance sans que la session change : le fil se relit tant qu'elle tourne
+  const running = data?.session.state === 'running';
+  const { data: conversation } = useQuery({
+    ...sessionConversationQuery(id),
+    refetchInterval: running ? CONVERSATION_REFRESH_MS : false,
+  });
   const settlement = useSettlements((state) => state.settlements[id] ?? null);
   const offline = useOffline();
   const answers = usePermissionAnswers({
@@ -73,11 +82,12 @@ export function SessionDetailScreen({ id }: { id: string }) {
         onCopy={copy}
       />
       <WorkerTaskNotice session={session} />
-      <div className="grid min-h-0 flex-1 gap-4 md:grid-cols-3">
-        <div className="flex min-h-0 flex-col md:col-span-2">
+      <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 md:grid-cols-3">
+        <div className="flex min-h-0 min-w-0 flex-col md:col-span-2">
           <SessionFeed
             session={session}
             journal={journal}
+            conversation={conversation}
             now={now}
             tail={
               <PermissionCard

@@ -1,0 +1,84 @@
+/*
+ * Bubble (shadcn) : la bulle d'un message. Variantes : bubble-default (marque), bubble-secondary, bubble-muted,
+ * bubble-tinted (fond de la marque adouci), bubble-outline, bubble-ghost (sans bulle), bubble-destructive ;
+ * bubble-end l'aligne à droite. Une bulle cliquable (bouton, lien) fonce au survol.
+ */
+@layer components {
+  .bubble {
+    max-width: 80%;
+    @apply relative flex w-fit min-w-0 flex-col gap-1;
+  }
+  .bubble-end,
+  .message-end .bubble {
+    @apply self-end;
+  }
+  .bubble-ghost {
+    @apply max-w-full border-none;
+  }
+  .bubble-content {
+    @apply w-fit max-w-full min-w-0 overflow-hidden rounded-card border border-transparent px-3 py-2 text-sm leading-relaxed wrap-break-word;
+  }
+  .bubble-end .bubble-content {
+    @apply self-end;
+  }
+  :is(button, a).bubble-content {
+    @apply text-left transition-colors focus-ring;
+  }
+  .bubble-default > .bubble-content {
+    @apply bg-primary text-on-primary;
+  }
+  .bubble-default > :is(button, a).bubble-content:hover {
+    @apply bg-primary-hover;
+  }
+  .bubble-secondary > .bubble-content,
+  .bubble-muted > .bubble-content {
+    @apply bg-surface-alt text-ink;
+  }
+  .bubble-secondary > :is(button, a).bubble-content:hover,
+  .bubble-muted > :is(button, a).bubble-content:hover {
+    background: color-mix(in oklch, var(--color-surface-alt), var(--color-ink) 5%);
+  }
+  .bubble-tinted > .bubble-content {
+    @apply bg-primary-soft text-ink;
+  }
+  .bubble-tinted > :is(button, a).bubble-content:hover {
+    background: color-mix(in oklch, var(--color-primary-soft), var(--color-primary) 10%);
+  }
+  .bubble-outline > .bubble-content {
+    @apply border-line bg-canvas;
+  }
+  .bubble-outline > :is(button, a).bubble-content:hover,
+  .bubble-ghost > :is(button, a).bubble-content:hover {
+    @apply bg-surface-alt text-ink;
+  }
+  .bubble-ghost > .bubble-content {
+    @apply rounded-none bg-transparent p-0;
+  }
+  .bubble-destructive > .bubble-content {
+    @apply bg-danger-soft text-danger;
+  }
+  .bubble-destructive > :is(button, a).bubble-content:hover {
+    background: color-mix(in oklch, var(--color-danger-soft), var(--color-danger) 10%);
+  }
+  .bubble-reactions {
+    @apply absolute z-10 flex w-fit shrink-0 items-center justify-center gap-1 rounded-full bg-surface-alt px-1.5 py-0.5 text-sm ring-3 ring-surface;
+  }
+  .bubble-reactions:has(button) {
+    @apply p-0;
+  }
+  .bubble-reactions-top {
+    @apply top-0 -translate-y-3/4;
+  }
+  .bubble-reactions-bottom {
+    @apply bottom-0 translate-y-3/4;
+  }
+  .bubble-reactions-start {
+    @apply left-3;
+  }
+  .bubble-reactions-end {
+    @apply right-3;
+  }
+  .bubble-group {
+    @apply flex min-w-0 flex-col gap-2;
+  }
+}

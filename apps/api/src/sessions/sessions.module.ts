@@ -5,12 +5,14 @@ import { APP_NAME } from '@bosco/domain';
 import type { Config } from '../config.ts';
 import type { Notifier } from './application/ports.ts';
 import { CONFIG, ORM } from '../shared/tokens.ts';
+import { ConversationService } from './application/conversation.service.ts';
 import { HistoryService } from './application/history.service.ts';
 import { LiveSignalService } from './application/live-signal.service.ts';
 import { LiveTrackingService } from './application/live-tracking.service.ts';
 import { SessionService } from './application/session.service.ts';
 import { SettingsService } from './application/settings.service.ts';
 import { SourceService } from './application/source.service.ts';
+import { FileConversationReader } from './infrastructure/claude-code/conversation-reader.ts';
 import { FileProfileFinder } from './infrastructure/claude-code/profile-finder.ts';
 import { FileProfileSettings } from './infrastructure/claude-code/profile-settings.ts';
 import { FileSessionRegistry } from './infrastructure/claude-code/session-registry.ts';
@@ -31,6 +33,7 @@ import { SessionsController } from './interface/http/sessions.controller.ts';
 import { SettingsController } from './interface/http/settings.controller.ts';
 import { SourcesController } from './interface/http/sources.controller.ts';
 import {
+  CONVERSATION_SERVICE,
   HISTORY_SERVICE,
   HOOK_SECRET,
   LIVE_SIGNAL_SERVICE,
@@ -45,6 +48,7 @@ import {
 
 const clock = { now: () => new Date() };
 const registry = new FileSessionRegistry();
+const conversations = new FileConversationReader();
 
 /** Contexte des sessions : chaque port du domaine relié à son adaptateur. */
 @Module({
@@ -59,6 +63,12 @@ const registry = new FileSessionRegistry();
   ],
   providers: [
     { provide: SESSION_EVENTS, useValue: new SessionEventsBus() },
+    {
+      provide: CONVERSATION_SERVICE,
+      inject: [ORM],
+      useFactory: (orm: MikroORM) =>
+        new ConversationService(new MikroOrmSessionRepository(orm), new MikroOrmSourceRepository(orm), conversations),
+    },
     {
       provide: HISTORY_SERVICE,
       inject: [ORM, SESSION_SERVICE],

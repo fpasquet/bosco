@@ -1,3 +1,4 @@
+import type { Conversation } from '../domain/conversation.ts';
 import type { ProfileCandidate } from '../domain/profile-candidate.ts';
 import type { Session } from '../domain/session.ts';
 import type { SettingsSnapshot } from '../domain/settings.ts';
@@ -88,4 +89,9 @@ export interface Clock {
 
 export interface IdGenerator {
   next(): string;
+}
+
+/** Conversation complète d'une session, lue dans son transcript ; null quand le fichier n'existe plus. */
+export interface ConversationReader {
+  read(profile: string, sessionId: string): Promise<Conversation | null>;
 }

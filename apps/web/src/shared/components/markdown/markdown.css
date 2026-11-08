@@ -1,0 +1,68 @@
+/*
+ * Markdown : réponses et réflexions d'un agent, rendues par Streamdown. Ses propres classes ne sont pas compilées
+ * (Tailwind ne lit pas node_modules) : la mise en forme vient d'ici, par les tokens.
+ */
+@layer components {
+  .markdown {
+    @apply flex min-w-0 flex-col gap-3 text-sm leading-relaxed wrap-break-word text-ink;
+  }
+  .markdown > * {
+    @apply max-w-full min-w-0;
+  }
+  /* Streamdown pose la classe border sur ses tableaux : sans couleur, Tailwind prendrait celle du texte */
+  .markdown * {
+    @apply border-line;
+  }
+  .markdown :is(h1, h2, h3, h4, h5, h6) {
+    @apply font-display font-semibold text-balance text-ink;
+  }
+  .markdown h1 {
+    @apply text-lg;
+  }
+  .markdown h2 {
+    @apply text-base;
+  }
+  .markdown :is(h3, h4, h5, h6) {
+    @apply text-sm;
+  }
+  .markdown :is(ul, ol) {
+    @apply flex flex-col gap-1 pl-5;
+  }
+  .markdown ul {
+    @apply list-disc;
+  }
+  .markdown ol {
+    @apply list-decimal;
+  }
+  .markdown li > :is(ul, ol) {
+    @apply mt-1;
+  }
+  .markdown li::marker {
+    @apply text-muted;
+  }
+  .markdown blockquote {
+    @apply border-l-2 border-line-strong pl-3 text-muted;
+  }
+  .markdown hr {
+    @apply border-line;
+  }
+  .markdown strong {
+    @apply font-semibold;
+  }
+  /* Un tableau large défile dans son cadre, jamais la page */
+  .markdown div:has(> table) {
+    @apply overflow-x-auto;
+  }
+  .markdown table {
+    @apply w-full border-collapse text-left text-sm;
+  }
+  .markdown :is(th, td) {
+    @apply border border-line px-2 py-1 align-top;
+  }
+  .markdown th {
+    @apply bg-surface-alt font-semibold;
+  }
+  .markdown-code {
+    @apply rounded-control bg-surface-alt px-1 py-0.5 font-mono text-xs;
+  }
+}

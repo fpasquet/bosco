@@ -34,3 +34,12 @@ Feature: Profiles at first launch
     And the response should match snapshot except for "session.sourceId"
     When I send GET request to "/api/sessions/unknown"
     Then the response code should be 404
+
+  @CA-SESS-73
+  Scenario: The conversation of a session gives its replies and its tools with their results
+    When I send POST request to "/api/sources" with the JSON "fixtures/watch-perso-profile.json"
+    And I send GET request to "/api/sessions/c41e9a07/conversation"
+    Then the response code should be 200
+    And the response should match snapshot
+    When I send GET request to "/api/sessions/unknown/conversation"
+    Then the response code should be 404
