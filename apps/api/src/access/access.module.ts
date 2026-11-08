@@ -1,5 +1,5 @@
 import type { MikroORM } from '@mikro-orm/sqlite';
-import type { IncomingMessage, ServerResponse } from 'node:http';
+import type { Server as HttpServer, IncomingMessage, ServerResponse } from 'node:http';
 import { Inject, Module, type OnApplicationBootstrap, type OnApplicationShutdown } from '@nestjs/common';
 import { HttpAdapterHost } from '@nestjs/core';
 import type { Config } from '../config.ts';
@@ -30,6 +30,12 @@ interface Routing {
           port: config.phone.port,
           // La même application que sur le poste : Fastify route la requête, API et interface comprises
           handle: (request, response) => adapter.httpAdapter.getInstance<Routing>().routing(request, response),
+          // Connexions WebSocket (rechargement à chaud de Next.js sous make dev) : passées au serveur du poste, qui
+          // les traite déjà ; sans elles, la page du téléphone ne s'anime pas en développement
+          upgrade: (request, socket, head) => {
+            const server = adapter.httpAdapter.getHttpServer() as HttpServer;
+            server.emit('upgrade', request, socket, head);
+          },
           authorize: async (token) =>
             token !== null && (await devices.findByTokenHash(cryptoSecrets.hash(token))) !== null,
         });
