@@ -6,6 +6,8 @@
 
 Disposition retenue : proposition A « Tour de contrôle », avec les colonnes d'état de la proposition B en second regroupement. Barre latérale permanente (navigation, dépôts, profils, état des sources). L'écran d'accueil répond d'abord à « qui attend ma réponse ? » par un bandeau en tête. Thème « Atelier clair », densité standard. L'interface est en français et tutoie l'utilisateur.
 
+- **Chargement** : un écran qui attend ses données garde sa forme, avec des blocs animés à la place du contenu (liste, détail et sa colonne, cartes de réglages, formulaire), jamais une page vide ni une roue seule ; les lecteurs d'écran entendent « Chargement ». Le fil d'une session montre aussi ses lignes animées tant que la conversation se lit. Sans mouvement quand le système en demande moins.
+
 ## <a id="42-logo"></a>4.2 Logo
 
 Le logo est le sifflet de bosco, l'appeau avec lequel le maître d'équipage appelle l'équipage : Bosco appelle le développeur quand une session a besoin de lui. Pictogramme blanc sur `primary`, sur une grille de 24 px avec un trait de 2 px. Deux fichiers, dans les specs (`specs/ui/assets/`), à reprendre tels quels :
