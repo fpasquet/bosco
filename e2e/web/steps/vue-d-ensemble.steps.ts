@@ -125,3 +125,10 @@ Then('la carte de la session {texte} montre les actions :', async ({ page }, tit
     .poll(async () => (await actions.allTextContents()).map((text) => text.replace(/^▸\s*/, '')))
     .toEqual(table.raw().map(([action]) => action));
 });
+
+/** Une étape du fil se déplie par sa ligne ; son nom finit par sa durée, qui change d'une exécution à l'autre. */
+When("je déplie l'étape {texte}", async ({ page }, title: string) => {
+  const escaped = title.replaceAll(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
+  const name = new RegExp(`^${escaped}`);
+  await page.getByRole('log').getByRole('button', { name }).click();
+});

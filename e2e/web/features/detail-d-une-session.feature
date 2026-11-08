@@ -24,7 +24,7 @@ Fonctionnalité: Détail d'une session
     Et je ne vois pas le bouton « Copier la reprise »
     Et la page est accessible
     Quand la session « 5e0a91c3 » lance la commande « yarn lint »
-    Alors je vois le texte « Bash · yarn lint »
+    Alors je vois le texte « Lance yarn lint »
 
   @CA-SESS-42
   Scénario: Une session close donne sa commande de reprise, avec le dossier du profil perso
@@ -64,3 +64,14 @@ Fonctionnalité: Détail d'une session
     Alors Claude Code reçoit la décision « allow »
     Et je suis sur la page « / »
     Et je vois le texte « Autorisé · Specs du tableau de bord Bosco »
+
+  @CA-SESS-73
+  Scénario: Le fil montre les réflexions, les commandes et leur sortie, et les réponses en Markdown
+    Étant donné le profil Claude Code « .claude » contient le transcript « session-labo-ia-pdf.jsonl » de la session « 7b2e5d10 »
+    Quand j'ouvre la page « /sessions/7b2e5d10 »
+    Alors je vois le titre « Découpage des PDF »
+    Et je vois le texte « A réfléchi »
+    Et je vois le texte « Vérifie le lint du paquet rag »
+    Quand je déplie l'étape « Lance toute la suite de tests : échec · 2 tests, 1 en échec »
+    Alors je vois le texte « Tests 1 failed | 1 passed (2) »
+    Et la page est accessible
