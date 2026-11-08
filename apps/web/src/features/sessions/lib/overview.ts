@@ -148,10 +148,13 @@ export function indicatorsOf(open: readonly SessionDto[], all: readonly SessionD
   };
 }
 
-/** Dépôts de la barre latérale, dans l'ordre des intertitres, avec leur nombre de sessions ouvertes. */
+/**
+ * Dépôts de la barre latérale, dans l'ordre des intertitres, avec leur nombre de sessions ouvertes ; un dépôt masqué
+ * dans les réglages n'y figure pas (CA-SESS-80).
+ */
 export function repositoriesOf(open: readonly SessionDto[]): { count: number; name: string }[] {
   return groupByRepository(open).flatMap(({ name, sessions }) =>
-    name === null ? [] : [{ name, count: sessions.length }],
+    name === null || sessions[0]?.repository?.hidden ? [] : [{ name, count: sessions.length }],
   );
 }
 

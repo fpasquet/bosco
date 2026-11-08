@@ -21,6 +21,8 @@
 @theme {
   /* Contenu et colonne latérale : grid-cols-content-aside */
   --grid-template-columns-content-aside: minmax(0, 1fr) 300px;
+  /* Contenu et liste latérale large (dépôts trouvés, E4d) : grid-cols-content-wide-aside */
+  --grid-template-columns-content-wide-aside: minmax(0, 1fr) 380px;
   /* Libellé puis champ : grid-cols-label-field */
   --grid-template-columns-label-field: 140px minmax(0, 1fr);
   /* Largeur de lecture : max-w-measure */
