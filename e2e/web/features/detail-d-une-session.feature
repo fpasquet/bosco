@@ -66,12 +66,20 @@ Fonctionnalité: Détail d'une session
     Et je vois le texte « Autorisé · Specs du tableau de bord Bosco »
 
   @CA-SESS-73
-  Scénario: Le fil montre les réflexions, les commandes et leur sortie, et les réponses en Markdown
+  Scénario: Le fil montre les réflexions, les commandes, les sous-agents, le plan et les sources de l'agent
     Étant donné le profil Claude Code « .claude » contient le transcript « session-labo-ia-pdf.jsonl » de la session « 7b2e5d10 »
     Quand j'ouvre la page « /sessions/7b2e5d10 »
     Alors je vois le titre « Découpage des PDF »
     Et je vois le texte « A réfléchi »
-    Et je vois le texte « Vérifie le lint du paquet rag »
+    Quand je déplie l'étape « 2 commandes, 1 mise à jour du plan »
+    Alors je vois le texte « Vérifie le lint du paquet rag »
     Quand je déplie l'étape « Lance toute la suite de tests : échec · 2 tests, 1 en échec »
     Alors je vois le texte « Tests 1 failed | 1 passed (2) »
+    Et je vois le texte « 1 à faire »
+    Quand je déplie l'étape « 2 sources »
+    Alors je vois le lien « pdfplumber tables »
+    Et la page est accessible
+    Quand je déplie l'étape « Sous-agent · Chercher les PDF de test »
+    Alors je vois le texte « Trouve les PDF de démonstration qui contiennent un tableau. »
+    Et je vois le texte « Deux fichiers contiennent un tableau »
     Et la page est accessible

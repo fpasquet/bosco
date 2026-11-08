@@ -1,7 +1,7 @@
 // Une instance de Bosco par processus de test : port, dossier Claude Code et enregistrements propres.
 import { type ChildProcess, spawn } from 'node:child_process';
 import { once } from 'node:events';
-import { cpSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { createServer } from 'node:net';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
@@ -108,6 +108,17 @@ export async function startBosco(recordings: string): Promise<Bosco> {
       mkdirSync(dir, { recursive: true });
       const file = join(dir, `${sessionId}.jsonl`);
       writeFileSync(file, content);
+      // Les sous-agents d'un transcript d'exemple sont à côté de lui : <transcript>/subagents/agent-<id>.{jsonl,meta.json}
+      const subagents = join(source.replace(/\.jsonl$/, ''), 'subagents');
+      if (existsSync(subagents)) {
+        const target = join(dir, sessionId, 'subagents');
+        mkdirSync(target, { recursive: true });
+        for (const name of readdirSync(subagents))
+          writeFileSync(
+            join(target, name),
+            readFileSync(join(subagents, name), 'utf8').replaceAll(SAMPLE_HOME, profilesRoot),
+          );
+      }
       return file;
     },
     writeTranscript(source, sessionId) {
