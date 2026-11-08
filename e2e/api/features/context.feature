@@ -62,3 +62,13 @@ Feature: Context of the agents
     And I send PUT request to "/api/socles/1" with the JSON "fixtures/context/looping-socle.json"
     Then the response code should be 400
     And the response property "message" should equal "Un socle ne peut pas hériter de lui-même, même indirectement."
+
+  @CA-CONT-65
+  Scenario: A socle changed after its creation reaches the repositories it now covers
+    When I send POST request to "/api/socles" with the JSON "fixtures/context/empty-socle.json"
+    And I send POST request to "/api/decisions" with the JSON "fixtures/context/socle-decision.json"
+    And I send GET request to "/api/context/preview?repository=labo-ia"
+    Then the response property "text" should not contain "Tests avec Vitest"
+    When I send PUT request to "/api/socles/1" with the JSON "fixtures/context/node-socle-labo-ia.json"
+    And I send GET request to "/api/context/preview?repository=labo-ia"
+    Then the response property "text" should contain "Tests avec Vitest"

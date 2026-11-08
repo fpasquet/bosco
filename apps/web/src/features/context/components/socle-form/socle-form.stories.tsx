@@ -23,3 +23,6 @@ type Story = StoryObj<typeof meta>;
 export const NewSocle: Story = {};
 
 export const Loop: Story = { args: { serverError: 'Un socle ne peut pas hériter de lui-même, même indirectement.' } };
+
+/** « Modifier le socle » (E14a) : le même formulaire, prérempli. */
+export const Editing: Story = { args: { initial: STORY_SOCLES[1] } };

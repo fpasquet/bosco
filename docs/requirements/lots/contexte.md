@@ -15,7 +15,7 @@
 - **RF-CONT-09** · **9. Contexte, intégrations et isolation se règlent par toi seul** : aucune session ni aucun agent ne peut les modifier.
 - **RF-CONT-10** · **10. Bosco garde les décisions** : elles s'y créent, s'y modifient et s'y acceptent, avec l'historique de chaque changement (auteur, date, note).
 - **RF-CONT-11** · **11. Une décision acceptée se modifie avec une note, ou se remplace par une nouvelle** : ses versions précédentes restent lisibles, et le changement ne touche que les agents lancés ensuite.
-- **RF-CONT-12** · **12. Le worker utilise l'abonnement Claude du poste** : ses tâches partagent les limites de cet abonnement avec tes sessions. Si la limite est atteinte, la tâche s'arrête et se relance ensuite.
+- **RF-CONT-12** · **12. Le worker utilise l'abonnement Claude du profil choisi** : ses tâches partagent les limites de cet abonnement avec les sessions de ce profil. Si la limite est atteinte, la tâche s'arrête et se relance ensuite.
 
 ## <a id="e9"></a>E9 · Contexte transmis aux agents
 
@@ -161,7 +161,7 @@ Règles de l'écran :
 
 ## <a id="e11"></a>E11 · Isolation du worker
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e11.html` · implémentation : **En cours (Isolation développée, écran compris (E11a, E11b) : un conteneur jetable par tâche, seul sur un réseau privé sans Internet ; sa seule sortie est un proxy propre à la tâche, qui ne laisse passer que les domaines de la liste, relue à chaque connexion. Liste par défaut verrouillée, domaines ajoutés et retirés d'un clic, refus récents avec l'heure, la tâche et le domaine, « Autoriser ce domaine » sans relancer la tâche ; plafond d'agents réglable de 1 à 8 ; lecture seule sur le téléphone, ouvert depuis Sources. Vérifié sur deux vraies tâches : github.com refusé puis autorisé. Écarts : seul l'accès à l'abonnement Claude est transmis (copie temporaire supprimée à la fin) ; le jeton Bosco de la tâche, le jeton npm temporaire et les registres privés ne sont pas encore développés ; le compte de l'abonnement du profil choisi n'est pas encore affiché ; une session du poste peut lire ces réglages, comme tout ce que Bosco sert sur le poste.)**
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e11.html` · implémentation : **Livré (Isolation développée, écran compris (E11a, E11b) : un conteneur jetable par tâche, seul sur un réseau privé sans Internet ; sa seule sortie est un proxy propre à la tâche, qui ne laisse passer que les domaines de la liste, relue à chaque connexion. Liste par défaut verrouillée, domaines ajoutés et retirés d'un clic, refus récents avec l'heure, la tâche et le domaine, « Autoriser ce domaine » sans relancer la tâche ; plafond d'agents réglable de 1 à 8 ; lecture seule sur le téléphone, ouvert depuis Sources. Vérifié sur deux vraies tâches : github.com refusé puis autorisé. Secrets (E11b) : l'abonnement Claude se choisit parmi les profils qui ont un accès, avec leur compte ; le .npmrc du poste (~/.npmrc par défaut, chemin réglable) est copié en lecture seule pour chaque tâche, et les domaines de ses registres sont autorisés d'office ; ses jetons ne s'affichent jamais. Une session du poste peut lire ces réglages, comme tout ce que Bosco sert sur le poste. Compte GitHub par défaut (E11b) : le compte actif de GitHub CLI, ou un autre compte connecté ; il n'est jamais transmis à l'agent.)**
 
 ### <a id="e11a"></a>E11a · Isolation du worker : mode et ressources
 
@@ -193,8 +193,8 @@ Règles de l'écran :
 2. On ajoute un domaine par nom ; `*.domaine` couvre ses sous-domaines. Les domaines ajoutés se retirent d'un clic. Tout domaine absent de la liste est refusé (règle 7).
 3. Chaque refus est visible avec l'heure, la tâche et le domaine. « Autoriser ce domaine » l'ajoute à la liste sans relancer la tâche : l'agent peut réessayer.
 4. Le filtrage se fait par nom de domaine : un domaine autorisé reste une sortie possible pour un agent qui voudrait y envoyer des données. L'avertissement reste affiché.
-5. Les jetons sont créés pour la tâche et expirent ou sont révoqués à sa fin. Les accès des intégrations et les réglages du poste ne sont jamais transmis (règle 5). Le worker utilise l'abonnement Claude du profil choisi, avec une copie temporaire de son accès (règle 12) : ses tâches comptent dans les limites de cet abonnement.
-6. Les registres privés sont ceux que les tâches utilisent pour installer les paquets et les images du dépôt. Bosco s'authentifie avec les identifiants du registre sur le poste : l'agent ne voit qu'un jeton temporaire, jamais ces identifiants.
+5. Chaque tâche reçoit une copie de l'accès à l'abonnement Claude du profil choisi, et une copie du fichier .npmrc choisi s'il existe, toutes deux supprimées à sa fin. « Modifier » choisit le profil parmi ceux qui ont un accès, avec leur compte, le compte GitHub parmi ceux connectés à GitHub CLI sur le poste, ou le chemin du .npmrc (`~/.npmrc` par défaut) ; le choix vaut pour les tâches suivantes. L'abonnement et le compte GitHub sont ceux par défaut : un dépôt peut choisir les siens dans ses droits ([E8a](taches.md#e8a)). Le compte GitHub sert à Bosco, sur le poste, pour pousser la branche et ouvrir la PR ; il n'est jamais transmis à l'agent. Les accès des intégrations et les réglages du poste ne sont jamais transmis (règle 5). Les tâches comptent dans les limites de l'abonnement choisi (règle 12).
+6. Les registres privés sont ceux du .npmrc choisi, par scope (`@interne`) : leurs domaines sont autorisés d'office pour que les installations passent. Leurs jetons ne s'affichent jamais ; l'agent les lit dans sa copie du fichier, d'où l'intérêt d'un jeton en lecture seule et de courte durée.
 
 **Mobile** : écran poussé en lecture seule, refus récents en tête. Autoriser un domaine se fait depuis le poste.
 
@@ -222,21 +222,21 @@ Règles de l'écran :
 
 ## <a id="e14"></a>E14 · Socles
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e14.html` · implémentation : **En cours (Socles développés (E14a, E14b) : socle global ou partagé, héritage d'un autre socle sans boucle, dépôts cochés ; liste des socles avec leurs décisions, leurs dépôts et les exceptions locales ; les socles s'empilent dans le contexte d'un dépôt. Écart : un socle existant ne se modifie pas encore depuis l'écran (dépôts, portée), et la confirmation du nombre de dépôts concernés n'est pas développée.)**
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e14.html` · implémentation : **Livré (Socles développés (E14a, E14b) : socle global ou partagé, héritage d'un autre socle sans boucle, dépôts cochés ; liste des socles avec leurs décisions, leurs dépôts et les exceptions locales ; les socles s'empilent dans le contexte d'un dépôt. Modifier un socle (E14c) : le formulaire du nouveau socle prérempli, puis une confirmation qui compte les dépôts concernés, socles héritiers compris ; la même confirmation précède une décision du socle acceptée ou changée. Le formulaire s'ouvre en page, et non en panneau latéral.)**
 
 ### <a id="e14a"></a>E14a · Socles : liste et héritages
 
 Les socles regroupent des décisions communes à plusieurs dépôts. Cet écran montre pour chacun ses décisions, les dépôts qui en héritent et les exceptions locales.
 
 - **Depuis** [E9a](#e9a) avec « Gérer les socles »
-- **Ensuite** [E14b](#e14b) avec « Nouveau socle » · [E9c](#e9c) avec « Nouvelle décision »
+- **Ensuite** [E14b](#e14b) avec « Nouveau socle » · [E14c](#e14c) avec « Modifier le socle » · [E9c](#e9c) avec « Nouvelle décision »
 
 Règles de l'écran :
 
 1. Un socle est global (il s'applique à tous les dépôts, ici les 15) ou partagé (seulement à ceux qui l'héritent). Les socles s'empilent dans le contexte d'un dépôt (règle 3).
 2. Les dépôts qui héritent du socle sont listés ; le renvoi « + 9 autres » déplie la liste complète. Un socle peut aussi hériter d'un autre socle.
 3. Les exceptions sont listées avec le dépôt concerné : api-voix garde Jest (DEC-5) au lieu de « Tests avec Vitest », qui est écartée pour lui seul.
-4. Changer un socle (décision, dépôts) touche les prochains agents de tous ces dépôts : une confirmation indique le nombre de dépôts concernés avant d'enregistrer. Les agents déjà lancés ne sont pas touchés.
+4. Changer un socle (décision, dépôts) touche les prochains agents de tous ces dépôts : « Modifier le socle » ouvre le formulaire prérempli ([E14c](#e14c)), et une confirmation indique le nombre de dépôts concernés avant d'enregistrer. Les agents déjà lancés ne sont pas touchés.
 5. Les socles se règlent par toi seul : aucune session ni aucun agent ne peut les modifier (règle 9). Sur mobile, l'écran se lit seulement.
 
 **Mobile** : écran poussé depuis Contexte, en lecture seule. Chaque socle est une carte ; pas de bouton de création ni de gestion des dépôts.
@@ -256,6 +256,21 @@ Règles de l'écran :
 4. Créer un socle demande un clavier et un regard d'ensemble : le mobile renvoie vers le poste (règle 9).
 
 **Mobile** : écran poussé qui renvoie vers le poste, comme pour une nouvelle décision ([E9c](#e9c)).
+
+### <a id="e14c"></a>E14c · Modifier un socle
+
+Le formulaire du nouveau socle, prérempli : changer le nom, la portée, l'héritage ou les dépôts. Avant d'enregistrer, une confirmation dit combien de dépôts le changement touche.
+
+- **Depuis** [E14a](#e14a) avec « Modifier le socle »
+- **Ensuite** [E14a](#e14a) après « Enregistrer »
+
+Règles de l'écran :
+
+1. Le formulaire est celui du nouveau socle ([E14b](#e14b)), prérempli : nom, portée, socle dont il hérite et dépôts. Un socle n'hérite jamais de lui-même ; une boucle plus longue est refusée avec le même message.
+2. Avant d'enregistrer, la confirmation compte les dépôts touchés : ceux du socle avant et après le changement, et ceux des socles qui en héritent. La même confirmation précède une décision du socle écrite, acceptée d'emblée ou changée ([E9c](#e9c), [E9e](#e9e)). Les agents déjà lancés ne sont pas touchés (règle 11).
+3. Comme sa création, la modification d'un socle se fait depuis le poste (règle 9).
+
+**Mobile** : écran poussé qui renvoie vers le poste, comme pour un nouveau socle ([E14b](#e14b)).
 
 ## <a id="criteres-dacceptation"></a>Critères d'acceptation
 
@@ -334,8 +349,11 @@ Règles de l'écran :
 - **CA-CONT-44** · [E11b](#e11b) · Étant donné un domaine ajouté par nom, ou par `*.domaine` pour ses sous-domaines, quand la personne le retire d'un clic, alors il disparaît de la liste, et tout domaine absent de la liste est refusé (RF-CONT-07).
 - **CA-CONT-45** · [E11b](#e11b) · Étant donné un accès refusé, quand la personne consulte les refus, alors chaque refus est visible avec l'heure, la tâche et le domaine, et « Autoriser ce domaine » l'ajoute à la liste sans relancer la tâche (RF-CONT-07).
 - **CA-CONT-46** · [E11b](#e11b) · Étant donné le filtrage par nom de domaine, quand la personne ouvre l'écran, alors l'avertissement reste affiché : un domaine autorisé reste une sortie possible pour un agent qui voudrait y envoyer des données (RF-CONT-07).
-- **CA-CONT-47** · [E11b](#e11b) · Étant donné une tâche terminée, quand la personne consulte les jetons, alors ils ont été créés pour la tâche et ont expiré ou ont été révoqués à sa fin, et les accès des intégrations et les réglages du poste ne sont jamais transmis (RF-CONT-05).
+- **CA-CONT-47** · [E11b](#e11b) · Étant donné une tâche terminée, quand la personne consulte son dossier temporaire, alors les copies de l'accès Claude et du .npmrc ont été supprimées avec lui, et les accès des intégrations et les réglages du poste n'ont jamais été transmis (RF-CONT-05).
 - **CA-CONT-48** · [E11b](#e11b) · Étant donné une tâche du worker, quand elle tourne, alors elle compte dans les limites de l'abonnement Claude du profil choisi (RF-CONT-12).
+- **CA-CONT-67** · [E11b](#e11b) · Étant donné plusieurs profils surveillés, quand la personne clique sur « Modifier » à côté de l'abonnement Claude, alors seuls les profils qui ont un accès sont proposés, chacun avec son compte ; le profil choisi s'affiche avec son compte et vaut pour les tâches suivantes (RF-CONT-12).
+- **CA-CONT-68** · [E11b](#e11b) · Étant donné un .npmrc au chemin choisi (`~/.npmrc` par défaut), quand une tâche démarre, alors elle en reçoit une copie en lecture seule, les domaines de ses registres sont autorisés d'office et listés par scope, et ses jetons ne s'affichent jamais ; un chemin relatif est refusé (RF-CONT-05).
+- **CA-CONT-69** · [E11b](#e11b) · Étant donné plusieurs comptes connectés à GitHub CLI sur le poste, quand la personne regarde le compte GitHub par défaut, alors c'est le compte actif de GitHub CLI tant qu'elle n'en choisit pas un autre parmi les comptes connectés ; ce compte sert à Bosco sur le poste et n'est jamais transmis à l'agent (RF-CONT-05).
 
 ### <a id="e12a-environnement-de-test-dun-depot"></a>E12a · Environnement de test d'un dépôt
 
@@ -361,3 +379,8 @@ Règles de l'écran :
 - **CA-CONT-62** · [E14b](#e14b) · Étant donné un héritage en boucle, quand la personne clique sur « Créer le socle », alors le message « Un socle ne peut pas hériter de lui-même, même indirectement. » s'affiche, le champ passe en erreur et « Créer le socle » reste sans effet (RF-CONT-03).
 - **CA-CONT-63** · [E14b](#e14b) · Étant donné un socle vide, quand les dépôts cochés sont lancés, alors ils n'en reçoivent rien de plus tant qu'il n'a pas de décision acceptée (RF-CONT-01, RF-CONT-03).
 - **CA-CONT-64** · [E14b](#e14b) · Étant donné un mobile, quand la personne ouvre l'écran, alors il renvoie vers le poste (RF-CONT-09).
+
+### <a id="e14c-modifier-un-socle"></a>E14c · Modifier un socle
+
+- **CA-CONT-65** · [E14c](#e14c) · Étant donné un socle existant, quand la personne clique sur « Modifier le socle », alors le formulaire du nouveau socle s'ouvre prérempli (nom, portée, héritage, dépôts) ; une fois enregistré, les prochains agents des dépôts qu'il couvre désormais reçoivent ses décisions (RF-CONT-03).
+- **CA-CONT-66** · [E14c](#e14c) · Étant donné une décision d'un socle écrite et acceptée d'emblée, ou changée par une nouvelle version, quand la personne enregistre, alors la même confirmation compte les dépôts concernés, socles qui en héritent compris ; une décision seulement proposée s'enregistre sans confirmation (RF-CONT-03, RF-CONT-11).

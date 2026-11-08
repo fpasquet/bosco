@@ -17,6 +17,8 @@ type SocleValues = z.infer<typeof socleSchema>;
 
 export interface SocleFormProps {
   busy: boolean;
+  /** Socle modifié (E14a, « Modifier le socle ») ; rien pour un nouveau socle (E14b) */
+  initial?: null | SocleDto;
   onCancel: () => void;
   onSubmit: (socle: {
     inherits: null | number;
@@ -30,12 +32,32 @@ export interface SocleFormProps {
   socles: SocleDto[];
 }
 
-/** Nouveau socle (E14b) : un nom, une portée, un socle dont il hérite, et ses dépôts s'il est partagé. */
-export function SocleForm({ busy, onCancel, onSubmit, repositories, serverError, socles }: SocleFormProps) {
+/**
+ * Nouveau socle (E14b) : un nom, une portée, un socle dont il hérite, et ses dépôts s'il est partagé. Le même
+ * formulaire modifie un socle existant, prérempli.
+ */
+export function SocleForm({
+  busy,
+  initial = null,
+  onCancel,
+  onSubmit,
+  repositories,
+  serverError,
+  socles,
+}: SocleFormProps) {
   const { control, formState, handleSubmit, register, setError } = useForm<SocleValues>({
     resolver: zodResolver(socleSchema),
-    defaultValues: { name: '', scope: 'shared', inherits: '', repositories: [] },
+    defaultValues: initial
+      ? {
+          name: initial.name,
+          scope: initial.scope,
+          inherits: initial.inherits === null ? '' : String(initial.inherits),
+          repositories: initial.repositories,
+        }
+      : { name: '', scope: 'shared', inherits: '', repositories: [] },
   });
+  // Un socle n'hérite pas de lui-même ; une boucle plus longue est refusée par Bosco (CA-CONT-62)
+  const parents = socles.filter(({ id }) => id !== initial?.id);
   const scope = useWatch({ control, name: 'scope' });
   const chosen = useWatch({ control, name: 'repositories' });
   useEffect(() => {
@@ -92,7 +114,7 @@ export function SocleForm({ busy, onCancel, onSubmit, repositories, serverError,
           {...register('inherits')}
         >
           <option value="">Aucun socle</option>
-          {socles.map((socle) => (
+          {parents.map((socle) => (
             <option key={socle.id} value={socle.id}>
               {socle.name}
             </option>
@@ -120,15 +142,17 @@ export function SocleForm({ busy, onCancel, onSubmit, repositories, serverError,
           </p>
         </fieldset>
       )}
-      <p className="text-xs text-muted">
-        Un socle sans décision n’a aucun effet : ajoute-en ensuite depuis la liste des socles.
-      </p>
+      {!initial && (
+        <p className="text-xs text-muted">
+          Un socle sans décision n’a aucun effet : ajoute-en ensuite depuis la liste des socles.
+        </p>
+      )}
       <div className="flex gap-2">
         <Button type="button" variant="ghost" onClick={onCancel}>
           Annuler
         </Button>
         <Button type="submit" disabled={busy}>
-          Créer le socle
+          {initial ? 'Enregistrer' : 'Créer le socle'}
         </Button>
       </div>
     </form>

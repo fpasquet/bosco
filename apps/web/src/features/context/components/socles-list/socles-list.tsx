@@ -1,7 +1,9 @@
 'use client';
+import { Pencil, Plus } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 import type { SocleDto } from '@bosco/domain';
+import { Button } from '@/shared/ui/button';
 import { titleOf } from '../../lib/decisions';
 
 const SHOWN = 3;
@@ -89,9 +91,20 @@ export function SoclesList({ socles }: { socles: SocleDto[] }) {
                 ))}
               </ul>
             )}
-            <Link href={`/context/decisions/new?socle=${socle.id}`} className="hidden link text-xs md:inline">
-              Nouvelle décision du socle
-            </Link>
+            <div className="hidden flex-wrap gap-2 md:flex">
+              <Button asChild variant="outline" size="sm">
+                <Link href={`/context/socles/${socle.id}/edit`}>
+                  <Pencil aria-hidden className="size-4" />
+                  Modifier le socle<span className="sr-only"> {socle.name}</span>
+                </Link>
+              </Button>
+              <Button asChild variant="ghost" size="sm" className="text-muted">
+                <Link href={`/context/decisions/new?socle=${socle.id}`}>
+                  <Plus aria-hidden className="size-4" />
+                  Nouvelle décision<span className="sr-only"> du socle {socle.name}</span>
+                </Link>
+              </Button>
+            </div>
           </section>
         );
       })}
