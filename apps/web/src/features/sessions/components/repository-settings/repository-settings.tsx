@@ -136,11 +136,15 @@ export function RepositorySettings({ busy, data, error, now, onChange }: Reposit
         aria-labelledby="found-title"
         className="min-w-0 self-start rounded-card border border-line bg-surface shadow-card"
       >
-        <div className="flex items-center gap-2 px-4 py-2.5">
-          <h2 id="found-title" className="text-xs font-semibold text-muted">
-            Dépôts trouvés
-          </h2>
-          <span className="badge badge-ghost font-mono badge-sm">{repositories.length}</span>
+        <div className="px-4 py-2.5">
+          <div className="flex items-center gap-2">
+            <h2 id="found-title" className="text-xs font-semibold text-muted">
+              Dépôts trouvés
+            </h2>
+            <span className="badge badge-ghost font-mono badge-sm">{repositories.length}</span>
+          </div>
+          {/* Un dépôt naît d'une session : Bosco ne parcourt pas le disque */}
+          <p className="mt-0.5 text-xs text-muted">Ceux où une session Claude Code a tourné.</p>
         </div>
         <ul aria-labelledby="found-title" className="divide-y divide-line border-t border-line">
           {repositories.map(({ hidden, lastActivityAt, name, root }) => (
