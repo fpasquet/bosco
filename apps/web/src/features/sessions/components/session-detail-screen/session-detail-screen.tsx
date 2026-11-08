@@ -9,10 +9,12 @@ import { useCopy } from '../../hooks/use-copy';
 import { useLiveEvents } from '../../hooks/use-live-events';
 import { useNow } from '../../hooks/use-now';
 import { usePermissionAnswers } from '../../hooks/use-permission-answers';
+import { useOffline } from '../../lib/connection';
 import { profileOf, resumeCommand } from '../../lib/detail';
 import { profileMark, waitingSessions } from '../../lib/overview';
 import { useSettlements } from '../../lib/settlements';
 import { AllowDialog } from '../allow-dialog';
+import { ConnectionStatus } from '../connection-status';
 import { Notices } from '../notices';
 import { PermissionCard } from '../permission-card';
 import { SessionFeed } from '../session-feed';
@@ -39,6 +41,7 @@ export function SessionDetailScreen({ id }: { id: string }) {
   const { data: sessions } = useQuery(sessionsQuery);
   const { data, isError } = useQuery(sessionDetailQuery(id));
   const settlement = useSettlements((state) => state.settlements[id] ?? null);
+  const offline = useOffline();
   const answers = usePermissionAnswers({
     onAnswered: (answered) => {
       if (waitingSessions(sessions ?? []).some((session) => session.id !== answered.id)) router.push('/');
@@ -59,6 +62,7 @@ export function SessionDetailScreen({ id }: { id: string }) {
   const resume = resumeCommand(session, sources.sources, sources.home);
   return (
     <div className="flex min-h-full flex-col gap-4 p-4 md:h-full md:px-8 md:pt-6">
+      <ConnectionStatus />
       <SessionHeader
         session={session}
         now={now}
@@ -79,7 +83,7 @@ export function SessionDetailScreen({ id }: { id: string }) {
                 now={now}
                 agentSays={agentSays(journal, session)}
                 settlement={settlement}
-                busy={answers.busyId === session.id}
+                busy={answers.busyId === session.id || offline}
                 onAllow={() => answers.onAllow(session)}
                 onDeny={(reason) => answers.deny(session, reason)}
               />

@@ -2,6 +2,7 @@ import { Check, Eye, Hand, SquareTerminal, X } from 'lucide-react';
 import Link from 'next/link';
 import type { SessionDto } from '@bosco/domain';
 import { Button } from '@/shared/ui/button';
+import { clockOf } from '../../lib/detail';
 import { elapsed } from '../../lib/format';
 import { titleOf } from '../sessions-table';
 import { WaitingSummary } from '../waiting-summary';
@@ -9,6 +10,8 @@ import { WaitingSummary } from '../waiting-summary';
 export interface WaitingActionsProps {
   /** Session dont la réponse part : ses boutons attendent */
   busyId: null | string;
+  /** Bosco injoignable : une réponse n'arriverait pas à l'agent, elle se donne dans le terminal (CA-SESS-24) */
+  offline?: boolean;
   onAllow: (session: SessionDto) => void;
 }
 
@@ -18,7 +21,12 @@ export const detailOf = (session: SessionDto) => `/sessions/${encodeURIComponent
  * « Autoriser » et « Refuser » pour une autorisation ; « Refuser » ouvre le détail pour écrire un motif (E2b). Un tour
  * terminé se répond dans le terminal : seulement « Voir la session » (RF-SESS-03, RF-SESS-04).
  */
-export function WaitingActions({ busyId, onAllow, session }: WaitingActionsProps & { session: SessionDto }) {
+export function WaitingActions({
+  busyId,
+  offline = false,
+  onAllow,
+  session,
+}: WaitingActionsProps & { session: SessionDto }) {
   if (session.waiting?.kind !== 'permission') {
     return (
       <Button variant="outline" size="sm" asChild>
@@ -29,15 +37,22 @@ export function WaitingActions({ busyId, onAllow, session }: WaitingActionsProps
       </Button>
     );
   }
-  const busy = busyId === session.id;
+  const busy = busyId === session.id || offline;
   return (
     <div className="flex gap-2">
-      <Button variant="outline" size="sm" className="max-md:btn-md" asChild>
-        <Link href={detailOf(session)}>
+      {offline ? (
+        <Button variant="outline" size="sm" className="max-md:btn-md" disabled>
           <X aria-hidden className="size-3.5" />
           Refuser
-        </Link>
-      </Button>
+        </Button>
+      ) : (
+        <Button variant="outline" size="sm" className="max-md:btn-md" asChild>
+          <Link href={detailOf(session)}>
+            <X aria-hidden className="size-3.5" />
+            Refuser
+          </Link>
+        </Button>
+      )}
       <Button variant="primary" size="sm" className="max-md:btn-md" disabled={busy} onClick={() => onAllow(session)}>
         <Check aria-hidden className="size-3.5" />
         Autoriser
@@ -76,7 +91,9 @@ export function WaitingBanner({
           {sessions.length > 1 ? `${sessions.length} sessions attendent ta réponse` : '1 session attend ta réponse'}
         </b>
         {oldest && sessions.length > 1 && (
-          <span className="ml-auto text-xs font-normal">la plus ancienne depuis {elapsed(new Date(oldest), now)}</span>
+          <span className="ml-auto text-xs font-normal">
+            la plus ancienne depuis {actions.offline ? clockOf(oldest) : elapsed(new Date(oldest), now)}
+          </span>
         )}
       </h2>
       <ul className="divide-y divide-line">
@@ -95,7 +112,8 @@ export function WaitingBanner({
               <WaitingSummary session={session} />
             </div>
             <span className="text-xs text-muted tabular-nums md:w-12 md:text-right">
-              {session.waiting && elapsed(new Date(session.waiting.since), now)}
+              {session.waiting &&
+                (actions.offline ? clockOf(session.waiting.since) : elapsed(new Date(session.waiting.since), now))}
             </span>
             <WaitingActions session={session} {...actions} />
           </li>

@@ -10,11 +10,12 @@ const STYLES: Record<SessionStateDto, { badge: string; dot: string }> = {
 };
 
 /** État d'une session : le libellé porte l'état, la couleur ne fait que le souligner (NF-18). */
-export function SessionStateBadge({ state }: { state: SessionStateDto }) {
+/** `still` : les données sont figées (Bosco injoignable), la pastille ne s'anime plus (E1f). */
+export function SessionStateBadge({ state, still = false }: { state: SessionStateDto; still?: boolean }) {
   const { badge, dot } = STYLES[state];
   return (
     <span className={cn('badge gap-1.5 badge-sm whitespace-nowrap', badge)}>
-      <span aria-hidden className={cn('size-1.5 rounded-full', dot)} />
+      <span aria-hidden className={cn('size-1.5 rounded-full', dot, still && 'animate-none')} />
       {STATE_LABELS[state]}
     </span>
   );

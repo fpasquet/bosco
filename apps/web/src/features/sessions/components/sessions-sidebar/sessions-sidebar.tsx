@@ -7,6 +7,8 @@ export interface SessionsSidebarProps {
   repositories: { count: number; name: string }[];
   /** Dépôt filtré (E1c) : son lien porte aria-current */
   selected: null | string;
+  /** L'état des sources se cache quand Bosco est injoignable : il serait périmé (E1f) */
+  showStatus?: boolean;
 }
 
 const ITEM =
@@ -14,7 +16,13 @@ const ITEM =
 const HEADING = 'mt-6 px-2.5 text-xs font-semibold tracking-wider uppercase';
 
 /** Dépôts, profils et état des sources dans la barre latérale ; un clic sur un dépôt filtre la vue d'ensemble. */
-export function SessionsSidebar({ liveTracking, profiles, repositories, selected }: SessionsSidebarProps) {
+export function SessionsSidebar({
+  liveTracking,
+  profiles,
+  repositories,
+  selected,
+  showStatus = true,
+}: SessionsSidebarProps) {
   return (
     <>
       {repositories.length > 0 && (
@@ -51,7 +59,7 @@ export function SessionsSidebar({ liveTracking, profiles, repositories, selected
           </li>
         ))}
       </ul>
-      <div className="mt-auto border-t border-line px-2 pt-3 text-xs/relaxed">
+      <div hidden={!showStatus} className="mt-auto border-t border-line px-2 pt-3 text-xs/relaxed">
         <p className="flex items-center gap-2 font-medium text-nav-ink">
           <span aria-hidden className="size-2 rounded-full bg-success" />
           {profiles.length > 1 ? `${profiles.length} sources surveillées` : '1 source surveillée'}

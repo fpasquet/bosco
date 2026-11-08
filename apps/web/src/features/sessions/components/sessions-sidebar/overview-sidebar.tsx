@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { sessionsQuery } from '../../api/sessions';
 import { sourcesQuery } from '../../api/sources';
 import { useNow } from '../../hooks/use-now';
+import { useOffline } from '../../lib/connection';
 import { displayPath } from '../../lib/format';
 import { openSessions, repositoriesOf } from '../../lib/overview';
 import { SessionsSidebar } from './sessions-sidebar';
@@ -11,12 +12,14 @@ import { SessionsSidebar } from './sessions-sidebar';
 export function OverviewSidebar({ selected }: { selected: null | string }) {
   const now = useNow(30_000);
   const { data: sources } = useQuery(sourcesQuery);
+  const offline = useOffline();
   const { data: sessions } = useQuery({ ...sessionsQuery, enabled: (sources?.sources.length ?? 0) > 0 });
   if (!sources || sources.sources.length === 0) return null;
   const open = openSessions(sessions ?? [], now);
   return (
     <SessionsSidebar
       selected={selected}
+      showStatus={!offline}
       liveTracking={sources.sources.some((source) => source.liveTracking)}
       repositories={repositoriesOf(open)}
       profiles={sources.sources
