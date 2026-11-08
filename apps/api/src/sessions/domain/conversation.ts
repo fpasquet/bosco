@@ -42,6 +42,8 @@ export interface ConversationTurn {
   id: string;
   parts: ConversationPart[];
   role: 'assistant' | 'user';
+  /** Demande écrite dans Bosco et arrivée par le canal de Bosco (E2i) */
+  viaChannel?: boolean;
 }
 
 export interface Conversation {

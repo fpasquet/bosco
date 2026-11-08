@@ -1,6 +1,7 @@
 import type { MikroORM } from '@mikro-orm/sqlite';
 import { Body, Controller, Get, HttpCode, Inject, Post } from '@nestjs/common';
 import type { AccessService } from './access/application/access.service.ts';
+import type { ChannelService } from './sessions/application/channel.service.ts';
 import type { LiveSignalService } from './sessions/application/live-signal.service.ts';
 import type { SessionService } from './sessions/application/session.service.ts';
 import type { SettingsService } from './sessions/application/settings.service.ts';
@@ -11,6 +12,7 @@ import type { IsolationService } from './tasks/application/isolation.service.ts'
 import type { ScriptedAgentRunner } from './tasks/infrastructure/worker/scripted-agent.ts';
 import { ACCESS_SERVICE } from './access/tokens.ts';
 import {
+  CHANNEL_SERVICE,
   LIVE_SIGNAL_SERVICE,
   NOTIFIER,
   PRESENCE,
@@ -35,6 +37,7 @@ export class TestController {
     @Inject(AGENT_RUNNER) private readonly agent: ScriptedAgentRunner,
     @Inject(ISOLATION_SERVICE) private readonly isolation: IsolationService,
     @Inject(SESSION_SERVICE) private readonly sessions: SessionService,
+    @Inject(CHANNEL_SERVICE) private readonly channel: ChannelService,
   ) {}
 
   /** Simule un domaine refusé par le proxy d'une tâche (E11b). */
@@ -65,6 +68,7 @@ export class TestController {
     this.agent.unavailable = null;
     await this.agent.forget();
     this.liveSignals.forget();
+    this.channel.forget();
     this.notifier.sent.splice(0);
     this.presence.report(false);
     await this.orm.schema.clear();

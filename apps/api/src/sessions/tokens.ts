@@ -14,3 +14,5 @@ export const NOTIFICATION_SERVICE = Symbol('NotificationService');
 export const PRESENCE = Symbol('Presence');
 export const PILOT_SERVICE = Symbol('PilotService');
 export const SUGGESTION_SERVICE = Symbol('SuggestionService');
+export const CHANNEL_SERVICE = Symbol('ChannelService');
+export const CHANNEL_INSTALLER = Symbol('ChannelInstaller');

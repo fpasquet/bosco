@@ -2,6 +2,7 @@
   "sessions": [
     {
       "branch": "feat/specs",
+      "channel": false,
       "cost": {
         "usd": 0.045,
         "unpriced": false

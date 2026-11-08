@@ -1,5 +1,6 @@
 import type { TranscriptEvent } from '../../domain/transcript-event.ts';
 import { describeAction, shorten } from '../../domain/action-summary.ts';
+import { channelMessageOf } from '../../domain/channel.ts';
 import { changeOf } from '../../domain/file-change.ts';
 // Lecture d'une ligne de transcript de Claude Code. Le format est interne et change d'une version à l'autre (DT-05) :
 // on ne garde que quelques faits, et toute ligne inconnue, incomplète ou mal formée est ignorée sans erreur (NF-08).
@@ -18,7 +19,10 @@ export class TranscriptParser {
     const record = parseJson(line);
     if (!record) return [];
     const sessionId = text(record.sessionId);
-    if (!sessionId || record.isSidechain === true || record.isMeta === true) return [];
+    if (!sessionId || record.isSidechain === true) return [];
+    // Un message écrit dans Bosco et arrivé par le canal est une demande de la personne, bien que « méta » (E2i)
+    const viaChannel = channelMessageOf(record);
+    if (record.isMeta === true && !viaChannel) return [];
     const base = {
       at: date(record.timestamp),
       cwd: text(record.cwd),
@@ -33,6 +37,7 @@ export class TranscriptParser {
         return title ? [{ sessionId, event: { ...base, kind: 'title', text: title } }] : [];
       }
       case 'user':
+        if (viaChannel) return [{ sessionId, event: { ...base, kind: 'prompt', text: shorten(viaChannel) } }];
         return this.userEvents(sessionId, base, record.message);
       case 'assistant':
         return this.assistantEvents(sessionId, base, record.message);

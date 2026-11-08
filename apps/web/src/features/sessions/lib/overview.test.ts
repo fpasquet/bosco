@@ -25,6 +25,7 @@ function session(id: string, overrides: Partial<SessionDto> = {}): SessionDto {
     lastEventAt: new Date('2026-11-06T14:59:00').toISOString(),
     lastMessage: null,
     model: 'claude-sonnet-5-5',
+    channel: false,
     openInTerminal: false,
     pilot: null,
     recentActions: [],

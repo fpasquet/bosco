@@ -73,15 +73,18 @@ export interface SessionView {
   openInTerminal: boolean;
   /** Session pilotée par Bosco (E2e) ; null sinon */
   pilot: null | PilotView;
+  /** Session du terminal lancée avec le canal de Bosco, ouvert : Bosco peut lui écrire (E2i) */
+  channel: boolean;
 }
 
 /** Sessions pilotées par Bosco, telles que la vue d'une session les montre. */
 export interface PilotsView {
+  channelOpen(sessionId: string): boolean;
   openInTerminal(sourceId: string, sessionId: string): boolean;
   pilotOf(sessionId: string): null | PilotView;
 }
 
-const NO_PILOTS: PilotsView = { openInTerminal: () => false, pilotOf: () => null };
+const NO_PILOTS: PilotsView = { channelOpen: () => false, openInTerminal: () => false, pilotOf: () => null };
 
 /** Détail d'une session (E2) : sa vue et son journal, du plus ancien au plus récent. */
 export interface SessionDetail {
@@ -254,6 +257,7 @@ export class SessionService {
     const { usage } = snapshot;
     return {
       branch,
+      channel: this.pilots.channelOpen(snapshot.id),
       cost: { usd: costMicros / 1_000_000, unpriced: snapshot.unpricedTokens > 0 },
       id,
       lastAction,

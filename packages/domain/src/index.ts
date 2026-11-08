@@ -1,6 +1,7 @@
 export { APP_NAME } from './app-name.ts';
 export type {
   AgentQuestionDto,
+  ChannelProfileDto,
   ConversationPartDto,
   ConversationStepDto,
   ConversationTurnDto,

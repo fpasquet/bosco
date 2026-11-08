@@ -111,7 +111,7 @@ export class PilotController {
 
   /** Un message à une session : il lance un tour, ou attend la fin du tour en cours (CA-SESS-92, CA-SESS-93). */
   @Post('sessions/:id/messages')
-  async send(@Param('id') id: string, @Body() body: unknown): Promise<{ status: 'queued' | 'sent' }> {
+  async send(@Param('id') id: string, @Body() body: unknown): Promise<{ status: 'channel' | 'queued' | 'sent' }> {
     const input = parseBody(messageSchema, body);
     try {
       const status = await this.pilot.send(id, pilotMessage(input));

@@ -3,6 +3,7 @@ import type { ConversationPart, ConversationStep, ConversationTurn } from '../..
 // version à l'autre (DT-05) : on ne garde que les demandes, les réflexions, les outils et les réponses, et toute ligne
 // inconnue, incomplète ou mal formée est ignorée sans erreur (NF-08).
 import { describeAction } from '../../domain/action-summary.ts';
+import { channelMessageOf } from '../../domain/channel.ts';
 import { type Conversation, lastParts } from '../../domain/conversation.ts';
 
 /** Texte d'une entrée d'outil au-delà duquel il est coupé (le contenu d'un Write, l'ancien texte d'un Edit). */
@@ -41,12 +42,15 @@ export class ConversationBuilder {
 
   add(line: string): void {
     const record = parseJson(line);
-    if (!record || record.isMeta === true || record.isCompactSummary === true) return;
+    if (!record || record.isCompactSummary === true) return;
+    const viaChannel = channelMessageOf(record);
+    if (record.isMeta === true && !viaChannel) return;
     if ((record.isSidechain === true) !== this.sidechain) return;
     const at = date(record.timestamp);
     if (!at) return;
     const message = isRecord(record.message) ? record.message : null;
-    if (record.type === 'user' && message) this.user(message.content, at);
+    if (viaChannel) this.prompt(viaChannel, at, true);
+    else if (record.type === 'user' && message) this.user(message.content, at);
     else if (record.type === 'assistant' && message) {
       if (typeof message.model === 'string' && !message.model.startsWith('<')) this.lastModel = message.model;
       this.assistant(message.content, at);
@@ -75,10 +79,11 @@ export class ConversationBuilder {
     if (texts.length) this.prompt(texts.join('\n'), at);
   }
 
-  private prompt(raw: string, at: Date): void {
+  private prompt(raw: string, at: Date, viaChannel = false): void {
     const text = promptText(raw);
     if (!text) return;
-    this.turns.push({ at, id: this.nextId('u'), parts: [{ at, kind: 'text', text }], role: 'user' });
+    const turn = { at, id: this.nextId('u'), parts: [{ at, kind: 'text' as const, text }], role: 'user' as const };
+    this.turns.push(viaChannel ? { ...turn, viaChannel } : turn);
   }
 
   private assistant(content: unknown, at: Date): void {
