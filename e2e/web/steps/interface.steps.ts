@@ -31,6 +31,10 @@ Then('je suis sur la page {texte}', async ({ page }, path: string) => {
   await expect(page).toHaveURL((url) => url.pathname === path);
 });
 
+Then('je vois le bouton {texte}', async ({ page }, name: string) => {
+  await expect(page.getByRole('button', { name })).toBeVisible();
+});
+
 Then('je ne vois pas le bouton {texte}', async ({ page }, name: string) => {
   await expect(page.getByRole('button', { name })).toHaveCount(0);
 });

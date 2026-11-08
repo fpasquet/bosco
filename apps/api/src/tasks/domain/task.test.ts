@@ -82,4 +82,29 @@ describe('TaskBoard', () => {
     expect(() => board.checkPrerequisites([99])).toThrow(/No task/);
     expect(() => board.checkPrerequisites([2], 3)).toThrow(/waits for it/);
   });
+
+  it('undoes a cancellation in the seconds that follow, back to its queue (CA-TACH-71)', () => {
+    const queued = task(4);
+    queued.settle(true, at);
+    queued.cancel(at);
+    queued.undoCancel(new Date(at.getTime() + 5000));
+    new TaskBoard([queued]).settleAll(at);
+    expect([queued.state, queued.toSnapshot().failure, queued.toSnapshot().log.at(-2)?.event]).toEqual([
+      'queued',
+      null,
+      'Annulation annulée',
+    ]);
+  });
+
+  it('keeps a cancellation once the delay has passed, or once the agent had started', () => {
+    const late = task(5);
+    late.cancel(at);
+    expect(() => late.undoCancel(new Date(at.getTime() + 16_000))).toThrow(TaskError);
+    const started = task(6);
+    started.settle(true, at);
+    started.start(at);
+    started.cancel(at);
+    expect(() => started.undoCancel(at)).toThrow(/had started/);
+    expect(() => task(7).undoCancel(at)).toThrow(/not just cancelled/);
+  });
 });

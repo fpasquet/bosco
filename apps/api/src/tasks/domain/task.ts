@@ -80,6 +80,9 @@ export class TaskError extends DomainError {}
 /** États d'une tâche qui n'a pas démarré : elle se modifie encore (RF-TACH-08). */
 export const NOT_STARTED: readonly TaskState[] = ['awaiting_session', 'blocked', 'queued'];
 
+/** Délai pendant lequel une annulation directe se défait (« Annuler l'annulation », CA-TACH-71). */
+export const UNDO_CANCEL_MS = 15_000;
+
 /** États finaux : rien ne bouge plus, sauf la relance d'un échec ou d'un rejet. */
 export const FINISHED: readonly TaskState[] = ['cancelled', 'failed', 'rejected', 'validated'];
 
@@ -224,6 +227,24 @@ export class Task {
       throw new TaskError('taskFinished', `Task T-${this.id} is already finished`);
     this.snapshot = { ...this.snapshot, failure: 'Annulée' };
     this.move('cancelled', at, 'Annulée');
+  }
+
+  /**
+   * Annulation défaite dans les secondes qui suivent (CA-TACH-71) : seulement pour une tâche qui n'avait pas démarré
+   * depuis sa création ou sa dernière relance, car un agent arrêté ne reprend pas. Elle repasse Bloquée, puis part ou
+   * attend selon ses préalables.
+   */
+  undoCancel(at: Date): void {
+    const last = this.snapshot.log.at(-1);
+    if (this.snapshot.state !== 'cancelled' || last?.event !== 'Annulée')
+      throw new TaskError('cancelNotUndoable', `Task T-${this.id} was not just cancelled`);
+    if (at.getTime() - last.at.getTime() > UNDO_CANCEL_MS)
+      throw new TaskError('cancelNotUndoable', `The cancellation of T-${this.id} can no longer be undone`);
+    const relaunched = this.snapshot.log.findLastIndex((entry) => entry.event === 'Relancée');
+    if (this.snapshot.log.slice(relaunched + 1).some((entry) => entry.event === 'Démarrée'))
+      throw new TaskError('cancelNotUndoable', `Task T-${this.id} had started: relaunch it instead`);
+    this.snapshot = { ...this.snapshot, failure: null };
+    this.move('blocked', at, 'Annulation annulée');
   }
 
   validate(at: Date): void {
