@@ -6,6 +6,7 @@ import {
   type Guardrails,
   NOT_STARTED,
   Task,
+  TaskError,
   type TaskMode,
   type TaskOutcome,
   type TaskSnapshot,
@@ -155,6 +156,17 @@ export class TaskService {
     task.cancel(at);
     const failed = new TaskBoard(tasks).cascade(id, 'annulée', at);
     return this.commit(tasks, [task, ...failed], id);
+  }
+
+  /** « Annuler l'annulation » d'une annulation directe, que personne n'attendait (CA-TACH-71). */
+  async undoCancel(id: number): Promise<TaskView> {
+    const tasks = await this.tasks.list();
+    const task = this.find(tasks, id);
+    const cascaded = tasks.some((other) => other.toSnapshot().failure === `Préalable T-${id} annulée`);
+    if (cascaded)
+      throw new TaskError('cancelNotUndoable', `The cancellation of T-${id} made other tasks fail: relaunch them`);
+    task.undoCancel(this.clock.now());
+    return this.commit(tasks, [task], id);
   }
 
   /** Relance d'un échec : la tâche repasse en file avec le même numéro, et celles qui l'attendaient avec elle (E13b). */

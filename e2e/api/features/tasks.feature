@@ -47,3 +47,16 @@ Feature: Tasks
     When I send GET request to "/api/tasks/2"
     Then the response property "state" should equal "failed"
     And the response property "failure" should equal "Préalable T-1 annulée"
+
+  @RF-TACH-07
+  @CA-TACH-71
+  Scenario: A direct cancellation is undone back to the queue, a cascading one is not
+    When I send POST request to "/api/tasks" with the JSON "fixtures/tasks/session-task.json"
+    And I send POST request to "/api/tasks/1/cancel"
+    And I send POST request to "/api/tasks/1/undo-cancel"
+    Then the response code should be 201
+    And the response property "state" should equal "awaiting_session"
+    When I send POST request to "/api/tasks" with the JSON "fixtures/tasks/following-task.json"
+    And I send POST request to "/api/tasks/1/cancel"
+    And I send POST request to "/api/tasks/1/undo-cancel"
+    Then the response code should be 409

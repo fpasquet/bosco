@@ -2,9 +2,10 @@
 import { type QueryClient, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import type { LiveEventDto, SessionDto } from '@bosco/domain';
+import { useNotices } from '@/shared/hooks/use-notices';
 import { importProgressQuery, sessionsQuery } from '../api/sessions';
 import { RETRY_MS, useConnection } from '../lib/connection';
-import { settledNotice, useNotices } from '../lib/notices';
+import { settledNotice } from '../lib/notices';
 import { useSettlements } from '../lib/settlements';
 
 type EventOf<T extends LiveEventDto['type']> = Extract<LiveEventDto, { type: T }>['data'];

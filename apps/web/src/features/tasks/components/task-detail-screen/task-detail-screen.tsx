@@ -1,7 +1,9 @@
 'use client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
+import { Notices } from '@/shared/components/notices';
 import { PageSkeleton } from '@/shared/components/page-skeleton';
+import { useNotices } from '@/shared/hooks/use-notices';
 import { Button } from '@/shared/ui/button';
 import {
   addLink,
@@ -16,6 +18,7 @@ import {
   removeLink,
   retryPullRequest,
   reviewQuery,
+  undoCancelTask,
   validateTask,
 } from '../../api/tasks';
 import { useLiveTasks } from '../../hooks/use-live-tasks';
@@ -24,6 +27,9 @@ import { TaskDetail } from '../task-detail';
 import { TaskLinks } from '../task-links';
 import { TaskReview } from '../task-review';
 import { ValidateDialog } from '../validate-dialog';
+
+/** États d'une tâche qui n'a pas démarré : son annulation se défait encore quelques secondes (CA-TACH-71). */
+const NOT_STARTED = new Set(['awaiting_session', 'blocked', 'queued']);
 
 /** Détail d'une tâche, tenu à jour par le flux des tâches (E13) ; revue quand elle est à relire (E7a, E7b, E7c). */
 export function TaskDetailScreen({ id }: { id: number }) {
@@ -53,7 +59,24 @@ export function TaskDetailScreen({ id }: { id: number }) {
   });
   const remove = useMutation({ mutationFn: (link: number) => removeLink(id, link), onSuccess: linked });
   const [pullRequestError, setPullRequestError] = useState<null | string>(null);
-  const cancel = useMutation({ mutationFn: () => cancelTask(id) });
+  const notify = useNotices((state) => state.push);
+  const undo = useMutation({
+    mutationFn: () => undoCancelTask(id),
+    onSuccess: () => notify(`T-${id} remise en file`, 'success'),
+    onError: () => notify('L’annulation ne peut plus être défaite.', 'warning'),
+  });
+  const cancel = useMutation({
+    // undoable se juge au clic : le flux en direct a déjà changé l'état de la tâche quand la réponse arrive
+    mutationFn: (_undoable: boolean) => cancelTask(id),
+    // Annulation directe d'une tâche qui n'avait pas démarré : elle se défait encore quelques secondes (CA-TACH-67)
+    onSuccess: (_task, undoable) => {
+      notify(
+        `T-${id} annulée`,
+        'info',
+        undoable ? { label: 'Annuler l’annulation', run: () => undo.mutate() } : undefined,
+      );
+    },
+  });
   const relaunch = useMutation({
     mutationFn: (changes: Parameters<typeof relaunchTask>[1]) => relaunchTask(id, changes),
   });
@@ -77,7 +100,13 @@ export function TaskDetailScreen({ id }: { id: number }) {
   if (!tasks) return <PageSkeleton variant="detail" rows={6} />;
   if (!task) return <p className="p-4 md:px-8 md:pt-6">Tâche introuvable.</p>;
   const followers = tasks.filter((other) => other.waitingFor.some((prerequisite) => prerequisite.id === id));
-  const busy = cancel.isPending || relaunch.isPending || validate.isPending || reject.isPending || retry.isPending;
+  const busy =
+    cancel.isPending ||
+    undo.isPending ||
+    relaunch.isPending ||
+    validate.isPending ||
+    reject.isPending ||
+    retry.isPending;
   return (
     <div className="flex flex-col gap-4 p-4 md:px-8 md:pt-6">
       {pullRequestError && (
@@ -110,7 +139,7 @@ export function TaskDetailScreen({ id }: { id: number }) {
           task={task}
           failing={failing ?? []}
           busy={busy}
-          onCancel={() => cancel.mutate()}
+          onCancel={() => cancel.mutate(NOT_STARTED.has(task.state) && (failing ?? []).length === 0)}
           onRelaunch={(changes) => relaunch.mutate(changes)}
         />
       )}
@@ -145,6 +174,7 @@ export function TaskDetailScreen({ id }: { id: number }) {
           onValidate={(pullRequest) => validate.mutate(pullRequest)}
         />
       )}
+      <Notices />
     </div>
   );
 }

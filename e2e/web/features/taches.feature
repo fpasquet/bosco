@@ -49,6 +49,20 @@ Fonctionnalité: Tâches
     Quand j'ouvre la page « /tasks/2 »
     Alors je vois le message « Préalable T-1 annulée »
 
+  @CA-TACH-67
+  @CA-TACH-71
+  @RF-TACH-07
+  Scénario: Une tâche que personne n'attend s'annule d'un clic, et l'annulation se défait aussitôt
+    Étant donné Docker ne répond pas
+    Et une tâche du worker « Ajoute un test du découpage. » existe dans le dépôt « labo-ia »
+    Quand j'ouvre la page « /tasks/1 »
+    Et je clique sur le bouton « Annuler la tâche »
+    Alors je vois le message « T-1 annulée »
+    Et je ne vois pas le bouton « Annuler la tâche »
+    Quand je clique sur le bouton « Annuler l’annulation »
+    Alors je vois le message « T-1 remise en file »
+    Et je vois le bouton « Annuler la tâche »
+
   @CA-TACH-14
   @CA-TACH-17
   @NF-18

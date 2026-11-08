@@ -2,6 +2,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Smartphone } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { useNotices } from '@/shared/hooks/use-notices';
 import { Button } from '@/shared/ui/button';
 import { Skeleton } from '@/shared/ui/skeleton';
 import {
@@ -15,7 +16,6 @@ import {
 import { useCopy } from '../../hooks/use-copy';
 import { useNow } from '../../hooks/use-now';
 import { sinceNow } from '../../lib/format';
-import { useNotices } from '../../lib/notices';
 import { PairingDialog } from '../pairing-dialog';
 
 /** Pendant l'appairage, la liste des téléphones se relit à cet intervalle pour voir arriver le nouveau. */

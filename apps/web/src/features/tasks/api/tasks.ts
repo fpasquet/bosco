@@ -73,6 +73,8 @@ export async function checkWorker(): Promise<WorkerStatusDto> {
 export const createTask = (draft: TaskDraftDto) => send('POST', '/api/tasks', draft);
 export const editTask = (id: number, draft: TaskDraftDto) => send('PUT', `/api/tasks/${id}`, draft);
 export const cancelTask = (id: number) => send('POST', `/api/tasks/${id}/cancel`);
+/** « Annuler l'annulation » dans les secondes qui suivent (CA-TACH-71). */
+export const undoCancelTask = (id: number) => send('POST', `/api/tasks/${id}/undo-cancel`);
 export const relaunchTask = (id: number, changes: { budgetUsd: number; fromBranch: boolean; instruction?: string }) =>
   send('POST', `/api/tasks/${id}/relaunch`, changes);
 

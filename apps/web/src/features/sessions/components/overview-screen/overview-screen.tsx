@@ -2,6 +2,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import type { SessionDto, SourcesDto } from '@bosco/domain';
+import { Notices } from '@/shared/components/notices';
 import { PageSkeleton } from '@/shared/components/page-skeleton';
 import { importProgressQuery, sessionsQuery } from '../../api/sessions';
 import { sourcesQuery } from '../../api/sources';
@@ -27,7 +28,6 @@ import { EndedToday } from '../ended-today';
 import { ImportProgressBanner } from '../import-progress-banner';
 import { LiveTrackingHint } from '../live-tracking-hint';
 import { LiveTrackingLine } from '../live-tracking-line';
-import { Notices } from '../notices';
 import { OverviewHeader } from '../overview-header';
 import { OverviewIndicators } from '../overview-indicators';
 import { ProfileChoice } from '../profile-choice';

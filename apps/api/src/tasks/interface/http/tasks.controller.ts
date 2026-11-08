@@ -143,6 +143,12 @@ export class TasksController {
     return task;
   }
 
+  /** « Annuler l'annulation » dans les secondes qui suivent une annulation directe (CA-TACH-71). */
+  @Post('tasks/:id/undo-cancel')
+  undoCancel(@Param('id', ParseIntPipe) id: number): Promise<TaskDto> {
+    return guardTask(() => this.tasks.undoCancel(id));
+  }
+
   @Post('tasks/:id/relaunch')
   async relaunch(@Param('id', ParseIntPipe) id: number, @Body() body: unknown): Promise<TaskDto> {
     const changes = parseBody(relaunchSchema, body);
