@@ -18,4 +18,9 @@
 @import './classes/overlay.css';
 
 /* Composants */
+@import '../shared/components/markdown/markdown.css';
+@import '../shared/ui/bubble/bubble.css';
 @import '../shared/ui/button/button.css';
+@import '../shared/ui/code-block/code-block.css';
+@import '../shared/ui/message/message.css';
+@import '../shared/ui/trace/trace.css';

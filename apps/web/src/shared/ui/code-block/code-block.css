@@ -1,0 +1,174 @@
+/*
+ * CodeBlock (shadcn) : du code, des commandes et leur sortie, avec numéros de ligne, lignes ajoutées ou retirées, et
+ * actions (copier) qui flottent en haut à droite quand le bloc n'a pas d'en-tête. Modificateurs : code-block-sm,
+ * code-block-content-wrap, code-block-content-numbered. Coloration : code-token, couleurs du thème clair ou sombre de Shiki.
+ */
+@layer components {
+  .code-block {
+    @apply relative flex w-full min-w-0 flex-col overflow-hidden rounded-control text-sm;
+  }
+  .code-block:has(> .code-block-content:focus-visible) {
+    @apply ring-3 ring-ring/40;
+  }
+  .code-block-sm {
+    @apply text-xs;
+  }
+  .code-block-default {
+    @apply border border-line bg-canvas text-ink;
+  }
+  .code-block-default:has(> .code-block-content:focus-visible) {
+    @apply border-primary;
+  }
+  .code-block-destructive {
+    @apply border border-danger/30 bg-danger-soft text-danger;
+  }
+  .code-block-header {
+    @apply flex min-w-0 shrink-0 items-center gap-2 px-3 pt-3 text-muted;
+  }
+  .code-block-sm .code-block-header {
+    @apply px-2.5 pt-2.5;
+  }
+  .code-block-destructive .code-block-header,
+  .code-block-destructive .code-block-title {
+    @apply text-danger;
+  }
+  .code-block-header > *:has(> .code-block-title) {
+    @apply min-w-0;
+  }
+  .code-block-title {
+    @apply min-w-0 truncate font-sans text-sm font-medium text-ink;
+  }
+  .code-block-sm .code-block-title {
+    @apply text-xs;
+  }
+  .code-block-title svg {
+    @apply pointer-events-none inline-block align-middle;
+  }
+  .code-block-title svg:not([class*='size-']) {
+    @apply size-3.5;
+  }
+  .code-block-title > svg {
+    @apply me-1.5;
+  }
+  .code-block-actions {
+    @apply -my-1 ms-auto -me-1.5 flex shrink-0 items-center gap-1;
+  }
+  /* Sans en-tête, les actions flottent dans le coin du bloc et apparaissent au survol ou au focus */
+  .code-block > .code-block-actions {
+    position: absolute;
+    inset-inline-end: calc(var(--spacing) * 2);
+    top: calc(var(--spacing) * 2);
+    z-index: 10;
+    margin: 0;
+    opacity: 0;
+    transition: opacity 150ms;
+  }
+  .code-block-sm > .code-block-actions {
+    inset-inline-end: calc(var(--spacing) * 1.5);
+    top: calc(var(--spacing) * 1.5);
+  }
+  .code-block:hover > .code-block-actions,
+  .code-block:focus-within > .code-block-actions {
+    opacity: 1;
+  }
+  @media (pointer: coarse) {
+    .code-block > .code-block-actions {
+      opacity: 1;
+    }
+  }
+  .code-block-content {
+    scrollbar-width: thin;
+    @apply min-h-0 min-w-0 overflow-auto p-3 text-start font-mono leading-relaxed outline-none;
+  }
+  .code-block-content-wrap {
+    @apply wrap-break-word whitespace-pre-wrap;
+  }
+  .code-block:has(> .code-block-header) .code-block-content {
+    @apply pt-2;
+  }
+  .code-block:has(> .code-block-footer) .code-block-content {
+    @apply pb-2;
+  }
+  .code-block-sm .code-block-content {
+    @apply p-2.5;
+  }
+  .code-block-content-code {
+    @apply grid min-h-lh min-w-max content-start;
+  }
+  .code-block-content-numbered .code-block-content-code {
+    grid-template-columns: auto 1fr;
+  }
+  .code-block-content-wrap .code-block-content-code {
+    @apply min-w-0;
+  }
+  .code-block-line {
+    @apply relative -mx-3 block min-h-lh px-3;
+  }
+  .code-block-sm .code-block-line {
+    @apply -mx-2.5 px-2.5;
+  }
+  .code-block-line::before {
+    min-width: calc(var(--spacing) * 6);
+    text-align: end;
+    color: var(--color-muted);
+  }
+  .code-block-line::after {
+    position: absolute;
+    inset-inline-start: var(--spacing);
+    top: 0;
+    color: var(--color-muted);
+    user-select: none;
+  }
+  .code-block-content-numbered .code-block-line {
+    grid-column: span 2;
+    display: grid;
+    grid-template-columns: subgrid;
+    column-gap: calc(var(--spacing) * 3);
+    counter-increment: line;
+  }
+  .code-block-content-numbered .code-block-line::before {
+    content: counter(line);
+    user-select: none;
+  }
+  @supports (content: counter(line) / '') {
+    .code-block-content-numbered .code-block-line::before {
+      content: counter(line) / '';
+    }
+  }
+  .code-block-line-added {
+    @apply bg-success-soft;
+  }
+  .code-block-line-added::after {
+    content: '+';
+    color: var(--color-success);
+  }
+  .code-block-line-removed {
+    @apply bg-danger-soft;
+  }
+  .code-block-line-removed::after {
+    content: '−';
+    color: var(--color-danger);
+  }
+  .code-block-line-highlighted {
+    @apply bg-surface-alt;
+  }
+  .code-block-footer {
+    @apply flex min-w-0 shrink-0 items-center gap-2 px-3 pb-3 text-muted;
+  }
+  .code-block-sm .code-block-footer {
+    @apply px-2.5 pb-2.5;
+  }
+  .code-token {
+    color: var(--shiki-light);
+  }
+  .dark .code-token {
+    color: var(--shiki-dark);
+  }
+}
+
+/* Moins de mouvement demandé par le système : les actions apparaissent sans fondu. */
+@media (prefers-reduced-motion: reduce) {
+  .code-block > .code-block-actions {
+    transition: none;
+  }
+}
