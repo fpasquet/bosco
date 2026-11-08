@@ -23,4 +23,5 @@
 @import '../shared/ui/button/button.css';
 @import '../shared/ui/code-block/code-block.css';
 @import '../shared/ui/message/message.css';
+@import '../shared/ui/skeleton/skeleton.css';
 @import '../shared/ui/trace/trace.css';
