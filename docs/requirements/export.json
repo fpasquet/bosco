@@ -5,7 +5,7 @@
   "source": {
     "repository": "fpasquet/specs",
     "path": "bosco/requirements",
-    "commit": "782f620"
+    "commit": "3d50ece"
   },
   "artifacts": {
     "specs": "https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1",
@@ -28,15 +28,15 @@
     "e14": "doing"
   },
   "files": {
-    "README.md": "5a5545eb05b03b3b",
+    "README.md": "04aa9ce603123d5b",
     "presentation.md": "3e8a2c6be5d9319b",
     "utilisateurs.md": "e24eac95cdde3821",
-    "lots/sessions.md": "a7500d30af7a7272",
+    "lots/sessions.md": "69f15de2e2b9d17c",
     "lots/taches.md": "5407331f99ea4cfe",
     "lots/contexte.md": "85081a0428dde415",
     "interface.md": "e614bb32e4a10923",
     "exigences-non-fonctionnelles.md": "5e997e7690c6d7cc",
-    "architecture.md": "4999250ca1c2a99f",
+    "architecture.md": "b3d18b5d9b99fd2f",
     "stack.md": "fa89f6a6355752c4",
     "infrastructure.md": "5ff6c2480219dfe2"
   }
