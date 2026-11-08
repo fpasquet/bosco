@@ -14,4 +14,6 @@ minimumReleaseAgeExclude:
 # Paquets dont le script d'installation est permis : moteur SQLite (MikroORM) et esbuild (Storybook, Vite)
 allowBuilds:
   better-sqlite3: true
+  # Application du poste : le script d'installation télécharge le binaire d'Electron
+  electron: true
   esbuild: true
