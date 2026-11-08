@@ -70,7 +70,7 @@ export class TestController {
     this.liveSignals.forget();
     this.channel.forget();
     this.notifier.sent.splice(0);
-    this.presence.report(false);
+    this.presence.reset();
     await this.orm.schema.clear();
     // L'index de recherche n'est pas une entité : il se vide à part
     await this.orm.em.getConnection().execute('delete from session_search');
