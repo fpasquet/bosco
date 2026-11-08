@@ -3,7 +3,7 @@ import { type ChildProcess, spawn } from 'node:child_process';
 import { once } from 'node:events';
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { createServer } from 'node:net';
-import { tmpdir } from 'node:os';
+import { homedir, tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
@@ -42,6 +42,9 @@ async function freePort(): Promise<number> {
   return address.port;
 }
 
+/** Dossiers personnels des scénarios : hors de /tmp, exclu des dépôts par défaut, et hors de tout dépôt git. */
+const HOMES = join(homedir(), '.cache', 'bosco-e2e');
+
 /** Dossier personnel écrit dans les transcripts d'exemple, remplacé par le dossier du scénario. */
 const SAMPLE_HOME = '/home/dev';
 
@@ -51,7 +54,9 @@ export async function startBosco(recordings: string): Promise<Bosco> {
   const phonePort = await freePort();
   const configDir = mkdtempSync(join(tmpdir(), 'bosco-claude-'));
   const dataDir = mkdtempSync(join(tmpdir(), 'bosco-data-'));
-  const profilesRoot = mkdtempSync(join(tmpdir(), 'bosco-home-'));
+  // Dossier personnel du scénario hors de /tmp, que Bosco exclut des dépôts par défaut (CA-SESS-79)
+  mkdirSync(HOMES, { recursive: true });
+  const profilesRoot = mkdtempSync(join(HOMES, 'bosco-home-'));
   const url = `http://127.0.0.1:${port}`;
   const child: ChildProcess = spawn(
     process.execPath,
@@ -103,6 +108,13 @@ export async function startBosco(recordings: string): Promise<Bosco> {
       const repository = cwd.slice(profilesRoot.length + 1).split('/')[0];
       if (repository) mkdirSync(join(profilesRoot, repository, '.git'), { recursive: true });
       mkdirSync(cwd, { recursive: true });
+      // Worktree de Claude Code (labo-ia/.claude/worktrees/fix-ui) : son .git est un fichier vers le dépôt d'origine
+      const worktree = /^(.+)\/\.claude\/worktrees\/([^/]+)/.exec(cwd);
+      if (worktree?.[1] && worktree[2]) {
+        const gitdir = join(worktree[1], '.git', 'worktrees', worktree[2]);
+        mkdirSync(gitdir, { recursive: true });
+        writeFileSync(join(worktree[0], '.git'), `gitdir: ${gitdir}\n`);
+      }
       // Dossier de dépôt nommé comme le fait Claude Code : le chemin de travail, / remplacés par -
       const dir = join(profilesRoot, profile, 'projects', cwd.replaceAll('/', '-'));
       mkdirSync(dir, { recursive: true });

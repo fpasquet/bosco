@@ -87,3 +87,11 @@ Given('le dépôt {texte} demande une PR à chaque validation', async ({ bosco }
 When('je décoche {texte}', async ({ page }, label: string) => {
   await page.getByRole('checkbox', { name: label }).uncheck();
 });
+
+Then('la liste {texte} ne contient pas {texte}', async ({ page }, label: string, item: string) => {
+  await expect(page.getByRole('list', { name: label }).getByRole('listitem').filter({ hasText: item })).toHaveCount(0);
+});
+
+Then('le choix {texte} propose {texte}', async ({ page }, label: string, options: string) => {
+  await expect(page.getByRole('combobox', { name: label }).getByRole('option')).toHaveText(options.split(', '));
+});

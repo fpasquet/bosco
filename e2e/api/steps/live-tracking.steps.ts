@@ -30,6 +30,15 @@ Given('the Claude Code profile {string} has the settings {string}', ({ bosco }, 
   cpSync(join(FEATURES, file), join(bosco.profilesRoot, profile, 'settings.json'));
 });
 
+Given('Bosco watches the profiles {string}', async ({ bosco }, profile: string) => {
+  const response = await fetch(`${bosco.url}/api/sources`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ paths: [join(bosco.profilesRoot, profile)] }),
+  });
+  expect(response.status).toBe(201);
+});
+
 Given('Bosco watches the profiles {string} and {string}', async ({ bosco }, first: string, second: string) => {
   const response = await fetch(`${bosco.url}/api/sources`, {
     method: 'POST',
