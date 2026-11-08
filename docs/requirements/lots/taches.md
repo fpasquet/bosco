@@ -185,7 +185,7 @@ Règles de l'écran :
 
 ## <a id="e13"></a>E13 · Détail d'une tâche
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `taches/e13.html` · implémentation : **En cours (Détail d'une tâche développé (E13a, E13b, E13c) : consigne, préalables et leur état, branche de départ, garde-fous, journal ; modifier avant le départ ; annuler avec la confirmation qui nomme les tâches en cascade ; relancer un échec depuis la branche ou de zéro, budget revu. « Voir la session » ouvre la session de la tâche. Écart : pas d'« Annuler l'annulation ».)**
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `taches/e13.html` · implémentation : **Livré (Détail d'une tâche développé (E13a, E13b, E13c) : consigne, préalables et leur état, branche de départ, garde-fous, journal ; modifier avant le départ ; annuler avec la confirmation qui nomme les tâches en cascade ; relancer un échec depuis la branche ou de zéro, budget revu. « Voir la session » ouvre la session de la tâche. Une tâche que personne n'attend s'annule d'un clic ; « Annuler l'annulation » la remet dans la file tant que le message est affiché, si elle n'avait pas démarré.)**
 
 ### <a id="e13a"></a>E13a · Détail d'une tâche : bloquée
 
@@ -231,7 +231,7 @@ Annuler une tâche dont d'autres dépendent a un effet en cascade : la confirmat
 Règles de l'écran :
 
 1. Annuler une tâche fait échouer en cascade celles qui l'attendent, avec le motif « Préalable T-13 annulée » (règle 3). L'encadré les nomme avant que tu confirmes.
-2. La confirmation n'apparaît que si des tâches attendent celle-ci. Sinon l'annulation est directe, suivie d'un message bref avec « Annuler l'annulation » pendant quelques secondes (règle 8).
+2. La confirmation n'apparaît que si des tâches attendent celle-ci. Sinon l'annulation est directe, suivie d'un message bref avec « Annuler l'annulation » pendant quelques secondes : la tâche revient dans la file, comme avant. Une tâche déjà démarrée ne se rétablit pas ainsi, son agent est arrêté : elle se relance (règle 8).
 3. Une tâche déjà démarrée dans le worker : l'agent s'arrête en quelques secondes et la branche reste disponible pour la relire ou la reprendre (règle 7).
 4. Une tâche prise par une session interactive : la session est prévenue à sa prochaine étape qu'elle doit s'arrêter (règle 7). Elle n'est pas coupée de force.
 5. La tâche passe « Annulée » et rejoint l'onglet Terminées de la file ([E5b](#e5b)), barrée. Le journal garde l'annulation et son motif.
@@ -324,3 +324,4 @@ Règles de l'écran :
 - **CA-TACH-68** · [E13c](#e13c) · Étant donné une tâche déjà démarrée dans le worker, quand elle est annulée, alors l'agent s'arrête en quelques secondes et la branche reste disponible pour la relire ou la reprendre (RF-TACH-07).
 - **CA-TACH-69** · [E13c](#e13c) · Étant donné une tâche prise par une session interactive, quand elle est annulée, alors la session est prévenue à sa prochaine étape qu'elle doit s'arrêter, sans être coupée de force (RF-TACH-07).
 - **CA-TACH-70** · [E13c](#e13c) · Étant donné une tâche annulée, quand la personne ouvre la file, alors elle est « Annulée », barrée, dans l'onglet Terminées, et son journal garde l'annulation et son motif ; « Garder la tâche » ramène au détail sans rien changer.
+- **CA-TACH-71** · [E13c](#e13c) · Étant donné une tâche qui n'avait pas démarré, annulée directement, quand la personne clique sur « Annuler l'annulation » tant que le message est affiché (8 secondes), alors la tâche revient dans la file avec son état d'avant et son journal le note ; une tâche déjà démarrée, ou dont l'annulation a fait échouer d'autres tâches, ne se rétablit pas ainsi et se relance (RF-TACH-07, RF-TACH-08).
