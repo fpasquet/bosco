@@ -86,3 +86,7 @@ Then('l’interrupteur {texte} est {texte}', async ({ page }, label: string, sta
 Then('le bouton {texte} est désactivé', async ({ page }, name: string) => {
   await expect(page.getByRole('button', { name })).toBeDisabled();
 });
+
+Then('je vois le message {texte}', async ({ page }, text: string) => {
+  await expect(page.getByRole('status').filter({ hasText: text })).toBeVisible();
+});

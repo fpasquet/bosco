@@ -1,0 +1,8 @@
+{
+  "repository": "labo-ia",
+  "folder": "packages/rag",
+  "instruction": "Ajoute un test du découpage des tableaux dans les PDF. Suis le format des tests existants.",
+  "mode": "worker",
+  "prerequisites": [],
+  "guardrails": { "budgetUsd": 1.5, "maxTurns": 30 }
+}

@@ -14,6 +14,7 @@ import { Migration20261107203000 } from './migrations/Migration20261107203000.ts
 import { Migration20261107210000 } from './migrations/Migration20261107210000.ts';
 import { Migration20261107230000 } from './migrations/Migration20261107230000.ts';
 import { Migration20261107233000 } from './migrations/Migration20261107233000.ts';
+import { Migration20261108000000 } from './migrations/Migration20261108000000.ts';
 import {
   SessionEventSchema,
   SessionSchema,
@@ -21,6 +22,7 @@ import {
   TranscriptCursorSchema,
 } from './sessions/infrastructure/persistence/sessions.schema.ts';
 import { SettingSchema } from './shared/infrastructure/persistence/setting.schema.ts';
+import { TaskSchema } from './tasks/infrastructure/persistence/task.schema.ts';
 
 export const MIGRATIONS = [
   { name: 'Migration20261107000000', class: Migration20261107000000 },
@@ -33,12 +35,21 @@ export const MIGRATIONS = [
   { name: 'Migration20261107210000', class: Migration20261107210000 },
   { name: 'Migration20261107230000', class: Migration20261107230000 },
   { name: 'Migration20261107233000', class: Migration20261107233000 },
+  { name: 'Migration20261108000000', class: Migration20261108000000 },
 ];
 
 export function ormConfig(dbName: string) {
   return defineConfig({
     dbName,
-    entities: [SettingSchema, SourceSchema, SessionSchema, SessionEventSchema, TranscriptCursorSchema, DeviceSchema],
+    entities: [
+      SettingSchema,
+      SourceSchema,
+      SessionSchema,
+      SessionEventSchema,
+      TranscriptCursorSchema,
+      DeviceSchema,
+      TaskSchema,
+    ],
     extensions: [Migrator],
     migrations: { migrationsList: MIGRATIONS, path: 'src/migrations', snapshot: false },
     // L'index FTS5 de la recherche (session_search et ses tables internes) n'est pas une entité : le comparateur de
