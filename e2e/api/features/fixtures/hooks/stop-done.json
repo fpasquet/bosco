@@ -1,0 +1,9 @@
+{
+  "session_id": "c41e9a07",
+  "transcript_path": "{{profiles}}/.claude-perso/projects/c41e9a07.jsonl",
+  "cwd": "{{profiles}}/labo-ia/packages/bosco",
+  "permission_mode": "default",
+  "hook_event_name": "Stop",
+  "stop_hook_active": false,
+  "last_assistant_message": "Le digest est généré et les tests passent."
+}

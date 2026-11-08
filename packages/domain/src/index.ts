@@ -9,6 +9,7 @@ export type {
   ImportProgressDto,
   JournalEntryDto,
   LiveEventDto,
+  NotificationDto,
   ProfileCandidateDto,
   RepositorySettingsDto,
   SessionConversationDto,

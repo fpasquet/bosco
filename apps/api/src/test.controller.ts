@@ -6,12 +6,14 @@ import type { SessionService } from './sessions/application/session.service.ts';
 import type { SettingsService } from './sessions/application/settings.service.ts';
 import type { FileTranscriptWatcher } from './sessions/infrastructure/claude-code/transcript-watcher.ts';
 import type { RecordingNotifier } from './sessions/infrastructure/notifications/desktop-notifier.ts';
+import type { PresenceTracker } from './sessions/infrastructure/notifications/presence.ts';
 import type { IsolationService } from './tasks/application/isolation.service.ts';
 import type { ScriptedAgentRunner } from './tasks/infrastructure/worker/scripted-agent.ts';
 import { ACCESS_SERVICE } from './access/tokens.ts';
 import {
   LIVE_SIGNAL_SERVICE,
   NOTIFIER,
+  PRESENCE,
   SESSION_SERVICE,
   SETTINGS_SERVICE,
   TRANSCRIPT_WATCHER,
@@ -27,6 +29,7 @@ export class TestController {
     @Inject(TRANSCRIPT_WATCHER) private readonly watcher: FileTranscriptWatcher,
     @Inject(LIVE_SIGNAL_SERVICE) private readonly liveSignals: LiveSignalService,
     @Inject(NOTIFIER) private readonly notifier: RecordingNotifier,
+    @Inject(PRESENCE) private readonly presence: PresenceTracker,
     @Inject(SETTINGS_SERVICE) private readonly settings: SettingsService,
     @Inject(ACCESS_SERVICE) private readonly access: AccessService,
     @Inject(AGENT_RUNNER) private readonly agent: ScriptedAgentRunner,
@@ -63,6 +66,7 @@ export class TestController {
     await this.agent.forget();
     this.liveSignals.forget();
     this.notifier.sent.splice(0);
+    this.presence.report(false);
     await this.orm.schema.clear();
     // L'index de recherche n'est pas une entité : il se vide à part
     await this.orm.em.getConnection().execute('delete from session_search');

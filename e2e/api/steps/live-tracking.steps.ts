@@ -135,7 +135,7 @@ When(
 Then('the desktop notifications should be:', async ({ request }, table: DataTable) => {
   const response = await request.get('/__test/notifications');
   const { notifications } = (await response.json()) as { notifications: { body: string; title: string }[] };
-  expect(notifications).toEqual(table.hashes());
+  expect(notifications.map(({ body, title }) => ({ title, body }))).toEqual(table.hashes());
 });
 
 Given('Docker does not answer', async ({ request }) => {

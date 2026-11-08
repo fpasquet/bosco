@@ -1,3 +1,4 @@
+import type { NotificationSettings } from '../domain/notification.ts';
 import type { DiscoverySnapshot } from '../domain/repository-discovery.ts';
 import type { SettingsRepository } from './ports.ts';
 import { Settings, type SettingsChanges, type SettingsSnapshot } from '../domain/settings.ts';
@@ -23,6 +24,10 @@ export class SettingsService {
 
   desktopNotifications(): boolean {
     return this.settings.desktopNotifications;
+  }
+
+  notifications(): NotificationSettings {
+    return this.settings.notifications;
   }
 
   repositories(): DiscoverySnapshot {

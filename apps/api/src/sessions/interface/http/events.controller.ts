@@ -14,6 +14,7 @@ import {
 import type { SessionService, SessionView } from '../../application/session.service.ts';
 import type { SessionEventsBus } from '../../infrastructure/events/session-events.bus.ts';
 import { SESSION_EVENTS, SESSION_SERVICE } from '../../tokens.ts';
+import { presentNotification } from './notifications.controller.ts';
 import { presentSession } from './session.presenter.ts';
 
 /** Un nouvel instantané à cet intervalle : une session sans événement passe Inactive à l'heure. */
@@ -50,7 +51,18 @@ export class EventsController {
       );
       // Réponse à une autorisation, donnée ici ou dans le terminal : un message bref dans l'interface (CA-SESS-07)
       const settlements = this.bus.settlements.pipe(map((settled) => ({ type: 'permission.settled', data: settled })));
-      return merge(first.pipe(concatWith(changes)), later, progress, settlements).pipe(
+      // Notification nouvelle (et si elle s'affiche en message bref), ou centre de notifications à relire (E15)
+      const notifications = this.bus.notifications.pipe(
+        map((event) =>
+          event
+            ? {
+                type: 'notification.created',
+                data: { inApp: event.inApp, notification: presentNotification(event.notification) },
+              }
+            : { type: 'notifications.changed', data: {} },
+        ),
+      );
+      return merge(first.pipe(concatWith(changes)), later, progress, settlements, notifications).pipe(
         finalize(() => subscription.unsubscribe()),
       );
     });

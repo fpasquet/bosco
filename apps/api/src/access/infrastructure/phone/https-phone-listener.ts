@@ -13,7 +13,14 @@ export const DEVICE_COOKIE = 'bosco_device';
 const OPEN_PATHS = [/^\/pair(\/|$|\?)/, /^\/_next\//, /^\/api\/pairing\/claim$/, /^\/favicon/];
 
 /** Réservé au poste, même pour un téléphone appairé : les hooks, l'accès, les tests, et tout réglage (E4b mobile). */
-const WORKSTATION_ONLY = [/^\/api\/hooks\//, /^\/api\/phone-access/, /^\/api\/devices/, /^\/__test\//];
+const WORKSTATION_ONLY = [
+  /^\/api\/hooks\//,
+  /^\/api\/phone-access/,
+  /^\/api\/devices/,
+  // Seul l'onglet du poste dit s'il est au premier plan (E15b)
+  /^\/api\/presence/,
+  /^\/__test\//,
+];
 const SETTINGS = [
   /^\/api\/sources/,
   /^\/api\/settings/,

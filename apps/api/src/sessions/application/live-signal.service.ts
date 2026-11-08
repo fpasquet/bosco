@@ -1,6 +1,8 @@
+import type { NotificationService } from './notification.service.ts';
 import type { Clock, IdGenerator, SessionEvents, SessionRepository } from './ports.ts';
 import type { SessionService } from './session.service.ts';
 import { DomainError } from '../../shared/domain/domain-error.ts';
+import { ASKING } from '../domain/notification.ts';
 import { Session } from '../domain/session.ts';
 
 /** Signal du suivi en direct, traduit depuis un hook de Claude Code par l'interface (DT-05). */
@@ -29,6 +31,19 @@ function titleOf(session: Session): string {
   return session.toSnapshot().title ?? `Session ${session.id.slice(0, 8)}`;
 }
 
+const EXCERPT = 180;
+
+/** Fin d'un message, là où l'agent conclut ou pose sa question : sa dernière partie, sur une ligne. */
+function excerptOf(message: null | string): null | string {
+  if (!message) return null;
+  const line = message.replaceAll(/\s+/g, ' ').trim();
+  return line.length > EXCERPT ? `…${line.slice(-EXCERPT + 1).trimStart()}` : line;
+}
+
+type Notifications = Pick<NotificationService, 'notify' | 'settle'>;
+
+const SILENT: Notifications = { notify: () => Promise.resolve(null), settle: () => Promise.resolve() };
+
 /** L'autorisation a déjà reçu sa réponse, ici ou dans le terminal : la première réponse l'emporte (RF-SESS-03). */
 export class PermissionAlreadySettled extends DomainError {
   constructor(sessionId: string) {
@@ -43,6 +58,8 @@ export class PermissionAlreadySettled extends DomainError {
 export class LiveSignalService {
   private readonly lastSignals = new Map<string, Date>();
   private readonly pending = new Map<string, PendingPermission>();
+  /** Début du tour en cours de chaque session : ta dernière demande, pour savoir si un tour a été long (E15b) */
+  private readonly turnStarts = new Map<string, Date>();
 
   constructor(
     private readonly sessionRepository: SessionRepository,
@@ -50,8 +67,8 @@ export class LiveSignalService {
     private readonly sessionEvents: SessionEvents,
     private readonly clock: Clock,
     private readonly idGenerator: IdGenerator,
-    /** Notification du bureau d'une nouvelle attente ; le point de composition y applique le réglage (RF-SESS-08) */
-    private readonly notify: (title: string, body: string) => void = () => undefined,
+    /** Notifications (E15) : ce qui attend une réponse, ce qui est fini, selon les réglages */
+    private readonly notifications: Notifications = SILENT,
   ) {}
 
   /** Dernier signal reçu d'un profil : la vérification de l'installation repose sur un vrai signal (CA-SESS-64). */
@@ -62,12 +79,29 @@ export class LiveSignalService {
   async receive(origin: SignalOrigin, signal: LiveSignal): Promise<void> {
     const at = this.clock.now();
     const session = await this.sessionOf(origin, at);
+    const subject = { sessionId: session.id, taskId: null, title: titleOf(session) };
     if (signal.kind === 'stop') {
       session.endTurn(signal.message, at);
-      this.notify(`${titleOf(session)} t’attend`, signal.message ?? 'Tour terminé : l’agent a rendu la main.');
-    } else if (signal.kind === 'end') session.end(at);
+      await this.publish(session);
+      const started = this.turnStarts.get(session.id);
+      this.turnStarts.delete(session.id);
+      const minutes = started ? Math.floor((at.getTime() - started.getTime()) / 60_000) : null;
+      await this.notifications.notify(
+        { kind: 'turn', message: signal.message, minutes },
+        { ...subject, excerpt: excerptOf(signal.message), turnMinutes: minutes },
+      );
+      return;
+    }
+    if (signal.kind === 'end') session.end(at);
     else session.resume(at);
+    // Ta demande ouvre un nouveau tour ; une demande ou une action de l'agent montre que l'attente a eu sa réponse
+    if (signal.kind === 'prompt') this.turnStarts.set(session.id, at);
     await this.publish(session);
+    if (signal.kind === 'end') {
+      await this.notifications.notify({ kind: 'ended' }, { ...subject, excerpt: session.toSnapshot().lastMessage });
+      await this.notifications.settle({ sessionId: session.id, kinds: ASKING }, 'Session terminée');
+    } else if (signal.kind === 'prompt' || signal.kind === 'tool')
+      await this.notifications.settle({ sessionId: session.id, kinds: ASKING }, 'Répondu');
   }
 
   /**
@@ -86,9 +120,14 @@ export class LiveSignalService {
     this.pending.get(origin.sessionId)?.resolve(null);
     session.awaitPermission(requestId, action.tool, action.detail, at);
     await this.publish(session);
-    this.notify(
-      `${titleOf(session)} t’attend`,
-      `Autorisation demandée : ${[action.tool, action.detail].filter(Boolean).join(' · ')}`,
+    await this.notifications.notify(
+      { kind: 'permission' },
+      {
+        sessionId: session.id,
+        taskId: null,
+        title: titleOf(session),
+        excerpt: [action.tool, action.detail].filter(Boolean).join(' · '),
+      },
     );
     return new Promise((resolve) => {
       this.pending.set(origin.sessionId, { requestId, resolve });
@@ -110,6 +149,10 @@ export class LiveSignalService {
       outcome: answer.behavior === 'allow' ? 'allowed' : 'denied',
     });
     entry.resolve(answer);
+    await this.notifications.settle(
+      { sessionId, kinds: ['permission'] },
+      answer.behavior === 'allow' ? 'Autorisé dans Bosco' : 'Refusé dans Bosco',
+    );
   }
 
   /** Oublie les demandes en cours et les derniers signaux (remise à zéro des scénarios). */
@@ -117,6 +160,7 @@ export class LiveSignalService {
     for (const entry of this.pending.values()) entry.resolve(null);
     this.pending.clear();
     this.lastSignals.clear();
+    this.turnStarts.clear();
   }
 
   /** Au démarrage : une autorisation restée en attente lors de l'arrêt ne peut plus se donner que dans le terminal. */
@@ -135,6 +179,7 @@ export class LiveSignalService {
     if (!session?.settlePermission(requestId, this.clock.now())) return;
     await this.publish(session);
     this.sessionEvents.permissionSettled({ sessionId, title: session.toSnapshot().title, outcome: 'elsewhere' });
+    await this.notifications.settle({ sessionId, kinds: ['permission'] }, 'Répondu dans le terminal');
   }
 
   private async sessionOf(origin: SignalOrigin, at: Date): Promise<Session> {
