@@ -1,5 +1,5 @@
 // Tâches du fil rouge des specs (lot 2), pour les histoires.
-import type { TaskDto } from '@bosco/domain';
+import type { IsolationDto, TaskDto } from '@bosco/domain';
 
 const at = (time: string) => new Date(`2026-11-06T${time}:00`).toISOString();
 
@@ -75,3 +75,18 @@ export const STORY_TASKS: TaskDto[] = [
     guardrails: { budgetUsd: 0.35, maxTurns: 30, model: null, tools: null },
   }),
 ];
+
+/** Isolation du worker du fil rouge (E11a, E11b). */
+export const STORY_ISOLATION: IsolationDto = {
+  capacity: { maxAgents: 4, maxAgentsRange: [1, 8], reservedMemory: 4 * 1024 ** 3, freeMemory: 28 * 1024 ** 3 },
+  domains: {
+    locked: ['api.anthropic.com', 'claude.ai', 'platform.claude.com', 'registry.npmjs.org', 'registry.yarnpkg.com'],
+    added: ['github.com', '*.github.com'],
+  },
+  image: 'bosco-agent:1',
+  limits: { memory: 4 * 1024 ** 3, cpus: 2, processes: 512 },
+  refusals: [
+    { at: at('15:02'), taskId: 12, host: 'pypi.org' },
+    { at: new Date('2026-11-05T11:41:00').toISOString(), taskId: 9, host: 'api.fastify.dev' },
+  ],
+};

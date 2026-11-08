@@ -50,6 +50,16 @@ When('the phone opens {string}', async ({ bosco }, path: string) => {
   phoneStatus = response.status;
 });
 
+When('the phone sends {word} request to {string}', async ({ bosco }, method: string, path: string) => {
+  const response = await phoneFetch(`${bosco.phoneUrl}${path}`, {
+    method,
+    headers: { 'content-type': 'application/json', ...(cookie ? { cookie } : {}) },
+    body: '{}',
+    dispatcher: phone,
+  });
+  phoneStatus = response.status;
+});
+
 When('the phone opens {string} without being paired', async ({ bosco }, path: string) => {
   const response = await phoneFetch(`${bosco.phoneUrl}${path}`, { redirect: 'manual', dispatcher: phone });
   phoneStatus = response.status;

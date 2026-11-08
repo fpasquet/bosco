@@ -16,6 +16,7 @@ import { Migration20261107230000 } from './migrations/Migration20261107230000.ts
 import { Migration20261107233000 } from './migrations/Migration20261107233000.ts';
 import { Migration20261108000000 } from './migrations/Migration20261108000000.ts';
 import { Migration20261108010000 } from './migrations/Migration20261108010000.ts';
+import { Migration20261108020000 } from './migrations/Migration20261108020000.ts';
 import {
   SessionEventSchema,
   SessionSchema,
@@ -23,6 +24,7 @@ import {
   TranscriptCursorSchema,
 } from './sessions/infrastructure/persistence/sessions.schema.ts';
 import { SettingSchema } from './shared/infrastructure/persistence/setting.schema.ts';
+import { EgressRefusalSchema } from './tasks/infrastructure/persistence/egress-refusal.schema.ts';
 import { TaskSchema } from './tasks/infrastructure/persistence/task.schema.ts';
 
 export const MIGRATIONS = [
@@ -38,6 +40,7 @@ export const MIGRATIONS = [
   { name: 'Migration20261107233000', class: Migration20261107233000 },
   { name: 'Migration20261108000000', class: Migration20261108000000 },
   { name: 'Migration20261108010000', class: Migration20261108010000 },
+  { name: 'Migration20261108020000', class: Migration20261108020000 },
 ];
 
 export function ormConfig(dbName: string) {
@@ -51,6 +54,7 @@ export function ormConfig(dbName: string) {
       TranscriptCursorSchema,
       DeviceSchema,
       TaskSchema,
+      EgressRefusalSchema,
     ],
     extensions: [Migrator],
     migrations: { migrationsList: MIGRATIONS, path: 'src/migrations', snapshot: false },

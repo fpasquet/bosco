@@ -77,3 +77,19 @@ export interface WorkerStatusDto {
   /** Pourquoi une tâche prête reste en file, par numéro de tâche */
   waiting: Record<number, string>;
 }
+
+/** Connexion d'un agent refusée par le proxy de sa tâche (E11b). */
+export interface EgressRefusalDto {
+  at: string;
+  host: string;
+  taskId: number;
+}
+
+/** Isolation du worker (E11a, E11b) : limites de chaque agent, capacité, domaines autorisés et refus récents. */
+export interface IsolationDto {
+  capacity: { freeMemory: number; maxAgents: number; maxAgentsRange: [number, number]; reservedMemory: number };
+  domains: { added: string[]; locked: string[] };
+  image: string;
+  limits: { cpus: number; memory: number; processes: number };
+  refusals: EgressRefusalDto[];
+}

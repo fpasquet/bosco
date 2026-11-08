@@ -1,5 +1,7 @@
 'use client';
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
+import { ChevronRight } from 'lucide-react';
+import Link from 'next/link';
 import { useState } from 'react';
 import { APP_NAME, type SourceDto } from '@bosco/domain';
 import { installLiveTracking, liveTrackingQuery, uninstallLiveTracking } from '../../api/live-tracking';
@@ -109,6 +111,13 @@ export function SourcesScreen({ title }: { title: string }) {
           onChange={(changes) => saveSettings.mutate(changes)}
         />
       )}
+      <Link
+        href="/settings"
+        className="flex items-center justify-between rounded-card border border-line bg-surface px-4 py-3 shadow-card md:hidden"
+      >
+        <span className="font-medium">Isolation du worker</span>
+        <ChevronRight aria-hidden className="size-4 text-muted" />
+      </Link>
       <LiveTrackingPanel
         source={selected && { label: selected.label, path: displayPath(selected.path, data.home) }}
         status={
