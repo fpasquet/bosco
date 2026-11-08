@@ -15,8 +15,10 @@ import {
   soclesQuery,
   writeDecision,
 } from '../../api/context';
+import { concernedRepositories } from '../../lib/socles';
 import { DecisionForm, type DecisionFormValues } from '../decision-form';
 import { DecisionView } from '../decision-view';
+import { SocleImpactDialog } from '../socle-impact-dialog';
 
 function useTargetLabel(target: DecisionTargetDto | null) {
   const { data: socles } = useQuery({ ...soclesQuery, enabled: target?.kind === 'socle' });
@@ -28,6 +30,34 @@ function useTargetLabel(target: DecisionTargetDto | null) {
     };
   const name = socles?.find(({ id }) => id === target.id)?.name ?? 'Socle';
   return { label: name, parent: { href: '/context/socles', label: 'Socles' } };
+}
+
+/**
+ * Confirmation d'un changement qui touche un socle (CA-CONT-58) : une décision du socle écrite, acceptée ou changée
+ * part vers les prochains agents de tous ses dépôts. Sans socle, le changement s'enregistre tout de suite.
+ */
+function useSocleConfirmation(target: DecisionTargetDto | null) {
+  const { data: socles } = useQuery({ ...soclesQuery, enabled: target?.kind === 'socle' });
+  const [pending, setPending] = useState<DecisionFormValues | null>(null);
+  const socle = target?.kind === 'socle' ? socles?.find(({ id }) => id === target.id) : undefined;
+  return {
+    pending,
+    setPending,
+    /** Enregistre, après confirmation si le changement touche les agents d'un socle */
+    submit: (values: DecisionFormValues, needed: boolean, run: (values: DecisionFormValues) => void) =>
+      socle && needed ? setPending(values) : run(values),
+    dialog: (busy: boolean, run: (values: DecisionFormValues) => void) =>
+      socle && socles ? (
+        <SocleImpactDialog
+          open={pending !== null}
+          socle={socle.name}
+          count={concernedRepositories(socle.id, socles).length}
+          busy={busy}
+          onCancel={() => setPending(null)}
+          onConfirm={() => pending && run(pending)}
+        />
+      ) : null,
+  };
 }
 
 /** Une décision (E9b, E9d), tenue à jour après chaque action. */
@@ -73,15 +103,19 @@ export function NewDecisionScreen({ replaces, target }: { replaces: null | numbe
   const { data: context } = useQuery({ ...contextQuery(repository ?? ''), enabled: repository !== null });
   const { data: replaced } = useQuery({ ...decisionQuery(replaces ?? 0), enabled: replaces !== null });
   const [error, setError] = useState<null | string>(null);
+  const confirmation = useSocleConfirmation(target);
   const write = useMutation({
     mutationFn: ({ accept, exceptionTo, text }: DecisionFormValues) =>
       writeDecision({ target, text, accept, exceptionTo, replaces }),
     onSuccess: async () => {
+      confirmation.setPending(null);
       await client.invalidateQueries();
       router.push(parent.href);
     },
-    onError: (failure) =>
-      setError(failure instanceof ContextRefused ? failure.message : 'La décision n’a pas pu être enregistrée.'),
+    onError: (failure) => {
+      confirmation.setPending(null);
+      setError(failure instanceof ContextRefused ? failure.message : 'La décision n’a pas pu être enregistrée.');
+    },
   });
   const choices = (context?.socles ?? []).flatMap(({ decisions }) => decisions);
   return (
@@ -103,11 +137,13 @@ export function NewDecisionScreen({ replaces, target }: { replaces: null | numbe
             busy={write.isPending}
             serverError={null}
             onCancel={() => router.back()}
-            onSubmit={(values) => write.mutate(values)}
+            // Une décision seulement proposée ne part vers aucun agent : pas de confirmation
+            onSubmit={(values) => confirmation.submit(values, values.accept, (chosen) => write.mutate(chosen))}
           />
         )}
         {error && <p className="mt-2 text-danger">{error}</p>}
       </div>
+      {confirmation.dialog(write.isPending, (chosen) => write.mutate(chosen))}
     </div>
   );
 }
@@ -119,14 +155,18 @@ export function EditDecisionScreen({ id }: { id: number }) {
   const { data } = useQuery(decisionQuery(id));
   const { label } = useTargetLabel(data?.decision.target ?? null);
   const [error, setError] = useState<null | string>(null);
+  const confirmation = useSocleConfirmation(data?.decision.target ?? null);
   const edit = useMutation({
     mutationFn: ({ note, text }: DecisionFormValues) => editDecision(id, text, note),
     onSuccess: async () => {
+      confirmation.setPending(null);
       await client.invalidateQueries();
       router.push(`/context/decisions/${id}`);
     },
-    onError: (failure) =>
-      setError(failure instanceof ContextRefused ? failure.message : 'La version n’a pas pu être enregistrée.'),
+    onError: (failure) => {
+      confirmation.setPending(null);
+      setError(failure instanceof ContextRefused ? failure.message : 'La version n’a pas pu être enregistrée.');
+    },
   });
   if (!data) return <PageSkeleton variant="form" rows={3} />;
   return (
@@ -143,9 +183,10 @@ export function EditDecisionScreen({ id }: { id: number }) {
           busy={edit.isPending}
           serverError={error}
           onCancel={() => router.back()}
-          onSubmit={(values) => edit.mutate(values)}
+          onSubmit={(values) => confirmation.submit(values, true, (chosen) => edit.mutate(chosen))}
         />
       </div>
+      {confirmation.dialog(edit.isPending, (chosen) => edit.mutate(chosen))}
     </div>
   );
 }

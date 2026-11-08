@@ -1,1 +1,1 @@
-export { NewSocleScreen, SoclesScreen } from './socles-screen';
+export { EditSocleScreen, NewSocleScreen, SoclesScreen } from './socles-screen';
