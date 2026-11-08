@@ -4,6 +4,7 @@
 import { execFile } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { promisify } from 'node:util';
+import type { GithubAccounts } from '../../../shared/infrastructure/github/gh-accounts.ts';
 import type { ChangesReader, PullRequestPublisher, TaskChanges } from '../../application/review.service.ts';
 
 const GIT = '/usr/bin/git';
@@ -14,6 +15,12 @@ const MAX_DIFF = 400 * 1024;
 async function git(cwd: string, ...args: string[]): Promise<string> {
   const { stdout } = await run(GIT, args, { cwd, maxBuffer: 32 * 1024 * 1024 });
   return stdout;
+}
+
+/** « owner/repo » d'une adresse GitHub, en SSH (git@github.com:owner/repo.git) comme en HTTPS. */
+export function githubRepositoryOf(remote: string): null | string {
+  const match = /github\.com[:/]([^/\s]+)\/([^/\s]+?)(?:\.git)?\/?$/.exec(remote.trim());
+  return match ? `${match[1]}/${match[2]}` : null;
 }
 
 /** Message d'erreur lisible d'une commande : sa dernière ligne d'erreur. */
@@ -43,23 +50,43 @@ export class GitChanges implements ChangesReader {
 }
 
 export class GhPublisher implements PullRequestPublisher {
-  constructor(private readonly gh: string) {}
+  constructor(
+    private readonly gh: string,
+    private readonly accounts: GithubAccounts,
+  ) {}
 
-  async availability(root: string): Promise<null | string> {
+  async availability(root: string, account: null | string): Promise<null | string> {
     const remote = await git(root, 'remote', 'get-url', 'origin').catch(() => null);
     if (!remote) return 'Le dépôt n’a pas de dépôt distant « origin »';
     if (!existsSync(this.gh)) return 'GitHub CLI n’est pas installé sur le poste';
-    const connected = await run(this.gh, ['auth', 'status'], { cwd: root }).then(
-      () => true,
-      () => false,
-    );
-    return connected ? null : 'GitHub CLI n’est pas connecté';
+    const connected = await this.accounts.list();
+    if (connected.length === 0) return 'GitHub CLI n’est pas connecté';
+    if (account && !connected.some(({ login }) => login === account))
+      return `Le compte GitHub ${account} n’est plus connecté à GitHub CLI`;
+    return null;
   }
 
-  async publish(root: string, request: { body: string; branch: string; from: string; title: string }): Promise<string> {
+  /**
+   * Pousse la branche de la tâche et ouvre la PR en brouillon. Avec un compte choisi (E8a), l'envoi passe en HTTPS
+   * avec le jeton de ce compte, le temps de la commande : la clé SSH du poste désignerait sinon un autre compte.
+   */
+  async publish(
+    root: string,
+    request: { body: string; branch: string; from: string; title: string },
+    account: null | string,
+  ): Promise<string> {
+    const token = await this.accounts.envOf(account);
+    const env = { ...process.env, ...token };
+    const origin = await git(root, 'remote', 'get-url', 'origin');
+    const remote = origin.trim();
+    const repository = githubRepositoryOf(remote);
+    // Seule la branche de la tâche part, sans forcer : une branche distante différente fait échouer l'envoi
+    const target = account && repository ? `https://github.com/${repository}.git` : 'origin';
+    const helper = account
+      ? ['-c', 'credential.helper=', '-c', `credential.helper=!${this.gh} auth git-credential`]
+      : [];
     try {
-      // Seule la branche de la tâche part, sans forcer : une branche distante différente fait échouer l'envoi
-      await git(root, 'push', '--quiet', 'origin', `${request.branch}:${request.branch}`);
+      await run(GIT, [...helper, 'push', '--quiet', target, `${request.branch}:${request.branch}`], { cwd: root, env });
     } catch (error) {
       throw new Error(`Envoi de la branche refusé : ${causeOf(error)}`, { cause: error });
     }
@@ -70,6 +97,7 @@ export class GhPublisher implements PullRequestPublisher {
           'pr',
           'create',
           '--draft',
+          ...(repository ? ['--repo', repository] : []),
           '--base',
           request.from,
           '--head',
@@ -79,7 +107,7 @@ export class GhPublisher implements PullRequestPublisher {
           '--body',
           request.body,
         ],
-        { cwd: root },
+        { cwd: root, env },
       );
       return stdout.trim().split('\n').at(-1) ?? '';
     } catch (error) {
@@ -98,5 +126,6 @@ export const scriptedReview: ChangesReader & PullRequestPublisher = {
       truncated: false,
     }),
   availability: () => Promise.resolve(null),
-  publish: (_root, request) => Promise.resolve(`https://github.com/exemple/depot/pull/${request.branch.length}`),
+  publish: (_root, request, account) =>
+    Promise.resolve(`https://github.com/${account ?? 'exemple'}/depot/pull/${request.branch.length}`),
 };

@@ -1,14 +1,15 @@
 'use client';
-import { KeyRound, Lock, Package } from 'lucide-react';
+import { GitBranch, KeyRound, Lock, Package } from 'lucide-react';
 import { useState } from 'react';
 import type { WorkerSecretsDto } from '@bosco/domain';
 import { Button } from '@/shared/ui/button';
 
 export interface WorkerSecretsProps {
   busy: boolean;
+  /** github : compte GitHub par défaut */
   /** Refus de l'API : profil sans accès, chemin relatif */
   error?: null | string;
-  onChange: (changes: { npmrc?: string; profile?: string }) => void;
+  onChange: (changes: { github?: string; npmrc?: string; profile?: string }) => void;
   secrets: WorkerSecretsDto;
 }
 
@@ -22,7 +23,8 @@ function profileName({ account, label }: { account: null | string; label: null |
  * une copie du .npmrc choisi, supprimées à la fin de la tâche. Sur le téléphone, tout se lit sans se changer.
  */
 export function WorkerSecrets({ busy, error = null, onChange, secrets }: WorkerSecretsProps) {
-  const [editing, setEditing] = useState<'npmrc' | 'profile' | null>(null);
+  const [editing, setEditing] = useState<'github' | 'npmrc' | 'profile' | null>(null);
+  const [github, setGithub] = useState(secrets.github.account ?? secrets.github.choices[0] ?? '');
   const [profile, setProfile] = useState(secrets.claude.profile ?? secrets.claude.choices[0]?.path ?? '');
   const [npmrc, setNpmrc] = useState(secrets.npmrc.path);
   const { claude } = secrets;
@@ -38,11 +40,11 @@ export function WorkerSecrets({ busy, error = null, onChange, secrets }: WorkerS
           <KeyRound aria-hidden className="mt-0.5 size-4 shrink-0 text-primary" />
           <div className="min-w-0 flex-1">
             <p className="font-medium">
-              Abonnement Claude{claude.label || claude.account ? ` · ${profileName(claude)}` : ''}
+              Abonnement Claude par défaut{claude.label || claude.account ? ` · ${profileName(claude)}` : ''}
             </p>
             <p className="text-muted">
               {claude.available
-                ? 'Copie temporaire de l’accès, supprimée à la fin de la tâche.'
+                ? 'Copie temporaire de l’accès, supprimée à la fin de la tâche. Un dépôt peut en choisir un autre.'
                 : 'Aucun accès à l’abonnement : connecte-toi dans un profil, puis choisis-le ici.'}
             </p>
             {editing === 'profile' && (
@@ -75,6 +77,56 @@ export function WorkerSecrets({ busy, error = null, onChange, secrets }: WorkerS
           {editing !== 'profile' && claude.choices.length > 0 && (
             <Button variant="ghost" size="sm" className="hidden md:inline-flex" onClick={() => setEditing('profile')}>
               Modifier<span className="sr-only"> le profil de l’abonnement</span>
+            </Button>
+          )}
+        </li>
+        <li className="flex items-start gap-3 px-4 py-3">
+          <GitBranch aria-hidden className="mt-0.5 size-4 shrink-0 text-primary" />
+          <div className="min-w-0 flex-1">
+            <p className="font-medium">
+              Compte GitHub par défaut
+              {secrets.github.account && (
+                <>
+                  {' · '}
+                  <span className="font-mono text-xs">{secrets.github.account}</span>
+                </>
+              )}
+            </p>
+            <p className="text-muted">
+              {secrets.github.choices.length > 0
+                ? 'Pour pousser la branche d’une tâche et ouvrir sa PR, sur le poste ; jamais transmis à l’agent. Un dépôt peut en choisir un autre.'
+                : 'Aucun compte connecté à GitHub CLI sur le poste : gh auth login.'}
+            </p>
+            {editing === 'github' && (
+              <form
+                className="mt-2 flex flex-wrap gap-2"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  onChange({ github });
+                  setEditing(null);
+                }}
+              >
+                <select
+                  aria-label="Compte GitHub par défaut"
+                  className="select min-w-0 flex-1 font-mono select-sm"
+                  value={github}
+                  onChange={(event) => setGithub(event.target.value)}
+                >
+                  {secrets.github.choices.map((login) => (
+                    <option key={login} value={login}>
+                      {login}
+                    </option>
+                  ))}
+                </select>
+                <Button type="submit" size="sm" disabled={busy || !github}>
+                  Enregistrer
+                </Button>
+              </form>
+            )}
+          </div>
+          {editing !== 'github' && secrets.github.choices.length > 0 && (
+            <Button variant="ghost" size="sm" className="hidden md:inline-flex" onClick={() => setEditing('github')}>
+              Modifier<span className="sr-only"> le compte GitHub par défaut</span>
             </Button>
           )}
         </li>

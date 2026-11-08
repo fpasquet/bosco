@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import type { RightsFieldDto } from '@bosco/domain';
 import { SectionSkeleton } from '@/shared/components/section-skeleton';
-import { repositoriesQuery, rightsQuery, RightsRefused, updateRights } from '../../api/tasks';
+import { repositoriesQuery, rightsQuery, RightsRefused, updateAccounts, updateRights } from '../../api/tasks';
 import { TASK_STATES } from '../../lib/tasks';
 import { RightsTable } from '../rights-table';
 
@@ -30,6 +30,16 @@ export function RightsScreen() {
     },
     onError: (failure) =>
       setError(failure instanceof RightsRefused ? failure.message : 'Les droits n’ont pas pu être enregistrés.'),
+  });
+  const account = useMutation({
+    mutationFn: ({ field, value }: { field: 'claudeProfile' | 'githubAccount'; value: null | string }) =>
+      updateAccounts(repository ?? '', { [field]: value }),
+    onSuccess: (rights) => {
+      setError(null);
+      client.setQueryData(rightsQuery(repository).queryKey, rights);
+    },
+    onError: (failure) =>
+      setError(failure instanceof RightsRefused ? failure.message : 'Le compte n’a pas pu être enregistré.'),
   });
   return (
     <div className="flex flex-col gap-4 p-4 md:px-8 md:pt-6">
@@ -67,9 +77,10 @@ export function RightsScreen() {
           key={scope}
           rights={data}
           repository={repository}
-          busy={save.isPending}
+          busy={save.isPending || account.isPending}
           error={error}
           onSave={(field, value) => save.mutateAsync({ field, value })}
+          onAccount={(field, value) => account.mutateAsync({ field, value })}
         />
       )}
       <div className="grid gap-3 md:grid-cols-2">

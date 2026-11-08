@@ -21,10 +21,12 @@ export type {
   WaitingDto,
 } from './sessions.ts';
 export type {
+  ClaudeProfileDto,
   EgressRefusalDto,
   GuardrailsDto,
   IsolationDto,
   PullRequestModeDto,
+  RepositoryAccountsDto,
   RightsDto,
   RightsFieldDto,
   RightsValuesDto,

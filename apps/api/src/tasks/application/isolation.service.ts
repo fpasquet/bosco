@@ -16,6 +16,8 @@ export interface IsolationStore {
 
 /** Ce que chaque tâche reçoit (E11b) : l'accès Claude du profil choisi, et le .npmrc choisi s'il existe. */
 export interface SecretsChoice {
+  /** Compte de GitHub CLI par défaut (E11b) ; null : le compte actif de gh */
+  github: null | string;
   /** Fichier .npmrc écrit comme dans le terminal (« ~/.npmrc ») ; null : celui par défaut */
   npmrc: null | string;
   /** Profil Claude Code dont le worker prend l'abonnement ; null : l'accès de la configuration */
@@ -28,6 +30,8 @@ export interface WorkerSecretsReader {
   account(profile: string): Promise<{ account: null | string; credentials: null | string }>;
   /** Le fichier existe sur le poste */
   exists(path: string): Promise<boolean>;
+  /** Comptes de GitHub CLI connectés sur le poste */
+  githubAccounts(): Promise<{ active: boolean; login: string }[]>;
   /** Contenu d'un .npmrc, ou null s'il n'existe pas */
   npmrc(path: string): Promise<null | string>;
   /** Profils Claude Code surveillés */
@@ -52,6 +56,8 @@ export interface SecretsView {
     label: null | string;
     profile: null | string;
   };
+  /** Compte GitHub par défaut : celui choisi, sinon le compte actif de gh */
+  github: { account: null | string; choices: string[] };
   npmrc: { exists: boolean; path: string; registries: NpmRegistry[] };
 }
 
@@ -60,6 +66,7 @@ const NO_SECRETS: { defaults: SecretsDefaults; reader: WorkerSecretsReader } = {
   reader: {
     account: () => Promise.resolve({ account: null, credentials: null }),
     exists: () => Promise.resolve(false),
+    githubAccounts: () => Promise.resolve([]),
     npmrc: () => Promise.resolve(null),
     profiles: () => Promise.resolve([]),
   },
@@ -101,7 +108,7 @@ function expandHome(path: string, home: string): string {
 export class IsolationService {
   private added: string[] = [];
   private agents: number = AGENTS.default;
-  private choice: SecretsChoice = { npmrc: null, profile: null };
+  private choice: SecretsChoice = { github: null, npmrc: null, profile: null };
   private registries: NpmRegistry[] = [];
 
   constructor(
@@ -122,13 +129,20 @@ export class IsolationService {
    * Secrets d'une tâche qui démarre (E11b) : l'accès Claude du profil choisi, et le .npmrc choisi s'il existe, relu
    * à chaque tâche pour que ses registres restent autorisés.
    */
-  async workerSecrets(): Promise<{ credentials: string; npmrc: null | string }> {
+  async workerSecrets(repositoryProfile: null | string = null): Promise<{ credentials: string; npmrc: null | string }> {
     const npmrc = await this.refreshRegistries();
-    const chosen = this.choice.profile ? await this.secrets.reader.account(this.choice.profile) : null;
+    // L'abonnement propre au dépôt (E8a) passe avant celui par défaut
+    const profile = repositoryProfile ?? this.choice.profile;
+    const chosen = profile ? await this.secrets.reader.account(profile) : null;
     return { credentials: chosen?.credentials ?? this.secrets.defaults.credentials, npmrc };
   }
 
-  /** Profil de l'abonnement et .npmrc (E11b) ; valent pour les tâches suivantes. */
+  /** Compte GitHub par défaut : celui choisi, sinon null pour le compte actif de gh. */
+  defaultGithubAccount(): null | string {
+    return this.choice.github;
+  }
+
+  /** Profil de l'abonnement, compte GitHub et .npmrc (E11b) ; valent pour les tâches suivantes. */
   async setSecrets(changes: Partial<SecretsChoice>): Promise<IsolationSnapshot> {
     const next = { ...this.choice, ...changes };
     if (changes.profile) {
@@ -137,6 +151,11 @@ export class IsolationService {
       const { credentials } = await this.secrets.reader.account(changes.profile);
       if (!known || !credentials)
         throw new InvalidIsolation('Ce profil n’a pas d’accès à l’abonnement Claude : connecte-toi dans ce profil.');
+    }
+    if (changes.github) {
+      const accounts = await this.secrets.reader.githubAccounts();
+      if (!accounts.some(({ login }) => login === changes.github))
+        throw new InvalidIsolation('Ce compte n’est pas connecté à GitHub CLI sur le poste : gh auth login.');
     }
     if (changes.npmrc) {
       const path = changes.npmrc.trim();
@@ -251,7 +270,12 @@ export class IsolationService {
       ? accounts.find(({ path }) => path === this.choice.profile)
       : accounts.find(({ credentials }) => credentials === defaults.credentials);
     const npmrc = this.npmrcPath();
+    const github = await reader.githubAccounts();
     return {
+      github: {
+        account: this.choice.github ?? github.find(({ active }) => active)?.login ?? null,
+        choices: github.map(({ login }) => login),
+      },
       claude: {
         account: chosen?.account ?? null,
         available: this.choice.profile ? Boolean(chosen?.credentials) : await reader.exists(defaults.credentials),

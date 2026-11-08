@@ -7,7 +7,14 @@ const meta = {
   title: 'Features/Tasks/RightsTable',
   component: RightsTable,
   parameters: { layout: 'padded' },
-  args: { rights: STORY_RIGHTS, repository: 'api-voix', busy: false, error: null, onSave: fn(() => Promise.resolve()) },
+  args: {
+    rights: STORY_RIGHTS,
+    repository: 'api-voix',
+    busy: false,
+    error: null,
+    onSave: fn(() => Promise.resolve()),
+    onAccount: fn(() => Promise.resolve()),
+  },
 } satisfies Meta<typeof RightsTable>;
 
 export default meta;

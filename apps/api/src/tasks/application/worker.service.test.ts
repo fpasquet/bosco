@@ -64,6 +64,7 @@ function setup(events: AgentEvent[], options: { budgetUsd?: number; hang?: boole
     servicesLaunched: () => Promise.resolve(),
     priceOf: () => 1,
     rightsOf: () => Promise.resolve(DEFAULT_RIGHTS),
+    claudeProfileOf: () => Promise.resolve(null),
     workspaces: {
       cleanupAll: () => Promise.resolve(),
       prepare: ({ branch }) => Promise.resolve({ branch, dir: '/var/lib/bosco/t-1' }),

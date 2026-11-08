@@ -38,9 +38,9 @@ export class MikroOrmIsolationStore implements IsolationStore {
     try {
       const parsed = JSON.parse(row?.value ?? '{}') as Record<string, unknown>;
       const text = (key: string) => (typeof parsed[key] === 'string' ? parsed[key] : null);
-      return { npmrc: text('npmrc'), profile: text('profile') };
+      return { github: text('github'), npmrc: text('npmrc'), profile: text('profile') };
     } catch {
-      return { npmrc: null, profile: null };
+      return { github: null, npmrc: null, profile: null };
     }
   }
 

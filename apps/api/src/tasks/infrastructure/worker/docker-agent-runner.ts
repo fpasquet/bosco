@@ -56,7 +56,7 @@ export interface DockerWorkerOptions {
    * Secrets d'une tâche qui démarre (E11b) : l'accès à l'abonnement Claude du profil choisi (DT-09) et le .npmrc
    * choisi, s'il existe ; une copie de chacun va dans le dossier personnel temporaire de l'agent.
    */
-  secrets: () => Promise<{ credentials: string; npmrc: null | string }>;
+  secrets: (profile: null | string) => Promise<{ credentials: string; npmrc: null | string }>;
   /** Profil du worker : les sessions des agents y sont gardées pour l'historique */
   /** Dossier de la liste des domaines autorisés, monté en lecture seule dans le proxy */
   allowDir: string;
@@ -152,7 +152,7 @@ export class DockerAgentRunner implements AgentRunner, WorkerHealth {
       () => false,
     );
     if (!docker) return 'Docker ne répond pas';
-    const { credentials } = await this.options.secrets();
+    const { credentials } = await this.options.secrets(null);
     if (!existsSync(credentials)) return 'Accès à l’abonnement Claude introuvable';
     if (!existsSync(this.options.claudeBinary)) return 'Claude Code introuvable sur le poste';
     return null;
@@ -219,7 +219,7 @@ export class DockerAgentRunner implements AgentRunner, WorkerHealth {
     const home = join(spec.workspace.dir, 'home');
     const config = join(home, '.claude');
     await mkdir(config, { recursive: true });
-    const secrets = await this.options.secrets();
+    const secrets = await this.options.secrets(spec.claudeProfile);
     await cp(secrets.credentials, join(config, '.credentials.json'));
     // Le .npmrc du poste, jetons compris : en lecture seule, supprimé avec le dossier personnel à la fin (E11b)
     if (secrets.npmrc) {

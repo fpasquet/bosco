@@ -15,7 +15,9 @@ import { estimateCostMicros } from '../sessions/domain/model-pricing.ts';
 import { TokenUsage } from '../sessions/domain/token-usage.ts';
 import { SessionsModule } from '../sessions/sessions.module.ts';
 import { SESSION_SERVICE, SOURCE_SERVICE } from '../sessions/tokens.ts';
+import { GhAccounts, scriptedGithubAccounts } from '../shared/infrastructure/github/gh-accounts.ts';
 import { CONFIG, ORM } from '../shared/tokens.ts';
+import { AccountsService } from './application/accounts.service.ts';
 import { IsolationService } from './application/isolation.service.ts';
 import { ReviewService } from './application/review.service.ts';
 import { RightsService } from './application/rights.service.ts';
@@ -23,6 +25,7 @@ import { TaskService, type TaskView } from './application/task.service.ts';
 import { TestEnvironmentService } from './application/test-environment.service.ts';
 import { WorkerService } from './application/worker.service.ts';
 import { AllowListFile } from './infrastructure/isolation/allow-list-file.ts';
+import { MikroOrmAccountsStore } from './infrastructure/persistence/accounts.store.ts';
 import { MikroOrmIsolationStore } from './infrastructure/persistence/isolation.store.ts';
 import { MikroOrmRightsStore } from './infrastructure/persistence/rights.store.ts';
 import { MikroOrmTaskRepository } from './infrastructure/persistence/task.repository.ts';
@@ -42,6 +45,7 @@ import { TestEnvironmentController } from './interface/http/test-environment.con
 import { WorkerController } from './interface/http/worker.controller.ts';
 import { McpController } from './interface/mcp/mcp.controller.ts';
 import {
+  ACCOUNTS_SERVICE,
   AGENT_RUNNER,
   ISOLATION_SERVICE,
   REPOSITORY_CATALOG,
@@ -89,12 +93,26 @@ const TICK_MS = 5000;
         new TaskService(new MikroOrmTaskRepository(orm), catalog, rights, bus, clock),
     },
     {
+      provide: ACCOUNTS_SERVICE,
+      inject: [ORM, ISOLATION_SERVICE],
+      useFactory: (orm: MikroORM, isolation: IsolationService) =>
+        new AccountsService(new MikroOrmAccountsStore(orm), isolation),
+    },
+    {
       provide: REVIEW_SERVICE,
-      inject: [CONFIG, TASK_SERVICE, RIGHTS_SERVICE],
-      useFactory: (config: Config, tasks: TaskService, rights: RightsService) =>
-        config.testing
-          ? new ReviewService(tasks, scriptedReview, scriptedReview, rights)
-          : new ReviewService(tasks, new GitChanges(), new GhPublisher(config.worker.gh), rights),
+      inject: [CONFIG, TASK_SERVICE, RIGHTS_SERVICE, ACCOUNTS_SERVICE],
+      useFactory: (config: Config, tasks: TaskService, rights: RightsService, accounts: AccountsService) => {
+        const githubAccountOf = (repository: string) => accounts.githubAccountOf(repository);
+        return config.testing
+          ? new ReviewService(tasks, scriptedReview, scriptedReview, rights, githubAccountOf)
+          : new ReviewService(
+              tasks,
+              new GitChanges(),
+              new GhPublisher(config.worker.gh, new GhAccounts(config.worker.gh)),
+              rights,
+              githubAccountOf,
+            );
+      },
     },
     {
       provide: TEST_ENVIRONMENT_SERVICE,
@@ -119,7 +137,10 @@ const TICK_MS = 5000;
         };
         return new IsolationService(new MikroOrmIsolationStore(orm), new AllowListFile(join(worker, 'egress')), {
           defaults: { credentials: config.worker.credentials, home: config.profilesRoot, npmrc: '~/.npmrc' },
-          reader: new FileWorkerSecrets(profiles),
+          reader: new FileWorkerSecrets(
+            profiles,
+            config.testing ? scriptedGithubAccounts : new GhAccounts(config.worker.gh),
+          ),
         });
       },
     },
@@ -134,7 +155,7 @@ const TICK_MS = 5000;
         const { gid, uid } = userInfo();
         return new DockerAgentRunner({
           claudeBinary: config.worker.claudeBinary,
-          secrets: () => isolation.workerSecrets(),
+          secrets: (profile) => isolation.workerSecrets(profile),
           allowDir: join(config.dataDir, 'worker', 'egress'),
           onRefusal: (refusal) => void isolation.refused(refusal).catch(() => undefined),
           onSessionSaved,
@@ -154,6 +175,7 @@ const TICK_MS = 5000;
         RIGHTS_SERVICE,
         CONTEXT_SERVICE,
         LINKS_SERVICE,
+        ACCOUNTS_SERVICE,
       ],
       useFactory: (
         config: Config,
@@ -164,6 +186,7 @@ const TICK_MS = 5000;
         rights: RightsService,
         context: ContextService,
         links: LinksService,
+        accounts: AccountsService,
       ) =>
         new WorkerService({
           contextOf: async (task) => {
@@ -185,6 +208,10 @@ const TICK_MS = 5000;
           freeMemory: freemem,
           maxAgents: () => isolation.maxAgents(),
           rightsOf: (repository) => rights.rightsOf(repository),
+          claudeProfileOf: async (repository) => {
+            const own = await accounts.of(repository);
+            return own.claudeProfile;
+          },
           workspaces: config.testing ? scriptedWorkspaces : new GitWorkspaces(join(config.dataDir, 'workspaces')),
           priceOf: (model, usage) => {
             const micros = estimateCostMicros(
@@ -196,7 +223,7 @@ const TICK_MS = 5000;
         }),
     },
   ],
-  exports: [TASK_SERVICE, WORKER_SERVICE, AGENT_RUNNER, ISOLATION_SERVICE, RIGHTS_SERVICE],
+  exports: [TASK_SERVICE, WORKER_SERVICE, AGENT_RUNNER, ISOLATION_SERVICE, RIGHTS_SERVICE, ACCOUNTS_SERVICE],
 })
 export class TasksModule implements OnApplicationBootstrap, OnApplicationShutdown {
   private timer: ReturnType<typeof setInterval> | undefined;
@@ -208,10 +235,17 @@ export class TasksModule implements OnApplicationBootstrap, OnApplicationShutdow
     @Inject(ISOLATION_SERVICE) private readonly isolation: IsolationService,
     @Inject(TASK_SERVICE) private readonly tasks: TaskService,
     @Inject(SESSION_SERVICE) private readonly sessions: SessionService,
+    @Inject(LINKS_SERVICE) private readonly links: LinksService,
+    @Inject(ACCOUNTS_SERVICE) private readonly accounts: AccountsService,
   ) {}
 
   async onApplicationBootstrap(): Promise<void> {
     await this.isolation.load();
+    // Les liens GitHub d'une tâche se lisent avec le compte de son dépôt (E8a)
+    this.links.useGithubAccounts(async (taskId) => {
+      const task = await this.tasks.get(taskId);
+      return this.accounts.githubAccountOf(task.repository.name);
+    });
     // La session d'un agent suit l'état de sa tâche : À relire, En échec (E2c, E2d)
     const link = (task: TaskView) =>
       task.mode === 'worker' && task.outcome.sessionId

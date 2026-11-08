@@ -25,6 +25,8 @@ export interface AtlassianAccess {
 
 export interface IntegrationSettings {
   confluence: AtlassianAccess | null;
+  /** Compte GitHub du dépôt de la tâche (E8a) ; null : le compte actif de gh */
+  githubAccount?: null | string;
   jira: AtlassianAccess | null;
 }
 
@@ -81,6 +83,9 @@ export class LinksService {
     { checkedAt: Date; error: null | string; failingSince: Date | null }
   >();
   private lastRefresh: Date | null = null;
+
+  /** Compte GitHub du dépôt d'une tâche, donné par le contexte des tâches (E8a) */
+  private githubAccountOf: (taskId: number) => Promise<null | string> = () => Promise.resolve(null);
 
   constructor(
     private readonly links: LinkRepository,
@@ -193,11 +198,17 @@ export class LinksService {
     this.health.delete(name);
   }
 
+  /** Les liens GitHub d'une tâche se lisent avec le compte de son dépôt (E8a). */
+  useGithubAccounts(githubAccountOf: (taskId: number) => Promise<null | string>): void {
+    this.githubAccountOf = githubAccountOf;
+  }
+
   private async read(link: LinkSnapshot, settings: IntegrationSettings): Promise<LinkSnapshot> {
     const reader = this.readers[link.service];
     const name = link.service === 'page' || link.service === 'decision' ? null : link.service;
     try {
-      const reading = await reader.read(link, settings);
+      const githubAccount = link.service === 'github' ? await this.githubAccountOf(link.taskId) : null;
+      const reading = await reader.read(link, { ...settings, githubAccount });
       if (name) this.health.set(name, { checkedAt: this.clock.now(), error: null, failingSince: null });
       return { ...link, ...reading, readAt: this.clock.now(), error: null };
     } catch (error) {
