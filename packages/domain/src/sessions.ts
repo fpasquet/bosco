@@ -143,6 +143,8 @@ export interface NotificationDto {
   excerpt: null | string;
   id: number;
   kind: 'ended' | 'failed' | 'long-turn' | 'permission' | 'question' | 'review' | 'turn-question';
+  /** Dépôt de la session ou de la tâche (« api-voix ») */
+  place: null | string;
   readAt: null | string;
   sessionId: null | string;
   /** Traitée (« Autorisé dans Bosco », « Répondu dans le terminal », « Validée ») : elle sort de « À traiter » */

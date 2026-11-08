@@ -185,7 +185,7 @@ export class SessionService {
       if (event.question && event.at && now - event.at.getTime() < RECENT_QUESTION_MS)
         await this.notifications.notify(
           { kind: 'question' },
-          { sessionId: view.id, taskId: null, title, excerpt: event.question },
+          { place: view.repository?.name ?? null, sessionId: view.id, taskId: null, title, excerpt: event.question },
         );
       else if (event.kind === 'prompt' && event.at && now - event.at.getTime() < RECENT_QUESTION_MS)
         await this.notifications.settle({ sessionId: view.id, kinds: ASKING }, 'Répondu');

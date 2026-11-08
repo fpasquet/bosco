@@ -12,6 +12,8 @@ import {
 /** Ce que la notification désigne : une session ou une tâche, son titre, et un extrait. */
 export interface NotificationSubject {
   excerpt: null | string;
+  /** Dépôt de la session ou de la tâche */
+  place: null | string;
   sessionId: null | string;
   taskId: null | number;
   title: string;
@@ -74,6 +76,7 @@ export class NotificationService {
       at,
       excerpt: subject.excerpt,
       kind,
+      place: subject.place,
       readAt: null,
       sessionId: subject.sessionId,
       settled: null,

@@ -38,10 +38,10 @@ Feature: Sources and settings
     When I install live tracking for the profile ".claude-perso"
     And Claude Code sends the hook "fixtures/hooks/stop.json" of the profile ".claude-perso"
     Then the desktop notifications should be:
-      | title                                     | body                                                   |
-      | Question · Specs du tableau de bord Bosco | Le digest est généré. Veux-tu que je lance les tests ? |
+      | title              | body                                                                                         |
+      | Question · labo-ia | <b>Specs du tableau de bord Bosco</b>\nLe digest est généré. Veux-tu que je lance les tests ? |
     When I send PUT request to "/api/settings" with the JSON "fixtures/settings-no-notifications.json"
     And Claude Code sends the hook "fixtures/hooks/permission-request.json" of the profile ".claude-perso" without waiting
     Then the desktop notifications should be:
-      | title                                     | body                                                   |
-      | Question · Specs du tableau de bord Bosco | Le digest est généré. Veux-tu que je lance les tests ? |
+      | title              | body                                                                                         |
+      | Question · labo-ia | <b>Specs du tableau de bord Bosco</b>\nLe digest est généré. Veux-tu que je lance les tests ? |

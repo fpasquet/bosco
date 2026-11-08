@@ -99,6 +99,8 @@ export interface NotificationRecord {
   /** Traitée : répondue, relue, relancée ; elle sort de « À traiter » */
   settled: null | string;
   taskId: null | number;
+  /** Dépôt de la session ou de la tâche (« api-voix ») : il titre la notification du bureau */
+  place: null | string;
   /** Session ou tâche concernée (« T-12 · Ajouter la prononciation de « SNCF » au lexique ») */
   title: string;
   /** Durée du tour, pour une fin de long tour */
@@ -106,6 +108,57 @@ export interface NotificationRecord {
 }
 
 export const NOTIFICATION_RETENTION_DAYS = 7;
+
+/** Longueur au-delà de laquelle l'extrait d'un message ne garde que ses dernières phrases */
+export const EXCERPT_MAX = 180;
+
+/** Le Markdown d'un message en texte simple, sur une ligne : la notification et le tiroir ne l'interprètent pas. */
+export function plainText(markdown: string): string {
+  return markdown
+    .replaceAll(/```\w*/g, '')
+    .replaceAll(/\]\([^)\s]*\)/g, ']')
+    .replaceAll('![', '[')
+    .replaceAll(/\[([^\]\n]{0,200})\]/g, '$1')
+    .replaceAll('`', '')
+    .replaceAll('**', '')
+    .replaceAll(/(^|\s)\*([^*\s][^*]*)\*/g, '$1$2')
+    .replaceAll(/^\s{0,3}(?:#{1,6}|>|[-*+]|\d+\.)\s+/gm, '')
+    .replaceAll(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * Extrait de la fin d'un message, là où l'agent conclut ou pose sa question : ses dernières phrases entières (une
+ * phrase s'arrête aussi à un point-virgule ou à deux-points), sans Markdown. Une dernière phrase trop longue garde sa
+ * fin, depuis le début d'un mot.
+ */
+export function messageExcerpt(message: null | string): null | string {
+  if (!message) return null;
+  const text = plainText(message);
+  if (text.length <= EXCERPT_MAX) return text || null;
+  const clauses = text.split(/(?<=[.!?;:…])\s+/);
+  let excerpt = '';
+  for (const clause of clauses.toReversed()) {
+    const longer = excerpt ? `${clause} ${excerpt}` : clause;
+    if (longer.length > EXCERPT_MAX) break;
+    excerpt = longer;
+  }
+  if (!excerpt) {
+    const tail = text.slice(-(EXCERPT_MAX - 1));
+    return `…${tail.slice(tail.indexOf(' ') + 1)}`;
+  }
+  return excerpt.charAt(0).toLocaleUpperCase('fr') + excerpt.slice(1);
+}
+
+/** Un titre coupé à la fin d'un mot, pour tenir sur une ligne. */
+export function shortTitle(title: string, max: number): string {
+  if (title.length <= max) return title;
+  const cut = title.slice(0, max - 1);
+  const space = cut.lastIndexOf(' ');
+  let kept = space > 0 ? cut.slice(0, space) : cut;
+  while (kept && ' ,;:.·-'.includes(kept.at(-1) ?? '')) kept = kept.slice(0, -1);
+  return `${kept}…`;
+}
 
 /** Libellé du type, en tête de la notification (E15a, E15b). */
 export const KIND_LABELS: Record<NotificationKind, string> = {

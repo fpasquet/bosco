@@ -298,7 +298,12 @@ async function notifyTask(
   task: TaskView,
   before: string | undefined,
 ): Promise<void> {
-  const subject = { sessionId: task.outcome.sessionId, taskId: task.id, title: `T-${task.id} · ${task.title}` };
+  const subject = {
+    place: task.repository.name,
+    sessionId: task.outcome.sessionId,
+    taskId: task.id,
+    title: `T-${task.id} · ${task.title}`,
+  };
   if (before === 'to_review' || before === 'failed')
     await notifications.settle({ taskId: task.id, kinds: ['failed', 'review'] }, SETTLED[task.state] ?? 'Traitée');
   if (task.mode !== 'worker') return;
