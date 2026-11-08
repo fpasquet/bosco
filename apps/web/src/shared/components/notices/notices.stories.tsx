@@ -7,38 +7,45 @@ const meta = {
   component: Notices,
   parameters: { layout: 'fullscreen' },
   decorators: [
-    (Story) => {
-      useNotices.setState({
-        notices: [
-          { id: 1, text: 'Autorisé · Specs du tableau de bord Bosco', tone: 'success' },
-          { id: 2, text: 'Répondu dans le terminal · Digest quotidien de la veille média', tone: 'info' },
-        ],
-      });
-      return (
-        <div className="h-64">
-          <Story />
-        </div>
-      );
-    },
+    (Story) => (
+      <div className="h-80">
+        <Story />
+      </div>
+    ),
   ],
 } satisfies Meta<typeof Notices>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Settled: Story = {};
-
-/** Un message qui propose une action, le temps qu'il reste affiché (E13c). */
-export const WithAction: Story = {
+/** Les trois sens d'un message (E15c) : réussi, information avec action, question qui reste affichée. */
+export const ThreeKinds: Story = {
   decorators: [
     (Story) => {
       useNotices.setState({
         notices: [
           {
-            id: 3,
-            text: 'T-12 annulée',
-            tone: 'info',
+            duration: null,
+            id: 1,
+            line: 'Bash · npm run db:migrate',
+            text: 'Autorisé · Specs du tableau de bord Bosco',
+            tone: 'success',
+          },
+          {
             action: { label: 'Annuler l’annulation', run: () => undefined },
+            duration: null,
+            id: 2,
+            line: 'Documenter le lexique dans le README',
+            text: 'T-17 annulée',
+            tone: 'info',
+          },
+          {
+            action: { label: 'Ouvrir', run: () => undefined },
+            duration: null,
+            id: 3,
+            line: '« Le digest est généré. Veux-tu que je lance les tests ? »',
+            text: 'Question · Digest quotidien de la veille média',
+            tone: 'warning',
           },
         ],
       });
@@ -46,3 +53,5 @@ export const WithAction: Story = {
     },
   ],
 };
+
+export const Phone: Story = { ...ThreeKinds, globals: { viewport: { value: 'mobile1' } } };

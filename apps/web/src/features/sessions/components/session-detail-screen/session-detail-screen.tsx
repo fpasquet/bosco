@@ -3,13 +3,12 @@ import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { JournalEntryDto, SessionDto } from '@bosco/domain';
-import { Notices } from '@/shared/components/notices';
 import { PageSkeleton } from '@/shared/components/page-skeleton';
+import { useNow } from '@/shared/hooks/use-now';
 import { sessionConversationQuery, sessionDetailQuery, sessionsQuery } from '../../api/sessions';
 import { sourcesQuery } from '../../api/sources';
 import { useCopy } from '../../hooks/use-copy';
 import { useLiveEvents } from '../../hooks/use-live-events';
-import { useNow } from '../../hooks/use-now';
 import { usePermissionAnswers } from '../../hooks/use-permission-answers';
 import { useOffline } from '../../lib/connection';
 import { profileOf, resumeCommand } from '../../lib/detail';
@@ -107,7 +106,6 @@ export function SessionDetailScreen({ id }: { id: string }) {
         <SessionSide session={session} now={now} resume={resume} onCopy={copy} />
       </div>
       <AllowDialog session={answers.confirming} onCancel={answers.cancel} onConfirm={answers.confirm} />
-      <Notices />
     </div>
   );
 }

@@ -2,12 +2,11 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import type { SessionDto, SourcesDto } from '@bosco/domain';
-import { Notices } from '@/shared/components/notices';
 import { PageSkeleton } from '@/shared/components/page-skeleton';
+import { useNow } from '@/shared/hooks/use-now';
 import { importProgressQuery, sessionsQuery } from '../../api/sessions';
 import { sourcesQuery } from '../../api/sources';
 import { useLiveEvents } from '../../hooks/use-live-events';
-import { useNow } from '../../hooks/use-now';
 import { usePermissionAnswers } from '../../hooks/use-permission-answers';
 import { useOffline } from '../../lib/connection';
 import { formatCost } from '../../lib/format';
@@ -110,7 +109,6 @@ function LiveOverview({ repository, sources, title }: OverviewProps & { sources:
         <EndedToday repository={repository} sessions={endedToday(all, now)} />
       )}
       <AllowDialog session={answers.confirming} onCancel={answers.cancel} onConfirm={answers.confirm} />
-      <Notices />
     </div>
   );
 }

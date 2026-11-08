@@ -1,7 +1,6 @@
 'use client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { Notices } from '@/shared/components/notices';
 import { PageSkeleton } from '@/shared/components/page-skeleton';
 import { useNotices } from '@/shared/hooks/use-notices';
 import { Button } from '@/shared/ui/button';
@@ -174,7 +173,6 @@ export function TaskDetailScreen({ id }: { id: number }) {
           onValidate={(pullRequest) => validate.mutate(pullRequest)}
         />
       )}
-      <Notices />
     </div>
   );
 }

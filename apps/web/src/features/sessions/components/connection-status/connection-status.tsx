@@ -1,5 +1,5 @@
 'use client';
-import { useNow } from '../../hooks/use-now';
+import { useNow } from '@/shared/hooks/use-now';
 import { useConnection } from '../../lib/connection';
 import { OfflineBanner } from '../offline-banner';
 

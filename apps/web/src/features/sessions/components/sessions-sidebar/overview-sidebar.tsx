@@ -1,9 +1,9 @@
 'use client';
 import { useQuery } from '@tanstack/react-query';
+import { useNow } from '@/shared/hooks/use-now';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { sessionsQuery } from '../../api/sessions';
 import { sourcesQuery } from '../../api/sources';
-import { useNow } from '../../hooks/use-now';
 import { useOffline } from '../../lib/connection';
 import { displayPath } from '../../lib/format';
 import { openSessions, repositoriesOf } from '../../lib/overview';

@@ -1,8 +1,10 @@
 import type { ReactNode } from 'react';
+import { Notices } from '@/shared/components/notices';
 import { Logo } from '@/shared/ui/logo';
 import { APP_NAME } from '@bosco/domain';
 import { NAV_ITEMS } from './nav-items';
 import { NavLink } from './nav-link';
+import { ShellBell } from './shell-slots';
 
 interface AppShellProps {
   children: ReactNode;
@@ -23,6 +25,7 @@ export function AppShell({ children, sidebar, title }: AppShellProps) {
           <Logo />
           <span className="font-display text-sm font-semibold text-nav-ink">{APP_NAME}</span>
           <span className="ml-auto badge badge-ghost font-mono badge-xs">local</span>
+          <ShellBell />
         </div>
         <nav aria-label="Navigation principale" className="flex flex-col gap-0.5">
           {NAV_ITEMS.map(({ href, icon: Icon, label }) => (
@@ -42,6 +45,9 @@ export function AppShell({ children, sidebar, title }: AppShellProps) {
         <header className="flex h-14 shrink-0 items-center gap-3 border-b border-line bg-nav px-4 text-nav-ink md:hidden">
           <Logo labelled />
           <h1 className="truncate font-display text-base font-semibold">{title}</h1>
+          <span className="ml-auto">
+            <ShellBell />
+          </span>
         </header>
         <main className="min-h-0 flex-1 overflow-y-auto">{children}</main>
         <nav
@@ -60,6 +66,7 @@ export function AppShell({ children, sidebar, title }: AppShellProps) {
           ))}
         </nav>
       </div>
+      <Notices />
     </div>
   );
 }
