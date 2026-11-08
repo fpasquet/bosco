@@ -117,3 +117,30 @@ export interface TestEnvironmentDto {
   selected: string[];
   services: { image: null | string; name: string }[];
 }
+
+export type PullRequestModeDto = 'always' | 'ask' | 'never';
+
+/** Droits d'un dépôt pour ses agents (E8a). */
+export interface RightsValuesDto {
+  concurrency: number;
+  deniedTools: string[];
+  maxBudgetUsd: number;
+  maxTurns: number;
+  model: string;
+  pullRequest: PullRequestModeDto;
+  tools: string[];
+}
+
+export type RightsFieldDto = keyof RightsValuesDto;
+
+/** Droits des agents (E8a) : le général, les valeurs du dépôt, et ce qui s'applique vraiment avec son origine. */
+export interface RightsDto {
+  effective: RightsValuesDto;
+  general: RightsValuesDto;
+  models: string[];
+  origins: Record<RightsFieldDto, 'dépôt' | 'général' | 'général + dépôt'>;
+  /** Tâches pas encore lancées du dépôt, qui appliqueront ces droits au lancement */
+  pending: { id: number; state: TaskStateDto; title: string }[];
+  /** null pour les réglages généraux */
+  repository: null | Partial<RightsValuesDto>;
+}

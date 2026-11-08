@@ -11,12 +11,13 @@ import { SessionsModule } from '../sessions/sessions.module.ts';
 import { SESSION_SERVICE } from '../sessions/tokens.ts';
 import { CONFIG, ORM } from '../shared/tokens.ts';
 import { IsolationService } from './application/isolation.service.ts';
+import { RightsService } from './application/rights.service.ts';
 import { TaskService } from './application/task.service.ts';
 import { TestEnvironmentService } from './application/test-environment.service.ts';
 import { WorkerService } from './application/worker.service.ts';
-import { DEFAULT_RIGHTS } from './domain/rights.ts';
 import { AllowListFile } from './infrastructure/isolation/allow-list-file.ts';
 import { MikroOrmIsolationStore } from './infrastructure/persistence/isolation.store.ts';
+import { MikroOrmRightsStore } from './infrastructure/persistence/rights.store.ts';
 import { MikroOrmTaskRepository } from './infrastructure/persistence/task.repository.ts';
 import { MikroOrmTestEnvironmentStore } from './infrastructure/persistence/test-environment.store.ts';
 import { TaskEventsBus } from './infrastructure/task-events.bus.ts';
@@ -25,6 +26,7 @@ import { DockerAgentRunner } from './infrastructure/worker/docker-agent-runner.t
 import { GitWorkspaces } from './infrastructure/worker/git-workspaces.ts';
 import { ScriptedAgentRunner, scriptedWorkspaces } from './infrastructure/worker/scripted-agent.ts';
 import { IsolationController } from './interface/http/isolation.controller.ts';
+import { RightsController } from './interface/http/rights.controller.ts';
 import { TasksController } from './interface/http/tasks.controller.ts';
 import { TestEnvironmentController } from './interface/http/test-environment.controller.ts';
 import { WorkerController } from './interface/http/worker.controller.ts';
@@ -32,6 +34,7 @@ import {
   AGENT_RUNNER,
   ISOLATION_SERVICE,
   REPOSITORY_CATALOG,
+  RIGHTS_SERVICE,
   TASK_EVENTS,
   TASK_SERVICE,
   TEST_ENVIRONMENT_SERVICE,
@@ -43,12 +46,10 @@ const clock = { now: () => new Date() };
 /** Le worker repasse à cet intervalle, et à chaque changement de tâche (E5c : il revérifie seul). */
 const TICK_MS = 5000;
 
-const rights = { rightsOf: () => Promise.resolve(DEFAULT_RIGHTS) };
-
 /** Contexte des tâches (RF-TACH) ; les dépôts viennent des sessions, par le point de composition. */
 @Module({
   imports: [SessionsModule],
-  controllers: [TasksController, WorkerController, IsolationController, TestEnvironmentController],
+  controllers: [TasksController, WorkerController, IsolationController, TestEnvironmentController, RightsController],
   providers: [
     { provide: TASK_EVENTS, useValue: new TaskEventsBus() },
     {
@@ -66,9 +67,14 @@ const rights = { rightsOf: () => Promise.resolve(DEFAULT_RIGHTS) };
       }),
     },
     {
+      provide: RIGHTS_SERVICE,
+      inject: [ORM],
+      useFactory: (orm: MikroORM) => new RightsService(new MikroOrmRightsStore(orm)),
+    },
+    {
       provide: TASK_SERVICE,
-      inject: [ORM, REPOSITORY_CATALOG, TASK_EVENTS],
-      useFactory: (orm: MikroORM, catalog: RepositoryCatalog, bus: TaskEventsBus) =>
+      inject: [ORM, REPOSITORY_CATALOG, TASK_EVENTS, RIGHTS_SERVICE],
+      useFactory: (orm: MikroORM, catalog: RepositoryCatalog, bus: TaskEventsBus, rights: RightsService) =>
         new TaskService(new MikroOrmTaskRepository(orm), catalog, rights, bus, clock),
     },
     {
@@ -108,13 +114,14 @@ const rights = { rightsOf: () => Promise.resolve(DEFAULT_RIGHTS) };
     },
     {
       provide: WORKER_SERVICE,
-      inject: [CONFIG, TASK_SERVICE, AGENT_RUNNER, ISOLATION_SERVICE, TEST_ENVIRONMENT_SERVICE],
+      inject: [CONFIG, TASK_SERVICE, AGENT_RUNNER, ISOLATION_SERVICE, TEST_ENVIRONMENT_SERVICE, RIGHTS_SERVICE],
       useFactory: (
         config: Config,
         tasks: TaskService,
         runner: DockerAgentRunner | ScriptedAgentRunner,
         isolation: IsolationService,
         environments: TestEnvironmentService,
+        rights: RightsService,
       ) =>
         new WorkerService({
           environmentOf: (task) => environments.forTask(task.repository),
@@ -124,7 +131,7 @@ const rights = { rightsOf: () => Promise.resolve(DEFAULT_RIGHTS) };
           health: runner,
           freeMemory: freemem,
           maxAgents: () => isolation.maxAgents(),
-          rightsOf: rights.rightsOf,
+          rightsOf: (repository) => rights.rightsOf(repository),
           workspaces: config.testing ? scriptedWorkspaces : new GitWorkspaces(join(config.dataDir, 'workspaces')),
           priceOf: (model, usage) => {
             const micros = estimateCostMicros(
@@ -136,7 +143,7 @@ const rights = { rightsOf: () => Promise.resolve(DEFAULT_RIGHTS) };
         }),
     },
   ],
-  exports: [TASK_SERVICE, WORKER_SERVICE, AGENT_RUNNER, ISOLATION_SERVICE],
+  exports: [TASK_SERVICE, WORKER_SERVICE, AGENT_RUNNER, ISOLATION_SERVICE, RIGHTS_SERVICE],
 })
 export class TasksModule implements OnApplicationBootstrap, OnApplicationShutdown {
   private timer: ReturnType<typeof setInterval> | undefined;

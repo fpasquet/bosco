@@ -17,6 +17,7 @@ const SETTINGS = [
   /^\/api\/sources/,
   /^\/api\/settings/,
   /^\/api\/isolation/,
+  /^\/api\/rights/,
   /^\/api\/repositories\/[^/]+\/test-environment/,
 ];
 

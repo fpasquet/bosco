@@ -160,6 +160,7 @@ export class WorkerService {
         workspace,
         folder: task.folder,
         image: environment.image,
+        deniedTools: rights.deniedTools,
         services: environment.services,
         onServices: (launches) => void this.deps.servicesLaunched(task, launches).catch(() => undefined),
         prompt: promptOf(task),
