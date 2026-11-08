@@ -113,6 +113,7 @@ export const STORY_ISOLATION: IsolationDto = {
       label: 'pro',
       profile: '/home/dev/.claude',
     },
+    github: { account: 'camille-dev', choices: ['camille-dev', 'camille-pro'] },
     npmrc: { exists: true, path: '~/.npmrc', registries: [{ host: 'npm.registre.exemple.dev', scope: '@interne' }] },
   },
   limits: { memory: 4 * 1024 ** 3, cpus: 2, processes: 512 },
@@ -173,6 +174,25 @@ const GENERAL_RIGHTS: RightsValuesDto = {
 
 /** Droits des agents d'api-voix du fil rouge (E8a). */
 export const STORY_RIGHTS: RightsDto = {
+  accounts: {
+    claude: {
+      choices: [
+        { account: 'camille@exemple.dev', label: 'pro', path: '/home/dev/.claude' },
+        { account: 'camille.perso@exemple.dev', label: 'perso', path: '/home/dev/.claude-perso' },
+      ],
+      effective: { account: 'camille.perso@exemple.dev', label: 'perso', path: '/home/dev/.claude-perso' },
+      general: { account: 'camille@exemple.dev', label: 'pro', path: '/home/dev/.claude' },
+      origin: 'dépôt',
+      repository: { account: 'camille.perso@exemple.dev', label: 'perso', path: '/home/dev/.claude-perso' },
+    },
+    github: {
+      choices: ['camille-dev', 'camille-pro'],
+      effective: 'camille-dev',
+      general: 'camille-dev',
+      origin: 'général',
+      repository: null,
+    },
+  },
   general: GENERAL_RIGHTS,
   repository: {
     tools: ['Read', 'Write', 'Edit', 'Grep', 'Bash(npm test)', 'Bash(npm run lint)'],

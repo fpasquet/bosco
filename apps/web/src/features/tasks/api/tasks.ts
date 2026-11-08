@@ -103,6 +103,24 @@ export async function updateRights(repository: null | string, changes: Partial<R
   return (await response.json()) as RightsDto;
 }
 
+/** Abonnement Claude et compte GitHub d'un dépôt (E8a) ; null revient au défaut de l'isolation du worker. */
+export async function updateAccounts(
+  repository: string,
+  changes: Partial<Record<'claudeProfile' | 'githubAccount', null | string>>,
+): Promise<RightsDto> {
+  const response = await fetch(`/api/rights/repositories/${encodeURIComponent(repository)}/accounts`, {
+    method: 'PUT',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(changes),
+  });
+  if (response.status === 400) {
+    const { message } = (await response.json()) as { message?: string };
+    throw new RightsRefused(message ?? 'Compte refusé.');
+  }
+  if (!response.ok) throw new Error(`PUT accounts answered ${response.status}`);
+  return (await response.json()) as RightsDto;
+}
+
 export const changesQuery = (id: number) => ({
   queryKey: ['task-changes', id],
   queryFn: () => read<TaskChangesDto>(`/api/tasks/${id}/changes`),

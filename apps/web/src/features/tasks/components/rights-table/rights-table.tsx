@@ -5,6 +5,7 @@ import type { RightsDto, RightsFieldDto, RightsValuesDto } from '@bosco/domain';
 import { cn } from '@/lib/cn';
 import { Button } from '@/shared/ui/button';
 import { modelLabel, PULL_REQUEST_LABELS, RIGHTS_FIELDS, RIGHTS_LABELS, rightsValue } from '../../lib/rights';
+import { type AccountField, AccountItems, AccountRows } from './account-rows';
 
 export interface RightsTableProps {
   busy: boolean;
@@ -13,6 +14,8 @@ export interface RightsTableProps {
   /** Nom du dépôt ; null pour les réglages généraux */
   repository: null | string;
   rights: RightsDto;
+  /** Abonnement Claude ou compte GitHub du dépôt ; null revient au défaut */
+  onAccount: (field: AccountField, value: null | string) => Promise<unknown>;
   /** null : revenir au général ; la promesse échoue quand l'API refuse la valeur */
   onSave: (field: RightsFieldDto, value: unknown) => Promise<unknown>;
 }
@@ -111,7 +114,7 @@ function Editor({
  * Droits des agents (E8a), ligne par ligne : la valeur générale, celle du dépôt et celle qui s'applique, avec son
  * origine. Une tâche peut resserrer ces droits, jamais les dépasser.
  */
-export function RightsTable({ busy, error, onSave, repository, rights }: RightsTableProps) {
+export function RightsTable({ busy, error, onAccount, onSave, repository, rights }: RightsTableProps) {
   const [editing, setEditing] = useState<null | RightsFieldDto>(null);
   const own = rights.repository;
   const save = (field: RightsFieldDto, value: unknown) =>
@@ -212,6 +215,13 @@ export function RightsTable({ busy, error, onSave, repository, rights }: RightsT
                 </tr>
               );
             })}
+            <AccountRows
+              accounts={rights.accounts}
+              busy={busy}
+              error={error}
+              repository={repository}
+              onSave={onAccount}
+            />
           </tbody>
         </table>
       </div>
@@ -228,6 +238,7 @@ export function RightsTable({ busy, error, onSave, repository, rights }: RightsT
             )}
           </li>
         ))}
+        <AccountItems accounts={rights.accounts} repository={repository} />
       </ul>
     </>
   );

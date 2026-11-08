@@ -15,7 +15,7 @@ export interface IsolationEgressProps {
   now: Date;
   onAdd: (domain: string) => void;
   onRemove: (domain: string) => void;
-  onSecrets: (changes: { npmrc?: string; profile?: string }) => void;
+  onSecrets: (changes: { github?: string; npmrc?: string; profile?: string }) => void;
   /** Refus de l'API pour le profil ou le .npmrc */
   secretsError?: null | string;
 }

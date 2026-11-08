@@ -21,6 +21,7 @@ export const Missing: Story = {
   args: {
     secrets: {
       claude: { account: null, available: false, choices: [], label: null, profile: null },
+      github: { account: null, choices: [] },
       npmrc: { exists: false, path: '~/.npmrc', registries: [] },
     },
   },
