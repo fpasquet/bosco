@@ -235,6 +235,47 @@ export class TaskService {
     return this.commit(tasks, [task, ...failed], id);
   }
 
+  /**
+   * « Prends la prochaine tâche Bosco » (mode Ma session) : la plus ancienne tâche en attente d'une session dont le
+   * dépôt contient le dossier de la session. null s'il n'y en a pas.
+   */
+  async takeNext(path: string, sessionId: null | string): Promise<null | TaskView> {
+    const tasks = await this.tasks.list();
+    const candidates = tasks
+      .filter((task) => {
+        const { mode, repository, state } = task.toSnapshot();
+        return (
+          mode === 'session' &&
+          state === 'awaiting_session' &&
+          (path === repository.root || path.startsWith(`${repository.root}/`))
+        );
+      })
+      .toSorted((a, b) => a.id - b.id);
+    const next = candidates[0];
+    if (!next) return null;
+    const at = this.clock.now();
+    next.start(at, 'prise par une session');
+    if (sessionId) next.progress(0, { sessionId }, at);
+    return this.commit(tasks, [next], next.id);
+  }
+
+  /** Dépôt connu qui contient ce dossier, et le dossier à l'intérieur (« packages/rag ») ; null s'il n'y en a pas. */
+  async repositoryOf(path: string): Promise<null | { folder: string; name: string }> {
+    const known = await this.catalog.list();
+    const found = known
+      .filter(({ root }) => path === root || path.startsWith(`${root}/`))
+      .toSorted((a, b) => b.root.length - a.root.length)[0];
+    return found ? { name: found.name, folder: path.slice(found.root.length + 1) } : null;
+  }
+
+  /** Une étape signalée par la session qui a pris la tâche. */
+  async note(id: number, step: string): Promise<TaskView> {
+    const tasks = await this.tasks.list();
+    const task = this.find(tasks, id);
+    task.note(step, this.clock.now());
+    return this.commit(tasks, [task], id);
+  }
+
   /** Rejet avec relance (E7b) : le motif rejoint la consigne, la tâche repart de sa branche, les suivantes attendent. */
   async rejectAndRelaunch(id: number, reason: string): Promise<TaskView> {
     const tasks = await this.tasks.list();

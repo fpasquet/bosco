@@ -34,6 +34,7 @@ import { RightsController } from './interface/http/rights.controller.ts';
 import { TasksController } from './interface/http/tasks.controller.ts';
 import { TestEnvironmentController } from './interface/http/test-environment.controller.ts';
 import { WorkerController } from './interface/http/worker.controller.ts';
+import { McpController } from './interface/mcp/mcp.controller.ts';
 import {
   AGENT_RUNNER,
   ISOLATION_SERVICE,
@@ -61,6 +62,7 @@ const TICK_MS = 5000;
     TestEnvironmentController,
     RightsController,
     ReviewController,
+    McpController,
   ],
   providers: [
     { provide: TASK_EVENTS, useValue: new TaskEventsBus() },

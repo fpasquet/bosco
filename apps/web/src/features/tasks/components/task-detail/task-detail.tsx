@@ -151,6 +151,14 @@ export function TaskDetail({ busy, failing, onCancel, onRelaunch, task }: TaskDe
             {task.repository.name}
             {task.folder ? ` · ${task.folder}` : ''} · {task.mode === 'worker' ? 'Worker' : 'Ma session'}
             {task.createdBy === 'session' ? ' · créée par une session' : ''}
+            {task.outcome.sessionId && (
+              <>
+                {' · '}
+                <Link href={`/sessions/${task.outcome.sessionId}`} className="link font-sans">
+                  Voir la session
+                </Link>
+              </>
+            )}
           </p>
         </div>
         <div className="flex gap-2">
@@ -180,6 +188,12 @@ export function TaskDetail({ busy, failing, onCancel, onRelaunch, task }: TaskDe
             onCancel();
           }}
         />
+      )}
+      {task.state === 'awaiting_session' && (
+        <p className="rounded-card border border-line bg-surface-alt px-4 py-3">
+          À prendre depuis Claude Code sur le poste : dans le dépôt, demande « prends la prochaine tâche Bosco ». Le
+          serveur MCP de Bosco s’ajoute à un profil avec <code className="font-mono">bosco mcp install</code>.
+        </p>
       )}
       {task.outcome.pullRequest && (
         <p className="rounded-card border border-line bg-surface px-4 py-3">

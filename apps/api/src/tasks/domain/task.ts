@@ -190,6 +190,12 @@ export class Task {
     this.move('running', at, 'Démarrée', detail);
   }
 
+  /** Étape signalée par la session qui a pris la tâche (mode Ma session), gardée dans le journal. */
+  note(step: string, at: Date): void {
+    if (this.snapshot.state !== 'running') throw new TaskError('taskNotRunning', `Task T-${this.id} is not running`);
+    this.move('running', at, 'Étape', step);
+  }
+
   /** Avancement de l'agent : dépense, tours, branche et session, tenus à jour pendant qu'il travaille. */
   progress(spentUsd: number, outcome: Partial<TaskOutcome>, at: Date): void {
     this.snapshot = { ...this.snapshot, spentUsd, updatedAt: at, outcome: { ...this.snapshot.outcome, ...outcome } };

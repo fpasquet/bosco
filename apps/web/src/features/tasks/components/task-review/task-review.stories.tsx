@@ -24,3 +24,14 @@ type Story = StoryObj<typeof meta>;
 export const ToReview: Story = {};
 
 export const Phone: Story = { globals: { viewport: { value: 'mobile1' } } };
+
+export const MySession: Story = {
+  args: {
+    task: {
+      ...STORY_REVIEW_TASK,
+      mode: 'session',
+      outcome: { ...STORY_REVIEW_TASK.outcome, base: null, branch: null, from: null },
+    },
+    changes: undefined,
+  },
+};
