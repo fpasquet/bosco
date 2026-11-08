@@ -1,9 +1,9 @@
 'use client';
 import { useState } from 'react';
 import type { SessionDto } from '@bosco/domain';
+import { useNotices } from '@/shared/hooks/use-notices';
 import { answerPermission, type PermissionAnswerDto } from '../api/sessions';
 import { titleOf } from '../components/sessions-table';
-import { useNotices } from '../lib/notices';
 
 /** Téléphone : « Autoriser » demande une confirmation rappelant la commande (RF-SESS-07, CA-SESS-37). */
 const onPhone = () => globalThis.matchMedia?.('(max-width: 767px)').matches ?? false;

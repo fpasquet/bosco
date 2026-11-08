@@ -1,9 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite';
-import { useNotices } from '../../lib/notices';
+import { useNotices } from '@/shared/hooks/use-notices';
 import { Notices } from './notices';
 
 const meta = {
-  title: 'Features/Sessions/Notices',
+  title: 'Shared/Notices',
   component: Notices,
   parameters: { layout: 'fullscreen' },
   decorators: [
@@ -27,3 +27,22 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Settled: Story = {};
+
+/** Un message qui propose une action, le temps qu'il reste affiché (E13c). */
+export const WithAction: Story = {
+  decorators: [
+    (Story) => {
+      useNotices.setState({
+        notices: [
+          {
+            id: 3,
+            text: 'T-12 annulée',
+            tone: 'info',
+            action: { label: 'Annuler l’annulation', run: () => undefined },
+          },
+        ],
+      });
+      return <Story />;
+    },
+  ],
+};

@@ -3,16 +3,16 @@ import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/rea
 import { ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
+import { Notices } from '@/shared/components/notices';
 import { PageSkeleton } from '@/shared/components/page-skeleton';
+import { useNotices } from '@/shared/hooks/use-notices';
 import { APP_NAME, type SourceDto } from '@bosco/domain';
 import { installLiveTracking, liveTrackingQuery, uninstallLiveTracking } from '../../api/live-tracking';
 import { type SettingsDto, settingsQuery, updateSettings } from '../../api/settings';
 import { setSourceWatched, sourcesQuery } from '../../api/sources';
 import { useNow } from '../../hooks/use-now';
 import { displayPath } from '../../lib/format';
-import { useNotices } from '../../lib/notices';
 import { LiveTrackingPanel, type LiveTrackingStep } from '../live-tracking-panel';
-import { Notices } from '../notices';
 import { SettingsPanel } from '../settings-panel';
 import { SourceCard } from '../source-card';
 
