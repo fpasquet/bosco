@@ -1,9 +1,11 @@
 'use client';
 import { Copy, RefreshCw } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 import { useEffect, useRef } from 'react';
 import { Button } from '@/shared/ui/button';
 import { APP_NAME } from '@bosco/domain';
 import type { PairingCodeDto } from '../../api/access';
+import { pairingLink } from '../../lib/pairing';
 
 export interface PairingDialogProps {
   code: null | PairingCodeDto;
@@ -36,7 +38,8 @@ export function PairingDialog({ code, now, onCancel, onCopy, onNewCode, open, ur
     if (open && element && !element.open) element.showModal();
     if (!open && element?.open) element.close();
   }, [open]);
-  const expired = code ? new Date(code.expiresAt) <= now : true;
+  // Le code tant qu'il vaut : le QR code et l'affichage n'en montrent pas d'expiré
+  const current = code && new Date(code.expiresAt) > now ? code : null;
   return (
     <dialog ref={dialog} className="modal" aria-labelledby="pairing-title" onClose={onCancel}>
       <div className="modal-box flex flex-col gap-4">
@@ -47,8 +50,27 @@ export function PairingDialog({ code, now, onCancel, onCopy, onNewCode, open, ur
           <p className="text-xs text-muted">Le téléphone se connecte sur le même réseau.</p>
         </div>
         <ol className="flex flex-col gap-4">
-          <li className="flex flex-col gap-1.5">
-            <p className="font-medium">1. Sur le téléphone, connecté au même réseau, ouvre</p>
+          <li className="flex flex-col gap-2">
+            <p className="font-medium">1. Sur le téléphone, connecté au même réseau, scanne ce QR code</p>
+            {url && (
+              <div className="flex items-center gap-4">
+                <QRCodeSVG
+                  value={pairingLink(url, current?.code ?? null)}
+                  size={144}
+                  marginSize={2}
+                  level="M"
+                  bgColor="transparent"
+                  fgColor="currentColor"
+                  role="img"
+                  aria-label="QR code de l’adresse du poste et du code d’appairage"
+                  className="shrink-0 rounded-control border border-line bg-surface p-1 text-ink"
+                />
+                <p className="text-xs text-muted">
+                  L’appareil photo ouvre {APP_NAME} avec le code déjà rempli : le téléphone s’appaire seul.
+                </p>
+              </div>
+            )}
+            <p className="text-xs text-muted">Ou ouvre cette adresse :</p>
             <div className="flex items-center gap-2">
               <code className="min-w-0 flex-1 truncate rounded-control bg-surface-alt px-3 py-2 font-mono text-sm">
                 {url ?? '…'}
@@ -68,13 +90,13 @@ export function PairingDialog({ code, now, onCancel, onCopy, onNewCode, open, ur
             </p>
           </li>
           <li className="flex flex-col gap-1">
-            <p className="font-medium">3. Saisis ce code</p>
+            <p className="font-medium">3. Saisis ce code, s’il n’est pas déjà rempli</p>
             <p aria-live="polite" className="font-mono text-3xl font-semibold tracking-widest tabular-nums">
-              {code && !expired ? spaced(code.code) : '—'}
+              {current ? spaced(current.code) : '—'}
             </p>
             <p className="text-xs text-muted">
-              {code && !expired
-                ? `Valable encore ${remaining(code.expiresAt, now)} · à usage unique`
+              {current
+                ? `Valable encore ${remaining(current.expiresAt, now)} · à usage unique`
                 : 'Code expiré : génère un nouveau code.'}
             </p>
           </li>

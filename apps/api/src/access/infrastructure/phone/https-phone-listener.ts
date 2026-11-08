@@ -1,6 +1,7 @@
 // Écoute HTTPS du téléphone sur le réseau local (DT-10, NF-13) : ouverte seulement quand l'accès est activé, elle
 // passe chaque requête au même serveur que le poste, après le contrôle du jeton de l'appareil (NF-14).
 import type { IncomingMessage, ServerResponse } from 'node:http';
+import type { Duplex } from 'node:stream';
 import { createServer, type Server } from 'node:https';
 import { networkInterfaces } from 'node:os';
 import type { PhoneListener } from '../../application/ports.ts';
@@ -40,6 +41,8 @@ export interface PhoneListenerOptions {
   host: null | string;
   /** Requête passée au serveur du poste (Fastify) */
   handle: (request: IncomingMessage, response: ServerResponse) => void;
+  /** Connexion WebSocket passée au serveur du poste ; seules celles de l'interface (/_next/) sont admises */
+  upgrade?: (request: IncomingMessage, socket: Duplex, head: Buffer) => void;
   port: number;
 }
 
@@ -73,6 +76,11 @@ export class HttpsPhoneListener implements PhoneListener {
     if (!host) throw new Error('No local network address: the phone cannot reach this workstation');
     const certificate = await certificateFor(this.options.dataDir, this.hosts);
     const server = createServer(certificate, (request, response) => void this.gate(request, response));
+    server.on('upgrade', (request: IncomingMessage, socket: Duplex, head: Buffer) => {
+      const upgrade = this.options.upgrade;
+      if (upgrade && request.url?.startsWith('/_next/')) upgrade(request, socket, head);
+      else socket.destroy();
+    });
     await new Promise<void>((resolve, reject) => {
       server.once('error', reject);
       server.listen(this.options.port, host, resolve);
