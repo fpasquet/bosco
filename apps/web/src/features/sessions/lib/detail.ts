@@ -15,6 +15,8 @@ export function clockOf(iso: string): string {
 export function resumeCommand(session: SessionDto, sources: readonly SourceDto[], home: string): null | string {
   if (session.state !== 'ended') return null;
   const source = sources.find((candidate) => candidate.id === session.sourceId);
+  // Une session du worker se réinstalle d'abord dans ton profil (E2c, E2d)
+  if (session.task) return `bosco resume ${session.id}`;
   const resume = `claude --resume ${session.id}`;
   return !source || source.path.endsWith('/.claude')
     ? resume

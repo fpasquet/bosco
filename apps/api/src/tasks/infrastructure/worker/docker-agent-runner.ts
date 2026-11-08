@@ -4,7 +4,7 @@
 // sortie est le proxy de la tâche, qui ne laisse passer que les domaines autorisés (E11b). Tout est supprimé à la fin.
 import { execFile, spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { cp, mkdir, open, writeFile } from 'node:fs/promises';
+import { cp, mkdir, open, readdir, readFile, writeFile } from 'node:fs/promises';
 import { extname, join } from 'node:path';
 import { createInterface } from 'node:readline';
 import { fileURLToPath } from 'node:url';
@@ -59,8 +59,37 @@ export interface DockerWorkerOptions {
   allowDir: string;
   /** Chaque refus du proxy, attribué à sa tâche (E11b) */
   onRefusal: (refusal: EgressRefusal) => void;
+  /** Une session d'agent rejoint le profil du worker : il devient une source surveillée (E2c, E2d) */
+  onSessionSaved: () => void;
   profile: string;
   user: string;
+}
+
+/** Dossier d'un projet tel que Claude Code le nomme : le chemin, chaque caractère hors lettres et chiffres en « - ». */
+export function projectDir(path: string): string {
+  return path.replaceAll(/[^a-zA-Z0-9]/g, '-');
+}
+
+/**
+ * Sessions de l'agent gardées dans le profil du worker, rattachées au dépôt du poste : /work devient la racine du
+ * dépôt, dans le fil comme dans le nom du dossier, pour que l'historique les range avec le dépôt et que la reprise
+ * fonctionne depuis le poste. true si une session a été gardée.
+ */
+async function keepSessions(from: string, to: string, repository: { folder: string; root: string }): Promise<boolean> {
+  const hostPath = repository.folder ? join(repository.root, repository.folder) : repository.root;
+  const escaped = JSON.stringify(repository.root).slice(1, -1);
+  let saved = false;
+  for (const dir of await readdir(from)) {
+    const target = join(to, projectDir(hostPath));
+    await mkdir(target, { recursive: true });
+    const files = await readdir(join(from, dir));
+    for (const file of files.filter((name) => name.endsWith('.jsonl'))) {
+      const content = await readFile(join(from, dir, file), 'utf8');
+      await writeFile(join(target, file), content.replaceAll(/"cwd":\s*"\/work/g, `"cwd":"${escaped}`));
+      saved = true;
+    }
+  }
+  return saved;
 }
 
 /** Suit les refus notés par le proxy dans son journal, depuis la dernière lecture. */
@@ -269,9 +298,11 @@ export class DockerAgentRunner implements AgentRunner, WorkerHealth {
     const finished = new Promise<void>((resolve) => child.on('exit', () => resolve())).then(async () => {
       clearInterval(polling);
       await readRefusals().catch(() => undefined);
-      await cp(join(config, 'projects'), join(this.options.profile, 'projects'), { recursive: true }).catch(
-        () => undefined,
-      );
+      const saved = await keepSessions(join(config, 'projects'), join(this.options.profile, 'projects'), {
+        folder: spec.folder,
+        root: spec.repositoryRoot,
+      }).catch(() => false);
+      if (saved) this.options.onSessionSaved();
       await this.services.remove(services.containers);
       await run(DOCKER, ['rm', '--force', isolation.proxy]).catch(() => undefined);
       await run(DOCKER, ['network', 'rm', isolation.network]).catch(() => undefined);

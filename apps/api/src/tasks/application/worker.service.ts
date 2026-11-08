@@ -159,6 +159,7 @@ export class WorkerService {
         taskId: task.id,
         workspace,
         folder: task.folder,
+        repositoryRoot: task.repository.root,
         image: environment.image,
         deniedTools: rights.deniedTools,
         services: environment.services,

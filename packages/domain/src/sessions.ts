@@ -52,6 +52,8 @@ export interface SessionDto {
   /** Réponses de l'agent */
   turns: number;
   usage: { cacheCreation: number; cacheRead: number; input: number; output: number };
+  /** Tâche du worker qui a lancé la session (E2c, E2d) ; null pour une session interactive */
+  task: null | { failure: null | string; id: number; state: string; title: string };
   waiting: null | WaitingDto;
 }
 

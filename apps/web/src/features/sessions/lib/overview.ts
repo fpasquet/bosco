@@ -49,15 +49,20 @@ function isToday(iso: string, now: Date): boolean {
  * ouvert, une session sans événement depuis aujourd'hui y passe aussi.
  */
 export function openSessions(sessions: readonly SessionDto[], now: Date): SessionDto[] {
-  return sessions.filter((session) =>
-    session.state === 'ended' ? false : session.state !== 'inactive' || isToday(session.lastEventAt, now),
-  );
+  return sessions.filter((session) => {
+    // Une session du worker à relire reste en vue tant que sa tâche n'est pas relue (E1b, E2c)
+    if (session.task?.state === 'to_review') return true;
+    return session.state === 'ended' ? false : session.state !== 'inactive' || isToday(session.lastEventAt, now);
+  });
 }
 
 /** Sessions terminées aujourd'hui, des plus récentes aux plus anciennes (E1c, E1d). */
 export function endedToday(sessions: readonly SessionDto[], now: Date): SessionDto[] {
   return sessions
-    .filter((session) => session.state === 'ended' && isToday(session.lastEventAt, now))
+    .filter(
+      (session) =>
+        session.state === 'ended' && session.task?.state !== 'to_review' && isToday(session.lastEventAt, now),
+    )
     .toSorted((left, right) => right.lastEventAt.localeCompare(left.lastEventAt));
 }
 
