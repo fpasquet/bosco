@@ -4,9 +4,27 @@ import type { DataTable } from 'playwright-bdd';
 import { expect } from '@playwright/test';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import type { SessionDetailDto } from '@bosco/domain';
 import { FEATURES } from '../paths.ts';
 import { Given, Then, When } from './fixtures.ts';
+
+/** Ce que les scénarios lisent du détail d'une session (le paquet e2e ne dépend pas du contrat partagé) */
+interface SessionView {
+  channel?: boolean;
+  pilot: null | {
+    pending: null | { text: string };
+    running: boolean;
+    settings: { effort: null | string; model: null | string; permissionMode: string };
+  };
+  repository: null | { name: string };
+  waiting:
+    | null
+    | { kind: 'permission'; detail: null | string; requestId: string }
+    | { kind: 'question'; questions: { question: string }[]; requestId: string }
+    | { kind: 'turn'; message: null | string };
+}
+interface SessionDetailDto {
+  session: SessionView;
+}
 
 /** Session démarrée par le scénario : son identifiant vient de Bosco */
 let started = '';
