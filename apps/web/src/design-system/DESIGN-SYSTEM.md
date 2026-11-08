@@ -30,7 +30,7 @@ de chaque étape, sous 120 lignes. Les conventions sont dans `.claude/rules/desi
 - 2026-11-07 · Commentaire de `theme.css` reformulé : il citait `--spacing-*: initial`, que l'audit prenait pour une restriction réelle de l'échelle.
 
 - 2026-11-08 · Fil des sessions sur les patterns d'AI Elements (Reasoning, Tool, Terminal, Test Results, Stack Trace, Task) : composants shadcn `trace`, `code-block`, `message`, `bubble` et `collapsible` (style `radix-nova`, `components.json`), rangés par `rehome.mjs` sous des classes du projet. États par classes de modificateur (`trace-line-error`, `message-end`, `code-block-sm`) au lieu des `data-*` de shadcn ; `shimmer`, `scroll-fade` et `scrollbar-thin` de shadcn remplacés par `animate-pulse` et du CSS standard.
-- 2026-11-08 · Markdown des agents par Streamdown (`shared/components/markdown`), mis en forme par la classe `markdown` (ses propres classes ne sont pas compilées) ; blocs de code par `HighlightedCode` (CodeBlock + Shiki). Thèmes Shiki `github-light-high-contrast` et `github-dark-high-contrast` : `github-light` échoue au contraste AA sur les lignes ajoutées ou retirées.
+- 2026-11-08 · Markdown des agents par Streamdown (`shared/components/markdown`), mis en forme par la classe `markdown` : ses éléments sont rendus sans les classes de Streamdown, dont certaines (`text-3xl`) seraient compilées par ailleurs et l'emporteraient ; blocs de code par `HighlightedCode` (CodeBlock + Shiki). Thèmes Shiki `github-light-high-contrast` et `github-dark-high-contrast` : `github-light` échoue au contraste AA sur les lignes ajoutées ou retirées.
 
 ## Migration
 

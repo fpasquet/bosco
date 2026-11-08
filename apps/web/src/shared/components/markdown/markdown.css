@@ -9,6 +9,10 @@
   .markdown > * {
     @apply max-w-full min-w-0;
   }
+  /* Streamdown pose la classe border sur ses tableaux : sans couleur, Tailwind prendrait celle du texte */
+  .markdown * {
+    @apply border-line;
+  }
   .markdown :is(h1, h2, h3, h4, h5, h6) {
     @apply font-display font-semibold text-balance text-ink;
   }

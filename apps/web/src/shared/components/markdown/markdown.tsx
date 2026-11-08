@@ -2,6 +2,7 @@
 import { Streamdown } from 'streamdown';
 import { cn } from '@/lib/cn';
 import { MarkdownCode } from './markdown-code';
+import { plainElement } from './markdown-element';
 import { MarkdownLink } from './markdown-link';
 
 export interface MarkdownProps {
@@ -9,7 +10,33 @@ export interface MarkdownProps {
   className?: string;
 }
 
-const COMPONENTS = { a: MarkdownLink, code: MarkdownCode };
+const PLAIN = [
+  'blockquote',
+  'em',
+  'h1',
+  'h2',
+  'h3',
+  'h4',
+  'h5',
+  'h6',
+  'hr',
+  'li',
+  'ol',
+  'p',
+  'strong',
+  'table',
+  'tbody',
+  'td',
+  'th',
+  'thead',
+  'tr',
+  'ul',
+] as const;
+const COMPONENTS = {
+  ...Object.fromEntries(PLAIN.map((tag) => [tag, plainElement(tag)])),
+  a: MarkdownLink,
+  code: MarkdownCode,
+};
 const NO_LINK_CHECK = { enabled: false };
 
 /**
