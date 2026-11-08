@@ -11,7 +11,7 @@ function budgetOf(task: TaskDto): string {
 }
 
 /** File des tâches (E5b) : toute ligne ouvre le détail de la tâche (CA-TACH-13). */
-export function TaskList({ tasks }: { tasks: TaskDto[] }) {
+export function TaskList({ tasks, waiting = {} }: { tasks: TaskDto[]; waiting?: Record<number, string> }) {
   if (tasks.length === 0) return <p className="text-muted">Aucune tâche ici.</p>;
   return (
     <div className="overflow-x-auto rounded-card border border-line bg-surface shadow-card">
@@ -39,6 +39,14 @@ export function TaskList({ tasks }: { tasks: TaskDto[] }) {
                     {task.folder ? ` · ${task.folder}` : ''}
                   </span>
                   {whyWaiting(task) && <span>· {whyWaiting(task)}</span>}
+                  {waiting[task.id] && <span>· {waiting[task.id]}</span>}
+                  {task.outcome.changes && (
+                    <span>
+                      · {task.outcome.changes.files} fichiers{' '}
+                      <span className="text-success">+{task.outcome.changes.added}</span>{' '}
+                      <span className="text-danger">−{task.outcome.changes.removed}</span>
+                    </span>
+                  )}
                   {task.createdBy === 'session' && <span>· créée par une session</span>}
                   {task.failure && task.state !== 'cancelled' && <span>· {task.failure}</span>}
                 </span>

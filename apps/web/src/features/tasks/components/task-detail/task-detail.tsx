@@ -180,6 +180,17 @@ export function TaskDetail({ busy, failing, onCancel, onRelaunch, task }: TaskDe
             <p className="whitespace-pre-line">{task.instruction}</p>
             {task.context && <p className="mt-2 text-sm text-muted">Contexte : {task.context}</p>}
           </section>
+          {task.outcome.report && (
+            <section
+              aria-labelledby="report-title"
+              className="rounded-card border border-line bg-surface p-4 shadow-card"
+            >
+              <h2 id="report-title" className="mb-2 text-xs font-semibold text-muted">
+                Compte rendu de l’agent
+              </h2>
+              <p className="whitespace-pre-line">{task.outcome.report}</p>
+            </section>
+          )}
           {failed && <Relaunch busy={busy} onRelaunch={onRelaunch} task={task} />}
           <section aria-labelledby="log-title" className="rounded-card border border-line bg-surface p-4 shadow-card">
             <h2 id="log-title" className="mb-2 text-xs font-semibold text-muted">
@@ -242,8 +253,19 @@ export function TaskDetail({ busy, failing, onCancel, onRelaunch, task }: TaskDe
                 </div>
                 <div className="flex justify-between gap-3">
                   <dt className="text-muted">Tours</dt>
-                  <dd className="font-mono text-xs">{task.guardrails.maxTurns}</dd>
+                  <dd className="font-mono text-xs">
+                    {task.outcome.turns > 0 ? `${task.outcome.turns} / ` : ''}
+                    {task.guardrails.maxTurns}
+                  </dd>
                 </div>
+                {task.outcome.branch && (
+                  <div className="flex justify-between gap-3">
+                    <dt className="text-muted">Branche</dt>
+                    <dd className="truncate font-mono text-xs" title={task.outcome.branch}>
+                      {task.outcome.branch}
+                    </dd>
+                  </div>
+                )}
                 <div className="flex justify-between gap-3">
                   <dt className="text-muted">Outils</dt>
                   <dd className="text-right text-xs">{task.guardrails.tools?.join(', ') ?? 'ceux du dépôt'}</dd>

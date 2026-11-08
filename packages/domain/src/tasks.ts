@@ -32,6 +32,14 @@ export interface TaskDto {
   instruction: string;
   log: { at: string; detail: null | string; event: string }[];
   mode: TaskModeDto;
+  /** Ce que le worker a produit : branche, compte rendu, modifications, session, tours (E7a) */
+  outcome: {
+    branch: null | string;
+    changes: { added: number; files: number; removed: number } | null;
+    report: null | string;
+    sessionId: null | string;
+    turns: number;
+  };
   prerequisites: number[];
   repository: { name: string; root: string };
   spentUsd: number;
@@ -58,4 +66,14 @@ export interface TaskDraftDto {
 export interface TaskIssueDto {
   field: 'budgetUsd' | 'instruction' | 'maxTurns' | 'prerequisites' | 'repository' | 'tools';
   message: string;
+}
+
+/** État du worker (GET /api/worker, E5b, E5c). */
+export interface WorkerStatusDto {
+  capacity: number;
+  running: number;
+  /** null quand le worker est disponible ; sinon la raison (« Docker ne répond pas ») */
+  unavailable: null | string;
+  /** Pourquoi une tâche prête reste en file, par numéro de tâche */
+  waiting: Record<number, string>;
 }

@@ -16,6 +16,7 @@ import {
 import { concatWith, defer, from, map, type Observable } from 'rxjs';
 import { z } from 'zod';
 import type { RepositoryCatalog } from '../../application/ports.ts';
+import type { WorkerService } from '../../application/worker.service.ts';
 import type { TaskEventsBus } from '../../infrastructure/task-events.bus.ts';
 import { DomainError } from '../../../shared/domain/domain-error.ts';
 import { parseBody } from '../../../shared/interface/http/parse-body.ts';
@@ -26,7 +27,7 @@ import {
   type TaskView,
   UnknownTask,
 } from '../../application/task.service.ts';
-import { REPOSITORY_CATALOG, TASK_EVENTS, TASK_SERVICE } from '../../tokens.ts';
+import { REPOSITORY_CATALOG, TASK_EVENTS, TASK_SERVICE, WORKER_SERVICE } from '../../tokens.ts';
 import { presentTask, type TaskDto } from './task.presenter.ts';
 
 const draftSchema = z.object({
@@ -85,6 +86,7 @@ export class TasksController {
     @Inject(TASK_SERVICE) private readonly tasks: TaskService,
     @Inject(TASK_EVENTS) private readonly bus: TaskEventsBus,
     @Inject(REPOSITORY_CATALOG) private readonly catalog: RepositoryCatalog,
+    @Inject(WORKER_SERVICE) private readonly worker: WorkerService,
   ) {}
 
   /** Dépôts où une tâche peut se créer : ceux des sessions des profils surveillés (E6a). */
@@ -135,9 +137,12 @@ export class TasksController {
     return guardTask(() => this.tasks.edit(id, draft));
   }
 
+  /** Annulation : l'agent d'une tâche en cours s'arrête en quelques secondes, la branche reste (RF-TACH-07). */
   @Post('tasks/:id/cancel')
   async cancel(@Param('id', ParseIntPipe) id: number): Promise<TaskDto> {
-    return guardTask(() => this.tasks.cancel(id));
+    const task = await guardTask(() => this.tasks.cancel(id));
+    await this.worker.stop(id);
+    return task;
   }
 
   @Post('tasks/:id/relaunch')

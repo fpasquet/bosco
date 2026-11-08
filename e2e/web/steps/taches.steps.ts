@@ -35,3 +35,12 @@ Given(
 When('je clique sur le bouton {texte} de la confirmation', async ({ page }, name: string) => {
   await page.getByRole('alertdialog').getByRole('button', { name }).click();
 });
+
+Given('Docker ne répond pas', async ({ bosco }) => {
+  const response = await fetch(`${bosco.url}/__test/worker`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ unavailable: 'Docker ne répond pas' }),
+  });
+  expect(response.status).toBe(204);
+});

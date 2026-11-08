@@ -1,4 +1,4 @@
-import type { TaskDraftDto, TaskDto, TaskIssueDto } from '@bosco/domain';
+import type { TaskDraftDto, TaskDto, TaskIssueDto, WorkerStatusDto } from '@bosco/domain';
 
 async function read<T>(path: string): Promise<T> {
   const response = await fetch(path);
@@ -43,6 +43,20 @@ export const cancellationQuery = (id: number) => ({
   queryKey: ['task-cancellation', id],
   queryFn: async () => (await read<{ failing: TaskDto[] }>(`/api/tasks/${id}/cancellation`)).failing,
 });
+
+/** État du worker, relu à cet intervalle : il revérifie seul (E5c). */
+export const workerQuery = {
+  queryKey: ['worker'],
+  queryFn: () => read<WorkerStatusDto>('/api/worker'),
+  refetchInterval: 5000,
+};
+
+/** « Réessayer » : le worker revérifie Docker et l'abonnement tout de suite (CA-TACH-16). */
+export async function checkWorker(): Promise<WorkerStatusDto> {
+  const response = await fetch('/api/worker/check', { method: 'POST' });
+  if (!response.ok) throw new Error(`POST /api/worker/check answered ${response.status}`);
+  return (await response.json()) as WorkerStatusDto;
+}
 
 export const createTask = (draft: TaskDraftDto) => send('POST', '/api/tasks', draft);
 export const editTask = (id: number, draft: TaskDraftDto) => send('PUT', `/api/tasks/${id}`, draft);

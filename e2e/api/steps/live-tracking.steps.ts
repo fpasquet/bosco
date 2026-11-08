@@ -128,3 +128,25 @@ Then('the desktop notifications should be:', async ({ request }, table: DataTabl
   const { notifications } = (await response.json()) as { notifications: { body: string; title: string }[] };
   expect(notifications).toEqual(table.hashes());
 });
+
+Given('Docker does not answer', async ({ request }) => {
+  const response = await request.post('/__test/worker', { data: { unavailable: 'Docker ne répond pas' } });
+  expect(response.status()).toBe(204);
+});
+
+Then('the task {int} should become {string}', async ({ request }, id: number, state: string) => {
+  await expect
+    .poll(
+      async () => {
+        const response = await request.get(`/api/tasks/${id}`);
+        return ((await response.json()) as { state: string }).state;
+      },
+      { timeout: 10_000 },
+    )
+    .toBe(state);
+});
+
+When('I ask the worker to check again', async ({ last, request }) => {
+  const response = await request.post('/api/worker/check');
+  last.response = { status: response.status(), body: (await response.json()) as unknown };
+});

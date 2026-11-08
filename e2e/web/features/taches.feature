@@ -47,3 +47,21 @@ Fonctionnalité: Tâches
     Alors je ne vois pas le bouton « Annuler la tâche »
     Quand j'ouvre la page « /tasks/2 »
     Alors je vois le message « Préalable T-1 annulée »
+
+  @CA-TACH-14
+  @CA-TACH-17
+  @NF-18
+  Scénario: Sans Docker, la file le dit et les tâches du worker attendent
+    Étant donné Docker ne répond pas
+    Et une tâche du worker « Ajoute un test du découpage. » existe dans le dépôt « labo-ia »
+    Quand j'ouvre la page « /tasks »
+    Alors je vois le texte « Le worker ne peut pas lancer d’agent : Docker ne répond pas. »
+    Et je vois le texte « Worker indisponible »
+    Et la page est accessible
+
+  @CA-TACH-32
+  Scénario: Une tâche du worker attend la relecture avec le compte rendu de l'agent
+    Étant donné une tâche du worker « Ajoute un test du découpage. » existe dans le dépôt « labo-ia »
+    Quand j'ouvre la page « /tasks/1 »
+    Alors je vois le titre « Compte rendu de l’agent »
+    Et je vois le texte « Fait : Ajoute un test du découpage. »
