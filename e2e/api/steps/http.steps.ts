@@ -133,3 +133,7 @@ Then('the response property {string} should not contain {string}', ({ last }, pa
     .reduce<unknown>((node, key) => (node as Record<string, unknown> | undefined)?.[key], last.response?.body);
   expect(String(actual)).not.toContain(value);
 });
+
+Then('the response should not contain {string}', ({ last }, value: string) => {
+  expect(JSON.stringify(last.response?.body)).not.toContain(value);
+});
