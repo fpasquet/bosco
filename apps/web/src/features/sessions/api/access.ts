@@ -26,14 +26,17 @@ async function send<T>(path: string, method: string, body?: unknown): Promise<T>
   return (response.status === 204 ? undefined : await response.json()) as T;
 }
 
+/** Réservés au poste : depuis le téléphone, la réponse est un refus définitif (403), sans nouvel essai. */
 export const phoneAccessQuery = {
   queryKey: ['phone-access'],
   queryFn: () => send<PhoneAccessDto>('/api/phone-access', 'GET'),
+  retry: false,
 };
 
 export const devicesQuery = {
   queryKey: ['devices'],
   queryFn: async () => (await send<{ devices: DeviceDto[] }>('/api/devices', 'GET')).devices,
+  retry: false,
 };
 
 export const setPhoneAccess = (enabled: boolean) => send<PhoneAccessDto>('/api/phone-access', 'PUT', { enabled });

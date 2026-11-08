@@ -32,7 +32,7 @@ export function PhoneAccess() {
   const push = useNotices((state) => state.push);
   const [code, setCode] = useState<null | PairingCodeDto>(null);
   const known = useRef<Set<string>>(new Set());
-  const { data: access } = useQuery(phoneAccessQuery);
+  const { data: access, isPending } = useQuery(phoneAccessQuery);
   const { data: devices } = useQuery({ ...devicesQuery, refetchInterval: code ? WAITING_REFRESH_MS : false });
   const newCode = useMutation({ mutationFn: issuePairingCode, onSuccess: setCode });
   const enable = useMutation({
@@ -61,12 +61,14 @@ export function PhoneAccess() {
       push('Téléphone appairé', 'success');
     }
   }, [code, devices, push]);
-  if (!access)
+  if (isPending)
     return (
       <div className="px-4 py-3">
         <Skeleton className="h-10 w-full" />
       </div>
     );
+  // Réservé au poste : depuis le téléphone, la carte n'apparaît pas
+  if (!access) return null;
   return (
     <div className="flex flex-col gap-3 px-4 py-3">
       <div className="flex flex-wrap items-center gap-4">
