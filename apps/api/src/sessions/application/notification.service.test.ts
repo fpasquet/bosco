@@ -4,7 +4,7 @@ import type { NotificationRecord } from '../domain/notification.ts';
 import { DEFAULT_NOTIFICATIONS } from '../domain/notification.ts';
 import { NotificationService } from './notification.service.ts';
 
-function service(options: { desktop?: boolean; foreground?: boolean; inApp?: boolean } = {}) {
+function service(options: { app?: boolean; desktop?: boolean; foreground?: boolean; inApp?: boolean } = {}) {
   const stored: NotificationRecord[] = [];
   const shown: { url: string; urgent: boolean }[] = [];
   const told: boolean[] = [];
@@ -25,7 +25,7 @@ function service(options: { desktop?: boolean; foreground?: boolean; inApp?: boo
       notifications: () => ({ ...DEFAULT_NOTIFICATIONS, inAppWhenForeground: options.inApp ?? true }),
     },
     { show: (_notification, shownOptions) => void shown.push(shownOptions) },
-    { foreground: () => options.foreground ?? false },
+    { appAttached: () => options.app ?? false, foreground: () => options.foreground ?? false },
     { changed: () => undefined, notified: (_notification, inApp) => void told.push(inApp) },
     { now: () => new Date('2026-11-06T15:13:00Z') },
     'http://127.0.0.1:4880',
@@ -63,6 +63,12 @@ describe('NotificationService', () => {
     const noToast = service({ foreground: true, inApp: false });
     await noToast.notifications.notify({ kind: 'permission' }, session);
     expect(noToast.shown).toHaveLength(1);
+  });
+
+  it('leaves the desktop notification to the desktop application when it is there (CA-APPS-03)', async () => {
+    const { notifications, shown, told } = service({ app: true });
+    await notifications.notify({ kind: 'permission' }, { ...session, excerpt: 'Bash · npm run db:migrate' });
+    expect([shown.length, told]).toEqual([0, [false]]);
   });
 
   it('stores nothing for what the settings leave out', async () => {
