@@ -268,6 +268,14 @@ export class TaskService {
     return found ? { name: found.name, folder: path.slice(found.root.length + 1) } : null;
   }
 
+  /** Un événement d'une tâche en cours, gardé dans son journal (contexte transmis, décision proposée). */
+  async record(id: number, event: string, detail: string): Promise<TaskView> {
+    const tasks = await this.tasks.list();
+    const task = this.find(tasks, id);
+    task.record(event, detail, this.clock.now());
+    return this.commit(tasks, [task], id);
+  }
+
   /** Une étape signalée par la session qui a pris la tâche. */
   async note(id: number, step: string): Promise<TaskView> {
     const tasks = await this.tasks.list();

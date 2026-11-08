@@ -1,0 +1,8 @@
+{
+  "text": {
+    "title": "Découper les tableaux par ligne",
+    "context": "Les tableaux des PDF arrivent fusionnés.",
+    "decision": "Découper chaque tableau par ligne et par colonne."
+  },
+  "note": " "
+}

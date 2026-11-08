@@ -3,9 +3,13 @@ import { Inject, Module, type OnApplicationBootstrap, type OnApplicationShutdown
 import { freemem, userInfo } from 'node:os';
 import { join } from 'node:path';
 import type { Config } from '../config.ts';
+import type { ContextService } from '../context/application/context.service.ts';
 import type { SessionService } from '../sessions/application/session.service.ts';
 import type { SourceService } from '../sessions/application/source.service.ts';
 import type { RepositoryCatalog } from './application/ports.ts';
+import { ContextModule } from '../context/context.module.ts';
+import { parseProposal, PROPOSAL_HELP } from '../context/domain/proposal.ts';
+import { CONTEXT_SERVICE } from '../context/tokens.ts';
 import { estimateCostMicros } from '../sessions/domain/model-pricing.ts';
 import { TokenUsage } from '../sessions/domain/token-usage.ts';
 import { SessionsModule } from '../sessions/sessions.module.ts';
@@ -54,7 +58,7 @@ const TICK_MS = 5000;
 
 /** Contexte des tâches (RF-TACH) ; les dépôts viennent des sessions, par le point de composition. */
 @Module({
-  imports: [SessionsModule],
+  imports: [SessionsModule, ContextModule],
   controllers: [
     TasksController,
     WorkerController,
@@ -69,16 +73,7 @@ const TICK_MS = 5000;
     {
       provide: REPOSITORY_CATALOG,
       inject: [SESSION_SERVICE],
-      useFactory: (sessions: SessionService): RepositoryCatalog => ({
-        list: async () => {
-          const views = await sessions.listSessions();
-          const roots = new Map<string, string>();
-          for (const view of views) if (view.repository) roots.set(view.repository.root, view.repository.name);
-          return [...roots.entries()]
-            .map(([root, name]) => ({ name, root }))
-            .toSorted((a, b) => a.name.localeCompare(b.name, 'fr'));
-        },
-      }),
+      useFactory: (sessions: SessionService): RepositoryCatalog => ({ list: () => sessions.knownRepositories() }),
     },
     {
       provide: RIGHTS_SERVICE,
@@ -140,7 +135,15 @@ const TICK_MS = 5000;
     },
     {
       provide: WORKER_SERVICE,
-      inject: [CONFIG, TASK_SERVICE, AGENT_RUNNER, ISOLATION_SERVICE, TEST_ENVIRONMENT_SERVICE, RIGHTS_SERVICE],
+      inject: [
+        CONFIG,
+        TASK_SERVICE,
+        AGENT_RUNNER,
+        ISOLATION_SERVICE,
+        TEST_ENVIRONMENT_SERVICE,
+        RIGHTS_SERVICE,
+        CONTEXT_SERVICE,
+      ],
       useFactory: (
         config: Config,
         tasks: TaskService,
@@ -148,8 +151,19 @@ const TICK_MS = 5000;
         isolation: IsolationService,
         environments: TestEnvironmentService,
         rights: RightsService,
+        context: ContextService,
       ) =>
         new WorkerService({
+          contextOf: async (task) => {
+            const sent = await context.sentTo(task.repository.name);
+            return { text: `${sent.text}\n\n${PROPOSAL_HELP}`, versions: sent.versions };
+          },
+          propose: async (task, markdown) => {
+            const text = parseProposal(markdown);
+            if (!text) return null;
+            const decision = await context.propose(task.repository.name, text, task.id);
+            return decision.id;
+          },
           environmentOf: (task) => environments.forTask(task.repository),
           servicesLaunched: (task, launches) => environments.launched(task.repository.name, task.id, launches),
           tasks,

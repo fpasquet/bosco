@@ -58,6 +58,8 @@ function setup(events: AgentEvent[], options: { budgetUsd?: number; hang?: boole
     health: { check: () => Promise.resolve(options.health ?? null) },
     freeMemory: () => 32 * 1024 ** 3,
     maxAgents: () => 4,
+    contextOf: () => Promise.resolve({ text: '', versions: '' }),
+    propose: () => Promise.resolve(null),
     environmentOf: () => Promise.resolve({ image: null, services: [] }),
     servicesLaunched: () => Promise.resolve(),
     priceOf: () => 1,
@@ -65,7 +67,8 @@ function setup(events: AgentEvent[], options: { budgetUsd?: number; hang?: boole
     workspaces: {
       cleanupAll: () => Promise.resolve(),
       prepare: ({ branch }) => Promise.resolve({ branch, dir: '/var/lib/bosco/t-1' }),
-      collect: () => Promise.resolve({ base: 'abc123', changes: { files: 2, added: 38, removed: 4 }, from: 'main' }),
+      collect: () =>
+        Promise.resolve({ base: 'abc123', changes: { files: 2, added: 38, removed: 4 }, from: 'main', proposals: [] }),
       remove: () => Promise.resolve(),
     },
   });

@@ -19,6 +19,10 @@ const SETTINGS = [
   /^\/api\/isolation/,
   /^\/api\/rights/,
   /^\/api\/repositories\/[^/]+\/test-environment/,
+  /^\/api\/context/,
+  /^\/api\/socles/,
+  // Sur le téléphone, une décision proposée s'accepte ou se refuse ; le reste s'écrit sur le poste (E9b mobile)
+  /^\/api\/decisions(\/\d+\/(versions|abandon))?$/,
 ];
 
 function workstationOnly(request: IncomingMessage, path: string): boolean {

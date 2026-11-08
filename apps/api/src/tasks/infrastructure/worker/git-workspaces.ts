@@ -49,6 +49,13 @@ export class GitWorkspaces implements Workspaces {
 
   async collect(workspace: Workspace, task: { id: number; repositoryRoot: string; title: string }) {
     const repo = join(workspace.dir, 'repo');
+    // Les décisions proposées par l'agent rejoignent Bosco, pas la branche
+    const proposalsDir = join(repo, '.bosco', 'decisions');
+    const names = await readdir(proposalsDir).catch(() => [] as string[]);
+    const proposals = await Promise.all(
+      names.filter((name) => name.endsWith('.md')).map((name) => readFile(join(proposalsDir, name), 'utf8')),
+    );
+    await rm(join(repo, '.bosco'), { recursive: true, force: true });
     await git(repo, 'add', '--all');
     const pending = await git(repo, 'status', '--porcelain');
     if (pending)
@@ -71,7 +78,7 @@ export class GitWorkspaces implements Workspaces {
     const from = origin.trim();
     // La branche rejoint le dépôt de la personne, sans toucher à sa branche courante ni à sa copie de travail
     await git(task.repositoryRoot, 'fetch', '--quiet', '--no-tags', repo, `+${workspace.branch}:${workspace.branch}`);
-    return { base: start, changes, from };
+    return { base: start, changes, from, proposals };
   }
 
   async remove(workspace: Workspace): Promise<void> {

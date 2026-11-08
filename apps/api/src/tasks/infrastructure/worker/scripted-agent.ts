@@ -98,6 +98,12 @@ export class ScriptedAgentRunner implements AgentRunner, WorkerHealth {
 export const scriptedWorkspaces: Workspaces = {
   cleanupAll: () => Promise.resolve(),
   prepare: ({ branch, id }) => Promise.resolve({ branch, dir: `scripted-${id}` }),
-  collect: () => Promise.resolve({ base: 'scripted-base', changes: { files: 2, added: 38, removed: 4 }, from: 'main' }),
+  collect: () =>
+    Promise.resolve({
+      base: 'scripted-base',
+      changes: { files: 2, added: 38, removed: 4 },
+      from: 'main',
+      proposals: [],
+    }),
   remove: () => Promise.resolve(),
 };
