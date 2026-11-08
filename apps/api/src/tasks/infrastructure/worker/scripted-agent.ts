@@ -12,6 +12,16 @@ export class ScriptedAgentRunner implements AgentRunner, WorkerHealth {
 
   start(spec: AgentSpec): Promise<AgentRun> {
     let stopped = false;
+    // Les services du fichier du dépôt sont « prêts » aussitôt : leur lancement réel se vérifie sur le poste
+    if (spec.services.length > 0)
+      spec.onServices(
+        spec.services.map((service) => ({
+          name: service.name,
+          image: service.image ?? '',
+          error: null,
+          readySeconds: 1,
+        })),
+      );
     const events = (async function* () {
       await new Promise((resolve) => setTimeout(resolve, 100));
       yield { kind: 'session' as const, sessionId: `scripted-${spec.taskId}` };

@@ -1,4 +1,5 @@
 import type { RepositoryRights } from '../domain/rights.ts';
+import type { ServiceLaunch, TestService } from '../domain/test-services.ts';
 import type { AgentEvent, AgentRun, AgentRunner, AgentUsage, WorkerHealth, Workspace, Workspaces } from './ports.ts';
 import type { TaskService, TaskView } from './task.service.ts';
 
@@ -18,6 +19,8 @@ export interface WorkerStatus {
 }
 
 export interface WorkerDeps {
+  /** Image de l'agent et services de test du dépôt, lus au lancement (E12a) */
+  environmentOf: (task: TaskView) => Promise<{ image: null | string; services: TestService[] }>;
   freeMemory: () => number;
   health: WorkerHealth;
   /** Plafond d'agents en même temps, réglé dans l'isolation du worker (E11a) */
@@ -26,6 +29,8 @@ export interface WorkerDeps {
   priceOf: (model: null | string, usage: AgentUsage) => null | number;
   rightsOf: (repository: string) => Promise<RepositoryRights>;
   runner: AgentRunner;
+  /** Dernier lancement des services d'un dépôt, montré dans l'environnement de test ; removed à la fin de la tâche */
+  servicesLaunched: (task: TaskView, launches: ServiceLaunch[] | 'removed') => Promise<void>;
   tasks: Pick<TaskService, 'fail' | 'finish' | 'list' | 'progress' | 'start'>;
   workspaces: Workspaces;
 }
@@ -137,6 +142,7 @@ export class WorkerService {
     const branch = branchOf(task);
     const startBranch = this.startBranchOf(task);
     let workspace: null | Workspace = null;
+    let servicesStarted = false;
     try {
       await this.deps.tasks.start(task.id, `branche ${branch}`);
       workspace = await this.deps.workspaces.prepare({
@@ -147,10 +153,15 @@ export class WorkerService {
       });
       // Les droits du dépôt ont pu se resserrer depuis la création : le surplus est écarté (CA-TACH-31)
       const tools = (task.guardrails.tools ?? rights.tools).filter((tool) => rights.tools.includes(tool));
+      const environment = await this.deps.environmentOf(task);
+      if (environment.services.length > 0) servicesStarted = true;
       const run = await this.deps.runner.start({
         taskId: task.id,
         workspace,
         folder: task.folder,
+        image: environment.image,
+        services: environment.services,
+        onServices: (launches) => void this.deps.servicesLaunched(task, launches).catch(() => undefined),
         prompt: promptOf(task),
         model: task.guardrails.model ?? rights.model,
         maxTurns: Math.min(task.guardrails.maxTurns, rights.maxTurns),
@@ -168,6 +179,7 @@ export class WorkerService {
       this.runs.delete(task.id);
       this.starting.delete(task.id);
       if (workspace) await this.deps.workspaces.remove(workspace);
+      if (servicesStarted) await this.deps.servicesLaunched(task, 'removed').catch(() => undefined);
       void this.tick();
     }
   }

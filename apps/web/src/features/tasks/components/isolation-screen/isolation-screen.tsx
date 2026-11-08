@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useState } from 'react';
 import type { IsolationDto } from '@bosco/domain';
+import { SettingsTabs } from '@/shared/layouts/settings-tabs';
 import { addDomain, isolationQuery, IsolationRefused, removeDomain, setMaxAgents } from '../../api/isolation';
 import { IsolationEgress } from '../isolation-egress';
 import { IsolationResources } from '../isolation-resources';
@@ -34,9 +35,10 @@ export function IsolationScreen({ title, view }: { title: string; view: Isolatio
   const busy = add.isPending || remove.isPending || capacity.isPending;
   return (
     <div className="flex flex-col gap-4 p-4 md:px-8 md:pt-6">
-      <div>
+      <div className="flex flex-col gap-3">
         <p className="text-xs text-muted">{title}</p>
-        <h1 className="mt-1 font-display text-2xl font-semibold tracking-tight">Isolation du worker</h1>
+        <SettingsTabs current="/settings/isolation" />
+        <h1 className="font-display text-2xl font-semibold tracking-tight">Isolation du worker</h1>
       </div>
       <nav aria-label="Isolation du worker" className="tabs tabs-border tabs-sm">
         {VIEWS.map(({ href, label, value }) => (

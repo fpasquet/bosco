@@ -112,3 +112,10 @@ Then('the event stream receives {string} with:', async ({ events }, type: string
     )
     .toBe(true);
 });
+
+Then('the response property {string} should match the names {string}', ({ last }, path: string, names: string) => {
+  const list = path
+    .split('.')
+    .reduce<unknown>((node, key) => (node as Record<string, unknown> | undefined)?.[key], last.response?.body);
+  expect((list as { name: string }[]).map(({ name }) => name).join(',')).toBe(names);
+});
