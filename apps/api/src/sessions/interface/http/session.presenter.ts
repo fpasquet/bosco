@@ -8,5 +8,6 @@ export function presentSession(view: SessionView): SessionDto {
     lastEventAt: view.lastEventAt.toISOString(),
     startedAt: view.startedAt.toISOString(),
     waiting: view.waiting ? { ...view.waiting, since: view.waiting.since.toISOString() } : null,
+    pilot: view.pilot ? { ...view.pilot, since: view.pilot.since.toISOString() } : null,
   };
 }

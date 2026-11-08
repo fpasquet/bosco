@@ -2,6 +2,7 @@ import type { FileChange } from '../domain/file-change.ts';
 import type { SessionState, Waiting } from '../domain/session.ts';
 import type { JournalEntry, TranscriptEvent } from '../domain/transcript-event.ts';
 import type { NotificationService } from './notification.service.ts';
+import type { PilotView } from './pilot.service.ts';
 import type { Clock, SessionEvents, SessionRegistry, SessionRepository } from './ports.ts';
 import { ASKING } from '../domain/notification.ts';
 import { LEGACY_DISCOVERY, RepositoryDiscovery, type RepositoryPlace } from '../domain/repository-discovery.ts';
@@ -68,7 +69,19 @@ export interface SessionView {
   task: null | TaskLink;
   /** Ce qu'attend la session tant qu'elle t'attend ; rien sinon */
   waiting: null | Waiting;
+  /** Ouverte dans un terminal : Bosco ne lui écrit pas (CA-SESS-98) */
+  openInTerminal: boolean;
+  /** Session pilotée par Bosco (E2e) ; null sinon */
+  pilot: null | PilotView;
 }
+
+/** Sessions pilotées par Bosco, telles que la vue d'une session les montre. */
+export interface PilotsView {
+  openInTerminal(sourceId: string, sessionId: string): boolean;
+  pilotOf(sessionId: string): null | PilotView;
+}
+
+const NO_PILOTS: PilotsView = { openInTerminal: () => false, pilotOf: () => null };
 
 /** Détail d'une session (E2) : sa vue et son journal, du plus ancien au plus récent. */
 export interface SessionDetail {
@@ -81,6 +94,7 @@ export class SessionService {
   private taskLinks = new Map<string, TaskLink>();
   private linkStore: null | TaskLinkStore = null;
   private notifications: null | Pick<NotificationService, 'notify' | 'settle'> = null;
+  private pilots: PilotsView = NO_PILOTS;
 
   constructor(
     private readonly sessionRepository: SessionRepository,
@@ -131,6 +145,11 @@ export class SessionService {
       (a, b) => b.lastActivityAt.getTime() - a.lastActivityAt.getTime() || a.name.localeCompare(b.name, 'fr'),
     );
     return { outside, repositories };
+  }
+
+  /** Sessions pilotées par Bosco, branchées au démarrage (le service de pilotage dépend de celui-ci). */
+  usePilots(pilots: PilotsView): void {
+    this.pilots = pilots;
   }
 
   /** Liens vers les tâches, lus au démarrage, et relus après une remise à zéro des scénarios. */
@@ -211,7 +230,10 @@ export class SessionService {
 
   private view(session: Session): SessionView {
     const snapshot = session.toSnapshot();
-    const open = this.registry.isOpen(snapshot.sourceId, snapshot.id);
+    const pilot = this.pilots.pilotOf(snapshot.id);
+    const openInTerminal = this.pilots.openInTerminal(snapshot.sourceId, snapshot.id);
+    // Entre deux tours, une session pilotée est close sans être terminée : elle attend ton prochain message
+    const open = pilot && !openInTerminal ? null : this.registry.isOpen(snapshot.sourceId, snapshot.id);
     const link = this.taskLinks.get(snapshot.id) ?? null;
     // L'agent d'une tâche qui ne tourne plus a fini : sa session est terminée, sans attendre l'inactivité
     const state =
@@ -238,6 +260,8 @@ export class SessionService {
       lastEventAt,
       lastMessage,
       model,
+      openInTerminal,
+      pilot,
       recentActions: snapshot.recentActions,
       repoPath,
       repository: repositoryOf(this.places(snapshot.repoRoot, repoPath)),

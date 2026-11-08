@@ -74,6 +74,8 @@ export async function startBosco(recordings: string): Promise<Bosco> {
         BOSCO_PHONE_HOST: '127.0.0.1',
         BOSCO_PHONE_PORT: String(phonePort),
         BOSCO_TEST: '1',
+        // Sessions pilotées : un faux Claude Code qui joue un tour (DT-31)
+        BOSCO_PILOT_CLAUDE: join(ROOT, 'e2e/shared/fake-claude.mjs'),
         BOSCO_REPLAY: process.env.BOSCO_REPLAY ?? 'replay',
         BOSCO_RECORDINGS: recordings,
       },

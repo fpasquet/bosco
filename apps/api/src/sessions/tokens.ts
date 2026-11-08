@@ -12,3 +12,5 @@ export const HISTORY_SERVICE = Symbol('HistoryService');
 export const CONVERSATION_SERVICE = Symbol('ConversationService');
 export const NOTIFICATION_SERVICE = Symbol('NotificationService');
 export const PRESENCE = Symbol('Presence');
+export const PILOT_SERVICE = Symbol('PilotService');
+export const SUGGESTION_SERVICE = Symbol('SuggestionService');

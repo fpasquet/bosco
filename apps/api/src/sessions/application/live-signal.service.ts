@@ -3,6 +3,7 @@ import type { Clock, IdGenerator, SessionEvents, SessionRepository } from './por
 import type { SessionService } from './session.service.ts';
 import { DomainError } from '../../shared/domain/domain-error.ts';
 import { ASKING, messageExcerpt } from '../domain/notification.ts';
+import { type AgentQuestion, answersOf } from '../domain/pilot.ts';
 import { Session } from '../domain/session.ts';
 
 /** Signal du suivi en direct, traduit depuis un hook de Claude Code par l'interface (DT-05). */
@@ -26,6 +27,20 @@ interface PendingPermission {
   requestId: string;
   resolve: (answer: null | PermissionAnswer) => void;
 }
+
+interface PendingQuestion {
+  questions: AgentQuestion[];
+  requestId: string;
+  resolve: (answers: null | string[][]) => void;
+}
+
+/** Tours pilotés par Bosco en cours : leurs autorisations passent par Bosco, pas par les hooks (DT-31). */
+export interface PilotedTurns {
+  isRunning(sessionId: string): boolean;
+}
+
+/** D'où vient un signal : un hook du suivi en direct, ou un tour piloté par Bosco */
+type Via = 'hook' | 'pilot';
 
 function titleOf(session: Session): string {
   return session.toSnapshot().title ?? `Session ${session.id.slice(0, 8)}`;
@@ -59,6 +74,8 @@ export class PermissionAlreadySettled extends DomainError {
 export class LiveSignalService {
   private readonly lastSignals = new Map<string, Date>();
   private readonly pending = new Map<string, PendingPermission>();
+  private readonly questions = new Map<string, PendingQuestion>();
+  private pilots: PilotedTurns = { isRunning: () => false };
   /** Début du tour en cours de chaque session : ta dernière demande, pour savoir si un tour a été long (E15b) */
   private readonly turnStarts = new Map<string, Date>();
 
@@ -72,14 +89,21 @@ export class LiveSignalService {
     private readonly notifications: Notifications = SILENT,
   ) {}
 
+  /** Tours pilotés par Bosco, branchés au démarrage (le service de pilotage dépend de celui-ci). */
+  usePilots(pilots: PilotedTurns): void {
+    this.pilots = pilots;
+  }
+
   /** Dernier signal reçu d'un profil : la vérification de l'installation repose sur un vrai signal (CA-SESS-64). */
   lastSignalAt(sourceId: string): Date | null {
     return this.lastSignals.get(sourceId) ?? null;
   }
 
-  async receive(origin: SignalOrigin, signal: LiveSignal): Promise<void> {
+  async receive(origin: SignalOrigin, signal: LiveSignal, via: Via = 'hook'): Promise<void> {
+    // Chaque tour piloté est un lancement de l'agent qui se ferme à la fin du tour : la session, elle, reste ouverte
+    if (signal.kind === 'end' && this.pilots.isRunning(origin.sessionId)) return;
     const at = this.clock.now();
-    const session = await this.sessionOf(origin, at);
+    const session = await this.sessionOf(origin, at, via);
     const subject = { place: placeOf(session), sessionId: session.id, taskId: null, title: titleOf(session) };
     if (signal.kind === 'stop') {
       session.endTurn(signal.message, at);
@@ -115,12 +139,15 @@ export class LiveSignalService {
   async requestPermission(
     origin: SignalOrigin,
     action: { detail: null | string; tool: string },
-    abandoned: (onAbandon: () => void) => void,
+    abandoned: (onAbandon: (note?: string) => void) => void,
+    via: Via = 'hook',
   ): Promise<null | PermissionAnswer> {
     // Une question de l'agent passe aussi par ce hook : c'est une question (lue dans le transcript), pas une autorisation
     if (action.tool === QUESTION_TOOL) return null;
+    // Pendant un tour piloté, Bosco reçoit la demande par le protocole de contrôle : le hook ne répond rien (DT-31)
+    if (via === 'hook' && this.pilots.isRunning(origin.sessionId)) return null;
     const at = this.clock.now();
-    const session = await this.sessionOf(origin, at);
+    const session = await this.sessionOf(origin, at, via);
     const requestId = this.idGenerator.next();
     // Une demande précédente encore ouverte pour la même session est caduque : Claude Code n'en pose qu'une à la fois
     this.pending.get(origin.sessionId)?.resolve(null);
@@ -138,8 +165,42 @@ export class LiveSignalService {
     );
     return new Promise((resolve) => {
       this.pending.set(origin.sessionId, { requestId, resolve });
-      abandoned(() => void this.abandon(origin.sessionId, requestId));
+      abandoned((note) => void this.abandon(origin.sessionId, requestId, note));
     });
+  }
+
+  /**
+   * Question à choix de l'agent d'une session pilotée (E2f) : la session t'attend jusqu'à ta réponse. Résout les
+   * réponses (une liste de choix par question), ou null pour « Passer » et quand le tour s'arrête.
+   */
+  async requestAnswers(
+    origin: SignalOrigin,
+    questions: AgentQuestion[],
+    abandoned: (onAbandon: () => void) => void,
+  ): Promise<null | string[][]> {
+    const at = this.clock.now();
+    const session = await this.sessionOf(origin, at, 'pilot');
+    const requestId = this.idGenerator.next();
+    this.questions.get(origin.sessionId)?.resolve(null);
+    session.awaitQuestion(requestId, questions, at);
+    await this.publish(session);
+    return new Promise((resolve) => {
+      this.questions.set(origin.sessionId, { questions, requestId, resolve });
+      abandoned(() => void this.answerQuestion(origin.sessionId, requestId, null).catch(() => undefined));
+    });
+  }
+
+  /** Réponses données dans Bosco, ou null pour « Passer » ; refusées si la question n'attend plus (CA-SESS-96). */
+  async answerQuestion(sessionId: string, requestId: string, answers: null | string[][]): Promise<void> {
+    const entry = this.questions.get(sessionId);
+    if (entry?.requestId !== requestId) throw new PermissionAlreadySettled(sessionId);
+    // Une réponse incomplète est refusée avant de libérer la question
+    if (answers) answersOf(entry.questions, answers);
+    this.questions.delete(sessionId);
+    const session = await this.sessionRepository.find(sessionId);
+    if (session?.settleQuestion(requestId, this.clock.now())) await this.publish(session);
+    entry.resolve(answers);
+    await this.notifications.settle({ sessionId, kinds: ['question'] }, answers ? 'Répondu dans Bosco' : 'Passée');
   }
 
   /** Réponse donnée dans Bosco ; refusée si le terminal a répondu le premier. */
@@ -166,6 +227,8 @@ export class LiveSignalService {
   forget(): void {
     for (const entry of this.pending.values()) entry.resolve(null);
     this.pending.clear();
+    for (const entry of this.questions.values()) entry.resolve(null);
+    this.questions.clear();
     this.lastSignals.clear();
     this.turnStarts.clear();
   }
@@ -177,7 +240,7 @@ export class LiveSignalService {
     }
   }
 
-  private async abandon(sessionId: string, requestId: string): Promise<void> {
+  private async abandon(sessionId: string, requestId: string, note = 'Répondu dans le terminal'): Promise<void> {
     const entry = this.pending.get(sessionId);
     if (entry?.requestId !== requestId) return;
     this.pending.delete(sessionId);
@@ -186,11 +249,12 @@ export class LiveSignalService {
     if (!session?.settlePermission(requestId, this.clock.now())) return;
     await this.publish(session);
     this.sessionEvents.permissionSettled({ sessionId, title: session.toSnapshot().title, outcome: 'elsewhere' });
-    await this.notifications.settle({ sessionId, kinds: ['permission'] }, 'Répondu dans le terminal');
+    await this.notifications.settle({ sessionId, kinds: ['permission'] }, note);
   }
 
-  private async sessionOf(origin: SignalOrigin, at: Date): Promise<Session> {
-    this.lastSignals.set(origin.sourceId, at);
+  private async sessionOf(origin: SignalOrigin, at: Date, via: Via = 'hook'): Promise<Session> {
+    // Seul un vrai hook prouve que le suivi en direct est installé (CA-SESS-64)
+    if (via === 'hook') this.lastSignals.set(origin.sourceId, at);
     const session =
       (await this.sessionRepository.find(origin.sessionId)) ?? Session.discover(origin.sessionId, origin.sourceId, at);
     session.placeIn(origin.cwd);

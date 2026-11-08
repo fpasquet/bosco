@@ -12,6 +12,14 @@ export function WaitingSummary({ session }: { session: SessionDto }) {
       </div>
     );
   }
+  if (waiting.kind === 'question') {
+    return (
+      <div className="min-w-0">
+        <p className="text-xs text-muted">Question de l’agent</p>
+        <p className="truncate">{waiting.questions[0]?.question ?? 'L’agent te pose une question.'}</p>
+      </div>
+    );
+  }
   return (
     <div className="min-w-0">
       <p className="text-xs text-muted">Autorisation demandée</p>

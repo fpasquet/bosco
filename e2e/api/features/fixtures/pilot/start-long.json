@@ -1,0 +1,6 @@
+{
+  "profile": "{{profiles}}/.claude-perso",
+  "text": "Un long travail",
+  "images": [],
+  "settings": { "permissionMode": "ask", "model": null, "effort": null }
+}

@@ -18,6 +18,11 @@ export class Source {
     return this.snapshot.path;
   }
 
+  /** Nom court du profil (« perso ») */
+  get label(): string {
+    return this.snapshot.label;
+  }
+
   get watched(): boolean {
     return this.snapshot.watched;
   }

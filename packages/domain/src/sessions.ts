@@ -27,7 +27,71 @@ export type SessionStateDto = 'ended' | 'inactive' | 'running' | 'waiting';
 /** Ce qu'attend une session qui t'attend : une autorisation (« Bash », « npm run db:migrate ») ou ta réponse au tour. */
 export type WaitingDto =
   | { detail: null | string; kind: 'permission'; requestId: string; since: string; tool: string }
+  /** Question à choix de l'agent d'une session pilotée par Bosco (E2f) */
+  | { kind: 'question'; questions: AgentQuestionDto[]; requestId: string; since: string }
   | { kind: 'turn'; message: null | string; since: string };
+
+/** Question à choix posée par l'agent (E2f) ; multiSelect : plusieurs choix possibles. */
+export interface AgentQuestionDto {
+  header: string;
+  multiSelect: boolean;
+  options: { description: string; label: string }[];
+  question: string;
+}
+
+export type PermissionModeDto = 'acceptEdits' | 'ask' | 'plan';
+export type EffortDto = 'high' | 'low' | 'max' | 'medium' | 'xhigh';
+
+/** Réglages d'un tour piloté : mode d'autorisations, modèle (null : celui du profil), effort (null : celui du profil). */
+export interface PilotSettingsDto {
+  effort: EffortDto | null;
+  model: null | string;
+  permissionMode: PermissionModeDto;
+}
+
+/** Session pilotée par Bosco (E2e) : ses réglages, son tour en cours et le message qui attend la fin du tour. */
+export interface PilotDto {
+  /** Message qui partira à la fin du tour (CA-SESS-93) */
+  pending: null | { images: number; text: string };
+  running: boolean;
+  settings: PilotSettingsDto;
+  since: string;
+}
+
+/** Une image jointe à un message, en base64 (5 au plus, 5 Mo chacune). */
+export interface PilotImageDto {
+  data: string;
+  mediaType: string;
+  name: string;
+}
+
+/** Message envoyé à une session pilotée : texte (fichiers en `@chemin`, commande en tête), images, réglages du tour. */
+export interface PilotMessageDto {
+  images: PilotImageDto[];
+  settings: PilotSettingsDto;
+  text: string;
+}
+
+/** Nouvelle session (E16a) : dépôt (sa racine), profil Claude Code (son dossier ; null : celui du dépôt), premier message. */
+export interface StartSessionDto extends PilotMessageDto {
+  profile: null | string;
+  repository: string;
+}
+
+/** Ce que propose le formulaire d'une nouvelle session (E16a) : les dépôts et les abonnements Claude. */
+export interface PilotOptionsDto {
+  /** Profils Claude Code surveillés qui ont un accès, et celui du dépôt choisi */
+  profiles: { account: null | string; label: string; path: string }[];
+  repositories: { defaultProfile: null | string; name: string; root: string }[];
+}
+
+/** Suggestion de l'éditeur (E2h) : un fichier du dépôt après « @ », une commande ou un skill après « / ». */
+export interface SuggestionDto {
+  description: null | string;
+  /** Origine d'une commande : « commande », « skill · profil perso », « dépôt api-voix » */
+  origin: null | string;
+  value: string;
+}
 
 export interface SessionDto {
   branch: null | string;
@@ -52,6 +116,10 @@ export interface SessionDto {
   startedAt: string;
   state: SessionStateDto;
   title: null | string;
+  /** Ouverte dans un terminal : Bosco ne lui écrit pas, on y répond dans le terminal (CA-SESS-98) */
+  openInTerminal: boolean;
+  /** Session pilotée par Bosco ; null pour une session du terminal ou du worker */
+  pilot: null | PilotDto;
   /** Réponses de l'agent */
   turns: number;
   usage: { cacheCreation: number; cacheRead: number; input: number; output: number };

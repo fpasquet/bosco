@@ -1,3 +1,4 @@
+import type { AgentQuestion } from './pilot.ts';
 import type { JournalEntry, TranscriptEvent } from './transcript-event.ts';
 import { type FileChange, mergeChange } from './file-change.ts';
 import { estimateCostMicros } from './model-pricing.ts';
@@ -12,6 +13,8 @@ export type SessionState = 'ended' | 'inactive' | 'running' | 'waiting';
 /** Ce qu'attend une session de la personne : une autorisation (RF-SESS-03) ou une réponse à la fin du tour (RF-SESS-04). */
 export type Waiting =
   | { detail: null | string; kind: 'permission'; requestId: string; since: Date; tool: string }
+  /** Question de l'agent dans une session pilotée par Bosco, à répondre dans Bosco (E2f) */
+  | { kind: 'question'; questions: AgentQuestion[]; requestId: string; since: Date }
   | { kind: 'turn'; message: null | string; since: Date };
 
 /** Délai sans événement après lequel une session ouverte devient Inactive (réglable dans les sources). */
@@ -114,6 +117,21 @@ export class Session {
     this.snapshot = { ...this.snapshot, waiting: { kind: 'permission', requestId, tool, detail, since: at } };
   }
 
+  /** L'agent d'une session pilotée pose une question à choix : la session t'attend jusqu'à ta réponse (E2f). */
+  awaitQuestion(requestId: string, questions: AgentQuestion[], at: Date): void {
+    this.touch(at);
+    this.snapshot = { ...this.snapshot, waiting: { kind: 'question', requestId, questions, since: at } };
+  }
+
+  /** La question a reçu sa réponse, ou le tour s'est arrêté : la session n'attend plus rien. */
+  settleQuestion(requestId: string, at: Date): boolean {
+    const { waiting } = this.snapshot;
+    if (waiting?.kind !== 'question' || waiting.requestId !== requestId) return false;
+    this.touch(at);
+    this.snapshot = { ...this.snapshot, waiting: null };
+    return true;
+  }
+
   /** L'agent a rendu la main : la session t'attend, avec son dernier message, jusqu'à ta réponse dans le terminal. */
   endTurn(message: null | string, at: Date): void {
     this.touch(at);
@@ -150,7 +168,8 @@ export class Session {
 
   /** Une autorisation laissée en attente par un arrêt de Bosco ne peut plus recevoir de réponse depuis Bosco. */
   dropStalePermission(): boolean {
-    if (this.snapshot.waiting?.kind !== 'permission') return false;
+    const kind = this.snapshot.waiting?.kind;
+    if (kind !== 'permission' && kind !== 'question') return false;
     this.snapshot = { ...this.snapshot, waiting: null };
     return true;
   }
@@ -218,7 +237,7 @@ export class Session {
     const { endedAt, lastEventAt, waiting } = this.snapshot;
     if (open === false || (open === null && endedAt)) return 'ended';
     // Une autorisation attend sa réponse sans limite côté Bosco : Claude Code annule lui-même le hook après 10 min
-    if (waiting?.kind === 'permission') return 'waiting';
+    if (waiting?.kind === 'permission' || waiting?.kind === 'question') return 'waiting';
     // Un tour terminé resté sans réponse devient lui aussi Inactive après le délai (RF-SESS-02)
     if (now.getTime() - lastEventAt.getTime() >= inactivityDelayMs) return 'inactive';
     return waiting ? 'waiting' : 'running';
