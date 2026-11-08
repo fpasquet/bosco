@@ -1,3 +1,4 @@
+import type { FileChange } from './file-change.ts';
 import type { TokenUsage } from './token-usage.ts';
 
 /**
@@ -9,6 +10,8 @@ export interface TranscriptEvent {
   at: Date | null;
   /** Dossier et branche de travail au moment de l'événement */
   branch: null | string;
+  /** Fichier modifié par l'outil appelé (Edit, MultiEdit, Write) */
+  change?: FileChange | null;
   cwd: null | string;
   kind: 'prompt' | 'reply' | 'title' | 'tool';
   model: null | string;

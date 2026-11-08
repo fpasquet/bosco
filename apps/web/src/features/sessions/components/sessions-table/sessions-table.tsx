@@ -1,7 +1,8 @@
 import { FolderGit2 } from 'lucide-react';
+import Link from 'next/link';
 import type { SessionDto } from '@bosco/domain';
 import { cn } from '@/lib/cn';
-import { elapsed, formatCost, formatTokens, sessions as sessionsLabel } from '../../lib/format';
+import { actionLabel, elapsed, formatCost, formatTokens, sessions as sessionsLabel } from '../../lib/format';
 import { type RepositoryGroup, totalTokens } from '../../lib/overview';
 import { SessionStateBadge } from '../session-state-badge';
 
@@ -18,7 +19,7 @@ export interface SessionsTableProps {
 
 export function lastActionOf(session: SessionDto, now: Date): string {
   if (session.state === 'inactive') return `Aucun événement depuis ${elapsed(new Date(session.lastEventAt), now)}`;
-  return session.lastAction ?? 'Démarrage de la session';
+  return session.lastAction ? actionLabel(session.lastAction) : 'Démarrage de la session';
 }
 
 export function titleOf(session: SessionDto): string {
@@ -44,13 +45,19 @@ function Row({
   const inactive = session.state === 'inactive';
   const mark = markOf(session);
   return (
-    <tr className={cn('h-row border-b border-line', inactive && 'text-muted')}>
+    <tr className={cn('relative h-row border-b border-line hover:bg-surface-alt', inactive && 'text-muted')}>
       <td className="pl-4">
         <SessionStateBadge state={session.state} />
       </td>
       <td>
         <span className="flex items-center gap-2">
-          <span className={cn('truncate', !inactive && 'font-medium')}>{titleOf(session)}</span>
+          {/* Toute la ligne ouvre le détail de la session (E1b, annotation 5) */}
+          <Link
+            href={`/sessions/${encodeURIComponent(session.id)}`}
+            className={cn('truncate after:absolute after:inset-0', !inactive && 'font-medium')}
+          >
+            {titleOf(session)}
+          </Link>
           {mark && (
             <span className="shrink-0 rounded-sm border border-line px-1 font-mono text-xs text-muted">{mark}</span>
           )}
@@ -91,10 +98,15 @@ function MobileList({ groups, now, pendingRows, showFolder }: Omit<SessionsTable
           )}
           <ul className="divide-y divide-line rounded-card border border-line bg-surface">
             {group.sessions.map((session) => (
-              <li key={session.id} className="flex items-center gap-3 px-3 py-2.5">
+              <li key={session.id} className="relative flex items-center gap-3 px-3 py-2.5">
                 <SessionStateBadge state={session.state} />
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate font-medium">{titleOf(session)}</span>
+                  <Link
+                    href={`/sessions/${encodeURIComponent(session.id)}`}
+                    className="block truncate font-medium after:absolute after:inset-0"
+                  >
+                    {titleOf(session)}
+                  </Link>
                   <span className="block truncate font-mono text-xs text-muted">
                     {session.branch ?? '—'} · {lastActionOf(session, now)}
                   </span>

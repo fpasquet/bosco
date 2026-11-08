@@ -1,10 +1,13 @@
+import type { FileChange } from '../domain/file-change.ts';
 import type { SessionState, Waiting } from '../domain/session.ts';
-import type { TranscriptEvent } from '../domain/transcript-event.ts';
+import type { JournalEntry, TranscriptEvent } from '../domain/transcript-event.ts';
 import type { Clock, SessionEvents, SessionRegistry, SessionRepository } from './ports.ts';
 import { Session } from '../domain/session.ts';
 
 export interface SessionView {
   branch: null | string;
+  /** Fichiers modifiés par l'agent, d'après ses appels d'outils */
+  changedFiles: FileChange[];
   /** Coût estimé en dollars ; unpriced : une partie des tokens vient d'un modèle sans tarif connu (« non chiffré ») */
   cost: { unpriced: boolean; usd: number };
   id: string;
@@ -21,8 +24,15 @@ export interface SessionView {
   state: SessionState;
   title: null | string;
   usage: { cacheCreation: number; cacheRead: number; input: number; output: number };
+  turns: number;
   /** Ce qu'attend la session tant qu'elle t'attend ; rien sinon */
   waiting: null | Waiting;
+}
+
+/** Détail d'une session (E2) : sa vue et son journal, du plus ancien au plus récent. */
+export interface SessionDetail {
+  journal: JournalEntry[];
+  session: SessionView;
 }
 
 /** Cas d'usage des sessions : une méthode par intention. */
@@ -56,6 +66,13 @@ export class SessionService {
     const view = this.view(session);
     this.sessionEvents.sessionChanged(view);
     return view;
+  }
+
+  async sessionDetail(id: string): Promise<null | SessionDetail> {
+    const session = await this.sessionRepository.find(id);
+    if (!session) return null;
+    const journal = await this.sessionRepository.journal(id);
+    return { session: this.view(session), journal };
   }
 
   async listSessions(): Promise<SessionView[]> {
@@ -100,6 +117,8 @@ export class SessionService {
       startedAt,
       state,
       waiting: state === 'waiting' ? snapshot.waiting : null,
+      turns: snapshot.turns,
+      changedFiles: snapshot.changedFiles,
       title,
       usage: {
         input: usage.input,

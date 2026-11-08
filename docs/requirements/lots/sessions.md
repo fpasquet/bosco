@@ -18,7 +18,7 @@
 
 ## <a id="e1"></a>E1 · Vue d'ensemble
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `sessions/e1.html` · implémentation : **En cours (Premier lancement (E1a) et vue d'ensemble en direct (E1b à E1e) développés : bandeau T'attend avec « Autoriser » et « Refuser » (motif facultatif), colonne T'attend en regroupement par état, message bref quand une autorisation reçoit sa réponse ici ou dans le terminal ; regroupement par dépôt ou par état, filtre par dépôt, indicateurs et coût du jour, progression de la lecture. Une session arrêtée passe en Terminée. Écarts : « Refuser » ouvre une fenêtre de motif en attendant le détail E2b, et « Voir la session » attend E2. Restent la liste des terminées du jour et Bosco injoignable (E1f).)**
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `sessions/e1.html` · implémentation : **En cours (Premier lancement (E1a) et vue d'ensemble en direct (E1b à E1e) développés : bandeau T'attend avec « Autoriser » et « Refuser » (motif facultatif), colonne T'attend en regroupement par état, message bref quand une autorisation reçoit sa réponse ici ou dans le terminal ; regroupement par dépôt ou par état, filtre par dépôt, indicateurs et coût du jour, progression de la lecture. Une session arrêtée passe en Terminée. Restent la liste des terminées du jour et Bosco injoignable (E1f).)**
 
 ### <a id="e1a"></a>E1a · Vue d'ensemble : premier lancement
 
@@ -121,7 +121,7 @@ Règles de l'écran :
 
 ## <a id="e2"></a>E2 · Détail d'une session
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `sessions/e2.html` · implémentation : **À développer**
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `sessions/e2.html` · implémentation : **En cours (Détail d'une session interactive développé (E2a, E2b) : fil en direct avec « Revenir au direct », carte d'autorisation avec motif du refus et « Répondu ailleurs », usage estimé, fichiers modifiés par l'agent, identifiant et commande de reprise d'une session close (claude --resume, précédée du dossier du profil perso). Écarts : une action du fil tient sur une ligne, sans détail dépliable. Restent les sessions du worker, À relire (E2c) et En échec (E2d), avec le lot 2.)**
 
 ### <a id="e2a"></a>E2a · Détail d'une session : en cours
 

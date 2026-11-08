@@ -13,6 +13,11 @@ export class MikroOrmSessionRepository implements SessionRepository {
     return row ? toSession(row) : null;
   }
 
+  async journal(id: string): Promise<JournalEntry[]> {
+    const rows = await this.orm.em.fork().find(SessionEventSchema, { sessionId: id }, { orderBy: { seq: 'asc' } });
+    return rows.map(({ at, kind, seq, text }) => ({ at, kind: kind as JournalEntry['kind'], seq, text }));
+  }
+
   async list(): Promise<Session[]> {
     const rows = await this.orm.em.fork().find(SessionSchema, {}, { orderBy: { lastEventAt: 'desc' } });
     return rows.map(toSession);

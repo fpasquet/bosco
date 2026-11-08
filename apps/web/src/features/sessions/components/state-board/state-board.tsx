@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
+import Link from 'next/link';
 import type { SessionDto, SessionStateDto } from '@bosco/domain';
-import { elapsed, formatCost, formatTokens } from '../../lib/format';
+import { actionLabel, elapsed, formatCost, formatTokens } from '../../lib/format';
 import { STATE_LABELS, totalTokens } from '../../lib/overview';
 import { lastActionOf, titleOf } from '../sessions-table';
 import { WaitingSummary } from '../waiting-summary';
@@ -25,17 +26,22 @@ function Card({ actionsOf, now, session }: Pick<StateBoardProps, 'actionsOf'> & 
   const running = session.state === 'running';
   const waiting = session.state === 'waiting';
   return (
-    <article className="flex flex-col gap-2 rounded-card border border-line bg-surface p-3 shadow-card">
+    <article className="relative flex flex-col gap-2 rounded-card border border-line bg-surface p-3 shadow-card hover:border-line-strong">
       <p className="flex items-center gap-2 font-mono text-xs text-muted">
         <span className="truncate">{placeOf(session)}</span>
         <span className="truncate">{session.branch ?? '—'}</span>
         <span className="ml-auto tabular-nums">{elapsed(new Date(session.lastEventAt), now)}</span>
       </p>
-      <h3 className="font-medium">{titleOf(session)}</h3>
+      <h3 className="font-medium">
+        {/* La carte entière ouvre le détail de la session (E1d) ; ses boutons restent au-dessus */}
+        <Link href={`/sessions/${encodeURIComponent(session.id)}`} className="after:absolute after:inset-0">
+          {titleOf(session)}
+        </Link>
+      </h3>
       {waiting && (
         <>
           <WaitingSummary session={session} />
-          <div className="flex">{actionsOf?.(session)}</div>
+          <div className="relative z-10 flex">{actionsOf?.(session)}</div>
         </>
       )}
       {running ? (
@@ -44,7 +50,7 @@ function Card({ actionsOf, now, session }: Pick<StateBoardProps, 'actionsOf'> & 
             (action, index) => (
               <li key={`${index}-${action}`} className="truncate">
                 <span aria-hidden>▸ </span>
-                {action}
+                {actionLabel(action)}
               </li>
             ),
           )}

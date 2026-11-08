@@ -25,3 +25,12 @@ Feature: Profiles at first launch
     And the response should match snapshot except for "sources.0.id, sources.1.id"
     When I send GET request to "/api/sessions"
     Then the response should match snapshot except for "sessions.0.sourceId"
+
+  @CA-SESS-27
+  Scenario: The detail of a session gives its feed in order
+    When I send POST request to "/api/sources" with the JSON "fixtures/watch-perso-profile.json"
+    And I send GET request to "/api/sessions/c41e9a07"
+    Then the response code should be 200
+    And the response should match snapshot except for "session.sourceId"
+    When I send GET request to "/api/sessions/unknown"
+    Then the response code should be 404

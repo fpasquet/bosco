@@ -1,5 +1,5 @@
 // Sessions du fil rouge des specs, pour les histoires : les dates suivent l'heure courante.
-import type { SessionDto, SourceDto } from '@bosco/domain';
+import type { JournalEntryDto, SessionDto, SourceDto } from '@bosco/domain';
 
 const ago = (seconds: number) => new Date(Date.now() - seconds * 1000).toISOString();
 const laboIa = (folder: string) => ({ folder, name: 'labo-ia', root: '/home/dev/www/labo-ia' });
@@ -20,6 +20,8 @@ function session(overrides: Partial<SessionDto> & Pick<SessionDto, 'id' | 'title
     state: 'running',
     usage: { cacheCreation: 0, cacheRead: 0, input: 0, output: 0 },
     waiting: null,
+    turns: 0,
+    changedFiles: [],
     ...overrides,
   };
 }
@@ -103,3 +105,43 @@ export const STORY_WAITING: SessionDto[] = [
     cost: { unpriced: false, usd: 1.84 },
   }),
 ];
+
+const at = (minutesAgo: number) => new Date(Date.now() - minutesAgo * 60_000).toISOString();
+
+/** Fil de la session S3 du fil rouge (E2a). */
+export const STORY_JOURNAL: JournalEntryDto[] = [
+  {
+    seq: 1,
+    at: at(38),
+    kind: 'prompt',
+    text: 'Les PDF avec des tableaux sont coupés au mauvais endroit, regarde le découpage.',
+  },
+  { seq: 2, at: at(37), kind: 'reply', text: 'Je relis le découpage des PDF, puis j’écris un test avec un tableau.' },
+  { seq: 3, at: at(36), kind: 'tool', text: 'Read · src/indexer/pdf.ts' },
+  {
+    seq: 4,
+    at: at(22),
+    kind: 'reply',
+    text: 'Le découpage coupe au milieu des tableaux. Je regroupe les lignes d’un même tableau dans un seul bloc.',
+  },
+  { seq: 5, at: at(21), kind: 'tool', text: 'Edit · src/indexer/pdf.ts' },
+  { seq: 6, at: at(12), kind: 'tool', text: 'Edit · src/indexer/pdf.test.ts' },
+  {
+    seq: 7,
+    at: at(3),
+    kind: 'reply',
+    text: 'Le test du tableau est écrit. Je lance toute la suite pour vérifier que rien d’autre ne bouge.',
+  },
+  { seq: 8, at: at(0.2), kind: 'tool', text: 'Bash · yarn test --forceExit' },
+];
+
+/** La session S3 en cours, avec ses fichiers modifiés et ses tours. */
+export const STORY_RUNNING: SessionDto = {
+  ...(STORY_SESSIONS[1] as SessionDto),
+  turns: 23,
+  model: 'claude-sonnet-5-5',
+  changedFiles: [
+    { path: 'src/indexer/pdf.ts', added: 24, removed: 6 },
+    { path: 'src/indexer/pdf.test.ts', added: 41, removed: 0 },
+  ],
+};

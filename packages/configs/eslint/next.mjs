@@ -21,6 +21,17 @@ export function next(options) {
         ...jsxA11y.flatConfigs.strict.rules,
         // Les props React ne sont jamais modifiées : Readonly<> partout n'ajouterait que du bruit.
         'sonarjs/prefer-read-only-props': 'off',
+        // Une zone qui défile doit se parcourir au clavier (axe : scrollable-region-focusable) : un journal (role="log"),
+        // comme le fil d'une session, peut donc prendre le focus
+        'jsx-a11y/no-noninteractive-tabindex': [
+          'error',
+          { tags: [], roles: ['tabpanel', 'log'], allowExpressionValues: true },
+        ],
+        // Les segments de route de Next.js ([id], (groupe)) gardent leur syntaxe ; le reste du code est en kebab-case
+        'check-file/folder-naming-convention': [
+          'error',
+          { 'src/app/**/': 'NEXT_JS_APP_ROUTER_CASE', 'src/!(app)/**/': 'KEBAB_CASE' },
+        ],
       },
     },
   ];

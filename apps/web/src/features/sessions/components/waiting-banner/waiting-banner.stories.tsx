@@ -7,7 +7,7 @@ const meta = {
   title: 'Features/Sessions/WaitingBanner',
   component: WaitingBanner,
   parameters: { layout: 'padded' },
-  args: { sessions: STORY_WAITING, now: new Date(), busyId: null, onAllow: fn(), onDeny: fn() },
+  args: { sessions: STORY_WAITING, now: new Date(), busyId: null, onAllow: fn() },
 } satisfies Meta<typeof WaitingBanner>;
 
 export default meta;

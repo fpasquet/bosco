@@ -18,13 +18,13 @@ import {
   waitingSessions,
 } from '../../lib/overview';
 import { useOverviewPreferences } from '../../lib/preferences';
+import { AllowDialog } from '../allow-dialog';
 import { ImportProgressBanner } from '../import-progress-banner';
 import { LiveTrackingHint } from '../live-tracking-hint';
 import { LiveTrackingLine } from '../live-tracking-line';
 import { Notices } from '../notices';
 import { OverviewHeader } from '../overview-header';
 import { OverviewIndicators } from '../overview-indicators';
-import { PermissionDialog } from '../permission-dialog';
 import { ProfileChoice } from '../profile-choice';
 import { SessionsTable } from '../sessions-table';
 import { StateBoard } from '../state-board';
@@ -54,7 +54,7 @@ function LiveOverview({ repository, sources, title }: OverviewProps & { sources:
   const loading = sessions === undefined || progress !== null;
   const liveTracking = sources.sources.some((source) => source.liveTracking);
   const answers = usePermissionAnswers();
-  const actions = { busyId: answers.busyId, onAllow: answers.onAllow, onDeny: answers.onDeny };
+  const actions = { busyId: answers.busyId, onAllow: answers.onAllow };
   const opened = `${open.length} ${open.length > 1 ? 'sessions ouvertes' : 'session ouverte'}`;
   const summary = `${opened} · ${indicators.sessionsToday} aujourd’hui · ${formatCost(indicators.costToday)} estimés`;
   return (
@@ -98,12 +98,7 @@ function LiveOverview({ repository, sources, title }: OverviewProps & { sources:
         />
       )}
       {!loading && open.length === 0 && <p className="text-center text-muted">Aucune session ouverte aujourd’hui.</p>}
-      <PermissionDialog
-        mode={answers.dialog?.mode ?? 'deny'}
-        session={answers.dialog?.session ?? null}
-        onCancel={answers.cancel}
-        onConfirm={answers.confirm}
-      />
+      <AllowDialog session={answers.confirming} onCancel={answers.cancel} onConfirm={answers.confirm} />
       <Notices />
     </div>
   );

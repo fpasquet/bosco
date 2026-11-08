@@ -1,6 +1,16 @@
-import { Body, ConflictException, Controller, Get, HttpCode, Inject, Param, Post } from '@nestjs/common';
+import {
+  Body,
+  ConflictException,
+  Controller,
+  Get,
+  HttpCode,
+  Inject,
+  NotFoundException,
+  Param,
+  Post,
+} from '@nestjs/common';
 import { z } from 'zod';
-import type { SessionDto } from '@bosco/domain';
+import type { SessionDetailDto, SessionDto } from '@bosco/domain';
 import type { LiveSignalService } from '../../application/live-signal.service.ts';
 import type { SessionService } from '../../application/session.service.ts';
 import { parseBody } from '../../../shared/interface/http/parse-body.ts';
@@ -29,6 +39,17 @@ export class SessionsController {
   async listSessions(): Promise<{ sessions: SessionDto[] }> {
     const sessions = await this.sessionService.listSessions();
     return { sessions: sessions.map(presentSession) };
+  }
+
+  /** Détail d'une session (E2) : sa vue et son fil ; le flux en direct signale ses changements. */
+  @Get(':id')
+  async sessionDetail(@Param('id') id: string): Promise<SessionDetailDto> {
+    const detail = await this.sessionService.sessionDetail(id);
+    if (!detail) throw new NotFoundException({ code: 'unknownSession' });
+    return {
+      session: presentSession(detail.session),
+      journal: detail.journal.map((entry) => ({ ...entry, at: entry.at.toISOString() })),
+    };
   }
 
   /** 409 quand le terminal a répondu le premier : la première réponse l'emporte (RF-SESS-03, CA-SESS-33). */

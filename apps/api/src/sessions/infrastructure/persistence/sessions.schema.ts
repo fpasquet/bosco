@@ -10,6 +10,8 @@ export interface SourceRow {
 
 export interface SessionRow {
   branch: null | string;
+  changedFiles: { added: number; path: string; removed: number }[];
+  turns: number;
   costMicros: number;
   endedAt: Date | null;
   lastAction: null | string;
@@ -85,6 +87,8 @@ export const SessionSchema = new EntitySchema<SessionRow>({
     unpricedTokens: { type: 'integer', fieldName: 'unpriced_tokens', default: 0 },
     waiting: { type: 'json', nullable: true },
     endedAt: { type: 'datetime', fieldName: 'ended_at', nullable: true },
+    turns: { type: 'integer', default: 0 },
+    changedFiles: { type: 'json', fieldName: 'changed_files', default: '[]' },
   },
 });
 

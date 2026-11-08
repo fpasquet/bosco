@@ -3,7 +3,9 @@ name: CI
 on:
   push:
     branches: [main]
+  # Une PR en brouillon ne lance pas la CI : elle part quand la PR est prête pour la relecture, puis à chaque push
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -12,6 +14,7 @@ concurrency:
 jobs:
   check:
     name: Lint, types, tests and build
+    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5

@@ -1,5 +1,6 @@
 import type { TranscriptEvent } from '../../domain/transcript-event.ts';
 import { describeAction, shorten } from '../../domain/action-summary.ts';
+import { changeOf } from '../../domain/file-change.ts';
 // Lecture d'une ligne de transcript de Claude Code. Le format est interne et change d'une version à l'autre (DT-05) :
 // on ne garde que quelques faits, et toute ligne inconnue, incomplète ou mal formée est ignorée sans erreur (NF-08).
 import { TokenUsage } from '../../domain/token-usage.ts';
@@ -71,10 +72,11 @@ export class TranscriptParser {
 type Base = Pick<TranscriptEvent, 'at' | 'branch' | 'cwd' | 'model' | 'repoRoot' | 'usage'>;
 
 /** Bloc d'un message de l'assistant : son texte, ou l'outil appelé et son argument principal. */
-function blockEvent(block: Record<string, unknown>): Pick<TranscriptEvent, 'kind' | 'text' | 'usage'>[] {
+function blockEvent(block: Record<string, unknown>): Pick<TranscriptEvent, 'change' | 'kind' | 'text' | 'usage'>[] {
   const content = text(block.text);
   if (block.type === 'text' && content) return [{ kind: 'reply', text: shorten(content), usage: null }];
-  if (block.type === 'tool_use' && text(block.name)) return [{ kind: 'tool', text: toolSummary(block), usage: null }];
+  if (block.type === 'tool_use' && text(block.name))
+    return [{ kind: 'tool', text: toolSummary(block), usage: null, change: changeOf(String(block.name), block.input) }];
   return [];
 }
 

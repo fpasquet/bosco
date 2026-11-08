@@ -1,1 +1,1 @@
-export { placeOf, WaitingActions, WaitingBanner } from './waiting-banner';
+export { detailOf, placeOf, WaitingActions, WaitingBanner } from './waiting-banner';

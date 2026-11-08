@@ -77,6 +77,19 @@ describe('Session', () => {
     expect(session.stateAt(at('14:05:10'))).toBe('running');
   });
 
+  it('counts the replies of the agent once and adds up the files it changed', () => {
+    const session = Session.discover('5e0a91c3', 'pro', at('14:02:00'));
+    const edit = {
+      ...reply('14:03:00', new TokenUsage(1, 1, 0, 0)),
+      kind: 'tool' as const,
+      text: 'Edit · src/indexer/pdf.ts',
+    };
+    session.record({ ...edit, change: { path: 'src/indexer/pdf.ts', added: 24, removed: 6 } });
+    session.record({ ...edit, usage: null, change: { path: 'src/indexer/pdf.ts', added: 1, removed: 0 } });
+    const { changedFiles, turns } = session.toSnapshot();
+    expect([turns, changedFiles]).toEqual([1, [{ path: 'src/indexer/pdf.ts', added: 25, removed: 6 }]]);
+  });
+
   it('adds up the token usage, cache included', () => {
     const session = Session.discover('c41e9a07', 'pro', at('14:02:00'));
     session.record(reply('14:02:00', new TokenUsage(10, 20, 30, 40)));

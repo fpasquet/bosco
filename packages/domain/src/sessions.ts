@@ -31,6 +31,8 @@ export type WaitingDto =
 
 export interface SessionDto {
   branch: null | string;
+  /** Fichiers modifiés par l'agent, d'après ses appels d'outils ; une commande shell n'y figure pas */
+  changedFiles: { added: number; path: string; removed: number }[];
   /** Coût estimé en dollars au tarif public des modèles ; unpriced : une part vient d'un modèle sans tarif connu */
   cost: { unpriced: boolean; usd: number };
   id: string;
@@ -47,8 +49,24 @@ export interface SessionDto {
   startedAt: string;
   state: SessionStateDto;
   title: null | string;
+  /** Réponses de l'agent */
+  turns: number;
   usage: { cacheCreation: number; cacheRead: number; input: number; output: number };
   waiting: null | WaitingDto;
+}
+
+/** Entrée du fil d'une session : ta demande, la réponse de l'agent, ou une de ses actions. */
+export interface JournalEntryDto {
+  at: string;
+  kind: 'prompt' | 'reply' | 'tool';
+  seq: number;
+  text: string;
+}
+
+/** Détail d'une session (GET /api/sessions/:id). */
+export interface SessionDetailDto {
+  journal: JournalEntryDto[];
+  session: SessionDto;
 }
 
 /** Avancement de la première lecture de l'historique ; null quand elle est finie. */
