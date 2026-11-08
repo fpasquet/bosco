@@ -1,28 +1,36 @@
 'use client';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Button } from '@/shared/ui/button';
 import { Logo } from '@/shared/ui/logo';
 import { APP_NAME } from '@bosco/domain';
 import { claimPairingCode } from '../../api/access';
+import { pairingDigits } from '../../lib/pairing';
 
 const MESSAGES = {
   expired: 'Ce code a expiré, a déjà servi ou n’a plus d’essai : génère un nouveau code sur le poste.',
   wrong: 'Code incorrect : vérifie les 6 chiffres affichés sur le poste.',
 } as const;
 
-/** Les 6 chiffres affichés sur le poste, espaces permis. */
-const codeSchema = z.object({ code: z.string().refine((value) => /^\d{6}$/.test(value.replaceAll(/\s/g, ''))) });
+const CODE_LENGTH = 6;
 
-/** Sur le téléphone, un écran plein ne demande que le code affiché sur le poste (E4c). */
+/** Les 6 chiffres affichés sur le poste, espaces permis. */
+const codeSchema = z.object({ code: z.string().refine((value) => pairingDigits(value) !== null) });
+
+/**
+ * Sur le téléphone, un écran plein ne demande que le code affiché sur le poste (E4c). Ouvert par le QR code, il reçoit
+ * le code dans son adresse (?code=) et s'appaire seul, une fois ; un code refusé laisse la saisie à la personne.
+ */
 export function PairingScreen() {
   const router = useRouter();
+  const scanned = pairingDigits(useSearchParams().get('code') ?? '');
   const { formState, handleSubmit, register, setError } = useForm({
     resolver: zodResolver(codeSchema),
     mode: 'onChange',
-    defaultValues: { code: '' },
+    defaultValues: { code: scanned ?? '' },
   });
   const error = formState.errors.code?.type === 'server' ? formState.errors.code.message : null;
   const claim = handleSubmit(async ({ code }) => {
@@ -30,6 +38,13 @@ export function PairingScreen() {
     if (result === 'accepted') router.push('/');
     else setError('code', { type: 'server', message: MESSAGES[result] });
   });
+  const field = register('code');
+  const submitted = useRef(false);
+  useEffect(() => {
+    if (!scanned || submitted.current) return;
+    submitted.current = true;
+    void claim();
+  }, [claim, scanned]);
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center gap-6 bg-canvas p-6 text-ink">
       <Logo size="lg" />
@@ -44,8 +59,12 @@ export function PairingScreen() {
             className="input w-full text-center font-mono tracking-widest input-lg"
             inputMode="numeric"
             autoComplete="one-time-code"
-            maxLength={7}
-            {...register('code')}
+            {...field}
+            onChange={(event) => {
+              // Seulement des chiffres, 6 au plus : un code collé avec son espace (« 482 913 ») reste valable
+              event.target.value = event.target.value.replaceAll(/\D/g, '').slice(0, CODE_LENGTH);
+              void field.onChange(event);
+            }}
             aria-invalid={error !== null}
             aria-describedby={error ? 'pairing-error' : undefined}
           />
