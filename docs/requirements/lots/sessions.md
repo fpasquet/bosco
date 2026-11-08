@@ -232,7 +232,7 @@ Règles de l'écran :
 
 ## <a id="e4"></a>E4 · Sources
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `sessions/e4.html` · implémentation : **Livré (Sources développées (E4a, E4b) : interrupteur de lecture par profil, état du suivi en direct et dernier signal, seuil d'inactivité (5 à 60 min), notifications du bureau envoyées par le service à chaque nouvelle attente, historique conservé en entier ; installation du suivi en trois étapes. Écarts : « Ajouter un dossier », « Gérer » et l'état « À mettre à jour » d'une source illisible ne sont pas faits ; le serveur Bosco (tâches et décisions) n'est pas encore ajouté au profil. Accès depuis le téléphone (E4c) : écoute HTTPS sur le réseau local seulement une fois activé, certificat créé par Bosco, code de 6 chiffres valable 5 min, à usage unique et 5 essais, page d'appairage sur le téléphone, téléphones appairés retirés d'un clic. QR code de l'adresse et du code : scanné, il ouvre la page d'appairage avec le code rempli, et le téléphone s'appaire seul ; l'adresse se copie aussi. Le champ du code ne garde que 6 chiffres.)**
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `sessions/e4.html` · implémentation : **Livré (Sources développées (E4a, E4b) : interrupteur de lecture par profil, état du suivi en direct et dernier signal, seuil d'inactivité (5 à 60 min), notifications du bureau envoyées par le service à chaque nouvelle attente, historique conservé en entier ; installation du suivi en trois étapes. Écarts : « Ajouter un dossier », « Gérer » et l'état « À mettre à jour » d'une source illisible ne sont pas faits ; le serveur Bosco (tâches et décisions) n'est pas encore ajouté au profil. Accès depuis le téléphone (E4c) : écoute HTTPS sur le réseau local seulement une fois activé, certificat créé par Bosco, code de 6 chiffres valable 5 min, à usage unique et 5 essais, page d'appairage sur le téléphone, téléphones appairés retirés d'un clic. QR code de l'adresse et du code : scanné, il ouvre la page d'appairage avec le code rempli, et le téléphone s'appaire seul ; l'adresse se copie aussi. Le champ du code ne garde que 6 chiffres. Dépôts découverts (E4d) : onglet « Dépôts » des réglages ; dépôts git seulement et worktrees rattachés à leur dépôt d'origine, activés par défaut ; dossiers de dépôts et dossiers exclus (/tmp par défaut), écrits comme dans le terminal ; dépôts trouvés, les plus récents d'abord, masqués d'un clic ; une nouvelle tâche ne propose que les dépôts git affichés. Le dépôt d'une session se calcule à l'affichage : un réglage vaut aussitôt, sans relire l'historique. Sur le téléphone, en lecture seule.)**
 
 ### <a id="e4a"></a>E4a · Sources : profils surveillés et réglages
 
@@ -284,6 +284,23 @@ Règles de l'écran :
 5. Sur ce téléphone, « Autoriser » demande ensuite une confirmation avant d'envoyer la réponse à l'agent ([E2b](#e2b)).
 
 **Mobile** : l'écran de gauche est celui qui s'ouvre sur le téléphone à l'adresse affichée par le poste, sans les onglets de l'application, puisqu'elle n'est pas encore accessible. Un champ de six chiffres et un bouton « Appairer » de 44 px suffisent.
+
+### <a id="e4d"></a>E4d · Réglages : dépôts découverts
+
+Comment Bosco range les sessions par dépôt. Un dépôt naît du dossier de travail d'une session : sa racine git, à condition d'être sous un dossier de dépôts et hors des dossiers exclus. Les dépôts trouvés se masquent un par un des listes. Les réglages valent tout de suite, sans relire l'historique.
+
+- **Depuis** l'onglet « Dépôts » des Réglages · [E4A](#e4a) pour les profils lus
+- **Ensuite** [E1B](#e1b), où les sessions se rangent par dépôt · [E6A](taches.md#e6a), qui ne propose que les dépôts git
+
+Règles de l'écran :
+
+1. Le dépôt d'une session est la racine git de son dossier de travail. « Dépôts git seulement », activé par défaut : une session qui tourne hors d'un dépôt git se range sous « Hors dépôt git » et ne crée pas de dépôt. Désactivé, son dossier de travail compte comme un dépôt, comme dans la première version.
+2. Un worktree git (une copie de travail sur une autre branche, comme ceux de Claude Code dans `.claude/worktrees/`) se range avec son dépôt d'origine, sous sa branche, au lieu de compter comme un dépôt à part. Activé par défaut.
+3. Les dossiers de dépôts limitent la découverte : un dépôt en dehors est ignoré ; sans dossier, tout le poste compte. Les dossiers exclus l'emportent : `/tmp` l'est par défaut, pour les copies jetables et les essais. Une session écartée reste visible dans la vue d'ensemble, sous « Hors dépôt git ». Un chemin s'écrit comme dans le terminal (`~/www`).
+4. Les dépôts trouvés, les plus récents d'abord : ceux où une session Claude Code a tourné, d'après les sessions que Claude Code garde encore. Un dépôt sans session n'y figure pas. « Masqué » retire un dépôt des listes (barre latérale, filtres, tâches, contexte) sans toucher à ses sessions, qui restent dans la vue d'ensemble ; un clic l'affiche de nouveau. Une nouvelle tâche ne propose que les dépôts git affichés, les plus récents d'abord : le worker a besoin d'un dépôt git.
+5. Ces réglages sont réservés à toi et valent tout de suite, sans relire l'historique des sessions.
+
+**Mobile** : écran poussé en lecture seule, ouvert depuis Réglages ; les listes s'y lisent sans bouton, et la mention « Modifiable depuis le poste » l'explique.
 
 ## <a id="criteres-dacceptation"></a>Critères d'acceptation
 
@@ -374,3 +391,9 @@ Règles de l'écran :
 - **CA-SESS-69** · [E4c](#e4c) · Étant donné la fenêtre ouverte, quand la personne clique sur « Annuler », alors la fenêtre se ferme sans rien activer de plus.
 - **CA-SESS-70** · [E4c](#e4c) · Étant donné un téléphone hors du réseau local, quand il tente de joindre le poste, alors il ne le joint pas, rien n'étant exposé sur Internet ; sur un téléphone appairé, « Autoriser » demande une confirmation (RF-SESS-07).
 - **CA-SESS-75** · [E4c](#e4c) · Étant donné un code d'appairage affiché sur le poste, quand la personne scanne le QR code de la fenêtre avec son téléphone, alors la page d'appairage s'ouvre avec le code rempli et le téléphone s'appaire sans rien saisir ; le champ du code n'accepte que 6 chiffres.
+- **CA-SESS-77** · [E4d](#e4d) · Étant donné « Dépôts git seulement », activé par défaut, quand une session tourne hors d'un dépôt git (dossier personnel, dossier temporaire), alors elle se range sous « Hors dépôt git » sans créer de dépôt ; désactivé, son dossier de travail compte comme un dépôt.
+- **CA-SESS-78** · [E4d](#e4d) · Étant donné « Worktrees rattachés à leur dépôt », activé par défaut, quand une session tourne dans un worktree git (comme ceux de `.claude/worktrees/`), alors elle se range avec le dépôt d'origine, sous sa branche, au lieu de compter comme un dépôt à part.
+- **CA-SESS-79** · [E4d](#e4d) · Étant donné des dossiers de dépôts et des dossiers exclus (`/tmp` par défaut), quand une session tourne dans un dépôt hors des premiers ou dans un des seconds, alors elle se range sous « Hors dépôt git » ; les dossiers exclus l'emportent, sans dossier de dépôts tout le poste compte, et un chemin s'écrit comme dans le terminal (`~/www`).
+- **CA-SESS-80** · [E4d](#e4d) · Étant donné la liste « Dépôts trouvés », faite des dépôts où une session Claude Code a tourné, les plus récents d'abord, quand la personne masque un dépôt, alors il disparaît de la barre latérale, des filtres, des tâches et du contexte, ses sessions restent dans la vue d'ensemble, et un clic l'affiche de nouveau.
+- **CA-SESS-81** · [E4d](#e4d) · Étant donné une nouvelle tâche ([E6a](taches.md#e6a)), quand la personne choisit son dépôt, alors seuls les dépôts git affichés sont proposés, les plus récents d'abord, même si « Dépôts git seulement » est désactivé.
+- **CA-SESS-82** · [E4d](#e4d) · Étant donné un réglage des dépôts changé, quand la personne revient à la vue d'ensemble, alors les sessions s'y rangent aussitôt selon le réglage, sans relire l'historique ; sur le téléphone, ces réglages se lisent sans pouvoir être changés.
