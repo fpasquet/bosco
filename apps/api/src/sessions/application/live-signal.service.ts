@@ -38,6 +38,9 @@ function placeOf(session: Session): null | string {
   return folder ? (folder.split('/').findLast(Boolean) ?? null) : null;
 }
 
+/** L'outil par lequel l'agent pose une question à choix : Claude Code demande aussi son « autorisation » */
+const QUESTION_TOOL = 'AskUserQuestion';
+
 type Notifications = Pick<NotificationService, 'notify' | 'settle'>;
 
 const SILENT: Notifications = { notify: () => Promise.resolve(null), settle: () => Promise.resolve() };
@@ -114,6 +117,8 @@ export class LiveSignalService {
     action: { detail: null | string; tool: string },
     abandoned: (onAbandon: () => void) => void,
   ): Promise<null | PermissionAnswer> {
+    // Une question de l'agent passe aussi par ce hook : c'est une question (lue dans le transcript), pas une autorisation
+    if (action.tool === QUESTION_TOOL) return null;
     const at = this.clock.now();
     const session = await this.sessionOf(origin, at);
     const requestId = this.idGenerator.next();
