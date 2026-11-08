@@ -126,3 +126,10 @@ Then('the response property {string} should contain {string}', ({ last }, path: 
     .reduce<unknown>((node, key) => (node as Record<string, unknown> | undefined)?.[key], last.response?.body);
   expect(String(actual)).toContain(value);
 });
+
+Then('the response property {string} should not contain {string}', ({ last }, path: string, value: string) => {
+  const actual = path
+    .split('.')
+    .reduce<unknown>((node, key) => (node as Record<string, unknown> | undefined)?.[key], last.response?.body);
+  expect(String(actual)).not.toContain(value);
+});
