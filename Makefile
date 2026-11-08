@@ -4,7 +4,7 @@ SKILLS := .claude/skills
 PROFILE ?= $(HOME)/.claude
 
 .DEFAULT_GOAL := help
-.PHONY: help install dev start build check lint typecheck test format format-check e2e e2e-api e2e-web e2e-record e2e-clean storybook claude-compat db-migration service-install mcp-install mcp-install-dev mcp-remove skills tokens tokens-check requirements requirements-check
+.PHONY: help install dev start desktop desktop-install build check lint typecheck test format format-check e2e e2e-api e2e-web e2e-record e2e-clean storybook claude-compat db-migration service-install mcp-install mcp-install-dev mcp-remove skills tokens tokens-check requirements requirements-check
 
 help: ## List the commands
 	@grep -E '^[a-z0-9-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN { FS = ":.*## " } { printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2 }'
@@ -18,6 +18,12 @@ dev: ## Start the service in development mode on http://127.0.0.1:4880 (web hot 
 
 start: build ## Build, then start the service on http://127.0.0.1:4870 and open the overview
 	node apps/api/dist/cli/main.js start
+
+desktop: build ## Build, then open the desktop application (Linux, optional: the browser still works)
+	pnpm --filter @bosco/desktop start
+
+desktop-install: build ## Add Bosco to the applications menu, opening the desktop application of this repository
+	pnpm --filter @bosco/desktop install-launcher
 
 build: ## Build every package
 	pnpm build
