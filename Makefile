@@ -1,9 +1,10 @@
 # Commandes courantes de Bosco : make help les liste. Chaque cible passe par pnpm et Turborepo.
 SPECS ?= ../specs
 SKILLS := .claude/skills
+PROFILE ?= $(HOME)/.claude
 
 .DEFAULT_GOAL := help
-.PHONY: help install dev start build check lint typecheck test format format-check e2e e2e-api e2e-web e2e-record e2e-clean storybook claude-compat db-migration service-install skills tokens tokens-check requirements requirements-check
+.PHONY: help install dev start build check lint typecheck test format format-check e2e e2e-api e2e-web e2e-record e2e-clean storybook claude-compat db-migration service-install mcp-install mcp-install-dev mcp-remove skills tokens tokens-check requirements requirements-check
 
 help: ## List the commands
 	@grep -E '^[a-z0-9-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN { FS = ":.*## " } { printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2 }'
@@ -65,6 +66,15 @@ db-migration: ## Write the migration that brings the database to the entity sche
 
 service-install: build ## Install Bosco as a systemd user service
 	node apps/api/dist/cli/main.js service install
+
+mcp-install: build ## Add the MCP server of Bosco (Ma session) to a Claude Code profile (PROFILE=~/.claude by default)
+	node apps/api/dist/cli/main.js mcp install --profile $(PROFILE)
+
+mcp-install-dev: ## Same, pointed at the development service (make dev: port 4880, data in .data/)
+	BOSCO_PORT=4880 BOSCO_DATA_DIR=$(CURDIR)/.data node apps/api/dist/cli/main.js mcp install --profile $(PROFILE)
+
+mcp-remove: ## Remove the MCP server of Bosco from a Claude Code profile (PROFILE=~/.claude by default)
+	node apps/api/dist/cli/main.js mcp remove --profile $(PROFILE)
 
 skills: ## Install the skills pinned by skills-lock.json
 	pnpm skills:install
