@@ -1,6 +1,7 @@
 'use client';
 import { useQueryClient } from '@tanstack/react-query';
 import { Info, SquareTerminal } from 'lucide-react';
+import Link from 'next/link';
 import { useState } from 'react';
 import type { PilotSettingsDto, SessionDto } from '@bosco/domain';
 import { useNotices } from '@/shared/hooks/use-notices';
@@ -25,16 +26,20 @@ export function PilotPanel({ session }: { session: SessionDto }) {
   const push = useNotices((state) => state.push);
   const [settings, setSettings] = useState<PilotSettingsDto>(session.pilot?.settings ?? DEFAULT_SETTINGS);
   if (session.task) return null;
-  if (!writable(session)) {
+  const inTerminal = !writable(session);
+  if (inTerminal && !session.channel) {
     return (
-      <p className="flex items-center gap-2 border-t border-line bg-surface-alt px-4 py-3 text-sm text-muted">
+      <p className="flex flex-wrap items-center gap-x-2 gap-y-1 border-t border-line bg-surface-alt px-4 py-3 text-sm text-muted">
         <SquareTerminal aria-hidden className="size-4 shrink-0" />
-        Ouverte dans un terminal · réponds-y là-bas. Une fois close, elle se reprendra aussi ici.
+        Ouverte dans un terminal · réponds-y là-bas.
+        <Link href={`/sources?canal=${encodeURIComponent(session.sourceId)}`} className="link link-primary">
+          Lancer tes sessions avec le canal de Bosco pour leur écrire d’ici
+        </Link>
       </p>
     );
   }
   const asking = session.waiting?.kind === 'question';
-  const closed = session.pilot === null;
+  const closed = session.pilot === null && !inTerminal;
   const place = session.repository
     ? [session.repository.name, session.repository.folder].filter(Boolean).join('/')
     : session.repoPath;
@@ -43,6 +48,7 @@ export function PilotPanel({ session }: { session: SessionDto }) {
       const status = await sendMessage(session.id, { ...value, settings });
       await client.invalidateQueries({ queryKey: ['session', session.id] });
       if (status === 'queued') push('Message en attente : il partira à la fin du tour.', 'info');
+      if (status === 'channel') push('Message envoyé dans le terminal par le canal de Bosco.', 'success');
     } catch (error) {
       push(error instanceof Error ? error.message : 'Le message n’est pas parti.', 'warning');
       throw error;
@@ -80,6 +86,7 @@ export function PilotPanel({ session }: { session: SessionDto }) {
           running={session.pilot?.running ?? false}
           onStop={stop}
           disabled={asking}
+          textOnly={inTerminal ? 'Ouverte dans un terminal · ton message y arrive par le canal de Bosco' : undefined}
         />
       </div>
     </div>
@@ -88,5 +95,6 @@ export function PilotPanel({ session }: { session: SessionDto }) {
 
 function placeholderOf(asking: boolean, closed: boolean): string {
   if (asking) return 'Réponds d’abord à la question';
+  // Session du terminal avec son canal (E2i), ou pilotée par Bosco
   return closed ? 'Écris pour reprendre la session ici…' : 'Écris à l’agent…';
 }

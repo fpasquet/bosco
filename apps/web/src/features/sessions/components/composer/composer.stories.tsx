@@ -134,6 +134,14 @@ export const Disabled: Story = {
   args: { disabled: true, placeholder: 'Réponds d’abord à la question' },
 };
 
+/** Session du terminal lancée avec le canal de Bosco (E2i) : texte seulement, sans images ni réglages */
+export const TextOnly: Story = {
+  args: {
+    placeholder: 'Écris à la session…',
+    textOnly: 'Ouverte dans un terminal · ton message y arrive par le canal de Bosco',
+  },
+};
+
 export const NewSession: Story = {
   args: {
     submitLabel: 'Démarrer',

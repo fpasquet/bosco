@@ -2,18 +2,24 @@
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ChevronRight } from 'lucide-react';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useSyncExternalStore } from 'react';
 import { PageSkeleton } from '@/shared/components/page-skeleton';
 import { useNotices } from '@/shared/hooks/use-notices';
 import { useNow } from '@/shared/hooks/use-now';
 import { APP_NAME, type SourceDto } from '@bosco/domain';
+import { channelProfilesQuery, installChannel, uninstallChannel } from '../../api/channel';
 import { installLiveTracking, liveTrackingQuery, uninstallLiveTracking } from '../../api/live-tracking';
 import { type SettingsDto, settingsQuery, updateSettings } from '../../api/settings';
 import { setSourceWatched, sourcesQuery } from '../../api/sources';
+import { useCopy } from '../../hooks/use-copy';
 import { displayPath } from '../../lib/format';
+import { ChannelPanel } from '../channel-panel';
 import { LiveTrackingPanel, type LiveTrackingStep } from '../live-tracking-panel';
 import { SettingsPanel } from '../settings-panel';
 import { SourceCard } from '../source-card';
+
+/** L'adresse ne change pas pendant la visite : rien à écouter */
+const noSubscription = () => () => undefined;
 
 /** Le dernier signal se relit à cet intervalle ; plus souvent pendant la vérification de l'installation. */
 const STATUS_REFRESH_MS = 5000;
@@ -60,6 +66,33 @@ export function SourcesScreen({ title }: { title: string }) {
     onSuccess: (saved) => client.setQueryData(settingsQuery.queryKey, saved),
     onError: () => push('Le réglage n’a pas pu être enregistré.', 'warning'),
   });
+  // Canal de Bosco (E4f) : son installation par profil ; « ?canal=1 » (depuis la bande d'E2a) ouvre le panneau
+  const { data: channelProfiles } = useQuery(channelProfilesQuery);
+  const [channelPath, setChannelPath] = useState<null | string>(null);
+  const [linkDismissed, setLinkDismissed] = useState(false);
+  // « ?canal=<source> » : le panneau s'ouvre sur le profil de la session d'où vient le lien
+  const fromLink = useSyncExternalStore(
+    noSubscription,
+    () => new URLSearchParams(globalThis.location.search).get('canal'),
+    () => null,
+  );
+  const copy = useCopy();
+  const linked = sources.find((source) => source.id === fromLink)?.path ?? null;
+  const openPath = channelPath ?? (linkDismissed ? null : linked);
+  const channelChange = useMutation({
+    mutationFn: ({ install: installing, path }: { install: boolean; path: string }) =>
+      installing ? installChannel(path) : uninstallChannel(path),
+    onSuccess: async (_, { install: installing }) => {
+      await client.invalidateQueries({ queryKey: channelProfilesQuery.queryKey });
+      if (!installing) {
+        setChannelPath(null);
+        setLinkDismissed(true);
+        push('Canal de Bosco retiré du profil.', 'info');
+      }
+    },
+    onError: (error) => push(error instanceof Error ? error.message : 'Le canal n’a pas changé.', 'warning'),
+  });
+  const channelOf = (path: string) => channelProfiles?.find((profile) => profile.path === path);
   const switchSource = useMutation({
     mutationFn: ({ id, watched }: { id: string; watched: boolean }) => setSourceWatched(id, watched),
     onSuccess: refresh,
@@ -88,6 +121,12 @@ export function SourcesScreen({ title }: { title: string }) {
             return (
               <SourceCard
                 key={source.id}
+                channel={
+                  channelOf(source.path) && {
+                    installed: channelOf(source.path)?.installed ?? false,
+                    onOpen: () => setChannelPath(source.path),
+                  }
+                }
                 label={source.label}
                 path={displayPath(source.path, data.home)}
                 liveTracking={source.liveTracking}
@@ -128,6 +167,18 @@ export function SourcesScreen({ title }: { title: string }) {
           </Link>
         ))}
       </nav>
+      <ChannelPanel
+        profile={(openPath && channelOf(openPath)) || null}
+        shownPath={openPath ? displayPath(openPath, data.home) : ''}
+        busy={channelChange.isPending}
+        onCopy={copy}
+        onClose={() => {
+          setChannelPath(null);
+          setLinkDismissed(true);
+        }}
+        onInstall={() => openPath && channelChange.mutate({ install: true, path: openPath })}
+        onUninstall={() => openPath && channelChange.mutate({ install: false, path: openPath })}
+      />
       <LiveTrackingPanel
         source={selected && { label: selected.label, path: displayPath(selected.path, data.home) }}
         status={

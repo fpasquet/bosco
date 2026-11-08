@@ -1,3 +1,4 @@
+import { RadioTower } from 'lucide-react';
 import type { ConversationTurnDto, SessionConversationDto } from '@bosco/domain';
 import { Bubble, BubbleContent } from '@/shared/ui/bubble';
 import { Message, MessageContent, MessageHeader } from '@/shared/ui/message';
@@ -30,6 +31,11 @@ function UserTurn({ turn }: { turn: ConversationTurnDto }) {
       <MessageContent>
         <MessageHeader className="gap-1.5">
           Toi · <Time at={turn.at} />
+          {turn.viaChannel && (
+            <span className="inline-flex items-center gap-1">
+              · <RadioTower aria-hidden className="size-3" /> depuis Bosco
+            </span>
+          )}
         </MessageHeader>
         <Bubble variant="tinted">
           <BubbleContent className="whitespace-pre-line">{text}</BubbleContent>

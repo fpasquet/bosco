@@ -1,6 +1,6 @@
 'use client';
 import { EditorContent, useEditor, useEditorState } from '@tiptap/react';
-import { Plus } from 'lucide-react';
+import { Plus, RadioTower } from 'lucide-react';
 import { type CSSProperties, useEffect, useId, useRef, useState, useSyncExternalStore } from 'react';
 import { useForm, useFormState, useWatch } from 'react-hook-form';
 import type { PilotImageDto, PilotSettingsDto, SuggestionDto } from '@bosco/domain';
@@ -40,6 +40,10 @@ export interface ComposerProps {
   submitLabel?: string;
   /** Suggestions de « @ » (fichiers) et « / » (commandes et skills), appelées à chaque frappe après le déclencheur */
   suggest: (kind: 'command' | 'file', query: string) => Promise<SuggestionDto[]>;
+  /**
+   * Texte seulement (canal de Bosco, E2i) : ni images ni réglages ; la note dit pourquoi, à la place de la barre d'outils
+   */
+  textOnly?: string;
 }
 
 interface Attachment {
@@ -79,6 +83,7 @@ export function Composer({
   settings,
   submitLabel,
   suggest,
+  textOnly,
 }: ComposerProps) {
   const baseId = useId();
   const helpId = `${baseId}-help`;
@@ -109,6 +114,10 @@ export function Composer({
   const empty = !hasText && attachments.length === 0;
 
   const addFiles = async (files: File[]) => {
+    if (textOnly) {
+      setError('Le canal de Bosco ne transmet que du texte.');
+      return;
+    }
     const reading = await readImages(files, getValues('attachments').length);
     const added = reading.images.map((image) => ({ id: crypto.randomUUID(), image }));
     setValue('attachments', [...getValues('attachments'), ...added]);
@@ -208,13 +217,15 @@ export function Composer({
       <div
         className={`composer-card rounded-card border border-line shadow-card ${disabled ? 'bg-surface-alt' : 'bg-surface'}`}
       >
-        <SettingsBar
-          compact
-          className="flex gap-1.5 overflow-x-auto px-2 pt-2 md:hidden"
-          settings={settings}
-          disabled={disabled}
-          onChange={onSettingsChange}
-        />
+        {!textOnly && (
+          <SettingsBar
+            compact
+            className="flex gap-1.5 overflow-x-auto px-2 pt-2 md:hidden"
+            settings={settings}
+            disabled={disabled}
+            onChange={onSettingsChange}
+          />
+        )}
         {attachments.length > 0 && (
           <ul aria-label="Images jointes" className="flex flex-wrap gap-2 px-3 pt-3">
             {attachments.map(({ id, image }) => (
@@ -225,21 +236,30 @@ export function Composer({
           </ul>
         )}
         <div className="flex flex-wrap items-end gap-2 p-1.5 md:gap-1 md:px-2 md:pt-0 md:pb-2">
-          <button
-            type="button"
-            aria-label="Joindre une image"
-            disabled={disabled}
-            className="btn btn-circle btn-outline btn-sm max-md:size-9"
-            onClick={() => fileInput.current?.click()}
-          >
-            <Plus aria-hidden className="size-4" />
-          </button>
-          <SettingsBar
-            className="flex items-center gap-1 max-md:hidden"
-            settings={settings}
-            disabled={disabled}
-            onChange={onSettingsChange}
-          />
+          {textOnly ? (
+            <p className="flex items-center gap-1.5 px-1 text-xs text-muted max-md:order-last max-md:basis-full">
+              <RadioTower aria-hidden className="size-3.5 shrink-0" />
+              {textOnly}
+            </p>
+          ) : (
+            <>
+              <button
+                type="button"
+                aria-label="Joindre une image"
+                disabled={disabled}
+                className="btn btn-circle btn-outline btn-sm max-md:size-9"
+                onClick={() => fileInput.current?.click()}
+              >
+                <Plus aria-hidden className="size-4" />
+              </button>
+              <SettingsBar
+                className="flex items-center gap-1 max-md:hidden"
+                settings={settings}
+                disabled={disabled}
+                onChange={onSettingsChange}
+              />
+            </>
+          )}
           <EditorContent
             editor={editor}
             style={rows}

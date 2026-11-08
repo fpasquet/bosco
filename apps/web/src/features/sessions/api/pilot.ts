@@ -44,12 +44,12 @@ export async function startSession(input: StartSessionDto): Promise<string> {
 }
 
 /** Un message à une session : il part tout de suite, ou attend la fin du tour (CA-SESS-92, CA-SESS-93). */
-export async function sendMessage(sessionId: string, message: PilotMessageDto): Promise<'queued' | 'sent'> {
+export async function sendMessage(sessionId: string, message: PilotMessageDto): Promise<'channel' | 'queued' | 'sent'> {
   const response = await call(`/api/sessions/${encodeURIComponent(sessionId)}/messages`, {
     method: 'POST',
     body: JSON.stringify(message),
   });
-  const body = (await response.json()) as { status: 'queued' | 'sent' };
+  const body = (await response.json()) as { status: 'channel' | 'queued' | 'sent' };
   return body.status;
 }
 
