@@ -8,3 +8,4 @@ export const LIVE_TRACKING_SERVICE = Symbol('LiveTrackingService');
 export const HOOK_SECRET = Symbol('HookSecret');
 export const SETTINGS_SERVICE = Symbol('SettingsService');
 export const NOTIFIER = Symbol('Notifier');
+export const HISTORY_SERVICE = Symbol('HistoryService');

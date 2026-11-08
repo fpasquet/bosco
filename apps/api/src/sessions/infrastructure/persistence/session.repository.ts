@@ -18,6 +18,22 @@ export class MikroOrmSessionRepository implements SessionRepository {
     return rows.map(({ at, kind, seq, text }) => ({ at, kind: kind as JournalEntry['kind'], seq, text }));
   }
 
+  async search(text: string): Promise<Set<string>> {
+    const words = text.split(/\s+/).filter(Boolean);
+    if (words.length === 0) return new Set();
+    // Chaque mot est cherché en début de mot, sans opérateur FTS5 : les guillemets sont doublés
+    const match = words.map((word) => `"${word.replaceAll('"', '""')}"*`).join(' ');
+    const connection = this.orm.em.getConnection();
+    const events = await connection.execute<{ session_id: string }[]>(
+      'select distinct session_id from session_search where session_search match ?',
+      [match],
+    );
+    const titled = await this.orm.em
+      .fork()
+      .find(SessionSchema, { $and: words.map((word) => ({ title: { $like: `%${word.replaceAll(/[%_]/g, '')}%` } })) });
+    return new Set([...events.map((row) => row.session_id), ...titled.map((row) => row.id)]);
+  }
+
   async list(): Promise<Session[]> {
     const rows = await this.orm.em.fork().find(SessionSchema, {}, { orderBy: { lastEventAt: 'desc' } });
     return rows.map(toSession);
@@ -45,6 +61,13 @@ export class MikroOrmSessionRepository implements SessionRepository {
           text: entry.text,
         })),
       );
+      // Index de recherche de l'historique (E3a), alimenté avec le journal
+      const connection = em.getConnection();
+      for (const entry of journal)
+        await connection.execute('insert into session_search (session_id, text) values (?, ?)', [
+          snapshot.id,
+          entry.text,
+        ]);
     }
   }
 }

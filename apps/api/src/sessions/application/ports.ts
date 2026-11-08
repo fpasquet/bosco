@@ -9,6 +9,8 @@ export interface SessionRepository {
   find(id: string): Promise<null | Session>;
   /** Journal d'une session, dans l'ordre (E2a) */
   journal(id: string): Promise<JournalEntry[]>;
+  /** Sessions dont le titre, un message ou une commande contient chacun des mots (E3a, CA-SESS-47) */
+  search(text: string): Promise<Set<string>>;
   list(): Promise<Session[]>;
   /** Enregistre la session et ajoute les nouvelles entrées de son journal, jamais modifiées ensuite. */
   save(session: Session, journal: JournalEntry[]): Promise<void>;

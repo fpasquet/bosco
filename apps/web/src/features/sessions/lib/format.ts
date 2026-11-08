@@ -85,3 +85,11 @@ export function actionLabel(action: string): string {
 export function relativePath(path: string, root: null | string | undefined): string {
   return root && path.startsWith(`${root}/`) ? path.slice(root.length + 1) : path;
 }
+
+/** « Opus 5.5 » d'après « claude-opus-5-5 » ; un modèle inconnu reste tel quel. */
+export function modelName(model: null | string): string {
+  const match = model && /^claude-([a-z]+)-(\d+)-(\d+)/.exec(model);
+  if (!match) return model ?? '—';
+  const [, family = '', major, minor] = match;
+  return `${family.charAt(0).toUpperCase()}${family.slice(1)} ${major}.${minor}`;
+}

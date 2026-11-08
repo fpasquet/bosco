@@ -11,6 +11,9 @@ class MemorySessions implements SessionRepository {
   find(id: string): Promise<null | Session> {
     return Promise.resolve(this.sessions.get(id) ?? null);
   }
+  search(_text: string): Promise<Set<string>> {
+    return Promise.resolve(new Set());
+  }
   journal(_id: string): Promise<JournalEntry[]> {
     return Promise.resolve([]);
   }

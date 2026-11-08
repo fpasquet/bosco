@@ -10,6 +10,7 @@ import { usePermissionAnswers } from '../../hooks/use-permission-answers';
 import { useOffline } from '../../lib/connection';
 import { formatCost } from '../../lib/format';
 import {
+  endedToday,
   filterSessions,
   groupByRepository,
   groupByState,
@@ -21,6 +22,7 @@ import {
 import { useOverviewPreferences } from '../../lib/preferences';
 import { AllowDialog } from '../allow-dialog';
 import { ConnectionStatus } from '../connection-status';
+import { EndedToday } from '../ended-today';
 import { ImportProgressBanner } from '../import-progress-banner';
 import { LiveTrackingHint } from '../live-tracking-hint';
 import { LiveTrackingLine } from '../live-tracking-line';
@@ -103,6 +105,9 @@ function LiveOverview({ repository, sources, title }: OverviewProps & { sources:
         />
       )}
       {!loading && open.length === 0 && <p className="text-center text-muted">Aucune session ouverte aujourd’hui.</p>}
+      {(repository !== null || grouping === 'state') && (
+        <EndedToday repository={repository} sessions={endedToday(all, now)} />
+      )}
       <AllowDialog session={answers.confirming} onCancel={answers.cancel} onConfirm={answers.confirm} />
       <Notices />
     </div>

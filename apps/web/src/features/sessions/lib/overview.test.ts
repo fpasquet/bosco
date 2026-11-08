@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 // Ce que les scénarios ne voient pas : chaque cas de tri, de regroupement et de filtre de la vue d'ensemble.
 import type { SessionDto, SourceDto } from '@bosco/domain';
 import {
+  endedToday,
   filterSessions,
   groupByRepository,
   groupByState,
@@ -178,5 +179,17 @@ describe('profileMark', () => {
   it('marks only the sessions of another profile than the default one', () => {
     expect(profileMark(session('rag'), sources)).toBeNull();
     expect(profileMark(session('bosco', { sourceId: 'perso' }), sources)).toBe('perso');
+  });
+});
+
+describe('endedToday', () => {
+  it('lists the sessions ended today, newest first', () => {
+    const ended = (id: string, time: string) => session(id, { state: 'ended', lastEventAt: at(time) });
+    const old = session('old', { state: 'ended', lastEventAt: new Date('2026-11-05T18:00:00').toISOString() });
+    expect(
+      endedToday([ended('early', '09:00:00'), old, ended('late', '13:40:00'), session('live')], now).map(
+        ({ id }) => id,
+      ),
+    ).toEqual(['late', 'early']);
   });
 });
