@@ -19,14 +19,16 @@ interface DeviceDto {
   pairedAt: string;
 }
 
-/** Nom lisible d'un téléphone d'après son navigateur : « Android · Chrome », « iPhone · Safari ». */
+/** Nom lisible d'un téléphone d'après son navigateur : « Android · Samsung Internet », « iPhone · Safari ». */
 function deviceName(userAgent: string | undefined): string {
   const agent = userAgent ?? '';
   // Le plus précis d'abord : un navigateur Android se déclare aussi « Linux »
   const system =
     ['iPhone', 'iPad', 'Android', 'Windows', 'Mac OS', 'Linux'].find((name) => agent.includes(name)) ?? 'Téléphone';
-  const browser = /Firefox|Edg|Chrome|Safari/.exec(agent)?.[0] ?? 'navigateur';
-  return `${system.replace('Mac OS', 'macOS')} · ${browser.replace('Edg', 'Edge')}`;
+  // Samsung Internet et Edge se déclarent aussi « Chrome » : ils passent avant lui
+  const browser = /SamsungBrowser|Firefox|Edg|Chrome|Safari/.exec(agent)?.[0] ?? 'navigateur';
+  const names: Record<string, string> = { Edg: 'Edge', SamsungBrowser: 'Samsung Internet' };
+  return `${system.replace('Mac OS', 'macOS')} · ${names[browser] ?? browser}`;
 }
 
 /** Accès depuis le téléphone (E4c) : activation, code d'appairage, téléphones appairés (RF-SESS-07). */
