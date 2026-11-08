@@ -1,6 +1,6 @@
 import { expect } from '@playwright/test';
 // Phrases des profils de Claude Code, écrits dans le dossier du scénario comme le fait Claude Code.
-import { copyFileSync } from 'node:fs';
+import { copyFileSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { TRANSCRIPTS } from '../../shared/transcripts.ts';
 import { Given } from './fixtures.ts';
@@ -30,3 +30,17 @@ Given(
     );
   },
 );
+
+Given(
+  'le profil Claude Code {texte} a accès à l’abonnement Claude de {texte}',
+  ({ bosco }, profile: string, email: string) => {
+    const dir = join(bosco.profilesRoot, profile);
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(join(dir, '.credentials.json'), '{}');
+    writeFileSync(join(dir, '.claude.json'), JSON.stringify({ oauthAccount: { emailAddress: email } }));
+  },
+);
+
+Given('le poste a le fichier npm {texte}', ({ bosco }, fixture: string) => {
+  copyFileSync(join(import.meta.dirname, '../../shared/npm', fixture), join(bosco.profilesRoot, '.npmrc'));
+});

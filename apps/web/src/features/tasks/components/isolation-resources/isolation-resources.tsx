@@ -15,7 +15,11 @@ const VISIBILITY = [
     granted: 'Sa copie du dépôt, un dossier personnel temporaire',
     denied: 'Tes autres dépôts, tes réglages, Bosco',
   },
-  { kind: 'Secrets', granted: 'Accès Claude temporaire', denied: 'Tes autres accès, les réglages du poste' },
+  {
+    kind: 'Secrets',
+    granted: 'Accès Claude temporaire, copie du .npmrc du poste',
+    denied: 'Accès GitHub, Jira, Confluence, tes autres accès, les réglages du poste',
+  },
   { kind: 'Réseau', granted: 'Domaines autorisés', denied: 'Le reste d’Internet' },
 ] as const;
 

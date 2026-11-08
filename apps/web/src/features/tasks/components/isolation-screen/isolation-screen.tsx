@@ -5,7 +5,14 @@ import { useState } from 'react';
 import type { IsolationDto } from '@bosco/domain';
 import { SectionSkeleton } from '@/shared/components/section-skeleton';
 import { SettingsTabs } from '@/shared/layouts/settings-tabs';
-import { addDomain, isolationQuery, IsolationRefused, removeDomain, setMaxAgents } from '../../api/isolation';
+import {
+  addDomain,
+  isolationQuery,
+  IsolationRefused,
+  removeDomain,
+  setMaxAgents,
+  setSecrets,
+} from '../../api/isolation';
 import { IsolationEgress } from '../isolation-egress';
 import { IsolationResources } from '../isolation-resources';
 
@@ -33,7 +40,18 @@ export function IsolationScreen({ title, view }: { title: string; view: Isolatio
   const add = useMutation({ mutationFn: addDomain, onSuccess: saved, onError: refused });
   const remove = useMutation({ mutationFn: removeDomain, onSuccess: saved, onError: refused });
   const capacity = useMutation({ mutationFn: setMaxAgents, onSuccess: saved, onError: refused });
-  const busy = add.isPending || remove.isPending || capacity.isPending;
+  // Un refus des secrets s'affiche dans leur carte, pas sous le champ des domaines
+  const [secretsError, setSecretsError] = useState<null | string>(null);
+  const secrets = useMutation({
+    mutationFn: setSecrets,
+    onSuccess: (isolation: IsolationDto) => {
+      setSecretsError(null);
+      saved(isolation);
+    },
+    onError: (failure) =>
+      setSecretsError(failure instanceof IsolationRefused ? failure.message : 'Le réglage n’a pas pu être enregistré.'),
+  });
+  const busy = add.isPending || remove.isPending || capacity.isPending || secrets.isPending;
   return (
     <div className="flex flex-col gap-4 p-4 md:px-8 md:pt-6">
       <div className="flex flex-col gap-3">
@@ -65,6 +83,8 @@ export function IsolationScreen({ title, view }: { title: string; view: Isolatio
             now={new Date()}
             onAdd={(domain) => add.mutate(domain)}
             onRemove={(domain) => remove.mutate(domain)}
+            secretsError={secretsError}
+            onSecrets={(changes) => secrets.mutate(changes)}
           />
         ))}
       {view === 'resources' && error && <p className="text-danger">{error}</p>}

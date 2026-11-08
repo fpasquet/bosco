@@ -91,7 +91,10 @@ export interface EgressRefusalDto {
 /** Isolation du worker (E11a, E11b) : limites de chaque agent, capacité, domaines autorisés et refus récents. */
 export interface IsolationDto {
   capacity: { freeMemory: number; maxAgents: number; maxAgentsRange: [number, number]; reservedMemory: number };
-  domains: { added: string[]; locked: string[] };
+  /** registries : domaines des registres du .npmrc choisi, autorisés d'office */
+  domains: { added: string[]; locked: string[]; registries: string[] };
+  /** Ce que chaque tâche reçoit (E11b) ; jamais les jetons eux-mêmes */
+  secrets: WorkerSecretsDto;
   image: string;
   limits: { cpus: number; memory: number; processes: number };
   refusals: EgressRefusalDto[];
@@ -167,4 +170,16 @@ export interface TaskReviewDto {
 export interface ValidationDto {
   pullRequestError: null | string;
   task: TaskDto;
+}
+
+/** Secrets transmis à chaque tâche du worker (E11b) : abonnement Claude du profil choisi, .npmrc du poste. */
+export interface WorkerSecretsDto {
+  claude: {
+    account: null | string;
+    available: boolean;
+    choices: { account: null | string; label: string; path: string }[];
+    label: null | string;
+    profile: null | string;
+  };
+  npmrc: { exists: boolean; path: string; registries: { host: string; scope: null | string }[] };
 }

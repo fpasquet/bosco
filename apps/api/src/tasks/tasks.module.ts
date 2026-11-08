@@ -33,6 +33,7 @@ import { FileComposeSource, GitComposeSource, servicesFile } from './infrastruct
 import { DockerAgentRunner } from './infrastructure/worker/docker-agent-runner.ts';
 import { GitWorkspaces } from './infrastructure/worker/git-workspaces.ts';
 import { ScriptedAgentRunner, scriptedWorkspaces } from './infrastructure/worker/scripted-agent.ts';
+import { FileWorkerSecrets } from './infrastructure/worker/worker-secrets.ts';
 import { IsolationController } from './interface/http/isolation.controller.ts';
 import { ReviewController } from './interface/http/review.controller.ts';
 import { RightsController } from './interface/http/rights.controller.ts';
@@ -108,12 +109,19 @@ const TICK_MS = 5000;
     },
     {
       provide: ISOLATION_SERVICE,
-      inject: [CONFIG, ORM],
-      useFactory: (config: Config, orm: MikroORM) =>
-        new IsolationService(
-          new MikroOrmIsolationStore(orm),
-          new AllowListFile(join(config.dataDir, 'worker', 'egress')),
-        ),
+      inject: [CONFIG, ORM, SOURCE_SERVICE],
+      useFactory: (config: Config, orm: MikroORM, sources: SourceService) => {
+        const worker = join(config.dataDir, 'worker');
+        // Les profils surveillés, sans celui du worker, qui ne garde que les sessions de ses agents
+        const profiles = async () => {
+          const view = await sources.listSources();
+          return view.sources.filter(({ path }) => path !== worker).map(({ label, path }) => ({ label, path }));
+        };
+        return new IsolationService(new MikroOrmIsolationStore(orm), new AllowListFile(join(worker, 'egress')), {
+          defaults: { credentials: config.worker.credentials, home: config.profilesRoot, npmrc: '~/.npmrc' },
+          reader: new FileWorkerSecrets(profiles),
+        });
+      },
     },
     {
       provide: AGENT_RUNNER,
@@ -125,7 +133,8 @@ const TICK_MS = 5000;
         if (config.testing) return new ScriptedAgentRunner({ path: profile, onSessionSaved });
         const { gid, uid } = userInfo();
         return new DockerAgentRunner({
-          ...config.worker,
+          claudeBinary: config.worker.claudeBinary,
+          secrets: () => isolation.workerSecrets(),
           allowDir: join(config.dataDir, 'worker', 'egress'),
           onRefusal: (refusal) => void isolation.refused(refusal).catch(() => undefined),
           onSessionSaved,

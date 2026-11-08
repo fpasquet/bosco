@@ -32,3 +32,6 @@ export const addDomain = (domain: string) => change('POST', '/api/isolation/doma
 export const removeDomain = (domain: string) =>
   change('DELETE', `/api/isolation/domains/${encodeURIComponent(domain)}`);
 export const setMaxAgents = (maxAgents: number) => change('PUT', '/api/isolation/capacity', { maxAgents });
+/** Profil de l'abonnement Claude et .npmrc des tâches suivantes (E11b). */
+export const setSecrets = (changes: { npmrc?: null | string; profile?: null | string }) =>
+  change('PUT', '/api/isolation/secrets', changes);

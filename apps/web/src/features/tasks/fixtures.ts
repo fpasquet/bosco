@@ -99,8 +99,22 @@ export const STORY_ISOLATION: IsolationDto = {
   domains: {
     locked: ['api.anthropic.com', 'claude.ai', 'platform.claude.com', 'registry.npmjs.org', 'registry.yarnpkg.com'],
     added: ['github.com', '*.github.com'],
+    registries: ['npm.registre.exemple.dev'],
   },
   image: 'bosco-agent:1',
+  secrets: {
+    claude: {
+      account: 'camille@exemple.dev',
+      available: true,
+      choices: [
+        { account: 'camille@exemple.dev', label: 'pro', path: '/home/dev/.claude' },
+        { account: 'camille.perso@exemple.dev', label: 'perso', path: '/home/dev/.claude-perso' },
+      ],
+      label: 'pro',
+      profile: '/home/dev/.claude',
+    },
+    npmrc: { exists: true, path: '~/.npmrc', registries: [{ host: 'npm.registre.exemple.dev', scope: '@interne' }] },
+  },
   limits: { memory: 4 * 1024 ** 3, cpus: 2, processes: 512 },
   refusals: [
     { at: at('15:02'), taskId: 12, host: 'pypi.org' },

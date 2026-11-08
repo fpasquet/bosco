@@ -4,7 +4,7 @@
 // sortie est le proxy de la tâche, qui ne laisse passer que les domaines autorisés (E11b). Tout est supprimé à la fin.
 import { execFile, spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { cp, mkdir, open, readdir, readFile, writeFile } from 'node:fs/promises';
+import { chmod, cp, mkdir, open, readdir, readFile, writeFile } from 'node:fs/promises';
 import { extname, join } from 'node:path';
 import { createInterface } from 'node:readline';
 import { fileURLToPath } from 'node:url';
@@ -52,8 +52,11 @@ const REFUSALS_POLL_MS = 1000;
 export interface DockerWorkerOptions {
   /** Exécutable de Claude Code du poste, monté dans le conteneur */
   claudeBinary: string;
-  /** Identifiants de l'abonnement Claude du poste (DT-09) */
-  credentials: string;
+  /**
+   * Secrets d'une tâche qui démarre (E11b) : l'accès à l'abonnement Claude du profil choisi (DT-09) et le .npmrc
+   * choisi, s'il existe ; une copie de chacun va dans le dossier personnel temporaire de l'agent.
+   */
+  secrets: () => Promise<{ credentials: string; npmrc: null | string }>;
   /** Profil du worker : les sessions des agents y sont gardées pour l'historique */
   /** Dossier de la liste des domaines autorisés, monté en lecture seule dans le proxy */
   allowDir: string;
@@ -149,7 +152,8 @@ export class DockerAgentRunner implements AgentRunner, WorkerHealth {
       () => false,
     );
     if (!docker) return 'Docker ne répond pas';
-    if (!existsSync(this.options.credentials)) return 'Accès à l’abonnement Claude introuvable';
+    const { credentials } = await this.options.secrets();
+    if (!existsSync(credentials)) return 'Accès à l’abonnement Claude introuvable';
     if (!existsSync(this.options.claudeBinary)) return 'Claude Code introuvable sur le poste';
     return null;
   }
@@ -215,7 +219,13 @@ export class DockerAgentRunner implements AgentRunner, WorkerHealth {
     const home = join(spec.workspace.dir, 'home');
     const config = join(home, '.claude');
     await mkdir(config, { recursive: true });
-    await cp(this.options.credentials, join(config, '.credentials.json'));
+    const secrets = await this.options.secrets();
+    await cp(secrets.credentials, join(config, '.credentials.json'));
+    // Le .npmrc du poste, jetons compris : en lecture seule, supprimé avec le dossier personnel à la fin (E11b)
+    if (secrets.npmrc) {
+      await cp(secrets.npmrc, join(home, '.npmrc'));
+      await chmod(join(home, '.npmrc'), 0o400);
+    }
     await writeFile(join(config, 'settings.json'), JSON.stringify({ autoUpdates: false }));
     const isolation = await this.isolate(spec.taskId, spec.workspace.dir);
     const readRefusals = refusalReader(isolation.refusals, spec.taskId, this.options.onRefusal);

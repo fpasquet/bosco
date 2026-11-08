@@ -1,5 +1,5 @@
 // Phrases Claude Code : des profils et des transcripts écrits comme le fait Claude Code, dans le dossier du scénario.
-import { copyFileSync, utimesSync } from 'node:fs';
+import { copyFileSync, mkdirSync, utimesSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { TRANSCRIPTS } from '../../shared/transcripts.ts';
 
@@ -32,3 +32,17 @@ Given(
     copyFileSync(join(COMPOSE, fixture), join(bosco.profilesRoot, repository, 'compose.yaml'));
   },
 );
+
+Given(
+  'the Claude Code profile {string} has an access to the Claude subscription of {string}',
+  ({ bosco }, profile: string, email: string) => {
+    const dir = join(bosco.profilesRoot, profile);
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(join(dir, '.credentials.json'), '{}');
+    writeFileSync(join(dir, '.claude.json'), JSON.stringify({ oauthAccount: { emailAddress: email } }));
+  },
+);
+
+Given('the workstation has the npm settings {string}', ({ bosco }, fixture: string) => {
+  copyFileSync(join(import.meta.dirname, '../../shared/npm', fixture), join(bosco.profilesRoot, '.npmrc'));
+});
