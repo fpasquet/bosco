@@ -17,3 +17,5 @@ allowBuilds:
   # Application du poste : le script d'installation télécharge le binaire d'Electron
   electron: true
   esbuild: true
+patchedDependencies:
+  react-native-webview@14.0.1: patches/react-native-webview@14.0.1.patch
