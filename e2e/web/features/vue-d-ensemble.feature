@@ -67,6 +67,20 @@ Fonctionnalité: Vue d'ensemble
     Quand je recharge la page
     Alors le bouton « État » est enfoncé
 
+  @CA-SESS-76
+  @mobile
+  Scénario: Sur le téléphone, les puces d'état montrent une colonne à la fois
+    Étant donné la session « 5e0a91c3 » a agi il y a quelques secondes
+    Et Bosco surveille les profils « .claude » et « .claude-perso »
+    Quand j'ouvre la page « / »
+    Et je clique sur le bouton « État »
+    Alors le bouton « En cours · 1 » est enfoncé
+    Et la colonne « En cours » montre la session « Corriger l’indexation des PDF dans Elasticsearch »
+    Et la page est accessible
+    Quand je clique sur le bouton « Inactives · 0 »
+    Alors je vois le texte « Aucune session »
+    Et je ne vois plus le texte « Corriger l’indexation des PDF dans Elasticsearch »
+
   @CA-SESS-16
   Scénario: Une session qui reprend change de colonne d'elle-même
     Étant donné la session « 5e0a91c3 » est inactive depuis 20 minutes
