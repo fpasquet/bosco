@@ -2,7 +2,23 @@ import type { FileChange } from '../domain/file-change.ts';
 import type { SessionState, Waiting } from '../domain/session.ts';
 import type { JournalEntry, TranscriptEvent } from '../domain/transcript-event.ts';
 import type { Clock, SessionEvents, SessionRegistry, SessionRepository } from './ports.ts';
+import { LEGACY_DISCOVERY, RepositoryDiscovery, type RepositoryPlace } from '../domain/repository-discovery.ts';
 import { DEFAULT_INACTIVITY_DELAY_MS, Session } from '../domain/session.ts';
+
+/** Range une session dans son dépôt (E4d) : racine git notée à la lecture, dossier de travail. */
+export type RepositoryPlaces = (gitRoot: null | string, path: null | string) => null | RepositoryPlace;
+
+const LEGACY_PLACES: RepositoryPlaces = (gitRoot, path) =>
+  new RepositoryDiscovery(LEGACY_DISCOVERY, '', () => null).placeOf(gitRoot, path);
+
+/** Dépôt trouvé (E4d), avec la dernière activité de ses sessions. */
+export interface DiscoveredRepository {
+  git: boolean;
+  hidden: boolean;
+  lastActivityAt: Date;
+  name: string;
+  root: string;
+}
 
 /** Tâche d'une session du worker (E2c, E2d) : la relecture ou la relance se font depuis la tâche. */
 export interface TaskLink {
@@ -32,8 +48,11 @@ export interface SessionView {
   lastMessage: null | string;
   model: null | string;
   repoPath: null | string;
-  /** Dépôt de la session : nom de la racine git et dossier de travail à l'intérieur (« labo-ia », « packages/bosco ») */
-  repository: { folder: string; name: string; root: string } | null;
+  /**
+   * Dépôt de la session : nom de la racine git et dossier de travail à l'intérieur (« labo-ia », « packages/bosco ») ;
+   * hidden : masqué des listes (E4d), ses sessions restent visibles
+   */
+  repository: { folder: string; hidden: boolean; name: string; root: string } | null;
   sourceId: string;
   startedAt: Date;
   state: SessionState;
@@ -67,16 +86,45 @@ export class SessionService {
     private readonly registry: Pick<SessionRegistry, 'isOpen'> = { isOpen: () => null },
     /** Seuil d'inactivité réglé dans les sources (CA-SESS-59) */
     private readonly inactivityDelayMs: () => number = () => DEFAULT_INACTIVITY_DELAY_MS,
+    /** Réglages des dépôts découverts (E4d), lus à chaque affichage (DT-27) */
+    private readonly places: RepositoryPlaces = LEGACY_PLACES,
   ) {}
 
-  /** Dépôts connus du poste, d'après les sessions des profils surveillés : ceux où l'on prépare du travail (E6a, E9a). */
+  /**
+   * Dépôts où l'on prépare du travail (E6a, E9a) : les dépôts git affichés, d'après les sessions des profils
+   * surveillés, les plus récents d'abord (CA-SESS-81).
+   */
   async knownRepositories(): Promise<{ name: string; root: string }[]> {
-    const views = await this.listSessions();
-    const roots = new Map<string, string>();
-    for (const view of views) if (view.repository) roots.set(view.repository.root, view.repository.name);
-    return [...roots.entries()]
-      .map(([root, name]) => ({ name, root }))
-      .toSorted((a, b) => a.name.localeCompare(b.name, 'fr'));
+    const { repositories } = await this.discoveredRepositories();
+    return repositories.filter(({ git, hidden }) => git && !hidden).map(({ name, root }) => ({ name, root }));
+  }
+
+  /** Dépôts trouvés (E4d), masqués compris, les plus récents d'abord ; outside : sessions hors dépôt git. */
+  async discoveredRepositories(): Promise<{ outside: number; repositories: DiscoveredRepository[] }> {
+    const sessions = await this.sessionRepository.list();
+    const found = new Map<string, DiscoveredRepository>();
+    let outside = 0;
+    for (const session of sessions) {
+      const { lastEventAt, repoPath, repoRoot } = session.toSnapshot();
+      const place = this.places(repoRoot, repoPath);
+      if (!place) {
+        outside += 1;
+        continue;
+      }
+      const known = found.get(place.root);
+      if (!known || known.lastActivityAt < lastEventAt)
+        found.set(place.root, {
+          git: place.git,
+          hidden: place.hidden,
+          lastActivityAt: lastEventAt,
+          name: place.name,
+          root: place.root,
+        });
+    }
+    const repositories = [...found.values()].toSorted(
+      (a, b) => b.lastActivityAt.getTime() - a.lastActivityAt.getTime() || a.name.localeCompare(b.name, 'fr'),
+    );
+    return { outside, repositories };
   }
 
   /** Liens vers les tâches, lus au démarrage, et relus après une remise à zéro des scénarios. */
@@ -164,7 +212,7 @@ export class SessionService {
       model,
       recentActions: snapshot.recentActions,
       repoPath,
-      repository: repositoryOf(snapshot.repoRoot, repoPath),
+      repository: repositoryOf(this.places(snapshot.repoRoot, repoPath)),
       sourceId,
       startedAt,
       state,
@@ -183,11 +231,7 @@ export class SessionService {
   }
 }
 
-/** Dépôt d'une session : sa racine git si elle est connue, sinon son dossier de travail. */
-function repositoryOf(root: null | string, path: null | string): SessionView['repository'] {
-  const base = root ?? path;
-  if (!base) return null;
-  const name = base.split('/').filter(Boolean).pop() ?? base;
-  const folder = path && path.startsWith(`${base}/`) ? path.slice(base.length + 1) : '';
-  return { name, root: base, folder };
+/** Dépôt d'une session tel que les écrans le montrent. */
+function repositoryOf(place: null | RepositoryPlace): SessionView['repository'] {
+  return place && { folder: place.folder, hidden: place.hidden, name: place.name, root: place.root };
 }

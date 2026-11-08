@@ -16,3 +16,22 @@ describe('Settings', () => {
     expect(settings.toSnapshot().inactivityMinutes).toBe(60);
   });
 });
+
+describe('Settings of the discovered repositories (E4d)', () => {
+  it('starts with git only, worktrees attached and /tmp excluded', () => {
+    expect(Settings.restore(null).repositories).toEqual({
+      attachWorktrees: true,
+      excluded: ['/tmp'],
+      gitOnly: true,
+      hidden: [],
+      roots: [],
+    });
+  });
+
+  it('changes one setting at a time, folders written as in the terminal and without duplicates', () => {
+    const settings = Settings.restore(null);
+    settings.update({ repositories: { roots: ['~/www/', '~/www'] } });
+    expect(settings.repositories).toMatchObject({ excluded: ['/tmp'], gitOnly: true, roots: ['~/www'] });
+    expect(() => settings.update({ repositories: { excluded: ['archives'] } })).toThrow(InvalidSetting);
+  });
+});

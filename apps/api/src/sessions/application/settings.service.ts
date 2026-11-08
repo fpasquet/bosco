@@ -1,5 +1,6 @@
+import type { DiscoverySnapshot } from '../domain/repository-discovery.ts';
 import type { SettingsRepository } from './ports.ts';
-import { Settings, type SettingsSnapshot } from '../domain/settings.ts';
+import { Settings, type SettingsChanges, type SettingsSnapshot } from '../domain/settings.ts';
 
 /** Cas d'usage des réglages ; gardés en mémoire, car l'état de chaque session en dépend (seuil d'inactivité). */
 export class SettingsService {
@@ -24,7 +25,11 @@ export class SettingsService {
     return this.settings.desktopNotifications;
   }
 
-  async update(changes: Partial<SettingsSnapshot>): Promise<SettingsSnapshot> {
+  repositories(): DiscoverySnapshot {
+    return this.settings.repositories;
+  }
+
+  async update(changes: SettingsChanges): Promise<SettingsSnapshot> {
     const next = Settings.restore(this.settings.toSnapshot());
     next.update(changes);
     await this.repository.save(next.toSnapshot());
