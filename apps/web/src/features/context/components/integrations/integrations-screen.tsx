@@ -1,6 +1,7 @@
 'use client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
+import { SectionSkeleton } from '@/shared/components/section-skeleton';
 import { SettingsTabs } from '@/shared/layouts/settings-tabs';
 import { configureIntegration, ContextRefused, integrationsQuery, refreshLinks } from '../../api/context';
 import { Integrations } from './integrations';
@@ -34,6 +35,7 @@ export function IntegrationsScreen({ title }: { title: string }) {
         <SettingsTabs current="/settings/integrations" />
         <h1 className="font-display text-2xl font-semibold tracking-tight">Intégrations</h1>
       </div>
+      {!data && <SectionSkeleton rows={4} />}
       {data && (
         <Integrations
           integrations={data.integrations}

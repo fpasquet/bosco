@@ -4,6 +4,7 @@ import { Info, Lock } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 import type { RightsFieldDto } from '@bosco/domain';
+import { SectionSkeleton } from '@/shared/components/section-skeleton';
 import { repositoriesQuery, rightsQuery, RightsRefused, updateRights } from '../../api/tasks';
 import { TASK_STATES } from '../../lib/tasks';
 import { RightsTable } from '../rights-table';
@@ -60,6 +61,7 @@ export function RightsScreen() {
           <option value={GENERAL}>Réglages généraux</option>
         </select>
       </div>
+      {!data && <SectionSkeleton rows={6} />}
       {data && (
         <RightsTable
           key={scope}

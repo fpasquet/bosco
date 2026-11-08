@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { JournalEntryDto, SessionDto } from '@bosco/domain';
+import { PageSkeleton } from '@/shared/components/page-skeleton';
 import { sessionConversationQuery, sessionDetailQuery, sessionsQuery } from '../../api/sessions';
 import { sourcesQuery } from '../../api/sources';
 import { useCopy } from '../../hooks/use-copy';
@@ -46,7 +47,7 @@ export function SessionDetailScreen({ id }: { id: string }) {
   const { data, isError } = useQuery(sessionDetailQuery(id));
   // Un sous-agent de fond avance sans que la session change : le fil se relit tant qu'elle tourne
   const running = data?.session.state === 'running';
-  const { data: conversation } = useQuery({
+  const { data: conversation, isPending: conversationPending } = useQuery({
     ...sessionConversationQuery(id),
     refetchInterval: running ? CONVERSATION_REFRESH_MS : false,
   });
@@ -67,7 +68,7 @@ export function SessionDetailScreen({ id }: { id: string }) {
       </div>
     );
   }
-  if (!data || !sources) return null;
+  if (!data || !sources) return <PageSkeleton variant="detail" rows={8} />;
   const { journal, session } = data;
   const resume = resumeCommand(session, sources.sources, sources.home);
   return (
@@ -88,6 +89,7 @@ export function SessionDetailScreen({ id }: { id: string }) {
             session={session}
             journal={journal}
             conversation={conversation}
+            loading={conversationPending}
             now={now}
             tail={
               <PermissionCard

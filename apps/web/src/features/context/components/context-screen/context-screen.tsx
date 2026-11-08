@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import type { ArchitectureDto } from '@bosco/domain';
+import { SectionSkeleton } from '@/shared/components/section-skeleton';
 import { contextQuery, previewQuery, repositoriesQuery, saveArchitecture } from '../../api/context';
 import { ContextOverview } from '../context-overview';
 import { PreviewDialog } from '../preview-dialog';
@@ -47,6 +48,7 @@ export function ContextScreen({ repository: asked }: { repository: null | string
           Aucun dépôt connu pour l’instant : ils viennent des sessions des profils surveillés.
         </p>
       )}
+      {repository !== null && !context && <SectionSkeleton rows={5} />}
       {context && (
         <ContextOverview
           context={context}

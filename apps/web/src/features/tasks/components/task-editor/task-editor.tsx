@@ -3,6 +3,7 @@ import { useMutation, useQueries, useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import type { TaskDraftDto, TaskIssueDto } from '@bosco/domain';
+import { PageSkeleton } from '@/shared/components/page-skeleton';
 import { createTask, editTask, repositoriesQuery, rightsQuery, TaskIssues } from '../../api/tasks';
 import { useLiveTasks } from '../../hooks/use-live-tasks';
 import { TaskForm } from '../task-form';
@@ -19,9 +20,9 @@ export function TaskEditor({ id, title }: { id?: number; title: string }) {
     onSuccess: (task) => router.push(id ? `/tasks/${task.id}` : '/tasks'),
     onError: (error) => setIssues(error instanceof TaskIssues ? error.issues : []),
   });
-  if (!tasks || !repositories) return null;
+  if (!tasks || !repositories) return <PageSkeleton variant="form" rows={5} />;
   const editing = id ? tasks.find((task) => task.id === id) : undefined;
-  if (id && !editing) return null;
+  if (id && !editing) return <PageSkeleton variant="form" rows={5} />;
   const limits = Object.fromEntries(
     repositories.flatMap(({ name }, index) => {
       const effective = rights[index]?.data?.effective;

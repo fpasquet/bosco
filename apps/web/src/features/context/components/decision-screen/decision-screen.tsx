@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import type { DecisionDto, DecisionTargetDto, DecisionTextDto } from '@bosco/domain';
+import { PageSkeleton } from '@/shared/components/page-skeleton';
 import {
   abandonDecision,
   acceptDecision,
@@ -46,7 +47,7 @@ export function DecisionScreen({ id }: { id: number }) {
   });
   const refuse = useMutation({ mutationFn: (reason: null | string) => refuseDecision(id, reason), onSuccess: done });
   const abandon = useMutation({ mutationFn: (reason: null | string) => abandonDecision(id, reason), onSuccess: done });
-  if (!data) return null;
+  if (!data) return <PageSkeleton variant="detail" rows={6} />;
   return (
     <div className="p-4 md:px-8 md:pt-6">
       <DecisionView
@@ -127,7 +128,7 @@ export function EditDecisionScreen({ id }: { id: number }) {
     onError: (failure) =>
       setError(failure instanceof ContextRefused ? failure.message : 'La version n’a pas pu être enregistrée.'),
   });
-  if (!data) return null;
+  if (!data) return <PageSkeleton variant="form" rows={3} />;
   return (
     <div className="flex flex-col gap-4 p-4 md:px-8 md:pt-6">
       <h1 className="font-display text-2xl font-semibold tracking-tight">Modifier DEC-{id}</h1>

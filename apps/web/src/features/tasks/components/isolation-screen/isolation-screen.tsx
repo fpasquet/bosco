@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useState } from 'react';
 import type { IsolationDto } from '@bosco/domain';
+import { SectionSkeleton } from '@/shared/components/section-skeleton';
 import { SettingsTabs } from '@/shared/layouts/settings-tabs';
 import { addDomain, isolationQuery, IsolationRefused, removeDomain, setMaxAgents } from '../../api/isolation';
 import { IsolationEgress } from '../isolation-egress';
@@ -52,6 +53,7 @@ export function IsolationScreen({ title, view }: { title: string; view: Isolatio
           </Link>
         ))}
       </nav>
+      {!data && <SectionSkeleton rows={4} />}
       {data &&
         (view === 'resources' ? (
           <IsolationResources isolation={data} busy={busy} onMaxAgents={(agents) => capacity.mutate(agents)} />

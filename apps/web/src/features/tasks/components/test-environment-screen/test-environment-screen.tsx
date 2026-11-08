@@ -1,6 +1,7 @@
 'use client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
+import { SectionSkeleton } from '@/shared/components/section-skeleton';
 import { SettingsTabs } from '@/shared/layouts/settings-tabs';
 import { repositoriesQuery } from '../../api/tasks';
 import {
@@ -59,6 +60,7 @@ export function TestEnvironmentScreen({ title }: { title: string }) {
           Aucun dépôt connu pour l’instant : ils viennent des sessions des profils surveillés.
         </p>
       )}
+      {repository !== null && !data && <SectionSkeleton rows={4} />}
       {data && (
         <TestEnvironment
           key={data.repository}

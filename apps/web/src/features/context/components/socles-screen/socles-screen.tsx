@@ -4,6 +4,7 @@ import { Plus } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { PageSkeleton } from '@/shared/components/page-skeleton';
 import { Button } from '@/shared/ui/button';
 import { ContextRefused, repositoriesQuery, saveSocle, soclesQuery } from '../../api/context';
 import { SocleForm } from '../socle-form';
@@ -53,7 +54,7 @@ export function NewSocleScreen() {
     onError: (failure) =>
       setError(failure instanceof ContextRefused ? failure.message : 'Le socle n’a pas pu être créé.'),
   });
-  if (!socles || !repositories) return null;
+  if (!socles || !repositories) return <PageSkeleton variant="list" rows={3} />;
   return (
     <div className="flex flex-col gap-4 p-4 md:px-8 md:pt-6">
       <h1 className="font-display text-2xl font-semibold tracking-tight">Nouveau socle</h1>

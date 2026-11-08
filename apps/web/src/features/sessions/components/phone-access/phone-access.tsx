@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Smartphone } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/shared/ui/button';
+import { Skeleton } from '@/shared/ui/skeleton';
 import {
   devicesQuery,
   issuePairingCode,
@@ -60,7 +61,12 @@ export function PhoneAccess() {
       push('Téléphone appairé', 'success');
     }
   }, [code, devices, push]);
-  if (!access) return null;
+  if (!access)
+    return (
+      <div className="px-4 py-3">
+        <Skeleton className="h-10 w-full" />
+      </div>
+    );
   return (
     <div className="flex flex-col gap-3 px-4 py-3">
       <div className="flex flex-wrap items-center gap-4">

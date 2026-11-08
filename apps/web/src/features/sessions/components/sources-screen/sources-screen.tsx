@@ -3,6 +3,7 @@ import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/rea
 import { ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
+import { PageSkeleton } from '@/shared/components/page-skeleton';
 import { APP_NAME, type SourceDto } from '@bosco/domain';
 import { installLiveTracking, liveTrackingQuery, uninstallLiveTracking } from '../../api/live-tracking';
 import { type SettingsDto, settingsQuery, updateSettings } from '../../api/settings';
@@ -64,7 +65,7 @@ export function SourcesScreen({ title }: { title: string }) {
     mutationFn: ({ id, watched }: { id: string; watched: boolean }) => setSourceWatched(id, watched),
     onSuccess: refresh,
   });
-  if (!data) return null;
+  if (!data) return <PageSkeleton variant="cards" rows={2} />;
   const watchedCount = sources.filter((source) => source.watched).length;
   const statusOf = (id: string) => statuses[sources.findIndex((source) => source.id === id)]?.data;
   const selectedStatus = selected ? statusOf(selected.id) : undefined;

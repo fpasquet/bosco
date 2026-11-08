@@ -24,3 +24,5 @@ export const Running: Story = {};
 export const Empty: Story = { args: { journal: [] } };
 
 export const Conversation: Story = { args: { conversation: STORY_CONVERSATION } };
+
+export const Loading: Story = { args: { loading: true } };
