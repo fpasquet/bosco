@@ -94,7 +94,7 @@ Then('Claude Code reçoit le refus avec le motif {texte}', async ({ pending }, m
 });
 
 When('je clique sur le bouton {texte} de la source {texte}', async ({ page }, name: string, source: string) => {
-  await page.getByRole('listitem').filter({ hasText: source }).getByRole('button', { name }).click();
+  await page.getByRole('listitem').filter({ hasText: source }).getByRole('button', { name, exact: true }).click();
 });
 
 When('je clique sur le bouton {texte} de la fenêtre', async ({ page }, name: string) => {

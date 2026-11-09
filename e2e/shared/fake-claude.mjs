@@ -10,6 +10,23 @@ import { join } from 'node:path';
 import { createInterface } from 'node:readline';
 
 const args = process.argv.slice(2);
+
+// `claude mcp add-json --scope user <nom> <json>` et `claude mcp remove --scope user <nom>` : le canal de Bosco (E4f)
+if (args[0] === 'mcp') {
+  const { readFileSync, writeFileSync } = await import('node:fs');
+  const file = join(process.env.CLAUDE_CONFIG_DIR ?? homedir(), '.claude.json');
+  let config = {};
+  try {
+    config = JSON.parse(readFileSync(file, 'utf8'));
+  } catch {
+    // pas encore de configuration
+  }
+  config.mcpServers ??= {};
+  if (args[1] === 'add-json') config.mcpServers[args[4]] = JSON.parse(args[5]);
+  else if (args[1] === 'remove') delete config.mcpServers[args[4]];
+  writeFileSync(file, JSON.stringify(config, null, 2));
+  process.exit(0);
+}
 const option = (name) => {
   const index = args.indexOf(name);
   return index === -1 ? null : args[index + 1];

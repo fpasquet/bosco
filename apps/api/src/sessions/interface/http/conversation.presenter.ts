@@ -31,6 +31,7 @@ export function presentConversation(conversation: Conversation): SessionConversa
       id: turn.id,
       parts: turn.parts.map(presentPart),
       role: turn.role,
+      ...(turn.viaChannel ? { viaChannel: true } : {}),
     })),
   };
 }

@@ -56,4 +56,16 @@ describe('TranscriptParser', () => {
     expect(parsed?.event.text).toHaveLength(280);
     expect(parsed?.event.text).not.toContain('\n');
   });
+
+  it('reads a message of the Bosco channel as a prompt, though a meta line (E2i)', () => {
+    const line = JSON.stringify({
+      ...base,
+      type: 'user',
+      isMeta: true,
+      origin: { kind: 'channel', server: 'bosco-channel' },
+      message: { role: 'user', content: '<channel source="bosco-channel" from="bosco">\nAjoute un test.\n</channel>' },
+    });
+    const [parsed] = new TranscriptParser().parse(line);
+    expect(parsed?.event).toMatchObject({ kind: 'prompt', text: 'Ajoute un test.' });
+  });
 });

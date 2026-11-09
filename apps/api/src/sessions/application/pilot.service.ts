@@ -1,3 +1,4 @@
+import type { ChannelService } from './channel.service.ts';
 import type { LiveSignalService, PermissionAnswer } from './live-signal.service.ts';
 import type {
   Clock,
@@ -13,6 +14,7 @@ import {
   answersOf,
   checkPilotMessage,
   DEFAULT_PILOT_SETTINGS,
+  InvalidPilotMessage,
   joinMessages,
   NoPilotedTurn,
   type PilotMessage,
@@ -117,6 +119,7 @@ export class PilotService {
   private readonly turns = new Map<string, Turn>();
   private readonly pending = new Map<string, PilotMessage>();
   private profiles: PilotProfiles = NO_PROFILES;
+  private channel: Pick<ChannelService, 'isConnected' | 'send'> = { isConnected: () => false, send: () => false };
 
   constructor(
     private readonly repository: PilotRepository,
@@ -216,14 +219,20 @@ export class PilotService {
 
   /**
    * Un message à une session (CA-SESS-92, CA-SESS-93, CA-SESS-97) : il lance un tour, ou attend la fin du tour en cours.
-   * Une session close, du terminal ou de Bosco, reprend dans Bosco et devient pilotée.
+   * Une session close, du terminal ou de Bosco, reprend dans Bosco et devient pilotée. Une session ouverte dans un
+   * terminal le reçoit par le canal de Bosco, si elle a été lancée avec lui (CA-SESS-101).
    */
-  async send(sessionId: string, input: { message: PilotMessage; settings: PilotSettings }): Promise<'queued' | 'sent'> {
+  async send(
+    sessionId: string,
+    input: { message: PilotMessage; settings: PilotSettings },
+  ): Promise<'channel' | 'queued' | 'sent'> {
     const message = checkPilotMessage(input.message);
     const record = await this.recordOf(sessionId);
-    if (this.openInTerminal(record.sourceId, sessionId)) throw new SessionOpenInTerminal(sessionId);
     // Sans registre des sessions ouvertes, une session du terminal qui tourne ou attend y est encore ouverte
-    if (!this.records.has(sessionId) && (await this.isLive(sessionId))) throw new SessionOpenInTerminal(sessionId);
+    const inTerminal =
+      this.openInTerminal(record.sourceId, sessionId) ||
+      (!this.records.has(sessionId) && (await this.isLive(sessionId)));
+    if (inTerminal) return this.throughChannel(sessionId, message);
     await this.keep({ ...record, settings: input.settings });
     if (this.turns.has(sessionId)) {
       this.pending.set(sessionId, joinMessages(this.pending.get(sessionId) ?? null, message));
@@ -232,6 +241,25 @@ export class PilotService {
     }
     await this.run(this.records.get(sessionId) ?? record, message, true);
     return 'sent';
+  }
+
+  /** Canal de Bosco, branché au démarrage. */
+  useChannel(channel: Pick<ChannelService, 'isConnected' | 'send'>): void {
+    this.channel = channel;
+  }
+
+  /** Le canal de la session est ouvert : l'étiquette « Canal de Bosco » et la zone réduite (E2i). */
+  channelOpen(sessionId: string): boolean {
+    return this.channel.isConnected(sessionId);
+  }
+
+  /** Message à une session du terminal : par son canal, en texte seulement ; sans canal, on y répond dans le terminal. */
+  private throughChannel(sessionId: string, message: PilotMessage): 'channel' {
+    if (!this.channel.isConnected(sessionId)) throw new SessionOpenInTerminal(sessionId);
+    if (message.images.length > 0)
+      throw new InvalidPilotMessage('Le canal de Bosco ne transmet que du texte : retire les images.');
+    this.channel.send(sessionId, message.text);
+    return 'channel';
   }
 
   /** « Annuler » le message en attente (CA-SESS-93). */

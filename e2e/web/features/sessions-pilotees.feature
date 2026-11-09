@@ -48,5 +48,5 @@ Fonctionnalité: Sessions pilotées par Bosco
   Scénario: Une session ouverte dans un terminal se répond dans son terminal
     Étant donné la session « c41e9a07 » est ouverte dans Claude Code
     Quand j'ouvre la page « /sessions/c41e9a07 »
-    Alors je vois le texte « Ouverte dans un terminal · réponds-y là-bas. Une fois close, elle se reprendra aussi ici. »
+    Alors je vois le texte « Ouverte dans un terminal · réponds-y là-bas. »
     Et je ne vois pas le bouton « Envoyer »

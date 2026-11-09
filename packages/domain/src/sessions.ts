@@ -120,6 +120,8 @@ export interface SessionDto {
   openInTerminal: boolean;
   /** Session pilotée par Bosco ; null pour une session du terminal ou du worker */
   pilot: null | PilotDto;
+  /** Session du terminal lancée avec le canal de Bosco, ouvert : Bosco peut lui écrire, en texte (E2i) */
+  channel: boolean;
   /** Réponses de l'agent */
   turns: number;
   usage: { cacheCreation: number; cacheRead: number; input: number; output: number };
@@ -183,6 +185,8 @@ export interface ConversationTurnDto {
   id: string;
   parts: ConversationPartDto[];
   role: 'assistant' | 'user';
+  /** Demande écrite dans Bosco et arrivée par le canal de Bosco (E2i) */
+  viaChannel?: boolean;
 }
 
 /** Conversation complète d'une session, lue dans son transcript (GET /api/sessions/:id/conversation). */
@@ -269,4 +273,12 @@ export interface RepositorySettingsDto {
   outside: number;
   repositories: { git: boolean; hidden: boolean; lastActivityAt: string; name: string; root: string }[];
   settings: DiscoverySettingsDto;
+}
+
+/** Canal de Bosco dans un profil surveillé (E4f) : installé ou non, et la commande qui lance une session avec lui. */
+export interface ChannelProfileDto {
+  command: string;
+  installed: boolean;
+  label: string;
+  path: string;
 }

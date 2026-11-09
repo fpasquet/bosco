@@ -19,10 +19,13 @@ const WORKSTATION_ONLY = [
   /^\/api\/devices/,
   // Seul l'onglet du poste dit s'il est au premier plan (E15b)
   /^\/api\/presence/,
+  // Le flux du canal de Bosco ne sert qu'aux sessions du terminal du poste (E2i)
+  /^\/api\/channel\/stream/,
   /^\/__test\//,
 ];
 const SETTINGS = [
   /^\/api\/sources/,
+  /^\/api\/channel\/profiles/,
   /^\/api\/settings/,
   /^\/api\/isolation/,
   /^\/api\/rights/,

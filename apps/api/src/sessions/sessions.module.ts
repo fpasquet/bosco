@@ -2,10 +2,12 @@ import type { MikroORM } from '@mikro-orm/sqlite';
 import { Inject, Module, type OnApplicationBootstrap, type OnApplicationShutdown } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { APP_NAME } from '@bosco/domain';
 import type { Config } from '../config.ts';
 import type { DesktopAlerts } from './application/notification.service.ts';
 import { CONFIG, ORM } from '../shared/tokens.ts';
+import { ChannelService } from './application/channel.service.ts';
 import { ConversationService } from './application/conversation.service.ts';
 import { HistoryService } from './application/history.service.ts';
 import { LiveSignalService } from './application/live-signal.service.ts';
@@ -17,6 +19,7 @@ import { SettingsService } from './application/settings.service.ts';
 import { SourceService } from './application/source.service.ts';
 import { SuggestionService } from './application/suggestion.service.ts';
 import { RepositoryDiscovery } from './domain/repository-discovery.ts';
+import { ClaudeChannelInstaller } from './infrastructure/claude-code/channel-installer.ts';
 import { ClaudeTurnRunner } from './infrastructure/claude-code/claude-turn-runner.ts';
 import { FileConversationReader } from './infrastructure/claude-code/conversation-reader.ts';
 import { FileProfileFinder } from './infrastructure/claude-code/profile-finder.ts';
@@ -36,6 +39,7 @@ import { MikroOrmSettingsRepository } from './infrastructure/persistence/setting
 import { MikroOrmSourceRepository } from './infrastructure/persistence/source.repository.ts';
 import { MikroOrmTaskLinkStore } from './infrastructure/persistence/task-link.store.ts';
 import { TranscriptCursorStore } from './infrastructure/persistence/transcript-cursor.store.ts';
+import { ChannelController } from './interface/http/channel.controller.ts';
 import { EventsController } from './interface/http/events.controller.ts';
 import { HistoryController } from './interface/http/history.controller.ts';
 import { HooksController } from './interface/http/hooks.controller.ts';
@@ -46,6 +50,8 @@ import { SessionsController } from './interface/http/sessions.controller.ts';
 import { SettingsController } from './interface/http/settings.controller.ts';
 import { SourcesController } from './interface/http/sources.controller.ts';
 import {
+  CHANNEL_INSTALLER,
+  CHANNEL_SERVICE,
   CONVERSATION_SERVICE,
   HISTORY_SERVICE,
   HOOK_SECRET,
@@ -80,6 +86,7 @@ const worktrees = new GitWorktreeOrigins();
     HistoryController,
     NotificationsController,
     PilotController,
+    ChannelController,
   ],
   providers: [
     { provide: SESSION_EVENTS, useValue: new SessionEventsBus() },
@@ -213,6 +220,27 @@ const worktrees = new GitWorktreeOrigins();
         ),
     },
     {
+      provide: CHANNEL_SERVICE,
+      inject: [ORM, SESSION_SERVICE, SESSION_EVENTS],
+      useFactory: (orm: MikroORM, sessionService: SessionService, bus: SessionEventsBus) =>
+        new ChannelService(new MikroOrmSessionRepository(orm), sessionService, bus),
+    },
+    {
+      provide: CHANNEL_INSTALLER,
+      inject: [CONFIG],
+      useFactory: (config: Config) =>
+        // Claude Code lance la commande `channel` de Bosco, qui retrouve le service par son port et son dossier
+        new ClaudeChannelInstaller(
+          config.pilotClaude,
+          {
+            command: process.execPath,
+            args: [fileURLToPath(new URL('../cli/main.js', import.meta.url)), 'channel'],
+            env: { BOSCO_PORT: String(config.port), BOSCO_DATA_DIR: config.dataDir },
+          },
+          config.profilesRoot,
+        ),
+    },
+    {
       provide: SUGGESTION_SERVICE,
       inject: [ORM],
       useFactory: (orm: MikroORM) =>
@@ -247,6 +275,7 @@ const worktrees = new GitWorktreeOrigins();
     SOURCE_SERVICE,
     HOOK_SECRET,
     PILOT_SERVICE,
+    CHANNEL_SERVICE,
   ],
 })
 export class SessionsModule implements OnApplicationBootstrap, OnApplicationShutdown {
@@ -259,12 +288,14 @@ export class SessionsModule implements OnApplicationBootstrap, OnApplicationShut
     @Inject(ORM) private readonly orm: MikroORM,
     @Inject(NOTIFICATION_SERVICE) private readonly notifications: NotificationService,
     @Inject(PILOT_SERVICE) private readonly pilot: PilotService,
+    @Inject(CHANNEL_SERVICE) private readonly channel: ChannelService,
   ) {}
 
   async onApplicationBootstrap(): Promise<void> {
     await this.settings.load();
     this.sessions.useNotifications(this.notifications);
     this.sessions.usePilots(this.pilot);
+    this.pilot.useChannel(this.channel);
     this.liveSignals.usePilots(this.pilot);
     await this.pilot.load();
     await this.sessions.useTaskLinks(new MikroOrmTaskLinkStore(this.orm));

@@ -10,6 +10,7 @@ import { fileURLToPath } from 'node:url';
 import { APP_NAME } from '@bosco/domain';
 import { loadConfig } from '../config.ts';
 import { loadHookSecret } from '../sessions/infrastructure/hooks/hook-secret.ts';
+import { runChannel } from './channel.ts';
 import { findSession, installSession } from './resume.ts';
 import { serviceUnit } from './service-unit.ts';
 
@@ -70,6 +71,19 @@ program
     // Claude Code du poste, par son chemin : celui des sessions, sans dépendre du PATH
     const child = spawn(config.worker.claudeBinary, ['--resume', session], { cwd, env, stdio: 'inherit' });
     child.on('exit', (code) => process.exit(code ?? 0));
+  });
+
+program
+  .command('channel')
+  .description('Bosco channel of a terminal session, launched by Claude Code (do not run it yourself)')
+  .action(() => {
+    const config = loadConfig();
+    // Claude Code donne au serveur du canal l'identifiant de la session qui le lance
+    runChannel({
+      port: config.port,
+      secret: loadHookSecret(config.dataDir),
+      sessionId: process.env.CLAUDE_CODE_SESSION_ID ?? null,
+    });
   });
 
 const mcp = program.command('mcp').description('Manage the MCP server of Bosco in a Claude Code profile (Ma session)');

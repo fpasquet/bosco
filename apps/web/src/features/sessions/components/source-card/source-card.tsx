@@ -1,8 +1,10 @@
-import { Radio, SquareTerminal } from 'lucide-react';
+import { Radio, RadioTower, SquareTerminal } from 'lucide-react';
 import { Button } from '@/shared/ui/button';
 import { sinceNow } from '../../lib/format';
 
 export interface SourceCardProps {
+  /** Canal de Bosco du profil (E4f) : installé ou non ; absent tant qu'il n'est pas connu */
+  channel?: { installed: boolean; onOpen: () => void };
   label: string;
   /** Dernier signal reçu d'une session du profil ; null tant qu'aucune n'a parlé depuis le démarrage de Bosco */
   lastSignalAt: Date | null;
@@ -48,6 +50,16 @@ export function SourceCard(props: SourceCardProps) {
           <p className="text-muted">
             {lastSignalAt ? `dernier signal ${sinceNow(lastSignalAt, now)}` : 'aucun signal depuis le démarrage'}
           </p>
+          {props.channel && (
+            <p className="mt-1 flex items-center gap-1.5 text-muted">
+              <RadioTower aria-hidden className="size-3.5 shrink-0" />
+              Canal de Bosco · {props.channel.installed ? 'installé' : 'non installé'}
+              <button type="button" className="link font-medium link-primary" onClick={props.channel.onOpen}>
+                {props.channel.installed ? 'Gérer' : 'Installer'}
+                <span className="sr-only"> le canal de Bosco du profil {label}</span>
+              </button>
+            </p>
+          )}
         </div>
       </div>
       <input

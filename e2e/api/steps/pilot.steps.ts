@@ -207,3 +207,35 @@ Then('the suggestions should be {string}', ({ last }, values: string) => {
   const { suggestions } = last.response?.body as { suggestions: { value: string }[] };
   expect(suggestions.map(({ value }) => value).join(', ')).toBe(values);
 });
+
+/** Messages reçus par le canal de Bosco ouvert par le scénario, comme le ferait le serveur du canal */
+const channelMessages: string[] = [];
+let channelStream: AbortController | null = null;
+
+Given('the session {string} has its Bosco channel open', async ({ bosco, request }, sessionId: string) => {
+  channelMessages.splice(0);
+  channelStream?.abort();
+  channelStream = new AbortController();
+  const response = await fetch(`${bosco.url}/api/channel/stream?session=${sessionId}`, {
+    headers: { authorization: `Bearer ${bosco.secret()}` },
+    signal: channelStream.signal,
+  });
+  expect(response.status).toBe(200);
+  const decoder = new TextDecoder();
+  void (async () => {
+    try {
+      for await (const chunk of response.body as unknown as AsyncIterable<Uint8Array>) {
+        for (const match of decoder.decode(chunk).matchAll(/data: (.+)/g))
+          channelMessages.push((JSON.parse(match[1] ?? '{}') as { text: string }).text);
+      }
+    } catch {
+      // flux fermé par le scénario
+    }
+  })();
+  await eventually(request, sessionId, (view) => view.channel === true);
+});
+
+Then('the Bosco channel receives {string}', async ({}, text: string) => {
+  await expect.poll(() => channelMessages.join('|')).toContain(text);
+  channelStream?.abort();
+});
