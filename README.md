@@ -20,12 +20,27 @@ make mcp-install      # « Ma session » : ajoute le serveur MCP de Bosco à ~/.
 
 Données : `~/.local/share/bosco` (`BOSCO_DATA_DIR`). Port : `BOSCO_PORT` (4870 par défaut), toujours sur la boucle locale.
 
+## Applications
+
+Facultatives : Bosco se lance toujours dans le navigateur, macOS compris.
+
+```bash
+make desktop          # application du poste (Linux) depuis le dépôt, avec le Node du poste
+make desktop-install  # ajoute cette application du dépôt au menu des applications
+make desktop-package  # paquet .deb qui embarque le service, l'interface et Node 26 (apps/desktop/out)
+make android          # APK de l'application Android (JDK 17 et SDK Android dans le dossier personnel)
+```
+
+Le paquet s'installe avec `sudo apt install ./apps/desktop/out/bosco-desktop_<version>_amd64.deb` : l'application va dans `/opt/Bosco`, son entrée dans le menu des applications, et son bac à sable est configuré à l'installation. Elle garde les données de `~/.local/share/bosco`, comme le service lancé depuis le dépôt.
+
 ## Dépôt
 
 | Dossier            | Contenu                                                                                                                                                                                 |
 | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `apps/api`         | Application serveur NestJS sur Fastify : un module par contexte (domain, application, infrastructure, interface/http), sert l'interface sur le même port ; commande `bosco` (`src/cli`) |
 | `apps/web`         | Interface Next.js, design system (tokens des specs, daisyUI, shadcn/ui sur Radix, Storybook)                                                                                            |
+| `apps/desktop`     | Application du poste (Electron, Linux) : fenêtre de l'interface, barre système, notifications natives ; paquet .deb                                                                     |
+| `apps/mobile`      | Application Android (Expo) : interface téléphone dans une vue web, appairage par QR code, notifications locales                                                                         |
 | `packages/domain`  | Contrats partagés avec le web : nom de l'application, types des vues                                                                                                                    |
 | `packages/configs` | Configurations partagées : TypeScript, ESLint, Vitest, Prettier                                                                                                                         |
 | `e2e`              | Scénarios Gherkin de l'API (anglais) et du web (français), module d'enregistrement des appels sortants                                                                                  |
