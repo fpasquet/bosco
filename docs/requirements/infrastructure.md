@@ -11,7 +11,7 @@ Aucun hébergement : Bosco tourne sur le poste de l'utilisateur, Ubuntu 24.04, D
 | Environnement | Usage | Données | Déploiement |
 |---|---|---|---|
 | Développement | Écrire et tester | Fixtures, sessions de test | `pnpm dev` |
-| Poste | Usage réel | Sessions réelles, `~/.local/share/bosco` | Service utilisateur systemd |
+| Poste | Usage réel | Sessions réelles, `~/.local/share/bosco` | Service utilisateur systemd, ou application du poste installée par son paquet .deb (DT-33) |
 
 ## <a id="83-topologie-et-reseau"></a>8.3 Topologie et réseau
 
