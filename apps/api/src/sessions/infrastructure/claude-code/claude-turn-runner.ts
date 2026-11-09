@@ -108,6 +108,7 @@ export class ClaudeTurnRunner implements TurnRunner {
       allow: (requestId, input) => respond(requestId, { behavior: 'allow', updatedInput: input }),
       deny: (requestId, message) => respond(requestId, { behavior: 'deny', message }),
       interrupt: () => send({ type: 'control_request', request_id: randomUUID(), request: { subtype: 'interrupt' } }),
+      pid: child.pid ?? null,
       finish: () => {
         if (!exited) child.stdin?.end();
       },
