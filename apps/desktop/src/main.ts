@@ -1,4 +1,3 @@
-import type { ChildProcess } from 'node:child_process';
 import {
   app,
   BrowserWindow,
@@ -21,8 +20,18 @@ import { isAutostart, setAutostart } from './autostart.ts';
 import { LiveEvents } from './events.ts';
 import { nativeText, pathOf } from './notification-text.ts';
 import { loadPreferences, savePreferences } from './preferences.ts';
-import { findNode, healthy, serviceLayout, startService, stopUserService, waitFor } from './service.ts';
+import {
+  findNode,
+  healthy,
+  type RunningService,
+  serviceLayout,
+  startFailure,
+  startService,
+  stopUserService,
+  waitFor,
+} from './service.ts';
 import { type TrayAction, trayMenu, trayTooltip, waitingSessions } from './tray-menu.ts';
+import { installedVersion, pendingUpdate, updateText } from './update.ts';
 
 /** Dossier de l'application : apps/desktop dans le dépôt, resources/app une fois installée par le paquet */
 const APP_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -32,13 +41,17 @@ const BASE = `http://127.0.0.1:${PORT}`;
 /** L'application redit sa présence à ce rythme : le service lui laisse alors les notifications (CA-APPS-03) */
 const PRESENCE_MS = 15_000;
 const PAUSE_MS = 60 * 60 * 1000;
+/** L'application regarde à ce rythme si un paquet plus récent a été installé (CA-APPS-10) */
+const UPDATE_CHECK_MS = 30_000;
 
 let window: BrowserWindow | null = null;
 let tray: null | Tray = null;
-let service: ChildProcess | null = null;
+let service: null | RunningService = null;
 let quitting = false;
 let pausedUntil = 0;
 let waiting: SessionDto[] = [];
+/** Version installée par un paquet plus récent, en attente de relance */
+let update: null | string = null;
 const hidden = process.argv.includes('--hidden');
 
 function show(path = '/'): void {
@@ -92,6 +105,9 @@ function act(action: TrayAction): void {
       quitting = true;
       app.quit();
       break;
+    case 'relaunch':
+      void relaunch();
+      break;
   }
 }
 
@@ -104,7 +120,7 @@ function launchCommand(): string {
 
 function refreshTray(): void {
   if (!tray) return;
-  const items = trayMenu(waiting, { autostart: isAutostart(homedir()), paused: pausedUntil > Date.now() });
+  const items = trayMenu(waiting, { autostart: isAutostart(homedir()), paused: pausedUntil > Date.now(), update });
   const template = items.map((item): MenuItemConstructorOptions => {
     if (item.type === 'separator') return { type: 'separator' };
     if (item.type === 'header') return { label: item.label, enabled: false };
@@ -126,6 +142,33 @@ function notify(notification: NotificationDto, inApp: boolean): void {
     urgency: ['permission', 'question', 'turn-question'].includes(notification.kind) ? 'critical' : 'normal',
   });
   native.on('click', () => show(pathOf(notification)));
+  native.show();
+}
+
+/** Relance Bosco sur le paquet installé : le service de l'application s'arrête d'abord, puis tout redémarre. */
+async function relaunch(): Promise<void> {
+  quitting = true;
+  const running = service;
+  if (running && !running.exited()) {
+    running.process.kill('SIGTERM');
+    await waitFor(() => Promise.resolve(running.exited()), 10_000);
+  }
+  app.relaunch({ args: process.argv.slice(1).filter((arg) => arg !== '--hidden') });
+  app.exit(0);
+}
+
+/** Un paquet plus récent installé pendant que Bosco tourne : le dire une fois, et le proposer en tête du menu. */
+function checkUpdate(): void {
+  const installed = pendingUpdate(app.getVersion(), installedVersion(APP_DIR));
+  if (!installed || installed === update) return;
+  update = installed;
+  refreshTray();
+  if (!Notification.isSupported()) return;
+  const native = new Notification({
+    ...updateText(installed),
+    icon: nativeImage.createFromPath(join(ASSETS, 'icon-256.png')),
+  });
+  native.on('click', () => void relaunch());
   native.show();
 }
 
@@ -171,8 +214,19 @@ async function ensureService(): Promise<boolean> {
     });
     return false;
   }
-  service = startService({ node, port: PORT, apiMain: layout.apiMain, webDir: layout.webDir });
-  return waitFor(() => healthy(BASE), 60_000);
+  const started = startService({ node, port: PORT, apiMain: layout.apiMain, webDir: layout.webDir });
+  service = started;
+  const up = await waitFor(async () => started.exited() || (await healthy(BASE)), 60_000);
+  if (up && !started.exited()) return true;
+  // Arrêté au démarrage (base d'un Bosco plus récent, port pris…) : le dire, au lieu de quitter sans un mot
+  const failure = startFailure(started.errors());
+  await dialog.showMessageBox({
+    type: 'error',
+    title: failure.title,
+    message: failure.message,
+    detail: failure.detail,
+  });
+  return false;
 }
 
 if (!app.requestSingleInstanceLock()) app.quit();
@@ -183,7 +237,7 @@ else {
   app.on('window-all-closed', () => undefined);
   app.on('before-quit', () => {
     quitting = true;
-    service?.kill('SIGTERM');
+    service?.process.kill('SIGTERM');
   });
   void app.whenReady().then(async () => {
     const ready = await ensureService();
@@ -211,5 +265,6 @@ else {
       }).catch(() => undefined);
     present();
     setInterval(present, PRESENCE_MS);
+    if (app.isPackaged) setInterval(checkUpdate, UPDATE_CHECK_MS);
   });
 }

@@ -59,4 +59,12 @@ describe('trayMenu', () => {
       'Bosco · 1 session t’attend',
     ]);
   });
+  it('CA-APPS-10 · puts the relaunch of an installed update at the top of the menu', () => {
+    const items = trayMenu([], { autostart: false, paused: false, update: '0.1.0+git20261110093000.4c2e9b1' });
+    expect(items.slice(0, 3)).toEqual([
+      { type: 'normal', label: 'Relancer Bosco · version 0.1.0 · 4c2e9b1 installée', action: { kind: 'relaunch' } },
+      { type: 'separator' },
+      { type: 'header', label: 'Bosco · rien ne t’attend' },
+    ]);
+  });
 });

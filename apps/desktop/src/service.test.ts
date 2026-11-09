@@ -1,7 +1,7 @@
 // Ce que l'application ne montre pas à l'œil : le service et le Node qu'elle lance (CA-APPS-01, CA-APPS-09).
 import { describe, expect, it } from 'vitest';
 import { parseEvents } from './events.ts';
-import { majorOf, nodeCandidates, serviceLayout } from './service.ts';
+import { majorOf, nodeCandidates, serviceLayout, startFailure } from './service.ts';
 
 describe('the Node of the workstation', () => {
   it('reads the major version and tries BOSCO_NODE first', () => {
@@ -25,6 +25,21 @@ describe('the service the application runs', () => {
       apiMain: '/repo/apps/api/dist/main.js',
       webDir: '/repo/apps/web',
       node: null,
+    });
+  });
+});
+
+describe('startFailure', () => {
+  it('CA-APPS-10 · explains a database migrated by a newer Bosco, and shows the last errors otherwise', () => {
+    const newer = startFailure(
+      '\u001b[31mERROR\u001b[39m DatabaseTooNewError: The database … was migrated by a newer Bosco',
+    );
+    expect(newer.message).toBe('Tes données viennent d’un Bosco plus récent');
+    const other = startFailure('\n  Error: listen EADDRINUSE: address already in use 127.0.0.1:4870\n');
+    expect(other).toEqual({
+      title: 'Bosco n’a pas démarré',
+      message: 'Le service Bosco n’a pas démarré',
+      detail: 'Error: listen EADDRINUSE: address already in use 127.0.0.1:4870',
     });
   });
 });

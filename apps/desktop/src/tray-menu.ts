@@ -1,12 +1,14 @@
 // Menu de la barre système (E17a, CA-APPS-02), décrit sans Electron : le processus principal le traduit en menu natif.
 import type { SessionDto } from '@bosco/domain';
+import { displayVersion } from './update.ts';
 
 export type TrayAction =
   | { kind: 'autostart' }
   | { kind: 'new-session' }
   | { kind: 'open'; path: string }
   | { kind: 'pause' }
-  | { kind: 'quit' };
+  | { kind: 'quit' }
+  | { kind: 'relaunch' };
 
 export type TrayItem =
   | { action: TrayAction; checked?: boolean; label: string; type: 'checkbox' | 'normal' }
@@ -29,10 +31,25 @@ export function waitingSessions(sessions: Iterable<SessionDto>): SessionDto[] {
     .toSorted((a, b) => (a.waiting?.since ?? '').localeCompare(b.waiting?.since ?? ''));
 }
 
-export function trayMenu(waiting: SessionDto[], options: { autostart: boolean; paused: boolean }): TrayItem[] {
+export function trayMenu(
+  waiting: SessionDto[],
+  options: { autostart: boolean; paused: boolean; update?: null | string },
+): TrayItem[] {
   const count = waiting.length;
   const header = `Bosco · ${waitingCount(count)}`;
+  // Une mise à jour installée passe en tête du menu, jusqu'à la relance (CA-APPS-10)
+  const update: TrayItem[] = options.update
+    ? [
+        {
+          type: 'normal',
+          label: `Relancer Bosco · version ${displayVersion(options.update)} installée`,
+          action: { kind: 'relaunch' },
+        },
+        { type: 'separator' },
+      ]
+    : [];
   return [
+    ...update,
     { type: 'header', label: header },
     ...waiting.map((session): TrayItem => ({
       type: 'normal',
