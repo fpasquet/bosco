@@ -1,7 +1,7 @@
-// Ce que l'application ne montre pas à l'œil : le Node du poste qu'elle choisit pour le service (CA-APPS-01).
+// Ce que l'application ne montre pas à l'œil : le service et le Node qu'elle lance (CA-APPS-01, CA-APPS-09).
 import { describe, expect, it } from 'vitest';
 import { parseEvents } from './events.ts';
-import { majorOf, nodeCandidates } from './service.ts';
+import { majorOf, nodeCandidates, serviceLayout } from './service.ts';
 
 describe('the Node of the workstation', () => {
   it('reads the major version and tries BOSCO_NODE first', () => {
@@ -11,6 +11,21 @@ describe('the Node of the workstation', () => {
       '/usr/local/bin/node',
       '/usr/bin/node',
     ]);
+  });
+});
+
+describe('the service the application runs', () => {
+  it('CA-APPS-09 · runs the packaged service with its own Node, and the repository service with the workstation one', () => {
+    expect(serviceLayout({ packaged: true, resourcesPath: '/opt/Bosco/resources', appDir: '/x' })).toEqual({
+      apiMain: '/opt/Bosco/resources/service/apps/api/dist/main.js',
+      webDir: '/opt/Bosco/resources/service/apps/web',
+      node: '/opt/Bosco/resources/node/bin/node',
+    });
+    expect(serviceLayout({ packaged: false, resourcesPath: '/x', appDir: '/repo/apps/desktop' })).toEqual({
+      apiMain: '/repo/apps/api/dist/main.js',
+      webDir: '/repo/apps/web',
+      node: null,
+    });
   });
 });
 

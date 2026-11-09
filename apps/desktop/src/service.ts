@@ -1,5 +1,6 @@
 // Le service Bosco que l'application du poste fait tourner, ou auquel elle se relie (E17b, CA-APPS-01, CA-APPS-04).
-// Il tourne avec le Node du poste, comme `bosco start` : l'application n'embarque ni Node ni le moteur SQLite.
+// Lancée depuis le dépôt, elle le fait tourner avec le Node du poste, comme `bosco start`. Installée par le paquet .deb,
+// elle embarque le service construit, l'interface et Node 26 : elle ne dépend alors ni du dépôt ni du Node du poste.
 import { type ChildProcess, execFile, spawn } from 'node:child_process';
 import { existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
@@ -39,6 +40,29 @@ export async function findNode(home: string, env: NodeJS.ProcessEnv): Promise<nu
   return null;
 }
 
+/** Ce que l'application fait tourner : le service, son interface, et le Node embarqué par le paquet. */
+export type ServiceLayout = Readonly<{ apiMain: string; node: null | string; webDir: string }>;
+
+/**
+ * Installée par le paquet, le service est dans les ressources de l'application (resources/service, resources/node) ;
+ * lancée depuis le dépôt, il est à côté d'elle (apps/api, apps/web) et tourne avec le Node du poste.
+ */
+export function serviceLayout(where: { appDir: string; packaged: boolean; resourcesPath: string }): ServiceLayout {
+  if (where.packaged) {
+    const service = join(where.resourcesPath, 'service', 'apps');
+    return {
+      apiMain: join(service, 'api', 'dist', 'main.js'),
+      webDir: join(service, 'web'),
+      node: join(where.resourcesPath, 'node', 'bin', 'node'),
+    };
+  }
+  return {
+    apiMain: join(where.appDir, '..', 'api', 'dist', 'main.js'),
+    webDir: join(where.appDir, '..', 'web'),
+    node: null,
+  };
+}
+
 /** Le service répond-il ? */
 export async function healthy(baseUrl: string): Promise<boolean> {
   try {
@@ -59,7 +83,7 @@ export async function waitFor(check: () => Promise<boolean>, timeoutMs: number):
   return false;
 }
 
-/** Démarre le service avec le Node du poste, sur son port, l'interface servie depuis le dépôt. */
+/** Démarre le service avec ce Node, sur son port, l'interface servie depuis son dossier. */
 export function startService(options: { apiMain: string; node: string; port: number; webDir: string }): ChildProcess {
   return spawn(options.node, [options.apiMain], {
     env: { ...process.env, BOSCO_PORT: String(options.port), BOSCO_WEB_DIR: options.webDir },

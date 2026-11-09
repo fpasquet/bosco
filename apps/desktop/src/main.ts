@@ -21,10 +21,10 @@ import { isAutostart, setAutostart } from './autostart.ts';
 import { LiveEvents } from './events.ts';
 import { nativeText, pathOf } from './notification-text.ts';
 import { loadPreferences, savePreferences } from './preferences.ts';
-import { findNode, healthy, startService, stopUserService, waitFor } from './service.ts';
+import { findNode, healthy, serviceLayout, startService, stopUserService, waitFor } from './service.ts';
 import { type TrayAction, trayMenu, trayTooltip, waitingSessions } from './tray-menu.ts';
 
-/** Dossier de l'application dans le dépôt (apps/desktop) : le service et l'interface sont à côté */
+/** Dossier de l'application : apps/desktop dans le dépôt, resources/app une fois installée par le paquet */
 const APP_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const ASSETS = join(APP_DIR, 'assets');
 const PORT = Number(process.env.BOSCO_PORT ?? 4870);
@@ -85,13 +85,7 @@ function act(action: TrayAction): void {
       refreshTray();
       break;
     case 'autostart':
-      // Relancée comme elle l'a été (sans bac à sable si chrome-sandbox n'est pas configuré)
-      setAutostart(
-        homedir(),
-        !isAutostart(homedir()),
-        [process.execPath, APP_DIR, ...process.argv.filter((arg) => arg === '--no-sandbox')].join(' '),
-        join(ASSETS, 'icon-256.png'),
-      );
+      setAutostart(homedir(), !isAutostart(homedir()), launchCommand(), join(ASSETS, 'icon-256.png'));
       refreshTray();
       break;
     case 'quit':
@@ -99,6 +93,13 @@ function act(action: TrayAction): void {
       app.quit();
       break;
   }
+}
+
+/** Relancée comme elle l'a été : l'exécutable du paquet, ou Electron sur le dossier du dépôt (sans bac à sable si
+ * chrome-sandbox n'est pas configuré) */
+function launchCommand(): string {
+  const sandbox = process.argv.filter((arg) => arg === '--no-sandbox');
+  return [process.execPath, ...(app.isPackaged ? [] : [APP_DIR]), ...sandbox].join(' ');
 }
 
 function refreshTray(): void {
@@ -159,7 +160,8 @@ async function ensureService(): Promise<boolean> {
     await stopUserService();
     await waitFor(async () => !(await healthy(BASE)), 10_000);
   }
-  const node = await findNode(homedir(), process.env);
+  const layout = serviceLayout({ appDir: APP_DIR, packaged: app.isPackaged, resourcesPath: process.resourcesPath });
+  const node = layout.node ?? (await findNode(homedir(), process.env));
   if (!node) {
     await dialog.showMessageBox({
       type: 'error',
@@ -169,12 +171,7 @@ async function ensureService(): Promise<boolean> {
     });
     return false;
   }
-  service = startService({
-    node,
-    port: PORT,
-    apiMain: join(APP_DIR, '..', 'api', 'dist', 'main.js'),
-    webDir: join(APP_DIR, '..', 'web'),
-  });
+  service = startService({ node, port: PORT, apiMain: layout.apiMain, webDir: layout.webDir });
   return waitFor(() => healthy(BASE), 60_000);
 }
 
