@@ -36,6 +36,24 @@ const missing = built.filter((file) => !existsSync(join(repo, file)));
 if (missing.length > 0) fail(`Build first (make build), missing: ${missing.join(', ')}`);
 
 rmSync(stage, { recursive: true, force: true });
+// Un seul paquet dans out : celui que `make desktop-update` installe
+for (const file of existsSync(out) ? readdirSync(out) : []) {
+  if (file.endsWith('.deb')) rmSync(join(out, file));
+}
+
+// Version du paquet : celle de l'application, suivie de la date et du commit (« 0.1.0+git20261109073400.3118cb5 »),
+// pour que chaque construction soit plus récente que la précédente pour apt ; « .dev… » si le dépôt a des changements
+function git(...args) {
+  // Le git du poste, celui du dépôt construit
+  // eslint-disable-next-line sonarjs/no-os-command-from-path
+  return execFileSync('git', args, { cwd: repo, encoding: 'utf8' }).trim();
+}
+const commit = git('log', '-1', '--format=%cd.%h', '--date=format:%Y%m%d%H%M%S');
+const changed = git('status', '--porcelain', '--untracked-files=no') !== '';
+const now = new Date().toISOString().replaceAll(/\D/g, '').slice(0, 14);
+const desktop = readJson(join(app, 'package.json'));
+const dev = changed ? '.dev' + now : '';
+const version = `${desktop.version}+git${commit}${dev}`;
 
 // 1. Le service : une copie réduite du dépôt (service, interface, contrats), installée sans les outils de développement
 const service = join(stage, 'service');
@@ -105,7 +123,6 @@ const license = join(dirname(process.execPath), '..', 'LICENSE');
 if (existsSync(license)) cpSync(license, join(node, 'LICENSE'));
 
 // 3. L'application : son code construit et ses images, sans dépendance à l'exécution
-const desktop = readJson(join(app, 'package.json'));
 const shell = join(stage, 'app');
 mkdirSync(shell, { recursive: true });
 cpSync(join(app, 'dist'), join(shell, 'dist'), { recursive: true, filter: (source) => !source.endsWith('.test.js') });
@@ -116,7 +133,7 @@ writeFileSync(
     {
       name: 'bosco-desktop',
       productName: 'Bosco',
-      version: desktop.version,
+      version,
       description: 'Tes sessions Claude Code, au même endroit',
       type: 'module',
       main: 'dist/main.js',
@@ -140,7 +157,7 @@ const artifacts = await build({
     appId: 'dev.bosco.desktop',
     productName: 'Bosco',
     executableName: 'bosco-desktop',
-    artifactName: 'bosco-desktop_${version}_${arch}.${ext}',
+    artifactName: `bosco-desktop_${version}_\${arch}.\${ext}`,
     electronVersion: electron.version,
     electronDist: join(dirname(requireFromApp.resolve('electron/package.json')), 'dist'),
     directories: { app: shell, output: out },
@@ -163,7 +180,8 @@ const artifacts = await build({
       description: "Application du poste de Bosco : le service, l'interface, la barre système et les notifications.",
       syncDesktopName: true,
     },
-    deb: { compression: 'xz' },
+    // La version complète, date et commit compris : electron-builder n'en garderait que « 0.1.0 »
+    deb: { compression: 'xz', fpm: ['--version', version] },
   },
 });
 for (const artifact of artifacts) console.log(`\nInstall it with: sudo apt install ${artifact}`);

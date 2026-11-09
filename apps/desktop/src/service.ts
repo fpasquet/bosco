@@ -4,7 +4,7 @@
 import { type ChildProcess, execFile, spawn } from 'node:child_process';
 import { existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { promisify } from 'node:util';
+import { promisify, stripVTControlCharacters } from 'node:util';
 
 const run = promisify(execFile);
 /** Version de Node dont Bosco a besoin */
@@ -83,12 +83,51 @@ export async function waitFor(check: () => Promise<boolean>, timeoutMs: number):
   return false;
 }
 
+/** Le service lancé par l'application : son processus, et la fin de sa sortie d'erreur s'il s'arrête au démarrage. */
+export type RunningService = Readonly<{ errors: () => string; exited: () => boolean; process: ChildProcess }>;
+
+/** Fin de la sortie d'erreur gardée : assez pour le message d'un arrêt au démarrage */
+const ERRORS_KEPT = 4000;
+
 /** Démarre le service avec ce Node, sur son port, l'interface servie depuis son dossier. */
-export function startService(options: { apiMain: string; node: string; port: number; webDir: string }): ChildProcess {
-  return spawn(options.node, [options.apiMain], {
+export function startService(options: { apiMain: string; node: string; port: number; webDir: string }): RunningService {
+  const child = spawn(options.node, [options.apiMain], {
     env: { ...process.env, BOSCO_PORT: String(options.port), BOSCO_WEB_DIR: options.webDir },
-    stdio: ['ignore', 'inherit', 'inherit'],
+    stdio: ['ignore', 'inherit', 'pipe'],
   });
+  let errors = '';
+  let exited = false;
+  child.stderr.on('data', (chunk: Buffer) => {
+    process.stderr.write(chunk);
+    errors = (errors + chunk.toString()).slice(-ERRORS_KEPT);
+  });
+  child.on('exit', () => {
+    exited = true;
+  });
+  return { process: child, errors: () => errors, exited: () => exited };
+}
+
+/** Ce que dit l'application quand le service s'arrête au démarrage (CA-APPS-10). */
+export function startFailure(errors: string): Readonly<{ detail: string; message: string; title: string }> {
+  const text = stripVTControlCharacters(errors);
+  if (text.includes('DatabaseTooNewError')) {
+    return {
+      title: 'Bosco plus récent sur ce poste',
+      message: 'Tes données viennent d’un Bosco plus récent',
+      detail:
+        'Un Bosco plus récent a mis à jour les données du poste. Cette version ne les touche pas : ' +
+        'mets à jour l’application (make desktop-update dans le dépôt), ou relance le Bosco plus récent.',
+    };
+  }
+  const lines = text
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean);
+  return {
+    title: 'Bosco n’a pas démarré',
+    message: 'Le service Bosco n’a pas démarré',
+    detail: lines.slice(-8).join('\n') || 'Le service s’est arrêté sans message.',
+  };
 }
 
 /** « Remplacer le service » : le service systemd de l'utilisateur s'arrête et ne démarre plus seul. */
