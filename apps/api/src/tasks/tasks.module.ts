@@ -1,6 +1,6 @@
 import type { MikroORM } from '@mikro-orm/sqlite';
 import { Inject, Module, type OnApplicationBootstrap, type OnApplicationShutdown } from '@nestjs/common';
-import { freemem, userInfo } from 'node:os';
+import { availableParallelism, freemem, userInfo } from 'node:os';
 import { join } from 'node:path';
 import type { Config } from '../config.ts';
 import type { ContextService } from '../context/application/context.service.ts';
@@ -20,12 +20,14 @@ import { NOTIFICATION_SERVICE, PILOT_SERVICE, SESSION_SERVICE, SOURCE_SERVICE } 
 import { GhAccounts, scriptedGithubAccounts } from '../shared/infrastructure/github/gh-accounts.ts';
 import { CONFIG, ORM } from '../shared/tokens.ts';
 import { AccountsService } from './application/accounts.service.ts';
+import { type ContainerProbe, ContainersService, MEASURE_MS } from './application/containers.service.ts';
 import { IsolationService } from './application/isolation.service.ts';
 import { ReviewService } from './application/review.service.ts';
 import { RightsService } from './application/rights.service.ts';
 import { TaskService, type TaskView } from './application/task.service.ts';
 import { TestEnvironmentService } from './application/test-environment.service.ts';
 import { WorkerService } from './application/worker.service.ts';
+import { ContainerEventsBus } from './infrastructure/container-events.bus.ts';
 import { AllowListFile } from './infrastructure/isolation/allow-list-file.ts';
 import { MikroOrmAccountsStore } from './infrastructure/persistence/accounts.store.ts';
 import { MikroOrmIsolationStore } from './infrastructure/persistence/isolation.store.ts';
@@ -36,9 +38,12 @@ import { GhPublisher, GitChanges, scriptedReview } from './infrastructure/review
 import { TaskEventsBus } from './infrastructure/task-events.bus.ts';
 import { FileComposeSource, GitComposeSource, servicesFile } from './infrastructure/test-services/compose-file.ts';
 import { DockerAgentRunner } from './infrastructure/worker/docker-agent-runner.ts';
+import { DockerContainers } from './infrastructure/worker/docker-containers.ts';
 import { GitWorkspaces } from './infrastructure/worker/git-workspaces.ts';
+import { ProcessTreeProbe } from './infrastructure/worker/process-tree.ts';
 import { ScriptedAgentRunner, scriptedWorkspaces } from './infrastructure/worker/scripted-agent.ts';
 import { FileWorkerSecrets } from './infrastructure/worker/worker-secrets.ts';
+import { ContainersController } from './interface/http/containers.controller.ts';
 import { IsolationController } from './interface/http/isolation.controller.ts';
 import { ReviewController } from './interface/http/review.controller.ts';
 import { RightsController } from './interface/http/rights.controller.ts';
@@ -49,6 +54,8 @@ import { McpController } from './interface/mcp/mcp.controller.ts';
 import {
   ACCOUNTS_SERVICE,
   AGENT_RUNNER,
+  CONTAINER_EVENTS,
+  CONTAINERS_SERVICE,
   ISOLATION_SERVICE,
   REPOSITORY_CATALOG,
   REVIEW_SERVICE,
@@ -63,6 +70,18 @@ const clock = { now: () => new Date() };
 
 /** Le worker repasse à cet intervalle, et à chaque changement de tâche (E5c : il revérifie seul). */
 const TICK_MS = 5000;
+/** Les conteneurs restés sont supprimés à cet intervalle, après le démarrage (CA-CONT-84) */
+const CLEANUP_MS = 60 * 60_000;
+
+/** Dans les scénarios, pas de Docker : aucun conteneur */
+const NO_CONTAINERS: ContainerProbe = {
+  diskOf: () => Promise.resolve(0),
+  list: () => Promise.resolve([]),
+  logs: () => Promise.resolve(''),
+  remove: () => Promise.resolve(),
+  restart: () => Promise.resolve(null),
+};
+
 /** Mémoire libre annoncée au worker dans les scénarios (BOSCO_TEST=1) : de quoi lancer ses agents */
 const SCENARIO_FREE_MEMORY = 64 * 1024 ** 3;
 
@@ -76,6 +95,7 @@ const SCENARIO_FREE_MEMORY = 64 * 1024 ** 3;
     TestEnvironmentController,
     RightsController,
     ReviewController,
+    ContainersController,
     McpController,
   ],
   providers: [
@@ -227,11 +247,55 @@ const SCENARIO_FREE_MEMORY = 64 * 1024 ** 3;
           },
         }),
     },
+    { provide: CONTAINER_EVENTS, useValue: new ContainerEventsBus() },
+    {
+      provide: CONTAINERS_SERVICE,
+      inject: [CONFIG, TASK_SERVICE, WORKER_SERVICE, CONTAINER_EVENTS, PILOT_SERVICE, SESSION_SERVICE],
+      useFactory: (
+        config: Config,
+        tasks: TaskService,
+        worker: WorkerService,
+        events: ContainerEventsBus,
+        pilot: PilotService,
+        sessions: SessionService,
+      ) => {
+        const processes = new ProcessTreeProbe();
+        return new ContainersService({
+          clock,
+          events,
+          hostCpus: availableParallelism(),
+          // Un tour piloté se mesure sur l'arbre des processus de son agent, sur le poste (DT-35)
+          pilots: {
+            list: async () => {
+              const turns = pilot.runningTurns();
+              if (turns.length === 0) return [];
+              const pids = turns.flatMap(({ pid }) => (pid === null ? [] : [pid]));
+              const [usage, views] = await Promise.all([processes.sample(pids), sessions.listSessions()]);
+              return turns.map((turn) => {
+                const measured = turn.pid === null ? undefined : usage.get(turn.pid);
+                const view = views.find(({ id }) => id === turn.sessionId);
+                return {
+                  cpu: measured?.cpu ?? 0,
+                  memory: measured?.memory ?? 0,
+                  sessionId: turn.sessionId,
+                  since: turn.since,
+                  title: view?.title ?? `Session ${turn.sessionId.slice(0, 8)}`,
+                };
+              });
+            },
+          },
+          probe: config.testing ? NO_CONTAINERS : new DockerContainers(),
+          tasks,
+          worker,
+        });
+      },
+    },
   ],
   exports: [TASK_SERVICE, WORKER_SERVICE, AGENT_RUNNER, ISOLATION_SERVICE, RIGHTS_SERVICE, ACCOUNTS_SERVICE],
 })
 export class TasksModule implements OnApplicationBootstrap, OnApplicationShutdown {
   private timer: ReturnType<typeof setInterval> | undefined;
+  private readonly containerTimers: ReturnType<typeof setInterval>[] = [];
 
   constructor(
     @Inject(WORKER_SERVICE) private readonly worker: WorkerService,
@@ -244,6 +308,7 @@ export class TasksModule implements OnApplicationBootstrap, OnApplicationShutdow
     @Inject(ACCOUNTS_SERVICE) private readonly accounts: AccountsService,
     @Inject(NOTIFICATION_SERVICE) private readonly notifications: NotificationService,
     @Inject(PILOT_SERVICE) private readonly pilot: PilotService,
+    @Inject(CONTAINERS_SERVICE) private readonly containers: ContainersService,
   ) {}
 
   async onApplicationBootstrap(): Promise<void> {
@@ -284,6 +349,14 @@ export class TasksModule implements OnApplicationBootstrap, OnApplicationShutdow
     await this.worker.recover();
     this.timer = setInterval(() => void this.worker.tick(), TICK_MS);
     this.timer.unref();
+    // Conteneurs en cours : mesurés toutes les 5 s, ceux restés après leur tâche supprimés au démarrage puis toutes les
+    // heures (E19, DT-35)
+    await this.containers.cleanup().catch(() => undefined);
+    this.containerTimers.push(
+      setInterval(() => void this.containers.tick().catch(() => undefined), MEASURE_MS),
+      setInterval(() => void this.containers.cleanup().catch(() => undefined), CLEANUP_MS),
+    );
+    for (const timer of this.containerTimers) timer.unref();
     // Une tâche devenue prête part sans attendre le prochain passage
     this.bus.changes.subscribe((task) => {
       if (task.state === 'queued') void this.worker.tick();
@@ -292,6 +365,7 @@ export class TasksModule implements OnApplicationBootstrap, OnApplicationShutdow
 
   onApplicationShutdown(): void {
     clearInterval(this.timer);
+    for (const timer of this.containerTimers) clearInterval(timer);
   }
 }
 
