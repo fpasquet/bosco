@@ -1,0 +1,55 @@
+/*
+ * Enchaînement des tâches (E5b, DT-34) : le dessin de @xyflow/react réglé sur les tokens. Sa feuille de base est dans la
+ * couche des composants (components.css) ; ces réglages viennent après elle, dans la même couche. Les points d'accroche
+ * restent invisibles : on ne relie pas les tâches à la main.
+ */
+@layer components {
+  .task-chain {
+    --xy-background-pattern-dots-color: var(--color-line-strong);
+    --xy-edge-stroke: var(--color-line-strong);
+    --xy-edge-stroke-width: 1.5;
+
+    .react-flow__handle {
+      opacity: 0;
+    }
+
+    .react-flow__edge-text {
+      fill: var(--color-muted);
+      font-family: var(--font-mono);
+      font-size: 0.625rem;
+    }
+
+    .react-flow__edge-textbg {
+      fill: var(--color-surface);
+      stroke: var(--color-line);
+    }
+
+    .react-flow__edge.is-lit {
+      --xy-edge-stroke: var(--color-primary);
+      --xy-edge-stroke-width: 2;
+    }
+
+    .react-flow__controls {
+      overflow: hidden;
+      border: 1px solid var(--color-line);
+      border-radius: var(--radius-control);
+      box-shadow: var(--shadow-card);
+    }
+
+    .react-flow__controls-button {
+      width: 1.75rem;
+      height: 1.75rem;
+      color: var(--color-muted);
+      background: var(--color-surface);
+
+      &:hover {
+        color: var(--color-ink);
+        background: var(--color-surface-alt);
+      }
+
+      & + & {
+        border-top: 1px solid var(--color-line);
+      }
+    }
+  }
+}

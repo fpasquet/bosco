@@ -11,7 +11,16 @@ function budgetOf(task: TaskDto): string {
 }
 
 /** File des tâches (E5b) : toute ligne ouvre le détail de la tâche (CA-TACH-13). */
-export function TaskList({ tasks, waiting = {} }: { tasks: TaskDto[]; waiting?: Record<number, string> }) {
+export function TaskList({
+  onHover,
+  tasks,
+  waiting = {},
+}: {
+  /** Tâche survolée ou atteinte au clavier, dont l'enchaînement met la chaîne en évidence (CA-TACH-10) ; null en sortant */
+  onHover?: (id: null | number) => void;
+  tasks: TaskDto[];
+  waiting?: Record<number, string>;
+}) {
   if (tasks.length === 0) return <p className="text-muted">Aucune tâche ici.</p>;
   return (
     <div className="overflow-x-auto rounded-card border border-line bg-surface shadow-card">
@@ -26,9 +35,19 @@ export function TaskList({ tasks, waiting = {} }: { tasks: TaskDto[]; waiting?: 
         </thead>
         <tbody>
           {tasks.map((task) => (
-            <tr key={task.id} className="relative border-b border-line hover:bg-surface-alt">
+            <tr
+              key={task.id}
+              className="relative border-b border-line hover:bg-surface-alt"
+              onMouseEnter={() => onHover?.(task.id)}
+              onMouseLeave={() => onHover?.(null)}
+            >
               <td className="pl-4">
-                <Link href={`/tasks/${task.id}`} className="font-medium after:absolute after:inset-0">
+                <Link
+                  href={`/tasks/${task.id}`}
+                  className="font-medium after:absolute after:inset-0"
+                  onBlur={() => onHover?.(null)}
+                  onFocus={() => onHover?.(task.id)}
+                >
                   <span className="font-mono text-xs text-muted">T-{task.id}</span> {task.title}
                 </Link>
                 <span className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted">
