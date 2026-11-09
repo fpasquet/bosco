@@ -18,3 +18,5 @@ test-results/
 .claude/skills/
 .agents/
 .data/
+# Paquet .deb de l'application du poste et son dossier de préparation
+apps/desktop/out/
