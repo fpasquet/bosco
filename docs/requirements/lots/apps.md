@@ -5,13 +5,13 @@
 ## <a id="regles-fonctionnelles-du-lot"></a>Règles fonctionnelles du lot
 
 - **RF-APPS-01** · **1. Une seule interface** : les applications montrent l'interface de Bosco telle qu'elle est, sur ordinateur et sur téléphone ; tout écran existe une fois. Seuls la barre système, les notifications, l'appairage et le certificat sont propres à une application.
-- **RF-APPS-02** · **2. L'application du poste est facultative** : Bosco se lance toujours comme avant, en service ouvert dans le navigateur, sur Linux comme sur macOS (où il n'y a pas d'application). Sur Linux, l'application fait tourner Bosco : l'ouvrir démarre le service, la fermer le garde dans la barre système ; « Quitter Bosco » l'arrête ; elle peut se lancer à l'ouverture de session. Si un service Bosco tourne déjà sur le poste, l'application s'y relie par défaut, ou le remplace si on le choisit. Elle s'installe par un paquet pour Debian et Ubuntu, qui contient tout Bosco : rien d'autre à installer.
+- **RF-APPS-02** · **2. L'application du poste est facultative** : Bosco se lance toujours comme avant, en service ouvert dans le navigateur, sur Linux comme sur macOS (où il n'y a pas d'application). Sur Linux, l'application fait tourner Bosco : l'ouvrir démarre le service, la fermer le garde dans la barre système ; « Quitter Bosco » l'arrête ; elle peut se lancer à l'ouverture de session. Si un service Bosco tourne déjà sur le poste, l'application s'y relie par défaut, ou le remplace si on le choisit. Elle s'installe par un paquet pour Debian et Ubuntu, qui contient tout Bosco : rien d'autre à installer. Un paquet plus récent installé pendant que Bosco tourne se signale, et Bosco ne passe à la nouvelle version que quand on le relance ; une version plus ancienne ne démarre jamais sur les données qu'une plus récente a mises à jour.
 - **RF-APPS-03** · **3. Rien ne quitte le réseau local** (règle 7 du lot 1) : le téléphone parle au poste sur le réseau local, sans service de notification d'Apple ou de Google. Les notifications du téléphone n'arrivent que tant que l'application est ouverte, ou connectée en arrière-plan si on l'a choisi (option désactivée par défaut, avec une notification permanente).
 - **RF-APPS-04** · **4. L'appairage se fait par le QR code du poste** ([E4c](sessions.md#e4c)) : il porte l'adresse, le code et l'empreinte du certificat de Bosco ; l'application ne fait confiance qu'à ce certificat, sans avertissement de sécurité. Le téléphone garde son accès dans le trousseau du système.
 
 ## <a id="e17"></a>E17 · Application desktop
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `apps/e17.html` · implémentation : **Livré (Application du poste développée (Linux) : démarre le service ou s'y relie, fenêtre de l'interface, barre système (pastille, sessions qui t'attendent, Nouvelle session, Suspendre les notifications 1 h, Lancer au démarrage, Quitter Bosco), notifications natives sans notify-send du service. Lancée depuis le dépôt (make desktop, make desktop-install) avec le Node du poste, ou installée par son paquet .deb (make desktop-package), qui embarque le service et Node 26 et active le bac à sable. Vérifié sur le poste (vraie question d'agent notifiée en natif ; application du paquet démarrée sans Node du poste). Écarts : E17b est une boîte de dialogue native ; lancée depuis le dépôt sans chrome-sandbox configuré (sudo), elle se lance sans bac à sable ; pas de paquet AppImage.)**
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `apps/e17.html` · implémentation : **Livré (Application du poste développée (Linux) : démarre le service ou s'y relie, fenêtre de l'interface, barre système (pastille, sessions qui t'attendent, Nouvelle session, Suspendre les notifications 1 h, Lancer au démarrage, Quitter Bosco), notifications natives sans notify-send du service. Lancée depuis le dépôt (make desktop, make desktop-install) avec le Node du poste, ou installée par son paquet .deb (make desktop-package), qui embarque le service et Node 26 et active le bac à sable. Mises à jour : version du paquet tirée du dépôt, make desktop-update, mise à jour installée signalée et relance (E17c), données d'un Bosco plus récent refusées (E17d). Vérifié sur le poste (vraie question d'agent notifiée en natif ; application du paquet démarrée sans Node du poste ; mise à jour simulée signalée puis relancée ; base plus récente refusée avec son message). Écarts : E17b est une boîte de dialogue native ; lancée depuis le dépôt sans chrome-sandbox configuré (sudo), elle se lance sans bac à sable ; pas de paquet AppImage.)**
 
 ### <a id="e17a"></a>E17a · Application du poste : barre système
 
@@ -45,6 +45,34 @@ Règles de l'écran :
 3. « Remplacer le service par l'application » arrête le service existant et l'empêche de redémarrer seul ; l'application fait alors tourner Bosco. Les mêmes données sont reprises : sessions, tâches et réglages, rien n' est perdu.
 
 **Mobile** : sans objet sur le téléphone.
+
+### <a id="e17c"></a>E17c · Application du poste : mise à jour installée
+
+Un paquet plus récent de l'application a été installé pendant que Bosco tournait : ses fichiers sont remplacés, mais Bosco tourne encore sur l'ancienne version. L'application le remarque d'elle-même et propose de relancer Bosco. Le cadre montre le bureau à 17:42, une minute après l'installation.
+
+- **Depuis** [E17A](#e17a), après l'installation d'un paquet plus récent
+- **Ensuite** [E17A](#e17a) sur la nouvelle version, après « Relancer »
+
+Règles de l'écran :
+
+1. Une mise à jour installée passe en tête du menu de la barre système, avec sa version, tant que Bosco n'a pas été relancé. « Relancer Bosco » arrête le service de l'application, puis rouvre l'application et son service sur la nouvelle version ; la fenêtre revient sur la vue d'ensemble. Bosco ne se relance jamais tout seul : un tour piloté en cours n'est pas interrompu sans qu'on l'ait choisi.
+2. Une seule notification par version installée, même quand les notifications sont suspendues. Un clic sur la notification fait comme la ligne du menu. Pour mettre à jour l'application depuis le dépôt, une seule commande reconstruit et installe le paquet ; chaque paquet porte une version plus récente que le précédent.
+
+**Mobile** : sans objet sur le téléphone. L'application du téléphone se met à jour par un nouveau paquet Android, sans écran propre.
+
+### <a id="e17d"></a>E17d · Application du poste : données d'un Bosco plus récent
+
+L'application et le service lancé depuis le dépôt partagent les données du poste. Quand un Bosco plus récent les a mises à jour, une version plus ancienne refuse de démarrer dessus plutôt que de risquer de les abîmer, et le dit.
+
+- **Depuis** le lancement de l'application, quand son service s'arrête au démarrage
+- **Ensuite** l'application se ferme après « Ok »
+
+Règles de l'écran :
+
+1. Le service vérifie, avant de toucher aux données, qu'aucune mise à jour plus récente que lui n'y est passée. Sinon il ne démarre pas et ne modifie rien : sessions, tâches et réglages restent tels que le Bosco plus récent les a laissés. La même règle vaut pour le service lancé depuis le dépôt, qui l'écrit dans son terminal.
+2. « Ok » ferme l'application. Tout autre arrêt du service au démarrage (port déjà pris, par exemple) s'affiche de la même façon, avec ses derniers messages, au lieu de fermer l'application sans un mot.
+
+**Mobile** : sans objet sur le téléphone. L'application du téléphone se met à jour par un nouveau paquet Android, sans écran propre.
 
 ## <a id="e18"></a>E18 · Application Android
 
@@ -114,6 +142,7 @@ Règles de l'écran :
 - **CA-APPS-03** · [E17a](#e17a) · Étant donné l'application du poste, quand une notification part (règles d'E15), alors elle s'affiche en notification native du bureau, avec « Ouvrir » qui ouvre la session dans la fenêtre ; le service ne l'envoie pas une seconde fois.
 - **CA-APPS-04** · [E17b](#e17b) · Étant donné un service Bosco qui répond déjà sur le poste, quand l'application s'ouvre la première fois, alors elle propose de s'y relier (choix par défaut) ou de le remplacer ; reliée, elle n'est qu'une fenêtre sur le service, et Bosco reste utilisable dans le navigateur, comme avant.
 - **CA-APPS-09** · [E17a](#e17a) · Étant donné le paquet de l'application du poste installé sur Debian ou Ubuntu, sans Node sur le poste, quand elle s'ouvre, alors elle démarre Bosco avec le Node qu'elle embarque et son bac à sable activé ; installer un paquet plus récent garde les sessions, les tâches et les réglages.
+- **CA-APPS-10** · [E17c](#e17c), [E17d](#e17d) · Étant donné un paquet plus récent de l'application installé pendant que Bosco tourne, quand l'application le remarque, alors elle le signale une fois par une notification et en tête du menu de la barre système, et « Relancer Bosco » arrête son service puis rouvre l'application et le service sur la nouvelle version ; étant donné des données mises à jour par un Bosco plus récent, quand une version plus ancienne démarre, alors son service refuse de démarrer sans rien modifier, et l'application le dit.
 
 ### <a id="e18-application-android"></a>E18 · Application Android
 
