@@ -6,6 +6,7 @@ import type { Config } from '../config.ts';
 import type { ContextService } from '../context/application/context.service.ts';
 import type { LinksService } from '../context/application/links.service.ts';
 import type { NotificationService } from '../sessions/application/notification.service.ts';
+import type { PilotService } from '../sessions/application/pilot.service.ts';
 import type { SessionService } from '../sessions/application/session.service.ts';
 import type { SourceService } from '../sessions/application/source.service.ts';
 import type { RepositoryCatalog } from './application/ports.ts';
@@ -15,7 +16,7 @@ import { CONTEXT_SERVICE, LINKS_SERVICE } from '../context/tokens.ts';
 import { estimateCostMicros } from '../sessions/domain/model-pricing.ts';
 import { TokenUsage } from '../sessions/domain/token-usage.ts';
 import { SessionsModule } from '../sessions/sessions.module.ts';
-import { NOTIFICATION_SERVICE, SESSION_SERVICE, SOURCE_SERVICE } from '../sessions/tokens.ts';
+import { NOTIFICATION_SERVICE, PILOT_SERVICE, SESSION_SERVICE, SOURCE_SERVICE } from '../sessions/tokens.ts';
 import { GhAccounts, scriptedGithubAccounts } from '../shared/infrastructure/github/gh-accounts.ts';
 import { CONFIG, ORM } from '../shared/tokens.ts';
 import { AccountsService } from './application/accounts.service.ts';
@@ -242,10 +243,18 @@ export class TasksModule implements OnApplicationBootstrap, OnApplicationShutdow
     @Inject(LINKS_SERVICE) private readonly links: LinksService,
     @Inject(ACCOUNTS_SERVICE) private readonly accounts: AccountsService,
     @Inject(NOTIFICATION_SERVICE) private readonly notifications: NotificationService,
+    @Inject(PILOT_SERVICE) private readonly pilot: PilotService,
   ) {}
 
   async onApplicationBootstrap(): Promise<void> {
     await this.isolation.load();
+    // Une session pilotée prend l'abonnement Claude de son dépôt, comme ses tâches (E16a, E8a)
+    this.pilot.useProfiles({
+      of: async (repository) => {
+        const { claude } = await this.accounts.view(repository || null);
+        return { choices: claude.choices, effective: claude.effective?.path ?? null };
+      },
+    });
     // Les liens GitHub d'une tâche se lisent avec le compte de son dépôt (E8a)
     this.links.useGithubAccounts(async (taskId) => {
       const task = await this.tasks.get(taskId);

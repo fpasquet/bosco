@@ -1,0 +1,6 @@
+{
+  "profile": "{{profiles}}/.claude-perso",
+  "text": "Pose une question",
+  "images": [],
+  "settings": { "permissionMode": "ask", "model": null, "effort": null }
+}

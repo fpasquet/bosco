@@ -7,18 +7,18 @@
 - **RF-SESS-01** · **1. Une session est découverte sans action de ta part** : toute session Claude Code écrite dans un dossier de configuration surveillé apparaît dans Bosco, avec son dépôt, sa branche et son profil (pro, perso ou worker). Bosco lit ces fichiers sans jamais les modifier.
 - **RF-SESS-02** · **2. Une session a un seul état** : T'attend (autorisation demandée, ou tour terminé : l'agent a rendu la main), En cours, Inactive (aucun événement depuis 15 min sans être close ; délai réglable dans les sources). Un tour terminé resté sans réponse devient lui aussi Inactive après ce délai. Sans suivi en direct, Bosco ne peut pas savoir qu'une session attend : seuls En cours et Inactive sont disponibles, À relire, Terminée, En échec. T'attend passe toujours en premier.
 - **RF-SESS-03** · **3. Une autorisation se donne depuis Bosco ou depuis le terminal**, au choix : la première réponse l'emporte et l'autre écran se met à jour. Les boutons « Autoriser » et « Refuser » n'existent que si le suivi en direct est installé pour ce profil ; sinon seul « Ouvrir » est proposé. Une autorisation vaut pour une seule commande : pas de « toujours autoriser » depuis Bosco.
-- **RF-SESS-04** · **4. Un tour terminé ne se répond pas dans Bosco** : on revient au terminal de la session. Bosco montre le dernier message et le dossier, mais ne peut pas mettre un terminal au premier plan.
+- **RF-SESS-04** · **4. Bosco écrit aux sessions qu'il pilote** : une session démarrée dans Bosco ([E16a](#e16a)), ou une session close reprise en lui écrivant ([E2g](#e2g)), se pilote depuis Bosco, sur le poste comme sur le téléphone : messages, questions de l'agent, autorisations selon le mode choisi au démarrage (Demander, Accepter les modifications, Plan). Elle tourne sur le poste, dans le dossier du dépôt et avec l'abonnement du dépôt, comme dans un terminal : ce n'est pas une tâche du worker (ni conteneur, ni budget, ni revue). Une session ouverte dans un terminal se répond dans son terminal : Bosco en montre le dernier message et le dossier, mais ne peut pas mettre un terminal au premier plan.
 - **RF-SESS-05** · **5. Le coût est une estimation** au tarif public des modèles, calculée à partir des tokens (cache compris), même sous abonnement. Un modèle dont le tarif n'est pas connu apparaît « non chiffré ». Le coût du jour additionne les sessions commencées aujourd'hui.
 - **RF-SESS-06** · **6. La vue d'ensemble se regroupe par dépôt ou par état** : tableau par dépôt, ou colonnes par état. Le choix est gardé d'une visite à l'autre.
 - **RF-SESS-07** · **7. Bosco reste sur le poste** : rien n'est envoyé ailleurs, et il n'écoute que sur le poste tant que l'accès téléphone n'est pas activé. L'accès depuis le téléphone est désactivé par défaut ; il s'active pour le réseau local ([E4c](#e4c)), en connexion chiffrée, avec un code d'appairage. Sur mobile, « Autoriser » demande une confirmation.
 - **RF-SESS-08** · **8. Bosco notifie ce qui t'attend et ce qui est fini, selon tes réglages** : une autorisation demandée, une question de l'agent, une fin de tour qui finit par une question ; une tâche du worker à relire ou en échec, une fin de tour après un long tour (2 min par défaut), une session terminée (désactivée par défaut). La notification du bureau part même quand Bosco n'est pas au premier plan ; devant Bosco, un message bref la remplace. Le centre de notifications garde tout 7 jours (E15).
-- **RF-SESS-09** · **9. Une session se reprend seulement quand elle est close** : reprendre une session encore ouverte mélangerait deux conversations. La commande de reprise n'apparaît donc que pour une session terminée ou en échec.
+- **RF-SESS-09** · **9. Une session se reprend seulement quand elle est close** : reprendre une session encore ouverte mélangerait deux conversations. La commande de reprise n'apparaît donc que pour une session close. Entre deux tours, une session pilotée par Bosco est close : elle se reprend dans un terminal (commande de reprise) ou dans Bosco (en lui écrivant). Tant qu'un terminal l'a rouverte, Bosco ne lui écrit plus.
 - **RF-SESS-10** · **10. Bosco garde sa propre copie des sessions** : Claude Code efface ses fichiers après 30 jours par défaut. L'historique reste lisible et chiffré dans Bosco, mais une session effacée par Claude Code ne se reprend plus.
 - **RF-SESS-11** · **11. Bosco se présente au premier lancement** : un bloc de bienvenue (logo, ce que fait Bosco, ses trois usages) précède le choix des profils, dans la page et sans fenêtre à fermer. Il se rouvre à tout moment depuis le logo (« À propos de Bosco »), avec l'origine du nom : le bosco est le maître d'équipage d'un navire.
 
 ## <a id="e1"></a>E1 · Vue d'ensemble
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `sessions/e1.html` · implémentation : **Livré (Premier lancement (E1a) et vue d'ensemble en direct (E1b à E1e) développés : bandeau T'attend avec « Autoriser » et « Refuser » (motif facultatif), colonne T'attend en regroupement par état, message bref quand une autorisation reçoit sa réponse ici ou dans le terminal ; regroupement par dépôt ou par état, filtre par dépôt, indicateurs et coût du jour, progression de la lecture. Une session arrêtée passe en Terminée ; chaque nouvelle attente déclenche une notification du bureau. Bosco injoignable (E1f) : écran figé et daté, réponses désactivées, reconnexion toutes les 5 s. Sessions terminées du jour sous la vue filtrée et la vue par état, avec « Voir l'historique ». Sur le téléphone, la vue par état suit la maquette : puces d'état en haut, une colonne à la fois, balayage d'une colonne à l'autre ; une colonne vide le dit. Chaque écran garde sa forme pendant le chargement.)**
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `sessions/e1.html` · implémentation : **Livré (Premier lancement (E1a) et vue d'ensemble en direct (E1b à E1e) développés : bandeau T'attend avec « Autoriser » et « Refuser » (motif facultatif), colonne T'attend en regroupement par état, message bref quand une autorisation reçoit sa réponse ici ou dans le terminal ; regroupement par dépôt ou par état, filtre par dépôt, indicateurs et coût du jour, progression de la lecture. Une session arrêtée passe en Terminée ; chaque nouvelle attente déclenche une notification du bureau. Bosco injoignable (E1f) : écran figé et daté, réponses désactivées, reconnexion toutes les 5 s. Sessions terminées du jour sous la vue filtrée et la vue par état, avec « Voir l'historique ». Sur le téléphone, la vue par état suit la maquette : puces d'état en haut, une colonne à la fois, balayage d'une colonne à l'autre ; une colonne vide le dit. Chaque écran garde sa forme pendant le chargement. Bouton « Nouvelle session » (E1b), bouton rond sur le téléphone.)**
 
 ### <a id="e1a"></a>E1a · Vue d'ensemble : premier lancement
 
@@ -51,6 +51,7 @@ Règles de l'écran :
 3. « Regrouper par » bascule entre ce tableau par dépôt et les colonnes par état ([E1d](#e1d)). Le choix est gardé d'une visite à l'autre (règle 6).
 4. Le coût du jour additionne les sessions commencées aujourd'hui, terminées comprises. Il est estimé au tarif public des modèles à partir des tokens, cache compris, même quand le compte est sous abonnement (règle 5).
 5. Toute la ligne ouvre le détail de la session ([E2](#e2a)). Dans chaque dépôt, tri par état (T'attend, En cours, À relire, Inactive), puis par activité la plus récente. La marque « perso » distingue la session lancée avec le second dossier de configuration de Claude Code. Les sessions terminées ne sont pas ici : elles vont dans l'historique ([E3a](#e3a)).
+6. « Nouvelle session » démarre une session sans terminal : formulaire [E16a](#e16a). Sur mobile, le bouton rond « + » en bas à droite fait la même chose.
 
 **Mobile** : la ligne du tableau devient une ligne de liste (état, titre, branche et dernière action, activité). « Autoriser » et « Refuser » passent en grands boutons de 44 px ; sur mobile, « Autoriser » demande une confirmation ([E2b](#e2b)). Les dépôts et les profils de la barre latérale passent dans le bouton de filtres de l'en-tête.
 
@@ -121,7 +122,7 @@ Règles de l'écran :
 
 ## <a id="e2"></a>E2 · Détail d'une session
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `sessions/e2.html` · implémentation : **Livré (Détail d'une session développé (E2a, E2b, E2c, E2d) : fil en direct avec « Revenir au direct », carte d'autorisation avec motif du refus et « Répondu ailleurs », usage estimé, fichiers modifiés par l'agent, identifiant et commande de reprise d'une session close. Sessions du worker : la session de l'agent rejoint le profil du worker, devenu une source surveillée, rangée avec le dépôt du poste et titrée comme sa tâche ; état « À relire » ou « En échec » d'après sa tâche, la session à relire restant dans la vue d'ensemble ; bandeau « Ouvrir la revue » ou raison de l'arrêt et « Voir la tâche » ; reprise avec bosco resume, qui réinstalle la session dans le profil. Fil complet lu dans le transcript, sur les patterns d'AI Elements : demandes en bulles, réponses en Markdown (Streamdown, code coloré), réflexions, commandes et leur sortie, tests et leurs cas en échec, erreurs et leur pile d'appels, modifications en diff, sous-agents lus dans leur propre transcript (modèle, consigne, étapes et résultat), plan de l'agent en file à faire et faite, pages consultées, étapes nombreuses repliées sous une ligne qui les résume ; une très longue session ne montre que ses derniers échanges, et un transcript effacé laisse le fil résumé. Vérifié sur de vraies tâches, sur une vraie session de plus de 80 Mo et sur une session jetable avec un sous-agent Explore, un plan et une recherche web. Écarts : la relecture d'une session liée à une tâche se fait dans la revue de la tâche, sans onglets Modifications et Usage propres ; les refus de sortie réseau n'apparaissent pas dans le fil ; « Marquer comme relue » d'une session sans tâche n'est pas développé.)**
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `sessions/e2.html` · implémentation : **Livré (Détail d'une session développé (E2a, E2b, E2c, E2d) : fil en direct avec « Revenir au direct », carte d'autorisation avec motif du refus et « Répondu ailleurs », usage estimé, fichiers modifiés par l'agent, identifiant et commande de reprise d'une session close. Sessions du worker : la session de l'agent rejoint le profil du worker, devenu une source surveillée, rangée avec le dépôt du poste et titrée comme sa tâche ; état « À relire » ou « En échec » d'après sa tâche, la session à relire restant dans la vue d'ensemble ; bandeau « Ouvrir la revue » ou raison de l'arrêt et « Voir la tâche » ; reprise avec bosco resume, qui réinstalle la session dans le profil. Fil complet lu dans le transcript, sur les patterns d'AI Elements : demandes en bulles, réponses en Markdown (Streamdown, code coloré), réflexions, commandes et leur sortie, tests et leurs cas en échec, erreurs et leur pile d'appels, modifications en diff, sous-agents lus dans leur propre transcript (modèle, consigne, étapes et résultat), plan de l'agent en file à faire et faite, pages consultées, étapes nombreuses repliées sous une ligne qui les résume ; une très longue session ne montre que ses derniers échanges, et un transcript effacé laisse le fil résumé. Vérifié sur de vraies tâches, sur une vraie session de plus de 80 Mo et sur une session jetable avec un sous-agent Explore, un plan et une recherche web. Écarts : la relecture d'une session liée à une tâche se fait dans la revue de la tâche, sans onglets Modifications et Usage propres ; les refus de sortie réseau n'apparaissent pas dans le fil ; « Marquer comme relue » d'une session sans tâche n'est pas développé. Sessions pilotées développées (E2e à E2h) : zone de message (éditeur avec puces « @ » fichier et « / » commande, images jointes, mode d'autorisations, modèle et effort par message, envoi ou « Arrêter »), message en attente annulable, question de l'agent répondue dans Bosco, reprise d'une session close en lui écrivant, bande « Ouverte dans un terminal » (E2a). Un tour par lancement de `claude -p` ; vérifié sur une vraie session (commande, question de l'agent répondue dans Bosco, réponse reçue par l'agent). Écart : « Arrêter » en bouton contour, et l'aide sous la zone masquée sur le téléphone.)**
 
 ### <a id="e2a"></a>E2a · Détail d'une session : en cours
 
@@ -137,6 +138,7 @@ Règles de l'écran :
 3. Usage estimé au tarif public (règle 5), même sous abonnement. Le cache est la part des tokens lus depuis le cache plutôt que recalculés. Les chiffres bougent avec le fil.
 4. Fichiers modifiés depuis le début de la session, comparés à l'état de la branche au démarrage ; le détail des lignes est dans le diff à la fin de la session ([E2C](#e2c)). Les fichiers viennent des actions de l'agent : les changements faits par une commande shell n'y figurent pas. Pour une session du worker, le diff vient de git et il est complet.
 5. Une session encore ouverte ne se reprend pas : la reprise mélangerait deux conversations (règle 9). La commande de reprise n'apparaît que lorsque la session est close ; d'ici là, la colonne ne garde que l'identifiant. « Copier le chemin du dossier » copie le dossier du dépôt pour ouvrir un terminal dessus.
+6. Une session ouverte dans un terminal ne reçoit pas de message de Bosco : la reprendre ici mélangerait deux conversations (règle 9). On y répond dans le terminal ; la bande remplace le composer. Une fois la session close, elle se reprend aussi bien dans un terminal que dans Bosco ([E2g](#e2g)).
 
 **Mobile** : écran poussé depuis la liste, avec le retour « Vue d'ensemble ». Trois onglets (Fil, Usage, Fichiers) remplacent la colonne de droite ; le fil occupe tout l'écran, sans barre du bas : « Copier le chemin du dossier » est une action du poste.
 
@@ -191,6 +193,73 @@ Règles de l'écran :
 5. « Copier la reprise » copie la commande qui poursuit la session : pour une session du worker, bosco resume la réinstalle dans le profil. Pour une session interactive close, la commande affichée est claude --resume avec l'identifiant complet, précédée du dossier de configuration pour le profil perso. La reprise reste possible après un échec, tant que Claude Code n'a pas effacé la session (règle 10). Sur téléphone, pas de copie : on ne colle rien dans un terminal depuis le téléphone.
 
 **Mobile** : écran poussé ; les onglets (Fil, Modifications, Usage) passent en haut. Le bandeau de raison précède le fil, et la barre du bas garde « Voir la tâche ».
+
+### <a id="e2e"></a>E2e · Détail d'une session : pilotée par Bosco
+
+Une session démarrée depuis Bosco : on lui écrit directement depuis l'interface, sur le poste comme sur le téléphone. Le point focal est le composer sous le fil : un éditeur de texte avec mentions de fichiers et commandes, des images en pièces jointes, et une barre d'outils pour les autorisations, le modèle et l'effort. Un message écrit pendant que l'agent travaille attend la fin du tour ; « Arrêter » interrompt le tour. À droite, la consommation, les fichiers touchés et la commande pour reprendre la session dans un terminal entre deux tours.
+
+- **Depuis** [E16A](#e16a) « Démarrer » · [E1B](#e1b) au clic sur la session
+- **Ensuite** [E2F](#e2f) quand l'agent pose une question · [E2B](#e2b) quand il demande une autorisation · [E2H](#e2h) en tapant @ ou /
+
+Règles de l'écran :
+
+1. L'éditeur est un vrai champ de texte : plusieurs lignes, qui grandit avec le texte jusqu'à 10 lignes, puis défile. Entrée envoie, Maj+Entrée ajoute une ligne. @ mentionne un fichier du dépôt et / en tête de message choisit une commande : les deux deviennent des puces non modifiables, le reste est du texte simple (un bloc de code s'affiche en police à chasse fixe). Voir [E2h](#e2h). Si l'agent travaille, le message ne part pas tout de suite : il part au tour suivant.
+2. Un message écrit pendant que l'agent travaille attend la fin du tour : « partira à la fin du tour ». « Annuler » le retire tant qu'il n'est pas parti. Il n'y a qu'un message en attente : un second s'ajoute au même.
+3. Le bouton rond envoie le message (flèche). Pendant un tour, avec le champ vide, il devient un carré « Arrêter » : il interrompt le tour, comme Échap dans le terminal ; le message en attente reste et part aussitôt après. Champ rempli pendant un tour, c'est la flèche : le message part en attente.
+4. La barre d'outils règle le mode d'autorisations (Demander, Accepter les modifications, Plan), le modèle et l'effort. Comme l'agent est lancé à chaque tour, ces réglages valent pour le message envoyé et les suivants. Avec « Demander », chaque autorisation arrive dans Bosco sous la forme de la carte [E2b](#e2b). Le bouton « + » ajoute une image.
+5. Pièces jointes : des images seulement (capture collée, glissée dans l'éditeur ou ajoutée par « + »), cinq au plus. Chaque puce se retire avec sa croix.
+6. Entre deux tours, la session est close : elle se reprend dans un terminal avec la commande affichée, ou ici en écrivant. Tant qu'un terminal l'a rouverte, Bosco ne lui écrit plus (règle 9) : elle se lit alors comme une session ouverte dans un terminal ([E2a](#e2a)).
+
+**Mobile** : écran poussé depuis la liste, onglet Fil. Le composer est une carte réduite collée en bas : « + », un éditeur d'une à trois lignes et le bouton rond ; pendant un tour, « Arrêter » remplace la flèche tant que le champ est vide. Les menus (autorisations, modèle, effort) s'ouvrent depuis une rangée de puces au-dessus de l'éditeur, qui défile horizontalement. Le message en attente s'affiche sous le fil, avec « Annuler ».
+
+### <a id="e2f"></a>E2f · Détail d'une session : question de l'agent
+
+Même session, un peu plus tard : l'agent a besoin d'un choix et le fil se termine par une carte de question. On répond sans quitter Bosco ; la session reprend aussitôt. L'état est « T'attend », comme pour une autorisation.
+
+- **Depuis** [E2E](#e2e)
+- **Ensuite** [E2E](#e2e) quand l'agent reprend
+
+Règles de l'écran :
+
+1. Une question de l'agent se répond dans Bosco. Les choix sont des boutons radio ; une question à choix multiples s'affiche en cases à cocher, et plusieurs questions se suivent dans la même carte. Le choix recommandé par l'agent est coché d'office et porte l'étiquette « Recommandé ».
+2. « Autre » donne un champ de texte libre : la réponse écrite est transmise telle quelle à l'agent.
+3. « Passer » laisse l'agent continuer sans réponse, comme Échap dans le terminal.
+4. Tant que la question est sans réponse, le composer est désactivé, avec ses boutons : « Réponds d'abord à la question ».
+5. La question arrive aussi en notification « Question de l'agent » et dans le centre de notifications ([E15a](#e15a)). Dans une session ouverte dans un terminal, une question se répond dans le terminal : Bosco n'affiche alors que « répondu dans le terminal ».
+
+**Mobile** : la carte de question occupe le bas du fil ; les choix sont de grandes lignes tactiles et « Répondre » prend toute la largeur. Le composer, désactivé, reste visible dessous.
+
+### <a id="e2g"></a>E2g · Détail d'une session : close, reprise dans Bosco
+
+Une session terminée (ici celle d'un terminal) n'est pas un cul-de-sac : le composer en bas du fil la reprend en un message, dans Bosco. La commande de reprise pour un terminal reste proposée à droite.
+
+- **Depuis** [E1B](#e1b) · [E3A](#e3a) (historique)
+- **Ensuite** [E2E](#e2e) une fois le premier message envoyé
+
+Règles de l'écran :
+
+1. Le premier message relance la session : la flèche ronde l'envoie, et Bosco reprend la session sur ce poste, dans le dossier du dépôt, pour un tour. Elle devient alors une session pilotée dans Bosco (icône message-square) et se lit comme [E2e](#e2e). L'éditeur est le même (fichiers par @, commandes par /, images).
+2. Le bandeau rappelle où la session tourne (ce poste, ce dossier) et avec quel profil : le profil de la session, ici pro. Les réglages de la barre d'outils (autorisations, modèle, effort) valent pour ce premier message.
+3. Deux façons de continuer la même conversation : écrire ici, ou copier la commande de reprise dans un terminal. Une fois rouverte dans un terminal, Bosco ne lui écrit plus (règle 9).
+4. Une session effacée par Claude Code ne se reprend plus (règle 10) : le composer est alors remplacé par « Effacée par Claude Code : elle ne se reprend plus ».
+
+**Mobile** : le composer est la carte réduite collée en bas, sous le bandeau court « Session close · ton message la reprend ». Les menus d'autorisations, de modèle et d'effort sont dans la rangée de puces au-dessus de l'éditeur. Pas de commande à copier sur le téléphone.
+
+### <a id="e2h"></a>E2h · Détail d'une session : mentionner un fichier ou lancer une commande
+
+Dans l'éditeur du composer, « @ » ouvre la liste des fichiers du dépôt et « / » en tête de message celle des commandes et skills. Le choix devient une puce dans le message. L'exemple montre la session entre deux tours, pendant qu'on tape une mention.
+
+- **Depuis** [E2E](#e2e)
+- **Ensuite** [E2E](#e2e)
+
+Règles de l'écran :
+
+1. « @ » propose les fichiers suivis du dépôt, les plus proches du texte tapé d'abord, avec la partie tapée en gras. Le fichier choisi devient une puce non modifiable dans le message, et l'agent le lit.
+2. « / » en tête de message propose les commandes et skills du profil et du dépôt, chacun avec son origine. Les commandes propres au terminal (réglages, connexion…) n'y sont pas. La commande choisie devient une puce en tête du message.
+3. Au clavier : ↑ ↓ pour choisir, Entrée pour insérer, Échap pour fermer le menu sans rien insérer.
+4. Sur le téléphone, une feuille remonte au-dessus du clavier à la place du menu : les lignes sont plus hautes et se touchent.
+
+**Mobile** : l'éditeur contient « / » et la feuille « Commandes et skills » remonte au-dessus du clavier : un nom en mono, son origine et sa description par ligne. Pour « @ », la même feuille liste les fichiers du dépôt.
 
 ## <a id="e3"></a>E3 · Historique
 
@@ -304,7 +373,7 @@ Règles de l'écran :
 
 ## <a id="e15"></a>E15 · Notifications
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `sessions/e15.html` · implémentation : **À faire évoluer (Notifications développées (E15a, E15b, E15c) : règles par type selon les réglages, centre de notifications gardé 7 jours derrière une cloche (tiroir sur ordinateur, écran sur le téléphone), réponse aux autorisations depuis le tiroir, notification du bureau par notify-send avec icône, type, extrait, priorité haute pour une question, remplacement par session et « Ouvrir », message bref quand l'onglet Bosco est au premier plan, messages brefs revus (couleur, extrait, une action, croix, pause au survol, trois au plus). Vérifié sur une vraie session : la question de fin de tour est arrivée sur le bureau. Écart : le titre d'une session sans titre donné par Claude Code est sa première demande, coupée à 60 caractères dans la notification du bureau. À faire évoluer : la notification du bureau titrée par son type et le dépôt, la session en gras puis les dernières phrases entières du message, sans mise en forme (E15b) ; le dépôt de chaque notification dans le tiroir (E15a).)**
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `sessions/e15.html` · implémentation : **Livré (Notifications développées (E15a, E15b, E15c) : règles par type selon les réglages, centre de notifications gardé 7 jours derrière une cloche (tiroir sur ordinateur, écran sur le téléphone), réponse aux autorisations depuis le tiroir, notification du bureau par notify-send avec icône, type, extrait, priorité haute pour une question, remplacement par session et « Ouvrir », message bref quand l'onglet Bosco est au premier plan, messages brefs revus (couleur, extrait, une action, croix, pause au survol, trois au plus). Vérifié sur une vraie session : la question de fin de tour est arrivée sur le bureau. Écart : le titre d'une session sans titre donné par Claude Code est sa première demande, coupée à 60 caractères dans la notification du bureau. Notification du bureau développée, titrée par son type et le dépôt, la session en gras puis les dernières phrases entières du message, sans mise en forme (E15b) ; le dépôt de chaque notification dans le tiroir (E15a).)**
 
 ### <a id="e15a"></a>E15a · Notifications : centre de notifications
 
@@ -355,6 +424,28 @@ Règles de l'écran :
 4. Sur le téléphone, le message prend toute la largeur au-dessus de la barre d'onglets.
 
 **Mobile** : mêmes messages, sur toute la largeur, au-dessus de la barre d'onglets.
+
+## <a id="e16"></a>E16 · Nouvelle session
+
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `sessions/e16.html` · implémentation : **Livré (Nouvelle session développée (E16a) : dépôt, abonnement Claude (celui du dépôt par défaut), avertissement si une session du terminal est ouverte dans le dossier, zone de message en grand avec ses réglages et « Démarrer ». Écart : sur le téléphone, « Démarrer » reste dans la zone de message, pas en pleine largeur dessous.)**
+
+### <a id="e16a"></a>E16a · Nouvelle session : formulaire
+
+Démarrer une session sans ouvrir de terminal, comme on ouvre un nouveau fil : le dépôt et l'abonnement en haut, puis le premier message dans le composer, avec ses réglages (autorisations, modèle, effort) dans la barre d'outils. Le récapitulatif de droite rappelle où la session tourne et comment elle se poursuit.
+
+- **Depuis** [E1B](#e1b) avec « Nouvelle session »
+- **Ensuite** [E2E](#e2e) avec « Démarrer »
+
+Règles de l'écran :
+
+1. Les dépôts proposés sont ceux que Bosco a découverts et surveille, les plus récents d'abord. Sous le champ : le dossier, la branche courante et le nombre de fichiers modifiés.
+2. L'abonnement Claude est celui par défaut du dépôt, réglé dans les droits du dépôt ([E8a](taches.md#e8a)). On peut en choisir un autre pour cette session.
+3. Le premier message se rédige dans le même éditeur que pour écrire à une session ([E2e](#e2e)) : plusieurs lignes, fichiers par @, commandes par /, images en pièces jointes ([E2h](#e2h)).
+4. Avertissement non bloquant : si une session est déjà ouverte dans ce dossier, dans un terminal, les deux agents modifieraient les mêmes fichiers. On peut démarrer quand même ; « Voir la session » ouvre l'autre session.
+5. La barre d'outils règle les autorisations (menu ouvert ici : Demander, Accepter les modifications, Plan), le modèle et l'effort. Ces choix se font au démarrage et se changent ensuite depuis la session ([E2e](#e2e)). « Demander » est le défaut : chaque autorisation arrive dans Bosco.
+6. « Démarrer » ouvre [E2e](#e2e) et lance le premier tour. La session apparaît dans la vue d'ensemble ([E1b](#e1b)) avec l'icône message-square. « Annuler » revient à la vue d'ensemble.
+
+**Mobile** : écran poussé « Nouvelle session » (retour « Vue d'ensemble »), dans le même ordre : dépôt, avertissement, abonnement, puis le composer pleine largeur. Les autorisations, le modèle et l'effort s'ouvrent depuis la rangée de puces au-dessus de l'éditeur, et « Démarrer » est pleine largeur sous la carte.
 
 ## <a id="criteres-dacceptation"></a>Critères d'acceptation
 
@@ -462,3 +553,16 @@ Règles de l'écran :
 - **CA-SESS-88** · [E15a](#e15a) · Étant donné une autorisation en attente dans le tiroir, quand la personne clique sur « Autoriser » ou « Refuser », alors la réponse part comme depuis le bandeau T'attend et la notification dit « autorisé dans Bosco » ; un clic sur une notification ouvre sa session ou sa tâche et la marque lue (RF-SESS-03).
 - **CA-SESS-89** · [E15c](#e15c) · Étant donné un message bref, quand il s'affiche, alors il a la couleur de son sens, un titre et un extrait, une action au plus et une croix ; il se ferme seul après 5 s (8 s avec une action), reste ouvert au survol, et une question reste affichée jusqu'à ce qu'on l'ouvre ou la ferme ; trois messages au plus.
 - **CA-SESS-90** · [E15a](#e15a) · Étant donné le téléphone, quand la personne touche la cloche de la barre du haut, alors l'écran des notifications s'ouvre, avec les mêmes filtres, et une autorisation s'y répond.
+
+### <a id="e2e-a-e2h-e16-sessions-pilotees-par-bosco"></a>E2e à E2h, E16 · Sessions pilotées par Bosco
+
+- **CA-SESS-91** · [E16a](#e16a) · Étant donné un dépôt, un abonnement Claude (celui du dépôt par défaut) et un premier message, quand la personne clique sur « Démarrer », alors la session démarre sur le poste, dans le dossier du dépôt, avec le mode d'autorisations, le modèle et l'effort choisis ; elle s'ouvre dans Bosco et apparaît dans la vue d'ensemble avec l'icône des sessions pilotées. Une session déjà ouverte dans ce dossier, dans un terminal, est signalée sans bloquer (RF-SESS-04).
+- **CA-SESS-92** · [E2e](#e2e) · Étant donné une session pilotée entre deux tours, quand la personne envoie un message, alors un tour commence avec ce message : texte, fichiers mentionnés, commande en tête, images jointes (5 au plus) ; à la fin du tour l'agent s'arrête et la session est close, reprenable dans un terminal comme dans Bosco (RF-SESS-04, RF-SESS-09).
+- **CA-SESS-93** · [E2e](#e2e) · Étant donné un tour en cours, quand la personne envoie un message, alors il attend la fin du tour (« partira à la fin du tour ») et part avec le tour suivant ; un second message rejoint le premier ; « Annuler » le retire ; « Arrêter » interrompt le tour et garde le message en attente.
+- **CA-SESS-94** · [E2e](#e2e) · Étant donné le mode d'autorisations, le modèle et l'effort de la barre d'outils, quand la personne en change, alors le changement vaut dès le message envoyé et pour les suivants ; il est gardé avec la session.
+- **CA-SESS-95** · [E2e](#e2e) · Étant donné une session pilotée en mode « Demander », quand l'agent demande une autorisation, alors elle arrive dans Bosco comme une carte T'attend et une notification, et la réponse donnée dans Bosco part à l'agent ; « Accepter les modifications » laisse passer les modifications de fichiers, « Plan » fait proposer un plan avant toute modification (RF-SESS-03).
+- **CA-SESS-96** · [E2f](#e2f) · Étant donné une question de l'agent dans une session pilotée, quand la personne choisit une réponse (ou plusieurs pour une question à choix multiples), écrit « Autre » ou clique sur « Passer », alors la réponse part à l'agent et le tour continue ; tant que la question attend, la zone de message est désactivée.
+- **CA-SESS-97** · [E2g](#e2g) · Étant donné une session close, d'un terminal ou de Bosco, quand la personne lui écrit, alors la session reprend dans Bosco avec la même conversation et devient pilotée ; une session effacée par Claude Code ne se reprend plus (RF-SESS-09, RF-SESS-10).
+- **CA-SESS-98** · [E2a](#e2a) · Étant donné une session ouverte dans un terminal, quand la personne ouvre son détail, alors la zone de message est remplacée par « Ouverte dans un terminal · réponds-y là-bas », et Bosco refuse de lui écrire tant qu'elle n'est pas close (RF-SESS-09).
+- **CA-SESS-99** · [E2h](#e2h) · Étant donné l'éditeur, quand la personne tape « @ », alors Bosco propose les fichiers suivis du dépôt, les plus proches du texte tapé d'abord, et le fichier choisi devient une puce ; quand elle tape « / » en tête de message, Bosco propose les commandes et skills du profil et du dépôt avec leur origine ; ↑↓, Entrée et Échap pilotent la liste.
+- **CA-SESS-100** · [E2e](#e2e) · Étant donné le téléphone, quand la personne ouvre une session pilotée ou une nouvelle session, alors elle peut écrire, joindre une image, choisir le mode, le modèle et l'effort depuis une rangée de puces, et les suggestions de « @ » et « / » s'ouvrent dans une feuille (RF-SESS-07).

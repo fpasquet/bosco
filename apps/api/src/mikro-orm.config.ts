@@ -22,7 +22,9 @@ import { Migration20261108030000 } from './migrations/Migration20261108030000.ts
 import { Migration20261108040000 } from './migrations/Migration20261108040000.ts';
 import { Migration20261108050000 } from './migrations/Migration20261108050000.ts';
 import { Migration20261108200000 } from './migrations/Migration20261108200000.ts';
+import { Migration20261108210000 } from './migrations/Migration20261108210000.ts';
 import { NotificationSchema } from './sessions/infrastructure/persistence/notification.schema.ts';
+import { PilotSchema } from './sessions/infrastructure/persistence/pilot.repository.ts';
 import {
   SessionEventSchema,
   SessionSchema,
@@ -51,6 +53,7 @@ export const MIGRATIONS = [
   { name: 'Migration20261108040000', class: Migration20261108040000 },
   { name: 'Migration20261108050000', class: Migration20261108050000 },
   { name: 'Migration20261108200000', class: Migration20261108200000 },
+  { name: 'Migration20261108210000', class: Migration20261108210000 },
 ];
 
 export function ormConfig(dbName: string) {
@@ -69,6 +72,7 @@ export function ormConfig(dbName: string) {
       SocleSchema,
       LinkSchema,
       NotificationSchema,
+      PilotSchema,
     ],
     extensions: [Migrator],
     migrations: { migrationsList: MIGRATIONS, path: 'src/migrations', snapshot: false },

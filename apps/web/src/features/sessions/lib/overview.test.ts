@@ -25,6 +25,8 @@ function session(id: string, overrides: Partial<SessionDto> = {}): SessionDto {
     lastEventAt: new Date('2026-11-06T14:59:00').toISOString(),
     lastMessage: null,
     model: 'claude-sonnet-5-5',
+    openInTerminal: false,
+    pilot: null,
     recentActions: [],
     repoPath: '/home/dev/www/labo-ia/packages/rag',
     repository: { folder: 'packages/rag', hidden: false, name: 'labo-ia', root: '/home/dev/www/labo-ia' },

@@ -1,0 +1,5 @@
+{
+  "text": "Et les tests",
+  "images": [{ "name": "capture-test.png" }],
+  "settings": { "permissionMode": "ask", "model": null, "effort": null }
+}

@@ -93,6 +93,17 @@ describe('LiveSignalService', () => {
     expect(session).toBeNull();
   });
 
+  it('leaves the permissions of a piloted turn to Bosco, and keeps the session open at the end of the turn (DT-31)', async () => {
+    const { origin, repository, service } = setup();
+    service.usePilots({ isRunning: () => true });
+    await expect(
+      service.requestPermission(origin, { tool: 'Bash', detail: 'npm test' }, () => undefined),
+    ).resolves.toBeNull();
+    await service.receive(origin, { kind: 'end' });
+    const session = await repository.find('c41e9a07');
+    expect(session).toBeNull();
+  });
+
   it('waits after the turn with the last message of the agent', async () => {
     const { origin, repository, service } = setup();
     await service.receive(origin, { kind: 'stop', message: 'Veux-tu que je lance les tests ?' });

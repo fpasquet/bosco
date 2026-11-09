@@ -1,7 +1,7 @@
-import { Copy } from 'lucide-react';
+import { Copy, MessageSquare } from 'lucide-react';
 import type { SessionDto } from '@bosco/domain';
 import { Button } from '@/shared/ui/button';
-import { cacheShare, durationEnd } from '../../lib/detail';
+import { cacheShare, clockOf, durationEnd } from '../../lib/detail';
 import { elapsed, formatCost, formatTokens, modelName, relativePath } from '../../lib/format';
 import { totalTokens } from '../../lib/overview';
 
@@ -80,8 +80,15 @@ export function SessionSide({ now, onCopy, resume, session }: SessionSideProps) 
         <dl className="flex flex-col gap-1.5 text-sm">
           <Row label="Identifiant" value={session.id.slice(0, 8)} />
         </dl>
+        {session.pilot && (
+          <p className="mt-1 flex items-center gap-1.5 text-xs">
+            <MessageSquare aria-hidden className="size-3.5 shrink-0 text-muted" />
+            Pilotée dans Bosco depuis <span className="font-mono tabular-nums">{clockOf(session.pilot.since)}</span>
+          </p>
+        )}
         {resume ? (
           <div className="mt-3 flex flex-col gap-2">
+            {session.pilot && <p className="text-xs text-muted">Reprendre dans un terminal entre deux tours :</p>}
             <code className="rounded-control bg-surface-alt px-3 py-2 font-mono text-xs break-all">{resume}</code>
             <Button
               variant="outline"

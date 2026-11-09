@@ -1,0 +1,6 @@
+{
+  "profile": "{{profiles}}/.claude-perso",
+  "text": "Lis le lexique",
+  "images": [],
+  "settings": { "permissionMode": "acceptEdits", "model": "claude-opus-5-5", "effort": "high" }
+}

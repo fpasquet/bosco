@@ -18,6 +18,8 @@ function session(overrides: Partial<SessionDto> & Pick<SessionDto, 'id' | 'title
     lastEventAt: ago(12),
     lastMessage: null,
     model: 'claude-sonnet-5-5',
+    openInTerminal: false,
+    pilot: null,
     recentActions: [],
     repoPath: null,
     repository: null,

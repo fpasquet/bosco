@@ -10,6 +10,8 @@
     "lastEventAt": "2026-11-06T14:02:06.000Z",
     "lastMessage": "Je commence par relire le contexte du projet.",
     "model": "claude-opus-5-5",
+    "openInTerminal": false,
+    "pilot": null,
     "recentActions": [
       "Bash · npm run db:migrate"
     ],

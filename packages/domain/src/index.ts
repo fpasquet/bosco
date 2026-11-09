@@ -1,15 +1,23 @@
 export { APP_NAME } from './app-name.ts';
 export type {
+  AgentQuestionDto,
   ConversationPartDto,
   ConversationStepDto,
   ConversationTurnDto,
   CostReportDto,
   DiscoverySettingsDto,
+  EffortDto,
   HistoryDayDto,
   ImportProgressDto,
   JournalEntryDto,
   LiveEventDto,
   NotificationDto,
+  PermissionModeDto,
+  PilotDto,
+  PilotImageDto,
+  PilotMessageDto,
+  PilotOptionsDto,
+  PilotSettingsDto,
   ProfileCandidateDto,
   RepositorySettingsDto,
   SessionConversationDto,
@@ -18,7 +26,9 @@ export type {
   SessionStateDto,
   SourceDto,
   SourcesDto,
+  StartSessionDto,
   SubagentDto,
+  SuggestionDto,
   WaitingDto,
 } from './sessions.ts';
 export type {

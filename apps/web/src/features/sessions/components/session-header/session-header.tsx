@@ -1,4 +1,4 @@
-import { ChevronRight, Copy, FolderOpen } from 'lucide-react';
+import { ChevronRight, Copy, FolderOpen, MessageSquare } from 'lucide-react';
 import Link from 'next/link';
 import type { SessionDto } from '@bosco/domain';
 import { Button } from '@/shared/ui/button';
@@ -48,6 +48,12 @@ export function SessionHeader({ mark, now, onCopy, profile, resume, session }: S
         <h1 className="mt-1 flex flex-wrap items-center gap-2 font-display text-xl font-semibold tracking-tight md:text-2xl">
           <SessionStateBadge state={session.state} task={session.task} />
           <span className="line-clamp-2 min-w-0">{titleOf(session)}</span>
+          {session.pilot && (
+            <span className="badge gap-1 badge-outline font-sans badge-sm font-normal text-muted">
+              <MessageSquare aria-hidden className="size-3" />
+              Pilotée dans Bosco
+            </span>
+          )}
           {mark && (
             <span className="rounded-sm border border-line px-1 font-mono text-xs font-normal text-muted">{mark}</span>
           )}
