@@ -2,7 +2,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ChevronRight } from 'lucide-react';
 import Link from 'next/link';
-import { useState } from 'react';
+import { type ReactNode, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import type { TaskDto } from '@bosco/domain';
@@ -18,6 +18,8 @@ export interface TaskDetailProps {
   failing: TaskDto[];
   onCancel: () => void;
   onRelaunch: (changes: { budgetUsd: number; fromBranch: boolean; instruction?: string }) => void;
+  /** Ressources d'une tâche du worker en cours, sous l'en-tête (E13d) */
+  resources?: ReactNode;
   task: TaskDto;
 }
 
@@ -128,7 +130,7 @@ function Relaunch({ busy, onRelaunch, task }: Pick<TaskDetailProps, 'busy' | 'on
 }
 
 /** Détail d'une tâche (E13a, E13b, E13c) : ce qu'elle fait, ce qu'elle attend, son journal, et ce qu'on peut faire. */
-export function TaskDetail({ busy, failing, onCancel, onRelaunch, task }: TaskDetailProps) {
+export function TaskDetail({ busy, failing, onCancel, onRelaunch, resources, task }: TaskDetailProps) {
   const [confirming, setConfirming] = useState(false);
   const canCancel = !['cancelled', 'failed', 'rejected', 'validated'].includes(task.state);
   const failed = task.state === 'failed' || task.state === 'rejected';
@@ -189,6 +191,7 @@ export function TaskDetail({ busy, failing, onCancel, onRelaunch, task }: TaskDe
           }}
         />
       )}
+      {resources}
       {task.state === 'awaiting_session' && (
         <p className="rounded-card border border-line bg-surface-alt px-4 py-3">
           À prendre depuis Claude Code sur le poste : dans le dépôt, demande « prends la prochaine tâche Bosco ». Le

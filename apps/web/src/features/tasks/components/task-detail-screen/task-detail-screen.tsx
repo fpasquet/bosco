@@ -24,6 +24,7 @@ import { useLiveTasks } from '../../hooks/use-live-tasks';
 import { RejectDialog } from '../reject-dialog';
 import { TaskDetail } from '../task-detail';
 import { TaskLinks } from '../task-links';
+import { TaskResources } from '../task-resources';
 import { TaskReview } from '../task-review';
 import { ValidateDialog } from '../validate-dialog';
 
@@ -140,6 +141,7 @@ export function TaskDetailScreen({ id }: { id: number }) {
           busy={busy}
           onCancel={() => cancel.mutate(NOT_STARTED.has(task.state) && (failing ?? []).length === 0)}
           onRelaunch={(changes) => relaunch.mutate(changes)}
+          resources={task.state === 'running' && task.mode === 'worker' ? <TaskResources taskId={task.id} /> : null}
         />
       )}
       <TaskLinks
