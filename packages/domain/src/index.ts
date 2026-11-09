@@ -71,3 +71,11 @@ export type {
   LinkServiceDto,
   SocleDto,
 } from './context.ts';
+export type {
+  ContainersDto,
+  LeftoverContainerDto,
+  PilotedTurnDto,
+  RunningAgentDto,
+  RunningServiceDto,
+  UsageDto,
+} from './containers.ts';
