@@ -1,5 +1,7 @@
 // Réglages d'un profil Claude Code (<profil>/settings.json) : Bosco ajoute ses hooks HTTP à ceux qui existent, sans
-// rien remplacer, et ne retire que les siens. Un fichier illisible n'est jamais réécrit.
+// toucher aux autres. Un seul Bosco suit un profil : installer le suivi remplace les hooks d'un autre Bosco du poste
+// (le service de développement, l'application du poste…), qui échoueraient quand il est arrêté (CA-SESS-105).
+// Désinstaller ne retire que les siens. Un fichier illisible n'est jamais réécrit.
 import { copyFile, readFile, rename, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { HookEndpoint, ProfileSettings } from '../../application/ports.ts';
@@ -15,18 +17,28 @@ export class UnreadableSettings extends DomainError {
   }
 }
 
-/** Un hook de Bosco : son adresse désigne l'entrée des hooks de ce profil, quel que soit le port. */
-function isBoscoHook(hook: unknown, endpoint: HookEndpoint): boolean {
-  if (typeof hook !== 'object' || hook === null) return false;
-  const { url } = hook as { url?: unknown };
-  return typeof url === 'string' && url.endsWith(new URL(endpoint.url).pathname);
+function hookUrl(hook: unknown): null | URL {
+  if (typeof hook !== 'object' || hook === null) return null;
+  const { type, url } = hook as { type?: unknown; url?: unknown };
+  return type === 'http' && typeof url === 'string' && URL.canParse(url) ? new URL(url) : null;
 }
 
-function withoutBosco(settings: Settings, endpoint: HookEndpoint): Settings {
+/** Un hook de ce Bosco pour ce profil : son adresse désigne l'entrée des hooks du profil, quel que soit le port. */
+function isOwnHook(hook: unknown, endpoint: HookEndpoint): boolean {
+  return hookUrl(hook)?.pathname === new URL(endpoint.url).pathname;
+}
+
+/** Un hook d'un Bosco du poste, celui-ci ou un autre : l'entrée des hooks d'un service sur la boucle locale. */
+function isAnyBoscoHook(hook: unknown): boolean {
+  const url = hookUrl(hook);
+  return !!url && ['127.0.0.1', 'localhost'].includes(url.hostname) && /^\/api\/hooks\/[\w-]+$/.test(url.pathname);
+}
+
+function withoutBosco(settings: Settings, isBoscoHook: (hook: unknown) => boolean): Settings {
   const hooks: Record<string, HookGroup[]> = {};
   for (const [event, groups] of Object.entries(settings.hooks ?? {})) {
     const kept = groups
-      .map((group) => ({ ...group, hooks: (group.hooks ?? []).filter((hook) => !isBoscoHook(hook, endpoint)) }))
+      .map((group) => ({ ...group, hooks: (group.hooks ?? []).filter((hook) => !isBoscoHook(hook)) }))
       .filter((group) => group.hooks.length > 0);
     if (kept.length > 0) hooks[event] = kept;
   }
@@ -39,7 +51,7 @@ export class FileProfileSettings implements ProfileSettings {
   async install(profilePath: string, endpoint: HookEndpoint, backup: boolean): Promise<{ backupPath: null | string }> {
     const path = join(profilePath, 'settings.json');
     const current = await this.read(path);
-    const settings = withoutBosco(current, endpoint);
+    const settings = withoutBosco(current, isAnyBoscoHook);
     let backupPath: null | string = null;
     if (backup && (await this.exists(path))) {
       backupPath = `${path}.bosco-backup`;
@@ -61,7 +73,8 @@ export class FileProfileSettings implements ProfileSettings {
     }
     const groupsOf = (event: string): HookGroup[] => settings.hooks?.[event] ?? [];
     return LIVE_TRACKING_EVENTS.every((event) =>
-      groupsOf(event).some((group) => (group.hooks ?? []).some((hook) => isBoscoHook(hook, endpoint))),
+      // Installé par ce Bosco, sur son port : des hooks vers un autre port n'arrivent pas jusqu'à lui
+      groupsOf(event).some((group) => (group.hooks ?? []).some((hook) => hookUrl(hook)?.href === endpoint.url)),
     );
   }
 
@@ -69,7 +82,10 @@ export class FileProfileSettings implements ProfileSettings {
     const path = join(profilePath, 'settings.json');
     if (!(await this.exists(path))) return;
     const settings = await this.read(path);
-    await this.write(path, withoutBosco(settings, endpoint));
+    await this.write(
+      path,
+      withoutBosco(settings, (hook) => isOwnHook(hook, endpoint)),
+    );
   }
 
   private async exists(path: string): Promise<boolean> {

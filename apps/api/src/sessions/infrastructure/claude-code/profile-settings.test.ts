@@ -49,6 +49,24 @@ describe('FileProfileSettings', () => {
     expect([backupPath === null || existsSync(backupPath), installed.hooks.Stop?.length]).toEqual([true, 1]);
   });
 
+  it('CA-SESS-105 · replaces the hooks of another Bosco of the workstation, and uninstalls only its own', async () => {
+    const other = { type: 'http', url: 'http://127.0.0.1:4880/api/hooks/be974f42-3b96', headers: {} };
+    const elsewhere = { type: 'http', url: 'https://hooks.example.dev/api/hooks/audit' };
+    const path = profile(
+      JSON.stringify({ hooks: { Stop: [{ hooks: [other] }], SessionEnd: [{ hooks: [other, elsewhere] }] } }),
+    );
+    const settings = new FileProfileSettings();
+    const otherInstalled = await settings.isInstalled(path, endpoint);
+    expect(otherInstalled).toBe(false);
+    await settings.install(path, endpoint, false);
+    const installed = read(path) as { hooks: Record<string, { hooks: { url?: string }[] }[]> };
+    const urls = Object.values(installed.hooks).flatMap((groups) => groups.flatMap((group) => group.hooks));
+    expect(urls.filter((hook) => hook.url === other.url)).toEqual([]);
+    expect(installed.hooks.SessionEnd?.[0]?.hooks).toEqual([elsewhere]);
+    await settings.uninstall(path, endpoint);
+    expect(read(path)).toEqual({ hooks: { SessionEnd: [{ hooks: [elsewhere] }] } });
+  });
+
   it('never rewrites settings it cannot read', async () => {
     const path = profile('{ "model": ');
     await expect(new FileProfileSettings().install(path, endpoint, true)).rejects.toBeInstanceOf(UnreadableSettings);
