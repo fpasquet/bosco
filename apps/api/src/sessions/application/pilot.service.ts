@@ -55,6 +55,8 @@ export interface RunningTurn {
   finish(): void;
   /** « Arrêter » : interrompt le tour, comme Échap dans le terminal */
   interrupt(): void;
+  /** Processus de l'agent sur le poste, pour mesurer ce qu'il consomme (E19a) ; null s'il n'a pas démarré */
+  pid: null | number;
 }
 
 export interface TurnRunner {
@@ -95,6 +97,7 @@ interface Turn {
   abandons: Map<string, () => void>;
   process: RunningTurn;
   result: boolean;
+  startedAt: Date;
 }
 
 type Signals = Pick<LiveSignalService, 'receive' | 'requestAnswers' | 'requestPermission'>;
@@ -147,6 +150,11 @@ export class PilotService {
 
   isRunning(sessionId: string): boolean {
     return this.turns.has(sessionId);
+  }
+
+  /** Tours en cours, avec le processus de leur agent : le panneau des conteneurs les mesure (E19a). */
+  runningTurns(): { pid: null | number; sessionId: string; since: Date }[] {
+    return [...this.turns].map(([sessionId, turn]) => ({ pid: turn.process.pid, sessionId, since: turn.startedAt }));
   }
 
   pilotOf(sessionId: string): null | PilotView {
@@ -311,7 +319,12 @@ export class PilotService {
     const origin = { cwd: record.cwd, sessionId: record.sessionId, sourceId: record.sourceId };
     // Le tour commence : la session apparaît (ou reprend) tout de suite, sans attendre les hooks ni le transcript
     await this.signals.receive(origin, { kind: 'prompt' }, 'pilot');
-    const turn: Turn = { abandons: new Map(), process: undefined as unknown as RunningTurn, result: false };
+    const turn: Turn = {
+      abandons: new Map(),
+      process: undefined as unknown as RunningTurn,
+      result: false,
+      startedAt: this.clock.now(),
+    };
     const request: TurnRequest = {
       configDir: source.path,
       cwd: record.cwd,
