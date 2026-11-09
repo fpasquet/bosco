@@ -62,6 +62,8 @@ const clock = { now: () => new Date() };
 
 /** Le worker repasse à cet intervalle, et à chaque changement de tâche (E5c : il revérifie seul). */
 const TICK_MS = 5000;
+/** Mémoire libre annoncée au worker dans les scénarios (BOSCO_TEST=1) : de quoi lancer ses agents */
+const SCENARIO_FREE_MEMORY = 64 * 1024 ** 3;
 
 /** Contexte des tâches (RF-TACH) ; les dépôts viennent des sessions, par le point de composition. */
 @Module({
@@ -206,7 +208,8 @@ const TICK_MS = 5000;
           tasks,
           runner,
           health: runner,
-          freeMemory: freemem,
+          // Dans les scénarios, la mémoire libre ne dépend pas de la machine : la CI en a parfois moins de 8 Go
+          freeMemory: config.testing ? () => SCENARIO_FREE_MEMORY : freemem,
           maxAgents: () => isolation.maxAgents(),
           rightsOf: (repository) => rights.rightsOf(repository),
           claudeProfileOf: async (repository) => {
