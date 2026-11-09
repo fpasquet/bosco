@@ -1,5 +1,6 @@
 // Tâches du fil rouge des specs (lot 2), pour les histoires.
 import type {
+  ContainersDto,
   IsolationDto,
   RightsDto,
   RightsValuesDto,
@@ -256,4 +257,120 @@ export const STORY_REVIEW: TaskReviewDto = {
   commits: 2,
   proposal: { title: STORY_REVIEW_TASK.title, body: `${STORY_REVIEW_TASK.outcome.report ?? ''}\n\nTâche T-12` },
   pullRequest: 'ask',
+};
+
+const GB = 1024 ** 3;
+const MB = 1024 ** 2;
+
+/** Conteneurs en cours du fil rouge (E19a) : T-18 près de son plafond, T-17 et ses services, une session pilotée. */
+export const STORY_CONTAINERS: ContainersDto = {
+  agents: [
+    {
+      cpu: 1.7,
+      cpuLimit: 2,
+      memory: 3.6 * GB,
+      memoryLimit: 4 * GB,
+      name: 'bosco-t18',
+      repository: 'outils-node',
+      services: [],
+      taskId: 18,
+      title: 'Monter Vitest en version 3',
+    },
+    {
+      cpu: 0.4,
+      cpuLimit: 2,
+      memory: 1.1 * GB,
+      memoryLimit: 4 * GB,
+      name: 'bosco-t17',
+      repository: 'api-voix',
+      services: [
+        {
+          cpu: 0.1,
+          cpuLimit: 1,
+          image: 'mysql:8.0',
+          memory: 412 * MB,
+          memoryLimit: GB,
+          name: 'bosco-t17-svc-database',
+          service: 'database',
+          state: 'running',
+        },
+        {
+          cpu: 0.2,
+          cpuLimit: 1,
+          image: 'rabbitmq:3-management',
+          memory: 138 * MB,
+          memoryLimit: GB,
+          name: 'bosco-t17-svc-rabbitmq',
+          service: 'rabbitmq',
+          state: 'running',
+        },
+        {
+          cpu: 0,
+          cpuLimit: 1,
+          image: 'fsouza/fake-gcs-server',
+          memory: 24 * MB,
+          memoryLimit: GB,
+          name: 'bosco-t17-svc-fake-gcs-server',
+          service: 'fake-gcs-server',
+          state: 'running',
+        },
+      ],
+      taskId: 17,
+      title: 'Documenter le lexique dans le README',
+    },
+  ],
+  capacity: { availableMemory: 22.3 * GB, maxAgents: 4, reservedMemory: 4 * GB, running: 2 },
+  hostCpus: 16,
+  leftovers: [],
+  leftoversDisk: 0,
+  measuredAt: at('15:13'),
+  nextCleanupAt: at('16:00'),
+  piloted: [
+    {
+      cpu: 0.3,
+      cpuLimit: null,
+      memory: 410 * MB,
+      memoryLimit: null,
+      sessionId: 'c0ffee00-lexique',
+      since: at('15:12'),
+      title: 'Lexique : test en échec sur develop',
+    },
+  ],
+  totals: { agents: 2, cpu: 2.7, memory: 5.7 * GB, piloted: 1, services: 3 },
+  unreachableSince: null,
+};
+
+/** Conteneurs restés après T-9, en échec hier (E19d). */
+export const STORY_LEFTOVERS: ContainersDto = {
+  ...STORY_CONTAINERS,
+  leftovers: [
+    {
+      image: 'bosco-agent:1',
+      kind: 'agent',
+      name: 'bosco-t9',
+      running: false,
+      service: null,
+      task: { endedAt: at('11:52'), state: 'failed', title: 'Monter la version de Fastify' },
+      taskId: 9,
+    },
+    {
+      image: 'mysql:8.0',
+      kind: 'service',
+      name: 'bosco-t9-svc-database',
+      running: false,
+      service: 'database',
+      task: { endedAt: at('11:52'), state: 'failed', title: 'Monter la version de Fastify' },
+      taskId: 9,
+    },
+  ],
+  leftoversDisk: 1.2 * GB,
+};
+
+/** Docker ne répond plus depuis 15:09 : la dernière mesure de T-18 reste, datée (E19c). */
+export const STORY_DOCKER_DOWN: ContainersDto = {
+  ...STORY_CONTAINERS,
+  agents: [{ ...STORY_CONTAINERS.agents[0]!, cpu: 1.6, memory: 3.4 * GB }],
+  measuredAt: at('15:09'),
+  piloted: [],
+  unreachableSince: at('15:09'),
 };
