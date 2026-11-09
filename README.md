@@ -32,7 +32,7 @@ make desktop-update   # récupère le dépôt, reconstruit le paquet et l'instal
 make android          # APK de l'application Android (JDK 17 et SDK Android dans le dossier personnel)
 ```
 
-Le paquet s'installe avec `sudo apt install ./apps/desktop/out/bosco-desktop_<version>_amd64.deb` : l'application va dans `/opt/Bosco`, son entrée dans le menu des applications, et son bac à sable est configuré à l'installation. Elle garde les données de `~/.local/share/bosco`, comme le service lancé depuis le dépôt. Chaque paquet porte la version de l'application suivie de la date et du commit, toujours plus récente pour apt. Installé pendant que Bosco tourne, il se signale dans la barre système : « Relancer Bosco » passe à la nouvelle version. Une version plus ancienne refuse de démarrer sur des données qu'une plus récente a mises à jour.
+Le paquet s'installe avec `sudo apt install ./apps/desktop/out/bosco-desktop_<version>_amd64.deb` (la remarque « Download is performed unsandboxed as root » d'apt est sans conséquence : il lit le fichier en root, faute d'accès au dossier personnel) : l'application va dans `/opt/Bosco`, son entrée dans le menu des applications, et son bac à sable est configuré à l'installation. Elle garde les données de `~/.local/share/bosco`, comme le service lancé depuis le dépôt. Chaque paquet porte la version de l'application suivie de la date et du commit, toujours plus récente pour apt. Installé pendant que Bosco tourne, il se signale dans la barre système : « Relancer Bosco » passe à la nouvelle version. Une version plus ancienne refuse de démarrer sur des données qu'une plus récente a mises à jour.
 
 ## Dépôt
 

@@ -32,7 +32,9 @@ desktop-update: ## Pull the repository, rebuild the .deb package and install it 
 	git pull --ff-only
 	pnpm install --frozen-lockfile
 	$(MAKE) desktop-package
-	sudo apt install --reinstall ./apps/desktop/out/bosco-desktop_*_amd64.deb
+	@# apt lit le paquet en tant que _apt, qui n'a pas accès au dossier personnel : il passe par un dossier temporaire lisible
+	@dir=$$(mktemp -d) && chmod 755 $$dir && install -m 644 apps/desktop/out/bosco-desktop_*_amd64.deb $$dir/ && \
+		sudo apt install --reinstall $$dir/bosco-desktop_*_amd64.deb; status=$$?; rm -rf $$dir; exit $$status
 
 # Outils Android dans le dossier personnel (JDK 17, SDK), comme les a installés le lot 4
 JAVA_HOME ?= $(HOME)/.local/jdk-17
