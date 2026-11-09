@@ -3,13 +3,13 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Lock } from 'lucide-react';
 import { useState } from 'react';
 import type { DiscoverySettingsDto } from '@bosco/domain';
+import { useNow } from '@/shared/hooks/use-now';
 import { SettingsTabs } from '@/shared/layouts/settings-tabs';
 import {
   RepositorySettingRefused,
   repositorySettingsQuery,
   updateRepositorySettings,
 } from '../../api/repository-settings';
-import { useNow } from '../../hooks/use-now';
 import { RepositorySettings } from './repository-settings';
 
 const REFRESH_MS = 60_000;

@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Smartphone } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useNotices } from '@/shared/hooks/use-notices';
+import { useNow } from '@/shared/hooks/use-now';
 import { Button } from '@/shared/ui/button';
 import { Skeleton } from '@/shared/ui/skeleton';
 import {
@@ -14,7 +15,6 @@ import {
   setPhoneAccess,
 } from '../../api/access';
 import { useCopy } from '../../hooks/use-copy';
-import { useNow } from '../../hooks/use-now';
 import { sinceNow } from '../../lib/format';
 import { PairingDialog } from '../pairing-dialog';
 

@@ -14,6 +14,8 @@ export interface TranscriptEvent {
   change?: FileChange | null;
   cwd: null | string;
   kind: 'prompt' | 'reply' | 'title' | 'tool';
+  /** Question posée par l'agent (outil AskUserQuestion) : elle attend ta réponse (E15) */
+  question?: null | string;
   model: null | string;
   /** Racine git du dossier de travail, trouvée par l'adaptateur : elle donne le dépôt de la session */
   repoRoot: null | string;

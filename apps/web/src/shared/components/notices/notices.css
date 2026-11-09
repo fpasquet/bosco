@@ -1,0 +1,28 @@
+/*
+ * Messages brefs (E15c) : la barre du bas montre le temps qui reste ; elle s'arrête tant que la souris ou le focus est
+ * sur le message, et sa fin le ferme. Sans mouvement demandé, la barre reste fixe mais le temps passe.
+ */
+@layer components {
+  .notice-timer {
+    @apply absolute bottom-0 left-0 h-0.5 w-full origin-left bg-line;
+    animation: notice-timer linear forwards;
+  }
+  .notice:hover .notice-timer,
+  .notice:focus-within .notice-timer {
+    animation-play-state: paused;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .notice-timer {
+      @apply opacity-0;
+    }
+  }
+}
+
+@keyframes notice-timer {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}

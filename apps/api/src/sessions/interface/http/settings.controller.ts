@@ -15,6 +15,20 @@ const settingsSchema = z
   .object({
     desktopNotifications: z.boolean(),
     inactivityMinutes: z.number().int(),
+    notifications: z
+      .object({
+        ended: z.boolean(),
+        failed: z.boolean(),
+        inAppWhenForeground: z.boolean(),
+        longTurnMinutes: z.number().int(),
+        permission: z.boolean(),
+        question: z.boolean(),
+        review: z.boolean(),
+        turn: z.enum(['always', 'long', 'never']),
+        turnQuestion: z.boolean(),
+      })
+      .partial()
+      .strict(),
     repositories: z
       .object({
         attachWorktrees: z.boolean(),

@@ -11,7 +11,7 @@
 - **RF-SESS-05** · **5. Le coût est une estimation** au tarif public des modèles, calculée à partir des tokens (cache compris), même sous abonnement. Un modèle dont le tarif n'est pas connu apparaît « non chiffré ». Le coût du jour additionne les sessions commencées aujourd'hui.
 - **RF-SESS-06** · **6. La vue d'ensemble se regroupe par dépôt ou par état** : tableau par dépôt, ou colonnes par état. Le choix est gardé d'une visite à l'autre.
 - **RF-SESS-07** · **7. Bosco reste sur le poste** : rien n'est envoyé ailleurs, et il n'écoute que sur le poste tant que l'accès téléphone n'est pas activé. L'accès depuis le téléphone est désactivé par défaut ; il s'active pour le réseau local ([E4c](#e4c)), en connexion chiffrée, avec un code d'appairage. Sur mobile, « Autoriser » demande une confirmation.
-- **RF-SESS-08** · **8. Chaque nouvelle attente déclenche une notification du bureau**, même quand Bosco n'est pas au premier plan. Activée par défaut, désactivable dans les sources.
+- **RF-SESS-08** · **8. Bosco notifie ce qui t'attend et ce qui est fini, selon tes réglages** : une autorisation demandée, une question de l'agent, une fin de tour qui finit par une question ; une tâche du worker à relire ou en échec, une fin de tour après un long tour (2 min par défaut), une session terminée (désactivée par défaut). La notification du bureau part même quand Bosco n'est pas au premier plan ; devant Bosco, un message bref la remplace. Le centre de notifications garde tout 7 jours (E15).
 - **RF-SESS-09** · **9. Une session se reprend seulement quand elle est close** : reprendre une session encore ouverte mélangerait deux conversations. La commande de reprise n'apparaît donc que pour une session terminée ou en échec.
 - **RF-SESS-10** · **10. Bosco garde sa propre copie des sessions** : Claude Code efface ses fichiers après 30 jours par défaut. L'historique reste lisible et chiffré dans Bosco, mais une session effacée par Claude Code ne se reprend plus.
 - **RF-SESS-11** · **11. Bosco se présente au premier lancement** : un bloc de bienvenue (logo, ce que fait Bosco, ses trois usages) précède le choix des profils, dans la page et sans fenêtre à fermer. Il se rouvre à tout moment depuis le logo (« À propos de Bosco »), avec l'origine du nom : le bosco est le maître d'équipage d'un navire.
@@ -247,7 +247,7 @@ Règles de l'écran :
 2. Le suivi en direct s'installe profil par profil. Quand il manque, la ligne propose « Installer », qui ouvre [E4b](#e4b) ; sinon, le lien « Vérifier le suivi en direct » y mène aussi. Sans lui, Bosco ne peut pas savoir qu'une session t'attend, et « Autoriser » reste indisponible (règles 2 et 3).
 3. Le seuil d'inactivité, 15 minutes par défaut, fixe le délai sans événement après lequel une session passe à « Inactive » (règle 2). Réglable de 5 à 60 minutes.
 4. L'accès depuis le téléphone est désactivé par défaut : Bosco n'écoute que sur ce poste et aucun accès n'existe en dehors (règle 7). L'activer ouvre l'accès sur le réseau local et affiche un code d'appairage à saisir sur le téléphone ([E4c](#e4c)) ; sur mobile, « Autoriser » demande ensuite une confirmation. Un téléphone appairé se retire d'un clic.
-5. La notification du bureau signale chaque nouvelle attente, y compris quand Bosco n'est pas au premier plan. Activée par défaut, désactivable (règle 8).
+5. « Notifications » mène aux réglages des notifications ([E15b](#e15b)) : ce qui notifie, et la notification du bureau, envoyée même quand Bosco n'est pas au premier plan (règle 8).
 6. Bosco garde sa propre copie des sessions : Claude Code efface ses fichiers après 30 jours par défaut, mais l'historique reste lisible dans Bosco. Une session effacée par Claude Code ne se reprend plus (règle 10).
 
 **Mobile** : les entrées « Contexte » et « Réglages » de la barre latérale passent ici, sous forme de deux boutons ([E9a](contexte.md#e9a), [E10a](contexte.md#e10a)). Les sources deviennent des cartes, les réglages une liste d'options à ouvrir. L'ajout d'un dossier n'existe que sur le poste, avec un renvoi explicite à l'ordinateur (pastille 6) ; l'appairage d'un téléphone se déclenche aussi depuis le poste.
@@ -301,6 +301,60 @@ Règles de l'écran :
 5. Ces réglages sont réservés à toi et valent tout de suite, sans relire l'historique des sessions.
 
 **Mobile** : écran poussé en lecture seule, ouvert depuis Réglages ; les listes s'y lisent sans bouton, et la mention « Modifiable depuis le poste » l'explique.
+
+## <a id="e15"></a>E15 · Notifications
+
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `sessions/e15.html` · implémentation : **Livré (Notifications développées (E15a, E15b, E15c) : règles par type selon les réglages, centre de notifications gardé 7 jours derrière une cloche (tiroir sur ordinateur, écran sur le téléphone), réponse aux autorisations depuis le tiroir, notification du bureau par notify-send avec icône, type, extrait, priorité haute pour une question, remplacement par session et « Ouvrir », message bref quand l'onglet Bosco est au premier plan, messages brefs revus (couleur, extrait, une action, croix, pause au survol, trois au plus). Vérifié sur une vraie session : la question de fin de tour est arrivée sur le bureau. Écart : le titre d'une session sans titre donné par Claude Code est sa première demande, coupée à 60 caractères dans la notification du bureau.)**
+
+### <a id="e15a"></a>E15a · Notifications : centre de notifications
+
+La cloche de la barre latérale ouvre un tiroir avec les notifications récentes, lues ou non : ce qui t'attend en tête, puis ce qui est fini. On y répond à une autorisation sans quitter l'écran.
+
+- **Depuis** la cloche de la barre latérale, sur tous les écrans · une notification du bureau, au clic
+- **Ensuite** [E2b](#e2b) en ouvrant une session · [E13](taches.md#e13a) en ouvrant une tâche · [E15b](#e15b) avec « Réglages »
+
+Règles de l'écran :
+
+1. La cloche porte le nombre de notifications non lues ; elle ouvre un tiroir à droite, sur toute la hauteur, au-dessus de l'écran en cours, qui reste visible en retrait. La croix, Échap ou un clic à côté le referment. « Tout marquer comme lu » vide le compteur sans rien effacer. « À traiter » ne garde que ce qui attend encore une réponse ou une relecture ; « Toutes » montre aussi ce qui est fini ou déjà répondu.
+2. Une notification dit son type (Autorisation, Question de l'agent, Question de fin de tour, À relire, En échec, Fin de tour, Session terminée), la session ou la tâche, et un extrait : la commande, la question ou la fin du message. Une autorisation se répond ici : « Autoriser » et « Refuser » comme dans le bandeau T'attend (règle 3) ; une question n'a que « Ouvrir » (règle 4). Un clic sur la ligne ouvre la session ([E2b](#e2b)) ou la tâche ([E13](taches.md#e13a)) et marque la notification lue.
+3. Une notification déjà traitée le dit (« répondu dans le terminal », « Validée ») et sort de « À traiter ». Le centre garde exactement ce que les réglages notifient ([E15b](#e15b)), même quand la notification du bureau est coupée ou que Bosco était devant toi.
+4. Les notifications sont gardées 7 jours. « Réglages des notifications » ouvre [E15b](#e15b).
+5. Sur le téléphone, la cloche est dans la barre du haut ; la liste s'ouvre en écran poussé. Une autorisation s'y répond comme dans [E2b](#e2b), avec la confirmation du téléphone.
+
+**Mobile** : écran poussé depuis la cloche de la barre du haut, mêmes filtres, réponses possibles aux autorisations.
+
+### <a id="e15b"></a>E15b · Réglages : notifications
+
+Ce qui mérite une notification : une question qui t'attend, un travail fini. Chaque cas se coupe ou se garde ; une fin de tour ne notifie que si l'agent a travaillé longtemps. L'aperçu montre la notification du bureau.
+
+- **Depuis** l'onglet « Notifications » des Réglages · « Réglages des notifications » de [E15a](#e15a)
+- **Ensuite** [E15a](#e15a), qui suit les mêmes réglages
+
+Règles de l'écran :
+
+1. La notification du bureau est envoyée par le service, même sans onglet ouvert (règle 8) ; elle se coupe sans toucher au tiroir des notifications ([E15a](#e15a)), qui garde tout. Quand l'onglet Bosco est au premier plan, un message bref ([E15c](#e15c)) la remplace : inutile de doubler ce qui est déjà sous tes yeux.
+2. « Une question t'attend » : une autorisation demandée, une question de l'agent (il propose des choix) et une fin de tour dont le dernier message finit par une question. Les trois sont activées par défaut.
+3. « Un travail est fini » : une tâche du worker à relire ou en échec (activées par défaut), une fin de tour sans question et une session terminée (désactivée par défaut). La fin de tour propose Jamais, Après un long tour (par défaut, à partir de 2 min, réglable de 1 à 30 min) ou Toujours : un tour se mesure de ta demande jusqu'à la main rendue.
+4. La notification du bureau porte l'icône de Bosco, son type en tête (Question, Autorisation, À relire, En échec, Fin de tour, Session terminée), la session ou la tâche et un extrait. « Ouvrir » ou un clic ouvre la session ou la tâche dans Bosco. Une seule notification par session : la suivante remplace la précédente au lieu de s'empiler. Une question ou une autorisation passe en priorité haute et reste affichée ; le reste disparaît seul.
+5. Sur le téléphone, les réglages se lisent sans se changer ; la mention « Modifiable depuis le poste » l'explique.
+
+**Mobile** : écran poussé en lecture seule, ouvert depuis Réglages.
+
+### <a id="e15c"></a>E15c · Notifications : messages brefs
+
+Les messages en bas de l'écran : la confirmation d'une action, et la notification qui remplace celle du bureau quand Bosco est devant toi. Ils disent leur sujet en une ligne, proposent au plus une action et se ferment seuls.
+
+- **Depuis** une action (« Autoriser », « Annuler la tâche ») · une notification quand Bosco est au premier plan ([E15b](#e15b))
+- **Ensuite** l'action du message : [E2b](#e2b), « Annuler l'annulation » de [E13c](taches.md#e13c)
+
+Règles de l'écran :
+
+1. Un message bref a une couleur selon son sens (réussi, information, à traiter), une icône, un titre d'une ligne (l'action ou le type, puis la session ou la tâche) et une ligne d'extrait. Il se ferme seul après 5 secondes, ou d'un clic sur la croix ; le survol le garde ouvert.
+2. Un message qui propose une action la garde 8 secondes : « Annuler l'annulation » ([E13c](taches.md#e13c)). Une seule action par message.
+3. Quand l'onglet Bosco est au premier plan, une notification arrive en message bref au lieu de la notification du bureau ([E15b](#e15b)), avec « Ouvrir » ; une question reste affichée jusqu'à ce qu'on l'ouvre ou la ferme. Trois messages au plus, le plus récent en bas ; un message de plus fait partir le plus ancien. Chacun est annoncé aux lecteurs d'écran.
+4. Sur le téléphone, le message prend toute la largeur au-dessus de la barre d'onglets.
+
+**Mobile** : mêmes messages, sur toute la largeur, au-dessus de la barre d'onglets.
 
 ## <a id="criteres-dacceptation"></a>Critères d'acceptation
 
@@ -397,3 +451,14 @@ Règles de l'écran :
 - **CA-SESS-80** · [E4d](#e4d) · Étant donné la liste « Dépôts trouvés », faite des dépôts où une session Claude Code a tourné, les plus récents d'abord, quand la personne masque un dépôt, alors il disparaît de la barre latérale, des filtres, des tâches et du contexte, ses sessions restent dans la vue d'ensemble, et un clic l'affiche de nouveau.
 - **CA-SESS-81** · [E4d](#e4d) · Étant donné une nouvelle tâche ([E6a](taches.md#e6a)), quand la personne choisit son dépôt, alors seuls les dépôts git affichés sont proposés, les plus récents d'abord, même si « Dépôts git seulement » est désactivé.
 - **CA-SESS-82** · [E4d](#e4d) · Étant donné un réglage des dépôts changé, quand la personne revient à la vue d'ensemble, alors les sessions s'y rangent aussitôt selon le réglage, sans relire l'historique ; sur le téléphone, ces réglages se lisent sans pouvoir être changés.
+
+### <a id="e15-notifications"></a>E15 · Notifications
+
+- **CA-SESS-83** · [E15b](#e15b) · Étant donné les réglages par défaut, quand une autorisation est demandée, que l'agent pose une question, qu'une fin de tour finit par une question ou qu'une tâche du worker passe à relire ou en échec, alors une notification part ; une session terminée ne notifie pas tant que son réglage est coupé, et seuls les événements nouveaux notifient, jamais l'historique relu (RF-SESS-08).
+- **CA-SESS-84** · [E15b](#e15b) · Étant donné une fin de tour sans question, quand le réglage vaut « Après un long tour », alors elle ne notifie que si le tour, de la demande à la main rendue, a duré au moins le seuil (2 min par défaut, de 1 à 30) ; « Toujours » notifie chaque fin de tour, « Jamais » aucune (RF-SESS-08).
+- **CA-SESS-85** · [E15b](#e15b) · Étant donné une notification du bureau, quand elle s'affiche, alors elle porte l'icône de Bosco, son type en tête, la session ou la tâche et un extrait ; « Ouvrir » ouvre la session ou la tâche dans Bosco ; la suivante d'une même session la remplace ; une question ou une autorisation passe en priorité haute (RF-SESS-08).
+- **CA-SESS-86** · [E15b](#e15b) · Étant donné l'onglet Bosco au premier plan sur le poste, quand une notification arrive, alors elle s'affiche en message bref dans Bosco au lieu de la notification du bureau, tant que ce réglage est activé (RF-SESS-08).
+- **CA-SESS-87** · [E15a](#e15a) · Étant donné des notifications reçues, quand la personne ouvre la cloche, alors un tiroir les liste sur 7 jours, rangées par jour, les non lues comptées sur la cloche ; « À traiter » ne garde que ce qui attend encore une réponse ou une relecture, et « Tout marquer comme lu » vide le compteur sans rien effacer.
+- **CA-SESS-88** · [E15a](#e15a) · Étant donné une autorisation en attente dans le tiroir, quand la personne clique sur « Autoriser » ou « Refuser », alors la réponse part comme depuis le bandeau T'attend et la notification dit « autorisé dans Bosco » ; un clic sur une notification ouvre sa session ou sa tâche et la marque lue (RF-SESS-03).
+- **CA-SESS-89** · [E15c](#e15c) · Étant donné un message bref, quand il s'affiche, alors il a la couleur de son sens, un titre et un extrait, une action au plus et une croix ; il se ferme seul après 5 s (8 s avec une action), reste ouvert au survol, et une question reste affichée jusqu'à ce qu'on l'ouvre ou la ferme ; trois messages au plus.
+- **CA-SESS-90** · [E15a](#e15a) · Étant donné le téléphone, quand la personne touche la cloche de la barre du haut, alors l'écran des notifications s'ouvre, avec les mêmes filtres, et une autorisation s'y répond.

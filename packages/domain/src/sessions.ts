@@ -137,8 +137,25 @@ export interface ImportProgressDto {
 }
 
 /** Événements du flux en direct (GET /api/events) : un instantané d'abord, puis les changements. */
+/** Une notification du centre de notifications (E15a). */
+export interface NotificationDto {
+  at: string;
+  excerpt: null | string;
+  id: number;
+  kind: 'ended' | 'failed' | 'long-turn' | 'permission' | 'question' | 'review' | 'turn-question';
+  readAt: null | string;
+  sessionId: null | string;
+  /** Traitée (« Autorisé dans Bosco », « Répondu dans le terminal », « Validée ») : elle sort de « À traiter » */
+  settled: null | string;
+  taskId: null | number;
+  title: string;
+  turnMinutes: null | number;
+}
+
 export type LiveEventDto =
   | { data: { progress: ImportProgressDto | null }; type: 'import.progress' }
+  | { data: { inApp: boolean; notification: NotificationDto }; type: 'notification.created' }
+  | { data: Record<string, never>; type: 'notifications.changed' }
   | {
       data: { outcome: 'allowed' | 'denied' | 'elsewhere'; sessionId: string; title: null | string };
       type: 'permission.settled';

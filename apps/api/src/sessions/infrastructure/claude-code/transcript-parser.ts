@@ -72,12 +72,34 @@ export class TranscriptParser {
 type Base = Pick<TranscriptEvent, 'at' | 'branch' | 'cwd' | 'model' | 'repoRoot' | 'usage'>;
 
 /** Bloc d'un message de l'assistant : son texte, ou l'outil appelé et son argument principal. */
-function blockEvent(block: Record<string, unknown>): Pick<TranscriptEvent, 'change' | 'kind' | 'text' | 'usage'>[] {
+function blockEvent(
+  block: Record<string, unknown>,
+): Pick<TranscriptEvent, 'change' | 'kind' | 'question' | 'text' | 'usage'>[] {
   const content = text(block.text);
   if (block.type === 'text' && content) return [{ kind: 'reply', text: shorten(content), usage: null }];
   if (block.type === 'tool_use' && text(block.name))
-    return [{ kind: 'tool', text: toolSummary(block), usage: null, change: changeOf(String(block.name), block.input) }];
+    return [
+      {
+        kind: 'tool',
+        text: toolSummary(block),
+        usage: null,
+        change: changeOf(String(block.name), block.input),
+        question: block.name === 'AskUserQuestion' ? questionOf(block.input) : null,
+      },
+    ];
   return [];
+}
+
+/** Première question d'un AskUserQuestion (« Quel exportateur pour les traces ? »), et le nombre des suivantes. */
+function questionOf(input: unknown): null | string {
+  if (!isRecord(input) || !Array.isArray(input.questions)) return null;
+  const questions = input.questions
+    .filter(isRecord)
+    .map((entry) => text(entry.question))
+    .filter(Boolean);
+  const [first] = questions;
+  if (!first) return null;
+  return questions.length > 1 ? `${first} (+ ${questions.length - 1} autres)` : first;
 }
 
 function parseJson(line: string): null | Record<string, unknown> {

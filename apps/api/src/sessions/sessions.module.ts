@@ -1,14 +1,16 @@
 import type { MikroORM } from '@mikro-orm/sqlite';
 import { Inject, Module, type OnApplicationBootstrap, type OnApplicationShutdown } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
+import { join } from 'node:path';
 import { APP_NAME } from '@bosco/domain';
 import type { Config } from '../config.ts';
-import type { Notifier } from './application/ports.ts';
+import type { DesktopAlerts } from './application/notification.service.ts';
 import { CONFIG, ORM } from '../shared/tokens.ts';
 import { ConversationService } from './application/conversation.service.ts';
 import { HistoryService } from './application/history.service.ts';
 import { LiveSignalService } from './application/live-signal.service.ts';
 import { LiveTrackingService } from './application/live-tracking.service.ts';
+import { NotificationService } from './application/notification.service.ts';
 import { SessionService } from './application/session.service.ts';
 import { SettingsService } from './application/settings.service.ts';
 import { SourceService } from './application/source.service.ts';
@@ -21,7 +23,9 @@ import { FileTranscriptWatcher } from './infrastructure/claude-code/transcript-w
 import { SessionEventsBus } from './infrastructure/events/session-events.bus.ts';
 import { GitWorktreeOrigins } from './infrastructure/git/worktree-origins.ts';
 import { loadHookSecret } from './infrastructure/hooks/hook-secret.ts';
-import { DesktopNotifier, RecordingNotifier } from './infrastructure/notifications/desktop-notifier.ts';
+import { NotifySendAlerts, RecordingNotifier } from './infrastructure/notifications/desktop-notifier.ts';
+import { PresenceTracker } from './infrastructure/notifications/presence.ts';
+import { MikroOrmNotificationRepository } from './infrastructure/persistence/notification.repository.ts';
 import { MikroOrmSessionRepository } from './infrastructure/persistence/session.repository.ts';
 import { MikroOrmSettingsRepository } from './infrastructure/persistence/settings.repository.ts';
 import { MikroOrmSourceRepository } from './infrastructure/persistence/source.repository.ts';
@@ -31,6 +35,7 @@ import { EventsController } from './interface/http/events.controller.ts';
 import { HistoryController } from './interface/http/history.controller.ts';
 import { HooksController } from './interface/http/hooks.controller.ts';
 import { LiveTrackingController } from './interface/http/live-tracking.controller.ts';
+import { NotificationsController } from './interface/http/notifications.controller.ts';
 import { SessionsController } from './interface/http/sessions.controller.ts';
 import { SettingsController } from './interface/http/settings.controller.ts';
 import { SourcesController } from './interface/http/sources.controller.ts';
@@ -40,7 +45,9 @@ import {
   HOOK_SECRET,
   LIVE_SIGNAL_SERVICE,
   LIVE_TRACKING_SERVICE,
+  NOTIFICATION_SERVICE,
   NOTIFIER,
+  PRESENCE,
   SESSION_EVENTS,
   SESSION_SERVICE,
   SETTINGS_SERVICE,
@@ -63,6 +70,7 @@ const worktrees = new GitWorktreeOrigins();
     LiveTrackingController,
     SettingsController,
     HistoryController,
+    NotificationsController,
   ],
   providers: [
     { provide: SESSION_EVENTS, useValue: new SessionEventsBus() },
@@ -86,18 +94,44 @@ const worktrees = new GitWorktreeOrigins();
     {
       provide: NOTIFIER,
       inject: [CONFIG],
-      useFactory: (config: Config) => (config.testing ? new RecordingNotifier() : new DesktopNotifier(APP_NAME)),
+      useFactory: (config: Config) => {
+        if (config.testing) return new RecordingNotifier();
+        // L'icône de Bosco, servie par l'interface : la notification du bureau la montre (E15b)
+        const icon = config.webDir ? join(config.webDir, 'public', 'logo.svg') : null;
+        return new NotifySendAlerts(APP_NAME, icon);
+      },
+    },
+    { provide: PRESENCE, useValue: new PresenceTracker(() => clock.now()) },
+    {
+      provide: NOTIFICATION_SERVICE,
+      inject: [ORM, SETTINGS_SERVICE, NOTIFIER, PRESENCE, SESSION_EVENTS, CONFIG],
+      useFactory: (
+        orm: MikroORM,
+        settings: SettingsService,
+        desktop: DesktopAlerts,
+        presence: PresenceTracker,
+        bus: SessionEventsBus,
+        config: Config,
+      ) =>
+        new NotificationService(
+          new MikroOrmNotificationRepository(orm),
+          settings,
+          desktop,
+          presence,
+          bus,
+          clock,
+          `http://${config.host}:${config.port}`,
+        ),
     },
     { provide: HOOK_SECRET, inject: [CONFIG], useFactory: (config: Config) => loadHookSecret(config.dataDir) },
     {
       provide: LIVE_SIGNAL_SERVICE,
-      inject: [ORM, SESSION_SERVICE, SESSION_EVENTS, SETTINGS_SERVICE, NOTIFIER],
+      inject: [ORM, SESSION_SERVICE, SESSION_EVENTS, NOTIFICATION_SERVICE],
       useFactory: (
         orm: MikroORM,
         sessionService: SessionService,
         bus: SessionEventsBus,
-        settings: SettingsService,
-        notifier: Notifier,
+        notifications: NotificationService,
       ) =>
         new LiveSignalService(
           new MikroOrmSessionRepository(orm),
@@ -105,9 +139,7 @@ const worktrees = new GitWorktreeOrigins();
           bus,
           clock,
           { next: randomUUID },
-          (title, body) => {
-            if (settings.desktopNotifications()) notifier.notify(title, body);
-          },
+          notifications,
         ),
     },
     {
@@ -166,6 +198,8 @@ const worktrees = new GitWorktreeOrigins();
     TRANSCRIPT_WATCHER,
     LIVE_SIGNAL_SERVICE,
     NOTIFIER,
+    NOTIFICATION_SERVICE,
+    PRESENCE,
     SETTINGS_SERVICE,
     SESSION_SERVICE,
     SOURCE_SERVICE,
@@ -180,10 +214,12 @@ export class SessionsModule implements OnApplicationBootstrap, OnApplicationShut
     @Inject(SETTINGS_SERVICE) private readonly settings: SettingsService,
     @Inject(SESSION_SERVICE) private readonly sessions: SessionService,
     @Inject(ORM) private readonly orm: MikroORM,
+    @Inject(NOTIFICATION_SERVICE) private readonly notifications: NotificationService,
   ) {}
 
   async onApplicationBootstrap(): Promise<void> {
     await this.settings.load();
+    this.sessions.useNotifications(this.notifications);
     await this.sessions.useTaskLinks(new MikroOrmTaskLinkStore(this.orm));
     await this.liveSignals.dropStalePermissions();
     await this.sourceService.resumeWatching();

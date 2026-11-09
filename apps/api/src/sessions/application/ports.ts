@@ -39,11 +39,6 @@ export interface SettingsRepository {
   save(settings: SettingsSnapshot): Promise<void>;
 }
 
-/** Notification du bureau, envoyée par le service même quand Bosco n'est pas au premier plan (RF-SESS-08). */
-export interface Notifier {
-  notify(title: string, body: string): void;
-}
-
 /**
  * Sessions ouvertes d'un profil, d'après le registre que Claude Code tient dans le dossier du profil. Une session qui
  * en sort est terminée ; `changed` reçoit les sessions entrées ou sorties.

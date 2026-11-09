@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import type { Config } from '../config.ts';
 import type { ContextService } from '../context/application/context.service.ts';
 import type { LinksService } from '../context/application/links.service.ts';
+import type { NotificationService } from '../sessions/application/notification.service.ts';
 import type { SessionService } from '../sessions/application/session.service.ts';
 import type { SourceService } from '../sessions/application/source.service.ts';
 import type { RepositoryCatalog } from './application/ports.ts';
@@ -14,7 +15,7 @@ import { CONTEXT_SERVICE, LINKS_SERVICE } from '../context/tokens.ts';
 import { estimateCostMicros } from '../sessions/domain/model-pricing.ts';
 import { TokenUsage } from '../sessions/domain/token-usage.ts';
 import { SessionsModule } from '../sessions/sessions.module.ts';
-import { SESSION_SERVICE, SOURCE_SERVICE } from '../sessions/tokens.ts';
+import { NOTIFICATION_SERVICE, SESSION_SERVICE, SOURCE_SERVICE } from '../sessions/tokens.ts';
 import { GhAccounts, scriptedGithubAccounts } from '../shared/infrastructure/github/gh-accounts.ts';
 import { CONFIG, ORM } from '../shared/tokens.ts';
 import { AccountsService } from './application/accounts.service.ts';
@@ -237,6 +238,7 @@ export class TasksModule implements OnApplicationBootstrap, OnApplicationShutdow
     @Inject(SESSION_SERVICE) private readonly sessions: SessionService,
     @Inject(LINKS_SERVICE) private readonly links: LinksService,
     @Inject(ACCOUNTS_SERVICE) private readonly accounts: AccountsService,
+    @Inject(NOTIFICATION_SERVICE) private readonly notifications: NotificationService,
   ) {}
 
   async onApplicationBootstrap(): Promise<void> {
@@ -256,8 +258,16 @@ export class TasksModule implements OnApplicationBootstrap, OnApplicationShutdow
             title: task.title,
           })
         : Promise.resolve();
-    for (const task of await this.tasks.list()) await link(task);
+    const tasks = await this.tasks.list();
+    for (const task of tasks) await link(task);
     this.bus.changes.subscribe((task) => void link(task).catch(() => undefined));
+    // Une tâche du worker à relire ou en échec notifie ; elle en sort une fois relue ou relancée (E15)
+    const states = new Map(tasks.map((task) => [task.id, task.state]));
+    this.bus.changes.subscribe((task) => {
+      const before = states.get(task.id);
+      states.set(task.id, task.state);
+      if (before !== task.state) void notifyTask(this.notifications, task, before).catch(() => undefined);
+    });
     if (this.runner instanceof DockerAgentRunner) await this.runner.cleanup();
     await this.worker.recover();
     this.timer = setInterval(() => void this.worker.tick(), TICK_MS);
@@ -271,4 +281,37 @@ export class TasksModule implements OnApplicationBootstrap, OnApplicationShutdow
   onApplicationShutdown(): void {
     clearInterval(this.timer);
   }
+}
+
+const SETTLED: Partial<Record<string, string>> = {
+  blocked: 'Relancée',
+  cancelled: 'Annulée',
+  queued: 'Relancée',
+  rejected: 'Rejetée',
+  running: 'Relancée',
+  validated: 'Validée',
+};
+
+/** Notification d'une tâche du worker qui change d'état : à relire, en échec, ou traitée. */
+async function notifyTask(
+  notifications: NotificationService,
+  task: TaskView,
+  before: string | undefined,
+): Promise<void> {
+  const subject = { sessionId: task.outcome.sessionId, taskId: task.id, title: `T-${task.id} · ${task.title}` };
+  if (before === 'to_review' || before === 'failed')
+    await notifications.settle({ taskId: task.id, kinds: ['failed', 'review'] }, SETTLED[task.state] ?? 'Traitée');
+  if (task.mode !== 'worker') return;
+  if (task.state === 'to_review') {
+    const changes = task.outcome.changes;
+    const files = changes && changes.files > 1 ? 'fichiers' : 'fichier';
+    const excerpt = [
+      changes ? `${changes.files} ${files} +${changes.added} −${changes.removed}` : null,
+      `${task.spentUsd.toFixed(2).replace('.', ',')} $`,
+    ]
+      .filter(Boolean)
+      .join(' · ');
+    await notifications.notify({ kind: 'review' }, { ...subject, excerpt });
+  } else if (task.state === 'failed')
+    await notifications.notify({ kind: 'failed' }, { ...subject, excerpt: task.failure });
 }

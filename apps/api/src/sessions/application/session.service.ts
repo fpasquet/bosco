@@ -1,9 +1,14 @@
 import type { FileChange } from '../domain/file-change.ts';
 import type { SessionState, Waiting } from '../domain/session.ts';
 import type { JournalEntry, TranscriptEvent } from '../domain/transcript-event.ts';
+import type { NotificationService } from './notification.service.ts';
 import type { Clock, SessionEvents, SessionRegistry, SessionRepository } from './ports.ts';
+import { ASKING } from '../domain/notification.ts';
 import { LEGACY_DISCOVERY, RepositoryDiscovery, type RepositoryPlace } from '../domain/repository-discovery.ts';
 import { DEFAULT_INACTIVITY_DELAY_MS, Session } from '../domain/session.ts';
+
+/** Une question lue dans le transcript ne notifie que si elle vient d'être posée : jamais l'historique relu. */
+const RECENT_QUESTION_MS = 2 * 60 * 1000;
 
 /** Range une session dans son dépôt (E4d) : racine git notée à la lecture, dossier de travail. */
 export type RepositoryPlaces = (gitRoot: null | string, path: null | string) => null | RepositoryPlace;
@@ -75,6 +80,7 @@ export interface SessionDetail {
 export class SessionService {
   private taskLinks = new Map<string, TaskLink>();
   private linkStore: null | TaskLinkStore = null;
+  private notifications: null | Pick<NotificationService, 'notify' | 'settle'> = null;
 
   constructor(
     private readonly sessionRepository: SessionRepository,
@@ -151,6 +157,11 @@ export class SessionService {
     }
   }
 
+  /** Notifications des questions de l'agent lues dans les transcripts (E15), branchées au démarrage. */
+  useNotifications(notifications: Pick<NotificationService, 'notify' | 'settle'>): void {
+    this.notifications = notifications;
+  }
+
   /** Tient compte des lignes nouvellement lues dans le transcript d'une session, qu'elle soit connue ou non. */
   async recordTranscript(sourceId: string, sessionId: string, events: TranscriptEvent[]): Promise<SessionView | null> {
     if (events.length === 0) return null;
@@ -161,7 +172,24 @@ export class SessionService {
     await this.sessionRepository.save(session, session.pullJournal());
     const view = this.view(session);
     this.sessionEvents.sessionChanged(view);
+    await this.notifyQuestions(view, events);
     return view;
+  }
+
+  /** Une question de l'agent qui vient d'être posée notifie ; ta demande suivante règle ce qui attendait. */
+  private async notifyQuestions(view: SessionView, events: TranscriptEvent[]): Promise<void> {
+    if (!this.notifications) return;
+    const now = this.clock.now().getTime();
+    const title = view.title ?? `Session ${view.id.slice(0, 8)}`;
+    for (const event of events) {
+      if (event.question && event.at && now - event.at.getTime() < RECENT_QUESTION_MS)
+        await this.notifications.notify(
+          { kind: 'question' },
+          { sessionId: view.id, taskId: null, title, excerpt: event.question },
+        );
+      else if (event.kind === 'prompt' && event.at && now - event.at.getTime() < RECENT_QUESTION_MS)
+        await this.notifications.settle({ sessionId: view.id, kinds: ASKING }, 'Répondu');
+    }
   }
 
   async sessionDetail(id: string): Promise<null | SessionDetail> {

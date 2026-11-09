@@ -10,3 +10,5 @@ export const SETTINGS_SERVICE = Symbol('SettingsService');
 export const NOTIFIER = Symbol('Notifier');
 export const HISTORY_SERVICE = Symbol('HistoryService');
 export const CONVERSATION_SERVICE = Symbol('ConversationService');
+export const NOTIFICATION_SERVICE = Symbol('NotificationService');
+export const PRESENCE = Symbol('Presence');

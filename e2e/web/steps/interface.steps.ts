@@ -112,3 +112,18 @@ When('je clique sur le bouton radio {texte}', async ({ page }, label: string) =>
   await radio.click();
   await expect(radio).toBeChecked();
 });
+
+When('je clique sur le bouton {texte} du tiroir', async ({ page }, name: string) => {
+  await page.getByRole('dialog').getByRole('button', { name, exact: true }).click();
+});
+
+When('j’ouvre Bosco au premier plan', async ({ page }) => {
+  // L'onglet dit au service qu'il est devant toi : une notification y arrivera en message bref (E15b)
+  const presence = page.waitForResponse((response) => response.url().endsWith('/api/presence'));
+  await page.goto('/');
+  await presence;
+});
+
+Then('le tiroir des notifications montre {texte}', async ({ page }, text: string) => {
+  await expect(page.getByRole('dialog').getByText(text)).toBeVisible();
+});

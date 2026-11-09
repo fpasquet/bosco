@@ -1,28 +1,85 @@
-// Notification du bureau envoyée par le service, même sans onglet ouvert (RF-SESS-08) : notify-send sous Linux. Un
-// poste sans notify-send n'a pas de notification, sans autre effet.
-import { execFile } from 'node:child_process';
+// Notification du bureau envoyée par le service, même sans onglet ouvert (règle 8, E15b) : notify-send sous Linux.
+// Un poste sans notify-send n'a pas de notification, sans autre effet ; le centre de notifications garde tout.
+import { type ChildProcess, spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import type { Notifier } from '../../application/ports.ts';
+import { createInterface } from 'node:readline';
+import type { DesktopAlerts } from '../../application/notification.service.ts';
+import { KIND_LABELS, type NotificationRecord } from '../../domain/notification.ts';
 
-/** Emplacements connus de notify-send : un chemin fixe plutôt que la recherche dans PATH. */
+/** Emplacements connus de notify-send et de xdg-open : un chemin fixe plutôt que la recherche dans PATH. */
 const NOTIFY_SEND = ['/usr/bin/notify-send', '/usr/local/bin/notify-send'];
+const XDG_OPEN = ['/usr/bin/xdg-open', '/usr/local/bin/xdg-open'];
+const OPEN_ACTION = 'open';
+/** Au-delà, le titre d'une notification du bureau est coupé : elle ne montre qu'une ligne */
+const TITLE_MAX = 60;
 
-export class DesktopNotifier implements Notifier {
+/** Titre et texte de la notification du bureau : le type en tête, puis la session ou la tâche, puis l'extrait. */
+export function desktopText(notification: NotificationRecord): { body: string; title: string } {
+  const label =
+    notification.kind === 'long-turn' && notification.turnMinutes !== null
+      ? `${KIND_LABELS['long-turn']} · ${notification.turnMinutes} min`
+      : KIND_LABELS[notification.kind];
+  // Une session sans titre prend sa première demande : la notification n'en garde que le début
+  const subject =
+    notification.title.length > TITLE_MAX ? `${notification.title.slice(0, TITLE_MAX - 1)}…` : notification.title;
+  return { title: `${label} · ${subject}`, body: notification.excerpt ?? '' };
+}
+
+/**
+ * notify-send : l'icône de Bosco, une priorité haute pour ce qui attend une réponse, une seule notification par
+ * session ou tâche (la suivante remplace la précédente) et « Ouvrir », qui ouvre la session ou la tâche dans Bosco.
+ */
+export class NotifySendAlerts implements DesktopAlerts {
   private readonly command = NOTIFY_SEND.find((path) => existsSync(path)) ?? null;
+  private readonly opener = XDG_OPEN.find((path) => existsSync(path)) ?? null;
+  /** Dernière notification de chaque session ou tâche, à remplacer, et le processus qui attend son clic */
+  private readonly shown = new Map<string, { child: ChildProcess; id: null | string }>();
 
-  constructor(private readonly appName: string) {}
+  constructor(
+    private readonly appName: string,
+    private readonly icon: null | string,
+  ) {}
 
-  notify(title: string, body: string): void {
+  show(notification: NotificationRecord, options: { url: string; urgent: boolean }): void {
     if (!this.command) return;
-    execFile(this.command, [`--app-name=${this.appName}`, '--urgency=normal', title, body], () => undefined);
+    const key =
+      notification.taskId === null ? `session:${notification.sessionId ?? ''}` : `task:${notification.taskId}`;
+    const previous = this.shown.get(key);
+    // L'ancien processus attendait un clic sur la notification remplacée : il n'a plus rien à attendre
+    previous?.child.kill();
+    const { body, title } = desktopText(notification);
+    const child = spawn(
+      this.command,
+      [
+        `--app-name=${this.appName}`,
+        `--urgency=${options.urgent ? 'critical' : 'normal'}`,
+        '--print-id',
+        ...(this.icon ? [`--icon=${this.icon}`] : []),
+        ...(previous?.id ? [`--replace-id=${previous.id}`] : []),
+        `--action=${OPEN_ACTION}=Ouvrir`,
+        title,
+        body,
+      ],
+      { stdio: ['ignore', 'pipe', 'ignore'] },
+    );
+    const entry = { child, id: null as null | string };
+    this.shown.set(key, entry);
+    child.on('error', () => this.shown.delete(key));
+    // Première ligne : l'identifiant de la notification ; ensuite, l'action choisie au clic
+    createInterface({ input: child.stdout }).on('line', (line) => {
+      const value = line.trim();
+      if (entry.id === null && /^\d+$/.test(value)) entry.id = value;
+      else if (value === OPEN_ACTION && this.opener)
+        spawn(this.opener, [options.url], { detached: true, stdio: 'ignore' }).unref();
+    });
   }
 }
 
 /** Notifications gardées en mémoire, que les scénarios relisent (BOSCO_TEST=1). */
-export class RecordingNotifier implements Notifier {
-  readonly sent: { body: string; title: string }[] = [];
+export class RecordingNotifier implements DesktopAlerts {
+  readonly sent: { body: string; title: string; urgent: boolean; url: string }[] = [];
 
-  notify(title: string, body: string): void {
-    this.sent.push({ title, body });
+  show(notification: NotificationRecord, options: { url: string; urgent: boolean }): void {
+    this.sent.push({ ...desktopText(notification), ...options });
   }
 }
