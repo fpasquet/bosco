@@ -189,4 +189,4 @@ const artifacts = await build({
     deb: { compression: 'xz', fpm: ['--version', version] },
   },
 });
-for (const artifact of artifacts) console.log(`\nInstall it with: sudo apt install ${artifact}`);
+for (const artifact of artifacts) console.log(`\nBuilt ${artifact}\nInstall it with: make desktop-package-install`);
