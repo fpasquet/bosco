@@ -73,6 +73,10 @@ export interface TaskIssueDto {
 
 /** État du worker (GET /api/worker, E5b, E5c). */
 export interface WorkerStatusDto {
+  /** Mémoire qu'un agent réserve en partant (E11a), en octets */
+  agentMemory: number;
+  /** Mémoire libre au-delà de la marge gardée libre, en octets : ce qui décide si un agent de plus peut partir (E11a) */
+  availableMemory: number;
   capacity: number;
   running: number;
   /** null quand le worker est disponible ; sinon la raison (« Docker ne répond pas ») */

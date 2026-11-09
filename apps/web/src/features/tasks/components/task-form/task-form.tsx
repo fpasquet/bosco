@@ -4,15 +4,18 @@ import { X } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import { type FieldErrors, type FieldPath, get, useForm, useWatch } from 'react-hook-form';
 import { z } from 'zod';
-import type { TaskDraftDto, TaskDto, TaskIssueDto } from '@bosco/domain';
+import type { TaskDraftDto, TaskDto, TaskIssueDto, WorkerStatusDto } from '@bosco/domain';
 import { cn } from '@/lib/cn';
 import { Button } from '@/shared/ui/button';
+import { departureOf } from '../../lib/departure';
 import { toolLabel } from '../../lib/rights';
 import { usd } from '../../lib/tasks';
 
 /** Plafonds d'un dépôt, d'après ses droits (E8a). */
 export interface RepositoryLimits {
   budgetUsd: number;
+  /** Agents au plus à la fois dans ce dépôt */
+  concurrency: number;
   maxTurns: number;
   tools: string[];
 }
@@ -20,6 +23,7 @@ export interface RepositoryLimits {
 /** Plafonds des réglages généraux d'origine, tant que les droits du dépôt ne sont pas lus. */
 export const DEFAULT_LIMITS: RepositoryLimits = {
   budgetUsd: 2,
+  concurrency: 1,
   maxTurns: 30,
   tools: ['Read', 'Write', 'Edit', 'Grep', 'Glob', 'Bash'],
 };
@@ -36,6 +40,8 @@ export interface TaskFormProps {
   repositories: { name: string; root: string }[];
   /** Tâches qu'une nouvelle tâche peut attendre */
   tasks: TaskDto[];
+  /** Capacité du worker en ce moment, pour la ligne de départ (E6a) ; absente tant qu'elle n'est pas lue */
+  worker?: WorkerStatusDto;
 }
 
 /** « Partira quand T-12 sera validée » */
@@ -108,6 +114,7 @@ export function TaskForm({
   onSubmit,
   repositories,
   tasks,
+  worker,
 }: TaskFormProps) {
   const { control, formState, handleSubmit, register, setError, setValue } = useForm<TaskDraftDto>({
     resolver: zodResolver(draftSchema),
@@ -368,7 +375,20 @@ export function TaskForm({
         <p className="text-muted">
           {startFrom ? `Sur la branche de T-${startFrom.id}` : 'Sur la branche principale du dépôt'}
         </p>
-        <p className="text-xs text-muted">Départ dès que les préalables sont validées.</p>
+        {draft.mode === 'worker' && worker && (
+          <p className="text-xs text-muted">
+            {departureOf({
+              concurrency: limits.concurrency,
+              prerequisites: chosen,
+              repository: draft.repository,
+              repositoryBusy: tasks.filter(
+                (task) =>
+                  task.repository.name === draft.repository && task.state === 'running' && task.mode === 'worker',
+              ).length,
+              worker,
+            })}
+          </p>
+        )}
         <div className="flex gap-2 pt-2">
           <Button type="button" variant="ghost" onClick={onCancel}>
             Annuler
