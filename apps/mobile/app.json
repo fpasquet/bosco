@@ -1,0 +1,44 @@
+{
+  "expo": {
+    "name": "Bosco",
+    "slug": "bosco",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/bosco-icon.png",
+    "userInterfaceStyle": "light",
+    "android": {
+      "package": "dev.bosco.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#0d6e66",
+        "foregroundImage": "./assets/bosco-icon.png"
+      },
+      "permissions": ["CAMERA", "POST_NOTIFICATIONS", "VIBRATE"],
+      "predictiveBackGestureEnabled": false
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Bosco scanne le QR code d'appairage affiché sur le poste.",
+          "recordAudioAndroid": false
+        }
+      ],
+      "expo-secure-store",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/bosco-icon.png",
+          "color": "#0d6e66"
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": false
+          }
+        }
+      ]
+    ]
+  }
+}

@@ -4,6 +4,8 @@ import { type ClaimResult, PairingCode } from '../domain/pairing-code.ts';
 
 export interface AccessStatus {
   enabled: boolean;
+  /** Empreinte du certificat du téléphone (« 9F:3A:… ») : l'application Android ne fait confiance qu'à lui */
+  fingerprint: null | string;
   /** Adresses à ouvrir sur le téléphone, sur le réseau local */
   urls: string[];
 }
@@ -29,7 +31,11 @@ export class AccessService {
 
   async status(): Promise<AccessStatus> {
     const enabled = await this.settings.load();
-    return { enabled, urls: enabled ? this.listener.urls() : [] };
+    return {
+      enabled,
+      fingerprint: enabled ? this.listener.fingerprint() : null,
+      urls: enabled ? this.listener.urls() : [],
+    };
   }
 
   /** Au démarrage : l'écoute du réseau local ne se rouvre que si l'accès était activé (NF-13). */
@@ -40,14 +46,14 @@ export class AccessService {
   async enable(): Promise<AccessStatus> {
     const { urls } = await this.listener.start();
     await this.settings.save(true);
-    return { enabled: true, urls };
+    return { enabled: true, fingerprint: this.listener.fingerprint(), urls };
   }
 
   async disable(): Promise<AccessStatus> {
     await this.listener.stop();
     await this.settings.save(false);
     this.code = null;
-    return { enabled: false, urls: [] };
+    return { enabled: false, fingerprint: null, urls: [] };
   }
 
   /** Nouveau code : il invalide le précédent (CA-SESS-67). */

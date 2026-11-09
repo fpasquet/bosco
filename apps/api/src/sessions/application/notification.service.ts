@@ -40,6 +40,8 @@ export interface DesktopAlerts {
 
 /** L'onglet Bosco est-il au premier plan sur le poste ? */
 export interface Presence {
+  /** L'application du poste est là : elle montre les notifications en natif, le service ne les envoie pas (E17a) */
+  appAttached(): boolean;
   foreground(): boolean;
 }
 
@@ -85,7 +87,7 @@ export class NotificationService {
       turnMinutes: subject.turnMinutes ?? null,
     });
     const inApp = this.settings.notifications().inAppWhenForeground && this.presence.foreground();
-    if (this.settings.desktopNotifications() && !inApp)
+    if (this.settings.desktopNotifications() && !inApp && !this.presence.appAttached())
       this.desktop.show(notification, { url: this.urlOf(notification), urgent: ASKING.includes(kind) });
     this.events.notified(notification, inApp);
     return notification;

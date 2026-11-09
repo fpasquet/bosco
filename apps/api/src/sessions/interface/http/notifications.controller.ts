@@ -8,7 +8,7 @@ import { parseBody } from '../../../shared/interface/http/parse-body.ts';
 import { NOTIFICATION_SERVICE, PRESENCE } from '../../tokens.ts';
 
 const readSchema = z.object({ id: z.number().int().nullable().default(null) }).strict();
-const presenceSchema = z.object({ foreground: z.boolean() }).strict();
+const presenceSchema = z.object({ foreground: z.boolean().optional(), app: z.literal(true).optional() }).strict();
 
 export function presentNotification(notification: NotificationRecord): NotificationDto {
   return {
@@ -46,6 +46,9 @@ export class NotificationsController {
   @Post('presence')
   @HttpCode(204)
   presenceOf(@Body() body: unknown): void {
-    this.presence.report(parseBody(presenceSchema, body).foreground);
+    const { app, foreground } = parseBody(presenceSchema, body);
+    // L'application du poste se signale à part : un onglet au premier plan, elle, n'en est pas un
+    if (app) this.presence.reportApp();
+    else this.presence.report(foreground ?? false);
   }
 }
