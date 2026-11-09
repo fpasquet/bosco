@@ -1,12 +1,12 @@
 // `make desktop-package` : le paquet .deb de l'application du poste (Linux). Il embarque le service construit, l'interface
-// et le Node 26 qui lance ce script : une fois installé, Bosco ne dépend plus du dépôt ni du Node du poste. Le service,
+// et Node 26 : une fois installé, Bosco ne dépend plus du dépôt ni du Node du poste. Le service,
 // l'interface et l'application doivent être construits (`make desktop-package` lance `make build` avant).
 import { execFileSync } from 'node:child_process';
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
-import { arch } from 'node:os';
+import { arch, homedir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const app = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const repo = resolve(app, '..', '..');
@@ -24,8 +24,6 @@ function readJson(file) {
   return JSON.parse(readFileSync(file, 'utf8'));
 }
 
-// Node embarqué : celui qui lance ce script, le même qui a construit le moteur SQLite du service
-if (Number(process.versions.node.split('.')[0]) < NODE_MAJOR) fail(`Node ${NODE_MAJOR} is required (nvm use).`);
 const built = [
   'apps/api/dist/main.js',
   'apps/web/.next/BUILD_ID',
@@ -34,6 +32,13 @@ const built = [
 ];
 const missing = built.filter((file) => !existsSync(join(repo, file)));
 if (missing.length > 0) fail(`Build first (make build), missing: ${missing.join(', ')}`);
+
+// Node embarqué : celui qui lance ce script s'il est en version 26, sinon celui que l'application choisirait (BOSCO_NODE,
+// puis le plus récent des Node 26 de nvm) ; le moteur SQLite du service ne dépend pas de la version de Node
+const { findNode } = await import(pathToFileURL(join(app, 'dist', 'service.js')).href);
+const embeddedNode =
+  Number(process.versions.node.split('.')[0]) >= NODE_MAJOR ? process.execPath : await findNode(homedir(), process.env);
+if (!embeddedNode) fail(`Node ${NODE_MAJOR} is required: install it with nvm, or give its path in BOSCO_NODE.`);
 
 rmSync(stage, { recursive: true, force: true });
 // Un seul paquet dans out : celui que `make desktop-update` installe
@@ -118,8 +123,8 @@ for (const file of ['pnpm-lock.yaml', 'pnpm-workspace.yaml', 'patches'])
 // 2. Node 26 et sa licence
 const node = join(stage, 'node');
 mkdirSync(join(node, 'bin'), { recursive: true });
-cpSync(process.execPath, join(node, 'bin', 'node'));
-const license = join(dirname(process.execPath), '..', 'LICENSE');
+cpSync(embeddedNode, join(node, 'bin', 'node'));
+const license = join(dirname(embeddedNode), '..', 'LICENSE');
 if (existsSync(license)) cpSync(license, join(node, 'LICENSE'));
 
 // 3. L'application : son code construit et ses images, sans dépendance à l'exécution
