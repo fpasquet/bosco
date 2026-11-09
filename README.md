@@ -25,14 +25,15 @@ Données : `~/.local/share/bosco` (`BOSCO_DATA_DIR`). Port : `BOSCO_PORT` (4870 
 Facultatives : Bosco se lance toujours dans le navigateur, macOS compris.
 
 ```bash
-make desktop          # application du poste (Linux) depuis le dépôt, avec le Node du poste
-make desktop-install  # ajoute cette application du dépôt au menu des applications
-make desktop-package  # paquet .deb qui embarque le service, l'interface et Node 26 (apps/desktop/out)
-make desktop-update   # récupère le dépôt, reconstruit le paquet et l'installe (sudo)
-make android          # APK de l'application Android (JDK 17 et SDK Android dans le dossier personnel)
+make desktop                  # application du poste (Linux) depuis le dépôt, avec le Node du poste
+make desktop-install          # ajoute cette application du dépôt au menu des applications
+make desktop-package          # paquet .deb qui embarque le service, l'interface et Node 26 (apps/desktop/out)
+make desktop-package-install  # installe ce paquet (sudo)
+make desktop-update           # récupère le dépôt, reconstruit le paquet et l'installe (sudo)
+make android                  # APK de l'application Android (JDK 17 et SDK Android dans le dossier personnel)
 ```
 
-Le paquet s'installe avec `sudo apt install ./apps/desktop/out/bosco-desktop_<version>_amd64.deb` (la remarque « Download is performed unsandboxed as root » d'apt est sans conséquence : il lit le fichier en root, faute d'accès au dossier personnel) : l'application va dans `/opt/Bosco`, son entrée dans le menu des applications, et son bac à sable est configuré à l'installation. Elle garde les données de `~/.local/share/bosco`, comme le service lancé depuis le dépôt. Chaque paquet porte la version de l'application suivie de la date et du commit, toujours plus récente pour apt. Installé pendant que Bosco tourne, il se signale dans la barre système : « Relancer Bosco » passe à la nouvelle version. Une version plus ancienne refuse de démarrer sur des données qu'une plus récente a mises à jour.
+Le paquet s'installe avec `make desktop-package-install` : l'application va dans `/opt/Bosco`, son entrée dans le menu des applications, et son bac à sable est configuré à l'installation. Elle garde les données de `~/.local/share/bosco`, comme le service lancé depuis le dépôt. Chaque paquet porte la version de l'application suivie de la date et du commit, toujours plus récente pour apt. Installé pendant que Bosco tourne, il se signale dans la barre système : « Relancer Bosco » passe à la nouvelle version. Une version plus ancienne refuse de démarrer sur des données qu'une plus récente a mises à jour.
 
 ## Dépôt
 
