@@ -21,6 +21,7 @@ import { Migration20261108020000 } from './migrations/Migration20261108020000.ts
 import { Migration20261108030000 } from './migrations/Migration20261108030000.ts';
 import { Migration20261108040000 } from './migrations/Migration20261108040000.ts';
 import { Migration20261108050000 } from './migrations/Migration20261108050000.ts';
+import { Migration20261108200000 } from './migrations/Migration20261108200000.ts';
 import { NotificationSchema } from './sessions/infrastructure/persistence/notification.schema.ts';
 import {
   SessionEventSchema,
@@ -49,6 +50,7 @@ export const MIGRATIONS = [
   { name: 'Migration20261108030000', class: Migration20261108030000 },
   { name: 'Migration20261108040000', class: Migration20261108040000 },
   { name: 'Migration20261108050000', class: Migration20261108050000 },
+  { name: 'Migration20261108200000', class: Migration20261108200000 },
 ];
 
 export function ormConfig(dbName: string) {

@@ -20,8 +20,8 @@ Feature: Notifications
     And Claude Code sends the hook "fixtures/hooks/user-prompt-submit.json" of the profile ".claude-perso"
     And Claude Code sends the hook "fixtures/hooks/stop-done.json" of the profile ".claude-perso"
     Then the desktop notifications should be:
-      | title                                                | body                                       |
-      | Fin de tour · 0 min · Specs du tableau de bord Bosco | Le digest est généré et les tests passent. |
+      | title                         | body                                                                             |
+      | Fin de tour · 0 min · labo-ia | <b>Specs du tableau de bord Bosco</b>\nLe digest est généré et les tests passent. |
 
   @CA-SESS-83
   @CA-SESS-87

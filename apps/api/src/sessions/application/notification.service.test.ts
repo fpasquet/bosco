@@ -33,7 +33,13 @@ function service(options: { desktop?: boolean; foreground?: boolean; inApp?: boo
   return { notifications, shown, stored, told };
 }
 
-const session = { sessionId: 'c41e9a07', taskId: null, title: 'Specs du tableau de bord Bosco', excerpt: null };
+const session = {
+  place: null,
+  sessionId: 'c41e9a07',
+  taskId: null,
+  title: 'Specs du tableau de bord Bosco',
+  excerpt: null,
+};
 
 describe('NotificationService', () => {
   it('shows a question on the desktop, urgent, opening its session (CA-SESS-85)', async () => {

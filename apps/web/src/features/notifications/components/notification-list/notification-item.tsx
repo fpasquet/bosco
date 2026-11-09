@@ -43,6 +43,7 @@ export function NotificationItem({ busy, notification, now, onAnswer, onOpen }: 
       <div className="min-w-0 flex-1">
         <p className="flex items-baseline gap-2">
           <span className="text-xs font-semibold text-muted">{kindLabel(notification)}</span>
+          {notification.place && <span className="truncate font-mono text-xs text-muted">{notification.place}</span>}
           {unread && <span className="sr-only">(non lue)</span>}
           <span className="ml-auto shrink-0 font-mono text-xs text-muted">{timeOf(notification.at, now)}</span>
         </p>

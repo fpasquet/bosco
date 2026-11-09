@@ -4,25 +4,35 @@ import { type ChildProcess, spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { createInterface } from 'node:readline';
 import type { DesktopAlerts } from '../../application/notification.service.ts';
-import { KIND_LABELS, type NotificationRecord } from '../../domain/notification.ts';
+import { KIND_LABELS, type NotificationRecord, shortTitle } from '../../domain/notification.ts';
 
 /** Emplacements connus de notify-send et de xdg-open : un chemin fixe plutôt que la recherche dans PATH. */
 const NOTIFY_SEND = ['/usr/bin/notify-send', '/usr/local/bin/notify-send'];
 const XDG_OPEN = ['/usr/bin/xdg-open', '/usr/local/bin/xdg-open'];
 const OPEN_ACTION = 'open';
-/** Au-delà, le titre d'une notification du bureau est coupé : elle ne montre qu'une ligne */
-const TITLE_MAX = 60;
+/** Le titre de la session ou de la tâche, en tête du texte, tient sur une ligne */
+const SUBJECT_MAX = 60;
 
-/** Titre et texte de la notification du bureau : le type en tête, puis la session ou la tâche, puis l'extrait. */
+/** Le texte d'une notification du bureau accepte un peu de balisage : le reste s'échappe. */
+function escapeMarkup(text: string): string {
+  return text.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+}
+
+/**
+ * Titre et texte de la notification du bureau : le type et le dépôt en titre (« Question · reservations ») ; en
+ * texte, la session ou la tâche en gras sur sa ligne, puis l'extrait. Sans dépôt connu, la session passe en titre.
+ */
 export function desktopText(notification: NotificationRecord): { body: string; title: string } {
   const label =
     notification.kind === 'long-turn' && notification.turnMinutes !== null
       ? `${KIND_LABELS['long-turn']} · ${notification.turnMinutes} min`
       : KIND_LABELS[notification.kind];
   // Une session sans titre prend sa première demande : la notification n'en garde que le début
-  const subject =
-    notification.title.length > TITLE_MAX ? `${notification.title.slice(0, TITLE_MAX - 1)}…` : notification.title;
-  return { title: `${label} · ${subject}`, body: notification.excerpt ?? '' };
+  const subject = shortTitle(notification.title, SUBJECT_MAX);
+  const excerpt = escapeMarkup(notification.excerpt ?? '');
+  if (!notification.place) return { title: `${label} · ${subject}`, body: excerpt };
+  const body = [`<b>${escapeMarkup(subject)}</b>`, excerpt].filter(Boolean).join('\n');
+  return { title: `${label} · ${notification.place}`, body };
 }
 
 /**

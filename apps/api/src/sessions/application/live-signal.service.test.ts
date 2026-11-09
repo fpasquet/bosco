@@ -84,6 +84,15 @@ describe('LiveSignalService', () => {
     expect(settled.map(({ outcome }) => outcome)).toEqual(['elsewhere']);
   });
 
+  it('leaves a question of the agent to the transcript, without a permission (CA-SESS-83)', async () => {
+    const { origin, repository, service } = setup();
+    await expect(
+      service.requestPermission(origin, { tool: 'AskUserQuestion', detail: null }, () => undefined),
+    ).resolves.toBeNull();
+    const session = await repository.find('c41e9a07');
+    expect(session).toBeNull();
+  });
+
   it('waits after the turn with the last message of the agent', async () => {
     const { origin, repository, service } = setup();
     await service.receive(origin, { kind: 'stop', message: 'Veux-tu que je lance les tests ?' });

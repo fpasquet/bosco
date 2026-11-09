@@ -1,6 +1,13 @@
 // Ce que les scénarios ne voient pas : chaque règle qui décide d'une notification (E15b).
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_NOTIFICATIONS, endsWithQuestion, notificationOf } from './notification.ts';
+import {
+  DEFAULT_NOTIFICATIONS,
+  endsWithQuestion,
+  messageExcerpt,
+  notificationOf,
+  plainText,
+  shortTitle,
+} from './notification.ts';
 
 describe('endsWithQuestion', () => {
   it('reads a final question mark, after quotes, emphasis or a closing parenthesis', () => {
@@ -37,5 +44,42 @@ describe('notificationOf', () => {
     expect(notificationOf(turn('Tests verts.', 0), { ...DEFAULT_NOTIFICATIONS, turn: 'always' })).toBe('long-turn');
     expect(notificationOf(turn('Tests verts.', 60), { ...DEFAULT_NOTIFICATIONS, turn: 'never' })).toBeNull();
     expect(notificationOf(turn('Je lance ?', 0), { ...DEFAULT_NOTIFICATIONS, turnQuestion: false })).toBeNull();
+  });
+});
+
+describe('messageExcerpt', () => {
+  it('keeps the last whole sentences, a clause after a semicolon starting with a capital (CA-SESS-85)', () => {
+    const message =
+      'Sans rien lire ni modifier : le fichier `0001_init.sql` crée les tables. La migration suivante semble plutôt concerner un tarif horaire des salles (`0002_room_hourly_rate.sql`) ; veux-tu que je lance les tests (`make check` et `make test-db`) pour vérifier où en est le travail ?';
+    expect(messageExcerpt(message)).toBe(
+      'Veux-tu que je lance les tests (make check et make test-db) pour vérifier où en est le travail ?',
+    );
+  });
+
+  it('keeps a short message whole, and the end of a single long sentence from a word', () => {
+    const long = `Je ${'relis '.repeat(40)}le lexique`;
+    const excerpt = messageExcerpt(long) ?? '';
+    expect([messageExcerpt('Tests **verts**.'), excerpt.startsWith('…relis'), excerpt.length <= 180]).toEqual([
+      'Tests verts.',
+      true,
+      true,
+    ]);
+  });
+});
+
+describe('plainText', () => {
+  it('drops the Markdown, keeps the underscores of a file name', () => {
+    expect(plainText('## Bilan\n- **fait** : `room_rate.sql`, [docs](https://x.dev)\n> *noté*')).toBe(
+      'Bilan fait : room_rate.sql, docs noté',
+    );
+  });
+});
+
+describe('shortTitle', () => {
+  it('cuts at the end of a word', () => {
+    expect([shortTitle('Corriger l’indexation des PDF', 60), shortTitle('Corriger l’indexation des PDF', 20)]).toEqual([
+      'Corriger l’indexation des PDF',
+      'Corriger…',
+    ]);
   });
 });

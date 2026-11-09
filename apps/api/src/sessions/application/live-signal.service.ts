@@ -2,7 +2,7 @@ import type { NotificationService } from './notification.service.ts';
 import type { Clock, IdGenerator, SessionEvents, SessionRepository } from './ports.ts';
 import type { SessionService } from './session.service.ts';
 import { DomainError } from '../../shared/domain/domain-error.ts';
-import { ASKING } from '../domain/notification.ts';
+import { ASKING, messageExcerpt } from '../domain/notification.ts';
 import { Session } from '../domain/session.ts';
 
 /** Signal du suivi en direct, traduit depuis un hook de Claude Code par l'interface (DT-05). */
@@ -31,14 +31,15 @@ function titleOf(session: Session): string {
   return session.toSnapshot().title ?? `Session ${session.id.slice(0, 8)}`;
 }
 
-const EXCERPT = 180;
-
-/** Fin d'un message, là où l'agent conclut ou pose sa question : sa dernière partie, sur une ligne. */
-function excerptOf(message: null | string): null | string {
-  if (!message) return null;
-  const line = message.replaceAll(/\s+/g, ' ').trim();
-  return line.length > EXCERPT ? `…${line.slice(-EXCERPT + 1).trimStart()}` : line;
+/** Dépôt de la session, d'après son dossier : il titre la notification du bureau */
+function placeOf(session: Session): null | string {
+  const { repoPath, repoRoot } = session.toSnapshot();
+  const folder = repoRoot ?? repoPath;
+  return folder ? (folder.split('/').findLast(Boolean) ?? null) : null;
 }
+
+/** L'outil par lequel l'agent pose une question à choix : Claude Code demande aussi son « autorisation » */
+const QUESTION_TOOL = 'AskUserQuestion';
 
 type Notifications = Pick<NotificationService, 'notify' | 'settle'>;
 
@@ -79,7 +80,7 @@ export class LiveSignalService {
   async receive(origin: SignalOrigin, signal: LiveSignal): Promise<void> {
     const at = this.clock.now();
     const session = await this.sessionOf(origin, at);
-    const subject = { sessionId: session.id, taskId: null, title: titleOf(session) };
+    const subject = { place: placeOf(session), sessionId: session.id, taskId: null, title: titleOf(session) };
     if (signal.kind === 'stop') {
       session.endTurn(signal.message, at);
       await this.publish(session);
@@ -88,7 +89,7 @@ export class LiveSignalService {
       const minutes = started ? Math.floor((at.getTime() - started.getTime()) / 60_000) : null;
       await this.notifications.notify(
         { kind: 'turn', message: signal.message, minutes },
-        { ...subject, excerpt: excerptOf(signal.message), turnMinutes: minutes },
+        { ...subject, excerpt: messageExcerpt(signal.message), turnMinutes: minutes },
       );
       return;
     }
@@ -98,7 +99,10 @@ export class LiveSignalService {
     if (signal.kind === 'prompt') this.turnStarts.set(session.id, at);
     await this.publish(session);
     if (signal.kind === 'end') {
-      await this.notifications.notify({ kind: 'ended' }, { ...subject, excerpt: session.toSnapshot().lastMessage });
+      await this.notifications.notify(
+        { kind: 'ended' },
+        { ...subject, excerpt: messageExcerpt(session.toSnapshot().lastMessage) },
+      );
       await this.notifications.settle({ sessionId: session.id, kinds: ASKING }, 'Session terminée');
     } else if (signal.kind === 'prompt' || signal.kind === 'tool')
       await this.notifications.settle({ sessionId: session.id, kinds: ASKING }, 'Répondu');
@@ -113,6 +117,8 @@ export class LiveSignalService {
     action: { detail: null | string; tool: string },
     abandoned: (onAbandon: () => void) => void,
   ): Promise<null | PermissionAnswer> {
+    // Une question de l'agent passe aussi par ce hook : c'est une question (lue dans le transcript), pas une autorisation
+    if (action.tool === QUESTION_TOOL) return null;
     const at = this.clock.now();
     const session = await this.sessionOf(origin, at);
     const requestId = this.idGenerator.next();
@@ -123,6 +129,7 @@ export class LiveSignalService {
     await this.notifications.notify(
       { kind: 'permission' },
       {
+        place: placeOf(session),
         sessionId: session.id,
         taskId: null,
         title: titleOf(session),
