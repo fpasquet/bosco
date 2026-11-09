@@ -4,7 +4,7 @@ import type { Task } from '../domain/task.ts';
 import type { AgentEvent, AgentRunner, TaskRepository } from './ports.ts';
 import { DEFAULT_RIGHTS } from '../domain/rights.ts';
 import { TaskService } from './task.service.ts';
-import { branchOf, WorkerService } from './worker.service.ts';
+import { branchOf, servicesEntry, WorkerService } from './worker.service.ts';
 
 class MemoryTasks implements TaskRepository {
   private readonly tasks = new Map<number, Task>();
@@ -120,6 +120,28 @@ describe('WorkerService', () => {
       14,
       { files: 2, added: 38, removed: 4 },
     ]);
+  });
+
+  it('notes in the journal the place taken at the start (CA-TACH-81)', async () => {
+    const { create, settle, tasks, worker } = setup([]);
+    const created = await create('Ajouter la prononciation de « SNCF »');
+    await worker.tick();
+    await settle();
+    const view = await tasks.get(created.id);
+    const started = view.log.find((entry) => entry.event === 'Démarrée');
+    expect(started?.detail).toMatch(/ · 1 agent sur 1 pour api-voix, 1 \/ 4$/);
+  });
+
+  it('notes the start time of each test service, or those that failed (CA-TACH-81)', () => {
+    expect(
+      servicesEntry([
+        { error: null, image: 'mysql:8.0', name: 'database', readySeconds: 12 },
+        { error: null, image: 'rabbitmq:3', name: 'rabbitmq', readySeconds: 8 },
+      ]),
+    ).toEqual(['Services prêts', 'database en 12 s · rabbitmq en 8 s']);
+    expect(
+      servicesEntry([{ error: 'pas prêt après 180 s', image: 'x', name: 'database', readySeconds: null }]),
+    ).toEqual(['Services en échec', 'database : pas prêt après 180 s']);
   });
 
   it('stops the agent once the budget is spent', async () => {

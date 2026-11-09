@@ -162,7 +162,7 @@ export class WorkerService {
     let workspace: null | Workspace = null;
     let servicesStarted = false;
     try {
-      await this.deps.tasks.start(task.id, `branche ${branch}`);
+      await this.deps.tasks.start(task.id, `branche ${branch} · ${this.placeOf(task, rights.concurrency)}`);
       workspace = await this.deps.workspaces.prepare({
         id: task.id,
         branch,
@@ -185,7 +185,10 @@ export class WorkerService {
         image: environment.image,
         deniedTools: rights.deniedTools,
         services: environment.services,
-        onServices: (launches) => void this.deps.servicesLaunched(task, launches).catch(() => undefined),
+        onServices: (launches) => {
+          void this.deps.servicesLaunched(task, launches).catch(() => undefined);
+          void this.deps.tasks.record(task.id, ...servicesEntry(launches)).catch(() => undefined);
+        },
         prompt: promptOf(task, context.text),
         model: task.guardrails.model ?? rights.model,
         maxTurns: Math.min(task.guardrails.maxTurns, rights.maxTurns),
@@ -268,6 +271,14 @@ export class WorkerService {
     return true;
   }
 
+  /** Place prise au départ, notée au journal (CA-TACH-81) : « 1 agent sur 1 pour api-voix, 2 / 4 ». */
+  private placeOf(task: TaskView, concurrency: number): string {
+    const inRepository = [...this.starting.values()].filter((repository) => repository === task.repository.name).length;
+    const repositoryBusy = Math.max(1, inRepository);
+    const agents = repositoryBusy > 1 ? 'agents' : 'agent';
+    return `${repositoryBusy} ${agents} sur ${concurrency} pour ${task.repository.name}, ${this.busy()} / ${this.deps.maxAgents()}`;
+  }
+
   /** Branche de départ : la sienne pour une relance depuis la branche, celle d'une préalable du même dépôt (RF-TACH-04). */
   private startBranchOf(task: TaskView): null | string {
     const relaunch = task.log.findLast((entry) => entry.event === 'Relancée');
@@ -275,6 +286,14 @@ export class WorkerService {
     const prerequisite = task.waitingFor.find(({ id }) => id === task.startFrom);
     return prerequisite ? branchOf(prerequisite) : null;
   }
+}
+
+/** « Services prêts » avec le temps de démarrage de chacun, ou ceux qui ne l'ont pas été (CA-TACH-81, CA-CONT-53). */
+export function servicesEntry(launches: readonly ServiceLaunch[]): [string, string] {
+  const failed = launches.filter((launch) => launch.error);
+  if (failed.length > 0)
+    return ['Services en échec', failed.map((launch) => `${launch.name} : ${launch.error ?? ''}`).join(' · ')];
+  return ['Services prêts', launches.map((launch) => `${launch.name} en ${launch.readySeconds ?? 0} s`).join(' · ')];
 }
 
 function usd(value: number): string {
