@@ -30,8 +30,11 @@ export interface DecisionFormProps {
   onSubmit: (values: DecisionFormValues) => void;
   /** Erreur renvoyée par l'API pour la note */
   serverError: null | string;
+  /** Dépôts entre lesquels choisir la cible d'une nouvelle décision ; sans eux, la cible est fixe */
+  targetChoices?: string[];
   /** « api-voix », « Socle Node.js » */
   targetLabel: string;
+  onTargetChange?: (repository: string) => void;
 }
 
 const required = (message: string) => z.string().refine((value) => value.trim().length > 0, message);
@@ -68,7 +71,9 @@ export function DecisionForm({
   onCancel,
   onSubmit,
   serverError,
+  targetChoices,
   targetLabel,
+  onTargetChange,
 }: DecisionFormProps) {
   const { formState, handleSubmit, register, setError, setFocus } = useForm<Values>({
     resolver: zodResolver(schemaOf(mode)),
@@ -106,9 +111,27 @@ export function DecisionForm({
   const errorOf = (name: keyof Values) => formState.errors[name]?.message;
   return (
     <form noValidate className="flex flex-col gap-4" onSubmit={(event) => void submit(true)(event)}>
-      <p className="text-sm text-muted">
-        Porte sur <span className="font-medium text-ink">{targetLabel}</span>
-      </p>
+      {targetChoices && targetChoices.length > 0 ? (
+        <label className="flex flex-col gap-1.5">
+          <span className="text-xs font-medium">Porte sur</span>
+          <select
+            className="select w-full"
+            value={targetLabel}
+            onChange={(event) => onTargetChange?.(event.target.value)}
+          >
+            {!targetChoices.includes(targetLabel) && <option value={targetLabel}>{targetLabel}</option>}
+            {targetChoices.map((name) => (
+              <option key={name} value={name}>
+                {name}
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : (
+        <p className="text-sm text-muted">
+          Porte sur <span className="font-medium text-ink">{targetLabel}</span>
+        </p>
+      )}
       {FIELDS.map(({ label, name, optional, rows }) => {
         const error = errorOf(name);
         const id = `decision-${name}`;

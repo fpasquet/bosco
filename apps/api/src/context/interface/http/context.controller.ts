@@ -111,6 +111,12 @@ export class ContextController {
     };
   }
 
+  @Get('context/repositories')
+  async listDecidedRepositories(): Promise<{ repositories: string[] }> {
+    const repositories = await this.context.listDecidedRepositories();
+    return { repositories };
+  }
+
   /** Décisions proposées, tous dépôts : le compteur de l'entrée « Contexte » (CA-CONT-03). */
   @Get('context/proposals')
   async proposals(): Promise<{ proposals: DecisionDto[] }> {

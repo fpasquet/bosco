@@ -98,6 +98,16 @@ export class ContextService {
     };
   }
 
+  /** Dépôts qui ont une décision à eux, proposée ou acceptée : ceux que l'écran du contexte propose de consulter. */
+  async listDecidedRepositories(): Promise<string[]> {
+    const all = await this.decisions.list();
+    const names = all.flatMap((decision) => {
+      const { state, target } = decision.toSnapshot();
+      return target.kind === 'repository' && (state === 'accepted' || state === 'proposed') ? [target.name] : [];
+    });
+    return [...new Set(names)].toSorted((a, b) => a.localeCompare(b));
+  }
+
   async proposals(): Promise<DecisionSnapshot[]> {
     const all = await this.decisions.list();
     return all.map((decision) => decision.toSnapshot()).filter((decision) => decision.state === 'proposed');

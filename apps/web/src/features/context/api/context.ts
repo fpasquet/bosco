@@ -90,6 +90,12 @@ export const repositoriesQuery = {
     (await read<{ repositories: { name: string; root: string }[] }>('/api/repositories')).repositories,
 };
 
+/** Dépôts qui ont une décision à eux, proposée ou acceptée : le choix de l'écran du contexte. */
+export const decidedRepositoriesQuery = {
+  queryKey: ['context-repositories'],
+  queryFn: async () => (await read<{ repositories: string[] }>('/api/context/repositories')).repositories,
+};
+
 export const integrationsQuery = {
   queryKey: ['integrations'],
   queryFn: () => read<IntegrationsDto>('/api/integrations'),
