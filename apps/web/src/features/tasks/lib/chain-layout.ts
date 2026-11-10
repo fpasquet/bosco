@@ -22,7 +22,12 @@ export interface ChainEdge {
  * Place l'enchaînement de haut en bas (DT-34) : une flèche de chaque préalable vers la tâche qui l'attend, rangs séparés,
  * sans chevauchement. Les préalables absentes des tâches dessinées sont ignorées. Positions : coin haut gauche.
  */
-export function layoutChain(tasks: readonly TaskDto[]): { edges: ChainEdge[]; nodes: ChainNode[] } {
+export function layoutChain(tasks: readonly TaskDto[]): {
+  edges: ChainEdge[];
+  nodes: ChainNode[];
+  /** Encombrement du dessin, en pixels du dessin */
+  size: { height: number; width: number };
+} {
   const ids = new Set(tasks.map((task) => task.id));
   const edges = tasks.flatMap((task) =>
     task.prerequisites
@@ -41,7 +46,11 @@ export function layoutChain(tasks: readonly TaskDto[]): { edges: ChainEdge[]; no
     const { x, y } = graph.node(String(task.id));
     return { task, x: x - CHAIN_NODE.width / 2, y: y - CHAIN_NODE.height / 2 };
   });
-  return { edges, nodes };
+  const size = {
+    height: Math.max(0, ...nodes.map(({ y }) => y + CHAIN_NODE.height)),
+    width: Math.max(0, ...nodes.map(({ x }) => x + CHAIN_NODE.width)),
+  };
+  return { edges, nodes, size };
 }
 
 /** Tâches liées à une tâche, en amont comme en aval, elle comprise : la chaîne mise en évidence au survol (CA-TACH-10). */

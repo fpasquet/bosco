@@ -20,10 +20,17 @@ import { useIsPhone } from '@/shared/hooks/use-is-phone';
 import { CHAIN_NODE, chainAround, layoutChain } from '../../lib/chain-layout';
 import { TaskStateBadge } from '../task-state-badge';
 
-type TaskNode = Node<{ lit: boolean; task: TaskDto }, 'task'>;
+type TaskNode = Node<{ dim: boolean; lit: boolean; task: TaskDto }, 'task'>;
+
+/**
+ * Le dessin s'ajuste à son cadre sans descendre sous 75 % : en dessous, le texte des tâches ne se lit plus, et l'on
+ * déplace le dessin. Le cadre prend la hauteur du dessin, entre 192 et 560 pixels.
+ */
+const FIT = { maxZoom: 1, minZoom: 0.75, padding: '16px' } as const;
+const FRAME = { max: 560, min: 192, padding: 16 };
 
 /** Une tâche du dessin : un lien vers son détail (CA-TACH-75), comme une ligne de la liste. */
-function TaskNodeCard({ data: { lit, task } }: NodeProps<TaskNode>) {
+function TaskNodeCard({ data: { dim, lit, task } }: NodeProps<TaskNode>) {
   return (
     <div
       className={cn(
@@ -31,6 +38,8 @@ function TaskNodeCard({ data: { lit, task } }: NodeProps<TaskNode>) {
         task.state === 'to_review' && 'border-primary bg-primary-soft',
         task.state === 'awaiting_session' && 'border-warning bg-warning-soft',
         lit && 'ring-2 ring-primary',
+        // Effacée sans transparence : son texte garde le contraste exigé (NF-18)
+        dim && 'border-line bg-surface-alt shadow-none',
       )}
       style={{ height: CHAIN_NODE.height, width: CHAIN_NODE.width }}
     >
@@ -65,7 +74,8 @@ const LABELS = {
  */
 export function TaskChain({ highlighted = null, tasks }: { highlighted?: null | number; tasks: TaskDto[] }) {
   const phone = useIsPhone();
-  const { edges, nodes } = useMemo(() => layoutChain(tasks), [tasks]);
+  const { edges, nodes, size } = useMemo(() => layoutChain(tasks), [tasks]);
+  const frame = Math.min(FRAME.max, Math.max(FRAME.min, size.height + 2 * FRAME.padding));
   const lit = useMemo(
     () =>
       highlighted !== null && nodes.some(({ task }) => task.id === highlighted)
@@ -77,7 +87,8 @@ export function TaskChain({ highlighted = null, tasks }: { highlighted?: null | 
   const flowNodes = useMemo<TaskNode[]>(
     () =>
       nodes.map(({ task, x, y }) => ({
-        data: { lit: lit?.has(task.id) ?? false, task },
+        // Une chaîne survolée : les autres tâches s'effacent, pour qu'elle se détache
+        data: { dim: lit !== null && !lit.has(task.id), lit: lit?.has(task.id) ?? false, task },
         id: String(task.id),
         position: { x, y },
         type: 'task',
@@ -89,7 +100,7 @@ export function TaskChain({ highlighted = null, tasks }: { highlighted?: null | 
       edges.map((edge) => {
         const onChain = lit?.has(edge.source) === true && lit.has(edge.target);
         return {
-          className: cn(onChain && 'is-lit'),
+          className: cn(onChain && 'is-lit', lit !== null && !onChain && 'is-dim'),
           id: edge.id,
           label: edge.sameBranch ? 'même branche' : undefined,
           markerEnd: {
@@ -109,13 +120,16 @@ export function TaskChain({ highlighted = null, tasks }: { highlighted?: null | 
   return (
     <aside
       aria-labelledby="chain-title"
-      className="flex flex-col rounded-card border border-line bg-surface p-4 shadow-card"
+      className="flex flex-col rounded-card border border-line bg-surface p-4 shadow-card md:col-span-2"
     >
       <h2 id="chain-title" className="text-xs font-semibold text-muted">
         Enchaînement
       </h2>
       <p className="mb-3 text-xs text-muted">Une tâche part quand toutes ses flèches entrantes sont validées.</p>
-      <div className="task-chain h-96 overflow-hidden rounded-control border border-line bg-surface-alt">
+      <div
+        className="task-chain overflow-hidden rounded-control border border-line bg-surface-alt"
+        style={{ height: frame }}
+      >
         <ReactFlow
           key={nodes.map(({ task }) => task.id).join(',')}
           ariaLabelConfig={LABELS}
@@ -123,7 +137,7 @@ export function TaskChain({ highlighted = null, tasks }: { highlighted?: null | 
           edgesFocusable={false}
           elementsSelectable={false}
           fitView
-          fitViewOptions={{ maxZoom: 1, padding: 0.12 }}
+          fitViewOptions={FIT}
           maxZoom={1.5}
           minZoom={0.3}
           nodes={flowNodes}
@@ -134,7 +148,7 @@ export function TaskChain({ highlighted = null, tasks }: { highlighted?: null | 
           proOptions={{ hideAttribution: true }}
         >
           <Background gap={16} size={1} variant={BackgroundVariant.Dots} />
-          <Controls position="bottom-left" showInteractive={false} />
+          <Controls position="bottom-left" showInteractive={false} fitViewOptions={FIT} />
         </ReactFlow>
       </div>
     </aside>

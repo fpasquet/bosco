@@ -13,6 +13,15 @@ describe('layoutChain', () => {
     );
   });
 
+  it('measures the drawing, so the frame takes its height', () => {
+    const { nodes, size } = layoutChain(chain);
+    for (const { x, y } of nodes) {
+      expect(x + CHAIN_NODE.width).toBeLessThanOrEqual(size.width);
+      expect(y + CHAIN_NODE.height).toBeLessThanOrEqual(size.height);
+    }
+    expect(size.height).toBe(Math.max(...nodes.map(({ y }) => y + CHAIN_NODE.height)));
+  });
+
   it('marks the arrow of a same-repository prerequisite not merged yet (CA-TACH-73)', () => {
     const { edges } = layoutChain(chain);
     expect(edges.filter((edge) => edge.sameBranch).map((edge) => edge.id)).toEqual(['12-13']);

@@ -115,8 +115,9 @@ export function TasksScreen({ title }: { title: string }) {
               <option value="session">Ma session</option>
             </select>
           </div>
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="md:col-span-2">
+          {/* L'enchaînement prend deux cinquièmes : assez pour lire ses tâches sans zoomer */}
+          <div className="grid gap-4 md:grid-cols-5">
+            <div className="md:col-span-3">
               <TaskList tasks={shown} waiting={worker?.waiting ?? {}} onHover={setHovered} />
             </div>
             <TaskChain tasks={chain} highlighted={hovered} />

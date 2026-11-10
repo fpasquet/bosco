@@ -1,12 +1,13 @@
 import type { TaskDto, TaskStateDto } from '@bosco/domain';
 
 /** Libellés et tons des états de tâche (CONTEXTE, lot 2). */
+// Un badge neutre garde sa bordure : sans elle, il disparaît sur une ligne survolée, du même fond que lui
 export const TASK_STATES: Record<TaskStateDto, { badge: string; label: string }> = {
   awaiting_session: { label: 'En attente d’une session', badge: 'badge-soft badge-warning' },
-  blocked: { label: 'Bloquée', badge: 'badge-ghost' },
-  cancelled: { label: 'Annulée', badge: 'badge-ghost line-through' },
+  blocked: { label: 'Bloquée', badge: 'badge-ghost border-line-strong' },
+  cancelled: { label: 'Annulée', badge: 'badge-ghost border-line-strong line-through' },
   failed: { label: 'En échec', badge: 'badge-soft badge-error' },
-  queued: { label: 'En file', badge: 'badge-ghost' },
+  queued: { label: 'En file', badge: 'badge-ghost border-line-strong' },
   rejected: { label: 'Rejetée', badge: 'badge-soft badge-error' },
   running: { label: 'En cours', badge: 'badge-soft badge-info' },
   to_review: { label: 'À relire', badge: 'badge-soft badge-primary' },

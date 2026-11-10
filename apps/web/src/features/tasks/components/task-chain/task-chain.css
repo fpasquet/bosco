@@ -26,7 +26,12 @@
 
     .react-flow__edge.is-lit {
       --xy-edge-stroke: var(--color-primary);
-      --xy-edge-stroke-width: 2;
+      --xy-edge-stroke-width: 2.5;
+    }
+
+    /* Seul le trait s'efface : l'étiquette « même branche » garde son contraste */
+    .react-flow__edge.is-dim .react-flow__edge-path {
+      opacity: 0.35;
     }
 
     .react-flow__controls {
