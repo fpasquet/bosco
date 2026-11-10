@@ -12,6 +12,7 @@ import {
   decisionQuery,
   editDecision,
   refuseDecision,
+  repositoriesQuery,
   soclesQuery,
   writeDecision,
 } from '../../api/context';
@@ -102,6 +103,13 @@ export function NewDecisionScreen({ replaces, target }: { replaces: null | numbe
   const repository = target.kind === 'repository' ? target.name : null;
   const { data: context } = useQuery({ ...contextQuery(repository ?? ''), enabled: repository !== null });
   const { data: replaced } = useQuery({ ...decisionQuery(replaces ?? 0), enabled: replaces !== null });
+  // Une décision de dépôt se porte sur n'importe quel dépôt connu, même sans décision encore
+  const { data: known } = useQuery({ ...repositoriesQuery, enabled: repository !== null });
+  const retarget = (name: string) => {
+    const query = new URLSearchParams({ repository: name });
+    if (replaces !== null) query.set('replaces', String(replaces));
+    router.replace(`/context/decisions/new?${query.toString()}`);
+  };
   const [error, setError] = useState<null | string>(null);
   const confirmation = useSocleConfirmation(target);
   const write = useMutation({
@@ -133,6 +141,8 @@ export function NewDecisionScreen({ replaces, target }: { replaces: null | numbe
             mode="new"
             initial={replaced?.decision.versions.at(-1) ?? null}
             targetLabel={label}
+            targetChoices={repository === null ? undefined : known?.map(({ name }) => name)}
+            onTargetChange={retarget}
             exceptionChoices={choices}
             busy={write.isPending}
             serverError={null}

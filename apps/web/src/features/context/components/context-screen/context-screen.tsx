@@ -1,19 +1,35 @@
 'use client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Plus } from 'lucide-react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import type { ArchitectureDto } from '@bosco/domain';
 import { SectionSkeleton } from '@/shared/components/section-skeleton';
-import { contextQuery, previewQuery, repositoriesQuery, saveArchitecture } from '../../api/context';
+import { Button } from '@/shared/ui/button';
+import {
+  contextQuery,
+  decidedRepositoriesQuery,
+  previewQuery,
+  repositoriesQuery,
+  saveArchitecture,
+} from '../../api/context';
 import { ContextOverview } from '../context-overview';
 import { PreviewDialog } from '../preview-dialog';
 
-/** Contexte d'un dépôt (E9a), choisi dans la liste des dépôts connus. */
+/**
+ * Contexte d'un dépôt (E9a), choisi parmi les dépôts qui ont une décision à eux ; un dépôt demandé par l'adresse s'y
+ * ajoute, même sans décision.
+ */
 export function ContextScreen({ repository: asked }: { repository: null | string }) {
   const router = useRouter();
   const client = useQueryClient();
-  const { data: repositories } = useQuery(repositoriesQuery);
-  const repository = asked ?? repositories?.[0]?.name ?? null;
+  const { data: decided } = useQuery(decidedRepositoriesQuery);
+  const { data: known } = useQuery(repositoriesQuery);
+  const repositories = decided && (asked && !decided.includes(asked) ? [asked, ...decided] : decided);
+  const repository = asked ?? repositories?.[0] ?? null;
+  // Sans dépôt décidé, la première décision s'écrit pour un dépôt connu, à changer dans le formulaire
+  const firstKnown = known?.[0]?.name;
   const { data: context } = useQuery({ ...contextQuery(repository ?? ''), enabled: repository !== null });
   const [previewing, setPreviewing] = useState(false);
   const { data: preview } = useQuery({ ...previewQuery(repository ?? ''), enabled: previewing && repository !== null });
@@ -35,7 +51,7 @@ export function ContextScreen({ repository: asked }: { repository: null | string
             value={repository ?? ''}
             onChange={(event) => router.push(`/context?repository=${encodeURIComponent(event.target.value)}`)}
           >
-            {repositories.map(({ name }) => (
+            {repositories.map((name) => (
               <option key={name} value={name}>
                 {name}
               </option>
@@ -43,10 +59,23 @@ export function ContextScreen({ repository: asked }: { repository: null | string
           </select>
         )}
       </div>
-      {repositories?.length === 0 && (
+      {repositories?.length === 0 && known?.length === 0 && (
         <p className="text-muted">
           Aucun dépôt connu pour l’instant : ils viennent des sessions des profils surveillés.
         </p>
+      )}
+      {repositories?.length === 0 && firstKnown && (
+        <div className="flex flex-col items-start gap-3">
+          <p className="text-muted">
+            Aucun dépôt n’a encore de décision : elles arrivent proposées par un agent, ou écrites ici.
+          </p>
+          <Button asChild size="sm" className="hidden md:inline-flex">
+            <Link href={`/context/decisions/new?repository=${encodeURIComponent(firstKnown)}`}>
+              <Plus aria-hidden className="size-4" />
+              Nouvelle décision
+            </Link>
+          </Button>
+        </div>
       )}
       {repository !== null && !context && <SectionSkeleton rows={5} />}
       {context && (

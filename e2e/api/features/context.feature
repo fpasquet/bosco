@@ -47,6 +47,18 @@ Feature: Context of the agents
     Then the response property "versions.length" should equal "2"
     And the response property "versions.1.note" should equal "Les colonnes aussi"
 
+  @CA-CONT-70
+  Scenario: Only the repositories with a decision of their own, proposed or accepted, are offered
+    When I send POST request to "/api/socles" with the JSON "fixtures/context/global-socle.json"
+    And I send POST request to "/api/decisions" with the JSON "fixtures/context/socle-decision.json"
+    And I send POST request to "/api/decisions" with the JSON "fixtures/context/repository-decision.json"
+    And I send POST request to "/api/decisions" with the JSON "fixtures/context/proposed-api-voix.json"
+    And I send GET request to "/api/context/repositories"
+    Then the response property "repositories" should equal "api-voix,labo-ia"
+    When I send POST request to "/api/decisions/3/refuse"
+    And I send GET request to "/api/context/repositories"
+    Then the response property "repositories" should equal "labo-ia"
+
   @CA-CONT-07
   Scenario: A worker agent receives the context at its launch, noted in the log of its task
     When I send POST request to "/api/decisions" with the JSON "fixtures/context/repository-decision.json"

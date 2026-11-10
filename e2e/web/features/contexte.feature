@@ -96,6 +96,31 @@ Fonctionnalité: Contexte des agents
     Alors je suis sur la page « /context/socles »
     Et je vois le lien « Tests avec Vitest »
 
+  @CA-CONT-70
+  Scénario: Le choix du dépôt ne propose que les dépôts qui ont une décision
+    Étant donné le profil Claude Code « .claude » contient le transcript « session-api-voix-fastify.jsonl » de la session « a41f07c2 »
+    Et le dépôt « labo-ia » a la décision acceptée « Garder Jest pour les tests »
+    Quand j'ouvre la page « /context »
+    Alors le choix « Dépôt » propose « labo-ia »
+
+  @CA-CONT-71
+  @NF-18
+  Scénario: Sans décision, la première s'écrit pour un dépôt choisi parmi les dépôts connus
+    Étant donné le profil Claude Code « .claude » contient le transcript « session-api-voix-fastify.jsonl » de la session « a41f07c2 »
+    Quand j'ouvre la page « /context »
+    Alors je vois le texte « Aucun dépôt n’a encore de décision : elles arrivent proposées par un agent, ou écrites ici. »
+    Et la page est accessible
+    Quand je clique sur le lien « Nouvelle décision »
+    Et je choisis « api-voix » dans la liste « Porte sur »
+    Alors la liste « Porte sur » vaut « api-voix »
+    Et la page est accessible
+    Quand je saisis « Garder les fichiers audio 30 jours en cache » dans le champ « Titre »
+    Et je saisis « Générer un même article plusieurs fois coûte cher. » dans le champ « Contexte »
+    Et je saisis « Garder chaque fichier audio 30 jours. » dans le champ « Décision »
+    Et je clique sur le bouton « Accepter la décision »
+    Alors la liste « Dépôt » vaut « api-voix »
+    Et je vois le lien « DEC-1 Garder les fichiers audio 30 jours en cache »
+
   @mobile
   @CA-CONT-19
   @NF-18
