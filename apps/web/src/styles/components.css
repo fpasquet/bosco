@@ -29,3 +29,5 @@
 
 /* Composants d'une fonctionnalité qui posent une classe du projet */
 @import '../features/sessions/components/composer/composer.css';
+@import '@xyflow/react/dist/base.css' layer(components);
+@import '../features/tasks/components/task-chain/task-chain.css';

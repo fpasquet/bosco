@@ -2,7 +2,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { cn } from '@/lib/cn';
 import { PageSkeleton } from '@/shared/components/page-skeleton';
 import { Button } from '@/shared/ui/button';
@@ -32,11 +32,17 @@ export function TasksScreen({ title }: { title: string }) {
   const [tab, setTab] = useState<TaskTab>('active');
   const [repository, setRepository] = useState('');
   const [mode, setMode] = useState('');
+  const [hovered, setHovered] = useState<null | number>(null);
+  const filtered = useMemo(
+    () =>
+      (tasks ?? []).filter(
+        (task) => (!repository || task.repository.name === repository) && (!mode || task.mode === mode),
+      ),
+    [mode, repository, tasks],
+  );
+  const chain = useMemo(() => chainOf(filtered), [filtered]);
   if (!tasks) return <PageSkeleton variant="list" rows={5} />;
   const running = worker?.running ?? tasks.filter((task) => task.state === 'running' && task.mode === 'worker').length;
-  const filtered = tasks.filter(
-    (task) => (!repository || task.repository.name === repository) && (!mode || task.mode === mode),
-  );
   const shown = sortTasks(filtered.filter((task) => tabOf(task) === tab));
   const repositories = [...new Set(tasks.map((task) => task.repository.name))].toSorted((a, b) =>
     a.localeCompare(b, 'fr'),
@@ -109,11 +115,12 @@ export function TasksScreen({ title }: { title: string }) {
               <option value="session">Ma session</option>
             </select>
           </div>
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="md:col-span-2">
-              <TaskList tasks={shown} waiting={worker?.waiting ?? {}} />
+          {/* L'enchaînement prend deux cinquièmes : assez pour lire ses tâches sans zoomer */}
+          <div className="grid gap-4 md:grid-cols-5">
+            <div className="md:col-span-3">
+              <TaskList tasks={shown} waiting={worker?.waiting ?? {}} onHover={setHovered} />
             </div>
-            <TaskChain tasks={chainOf(filtered)} />
+            <TaskChain tasks={chain} highlighted={hovered} />
           </div>
         </>
       )}
