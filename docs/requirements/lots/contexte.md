@@ -16,10 +16,11 @@
 - **RF-CONT-10** · **10. Bosco garde les décisions** : elles s'y créent, s'y modifient et s'y acceptent, avec l'historique de chaque changement (auteur, date, note).
 - **RF-CONT-11** · **11. Une décision acceptée se modifie avec une note, ou se remplace par une nouvelle** : ses versions précédentes restent lisibles, et le changement ne touche que les agents lancés ensuite.
 - **RF-CONT-12** · **12. Le worker utilise l'abonnement Claude du profil choisi** : ses tâches partagent les limites de cet abonnement avec les sessions de ce profil. Si la limite est atteinte, la tâche s'arrête et se relance ensuite.
+- **RF-CONT-13** · **13. Ce que Bosco fait tourner se voit et s'arrête** : agents du worker, services de test et tours de sessions pilotées sont listés avec ce qu'ils consomment, par rapport à leur plafond ; Bosco ne lance rien à la main, il arrête un agent (sa tâche est annulée), redémarre un service ou interrompt un tour, après une confirmation qui dit ce que cela provoque. Un conteneur resté après sa tâche est supprimé au démarrage de Bosco puis toutes les heures.
 
 ## <a id="e9"></a>E9 · Contexte transmis aux agents
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e9.html` · implémentation : **Livré (Contexte des agents développé (E9a à E9f) : décisions d'un dépôt ou d'un socle, au format contexte, décision, conséquences, alternatives écartées ; proposées par un agent (fichier relevé à la fin d'une tâche du worker, ou outil MCP d'une session), acceptées, modifiées avant, ou refusées avec un motif par toi seul ; nouvelle décision gardée en proposition ou acceptée, avec « fait exception à » une décision d'un socle ; versions avec auteur, date et note obligatoire ; remplacer, abandonner ; place du dépôt dans l'architecture ; aperçu du texte exact transmis, avec ce qui en est absent et l'estimation des tokens. Chaque agent du worker reçoit ce texte au lancement, noté dans le journal de sa tâche avec les versions transmises ; une session le lit par MCP. Vérifié sur une vraie tâche : contexte reçu, décision proposée par fichier, sans trace dans la branche. Écarts : le compteur des décisions à valider n'est pas repris sur l'entrée « Contexte » ; les relations ne montrent pas encore les tâches qui ont reçu une décision.)**
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e9.html` · implémentation : **Livré (Contexte des agents développé (E9a à E9f) : décisions d'un dépôt ou d'un socle, au format contexte, décision, conséquences, alternatives écartées ; proposées par un agent (fichier relevé à la fin d'une tâche du worker, ou outil MCP d'une session), acceptées, modifiées avant, ou refusées avec un motif par toi seul ; nouvelle décision gardée en proposition ou acceptée, avec « fait exception à » une décision d'un socle ; versions avec auteur, date et note obligatoire ; remplacer, abandonner ; place du dépôt dans l'architecture ; aperçu du texte exact transmis, avec ce qui en est absent et l'estimation des tokens. Chaque agent du worker reçoit ce texte au lancement, noté dans le journal de sa tâche avec les versions transmises ; une session le lit par MCP. Le choix du dépôt ne propose que les dépôts qui ont une décision à eux (et celui qu'on ouvre) ; « Porte sur » d'une nouvelle décision propose tous les dépôts connus. Vérifié sur une vraie tâche : contexte reçu, décision proposée par fichier, sans trace dans la branche. Écarts : le compteur des décisions à valider n'est pas repris sur l'entrée « Contexte » ; les relations ne montrent pas encore les tâches qui ont reçu une décision.)**
 
 ### <a id="e9a"></a>E9a · Contexte d'un dépôt
 
@@ -35,7 +36,7 @@ Règles de l'écran :
 3. Une décision seulement proposée n'est pas transmise : un agent propose, un humain décide (règle 2). Le bandeau n'apparaît que s'il y a des décisions à valider ; son compteur est repris sur l'entrée « Contexte » de la barre latérale. « Examiner » ouvre la décision ([E9b](#e9b)).
 4. L'architecture dit ce que le dépôt appelle et qui l'appelle, pour que l'agent mesure l'effet de ses changements sur les autres dépôts.
 5. « Aperçu du texte transmis » montre exactement le texte que lira l'agent au prochain lancement, décisions écartées et proposées exclues ([E9f](#e9f)). Les liens propres à une tâche s'y ajoutent au lancement ([E10b](#e10b)).
-6. Les décisions sont gérées dans Bosco : « Nouvelle décision » ouvre [E9c](#e9c), et chaque changement garde son auteur et sa date (règle 10). Cet écran se règle par toi seul, aucune session ni aucun agent ne peut le modifier (règle 9).
+6. Les décisions sont gérées dans Bosco : « Nouvelle décision » ouvre [E9c](#e9c), et chaque changement garde son auteur et sa date (règle 10). Cet écran se règle par toi seul, aucune session ni aucun agent ne peut le modifier (règle 9). Le choix du dépôt ne propose que les dépôts qui ont une décision à eux, proposée ou acceptée, et celui qu'on vient d'ouvrir ; quand aucun dépôt n'en a, l'écran le dit (« Aucun dépôt n'a encore de décision : elles arrivent proposées par un agent, ou écrites ici. ») et propose « Nouvelle décision ».
 
 **Mobile** : écran poussé depuis l'onglet Sources (Contexte et Réglages s'y ouvrent). Le bandeau de la décision à valider passe en tête ; chaque bloc est repliable, seul le premier est ouvert. Pas d'infobulle ni de colonne « Utilisé par » : les tâches concernées se retrouvent depuis la file.
 
@@ -65,7 +66,7 @@ Bosco est le seul endroit où vivent les décisions : on les écrit ici, pour un
 
 Règles de l'écran :
 
-1. Une décision porte sur un dépôt ou sur un socle. Sur un socle, elle s'applique à tous les dépôts concernés (règle 3).
+1. Une décision porte sur un dépôt ou sur un socle. Sur un socle, elle s'applique à tous les dépôts concernés (règle 3). Pour une décision de dépôt, « Porte sur » propose tous les dépôts connus, même ceux qui n'ont encore aucune décision : c'est ainsi qu'un dépôt reçoit sa première décision, puis apparaît dans le choix du dépôt d'[E9a](#e9a).
 2. Même format que les décisions proposées par un agent ([E9b](#e9b)). Titre, contexte et décision sont obligatoires.
 3. « Fait exception à » retire la décision choisie du socle pour ce seul dépôt, sans la changer ailleurs (règle 3). Le champ n'apparaît que pour une décision de dépôt.
 4. Une décision acceptée se modifie ou se remplace ensuite depuis [E9a](#e9a), sans perdre ses versions précédentes (règle 10). « Garder en proposition » la laisse hors du contexte transmis (règle 1).
@@ -198,6 +199,71 @@ Règles de l'écran :
 
 **Mobile** : écran poussé en lecture seule, refus récents en tête. Autoriser un domaine se fait depuis le poste.
 
+## <a id="e19"></a>E19 · Conteneurs en cours
+
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e19.html` · implémentation : **En cours**
+
+### <a id="e19a"></a>E19a · Conteneurs en cours : panneau déplié
+
+Ce que Bosco fait tourner en ce moment, et ce que chaque élément consomme : les agents du worker, les services de test de leurs tâches et les sessions pilotées dont un tour est en cours. Le panneau s'ouvre par-dessus n'importe quelle page, ici la file de tâches, qui reste utilisable.
+
+- **Depuis** « Conteneurs » en bas de la barre latérale, sur toutes les pages · sur le téléphone, la ligne du worker de l'onglet Tâches
+- **Ensuite** [E19b](#e19b) avec « Redémarrer » · [E13c](taches.md#e13c) avec « Arrêter » sur un agent · [E13d](taches.md#e13d) avec « Voir la tâche » · [E19c](#e19c) si Docker ne répond pas · [E19d](#e19d) pour des conteneurs restés après leur tâche
+
+Règles de l'écran :
+
+1. « Conteneurs » n'apparaît en bas de la barre latérale que si quelque chose tourne : le nombre d'agents et la mémoire au total, mis à jour toutes les 5 s ; le panneau y ajoute le processeur. Un clic déplie ou replie le panneau, sur n'importe quelle page ; il reste déplié d'une page à l'autre, et l'appareil s'en souvient (règle 13).
+2. Trois groupes : les agents du worker, une ligne par tâche ; les services de test, sous la tâche qui les a lancés ; les sessions pilotées dont un tour est en cours. Seul ce que Bosco a lancé est listé : ni les autres conteneurs du poste ni les sessions ouvertes dans un terminal.
+3. Le processeur et la mémoire se lisent par rapport au plafond de chaque conteneur ([E11a](#e11a) : 2 cœurs et 4 Go par agent ; [E12a](#e12a) : 1 cœur et 1 Go par service). À partir de 80 %, la jauge passe en orange avec « Proche du plafond » : au-delà de sa mémoire, un conteneur voit ses commandes échouer. Une session pilotée tourne sur le poste, sans plafond : sa valeur s'affiche seule.
+4. Une action par nature, jamais de démarrage à la main : c'est le worker qui lance. « Voir la tâche » ouvre son détail avec ses ressources ([E13d](taches.md#e13d)). « Arrêter » un agent annule sa tâche, avec la même confirmation ([E13c](taches.md#e13c)). « Redémarrer » un service passe par une confirmation qui dit ce qu'il provoque ([E19b](#e19b)), et « Journal » affiche ses 300 dernières lignes. « Arrêter le tour » interrompt la session pilotée, qui se reprend ensuite ([E2g](sessions.md#e2g)).
+5. Le pied rappelle la capacité du worker : agents au travail sur le plafond, et mémoire disponible au-delà de la marge gardée libre. C'est ce qui décide si la prochaine tâche part ou reste « En file » ([E11a](#e11a)).
+
+**Mobile** : écran poussé, ouvert depuis la ligne du worker de l'onglet Tâches. Un élément par carte, les jauges sous le titre ; « Journal » et « Voir la tâche » restent sur le poste. Arrêter un agent ou un tour, et redémarrer un service, se font aussi depuis le téléphone, avec la même confirmation.
+
+### <a id="e19b"></a>E19b · Conteneurs en cours : redémarrer un service de test
+
+Un service de test bloqué se redémarre sans relancer la tâche. La confirmation dit ce que la tâche va perdre, et pendant combien de temps.
+
+- **Depuis** [E19a](#e19a) avec « Redémarrer » sur un service
+- **Ensuite** [E19a](#e19a), la ligne en « Redémarrage… » puis revenue
+
+Règles de l'écran :
+
+1. L'encadré nomme la tâche qui utilise le service et ce qu'elle perd. L'agent n'est pas prévenu : s'il lançait ses tests à ce moment, ils échouent, et il le voit dans leur sortie comme pour toute panne.
+2. Le service redémarre sans être recréé : ses données de test restent. Il est prêt quand sa vérification d'état répond, avec la même attente maximale qu'au lancement ([E12a](#e12a), 180 s). Faute de réponse, la ligne passe « En échec » et le journal de la tâche le note.
+3. Après confirmation, la ligne du service affiche « Redémarrage… » dans [E19a](#e19a), puis ses valeurs reviennent. Le redémarrage est noté dans le journal de la tâche, avec l'heure. Il ne se propose que pour un service de test : un agent s'arrête, il ne redémarre pas.
+
+**Mobile** : feuille en bas de l'écran, boutons empilés en 44 px, même texte en plus court.
+
+### <a id="e19c"></a>E19c · Conteneurs en cours : Docker ne répond pas
+
+Quand Docker ne répond plus, Bosco ne peut ni mesurer ni arrêter les conteneurs. Le résumé le dit au lieu de disparaître, et le panneau montre les dernières mesures, datées.
+
+- **Depuis** « Conteneurs · Docker ne répond pas » en bas de la barre latérale
+- **Ensuite** [E19a](#e19a) dès que Docker répond · [E5c](taches.md#e5c) pour les tâches en attente
+
+Règles de l'écran :
+
+1. Le résumé reste affiché quand Docker ne répond pas, en orange avec « Docker ne répond pas » : Bosco ne sait plus si quelque chose tourne, il ne le cache donc pas.
+2. L'encadré dit depuis quand et ce qui ne marche plus. C'est la même panne que « Worker indisponible » dans la file ([E5c](taches.md#e5c)) : les tâches attendent. « Réessayer » relance la connexion tout de suite ; sinon Bosco réessaie toutes les 30 s.
+3. Les dernières mesures restent visibles, grisées et datées, actions désactivées. Dès que Docker répond, le panneau revient à [E19a](#e19a) avec des valeurs à jour.
+
+**Mobile** : même écran poussé qu'[E19a](#e19a), l'encadré en tête avec « Réessayer » en 44 px.
+
+### <a id="e19d"></a>E19d · Conteneurs en cours : restés après une tâche
+
+Un conteneur dont la tâche est finie n'a plus rien à faire là, par exemple après un arrêt brutal de Bosco. Il apparaît à part, en tête du panneau, jusqu'à ce que Bosco le supprime.
+
+- **Depuis** [E19a](#e19a) après un redémarrage de Bosco
+- **Ensuite** [E19a](#e19a) une fois supprimés
+
+Règles de l'écran :
+
+1. Un conteneur dont la tâche est finie (validée, rejetée, en échec, annulée) est normalement supprimé avec elle. S'il reste, après un arrêt brutal de Bosco ou une suppression qui a échoué, il passe dans ce groupe. Bosco les supprime au démarrage puis toutes les heures ; « Supprimer » et « Tout supprimer maintenant » n'attendent pas, sans confirmation puisque la branche de la tâche est déjà rapatriée.
+2. Un conteneur resté est arrêté : il ne compte ni dans les totaux ni dans la capacité du worker, seulement dans la place prise sur le disque, indiquée ici. Le résumé de la barre latérale ne change pas.
+
+**Mobile** : le groupe en tête de l'écran poussé, « Tout supprimer maintenant » en 44 px ; la suppression une à une reste sur le poste.
+
 ## <a id="e12"></a>E12 · Environnement de test
 
 [specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e12.html` · implémentation : **Livré (Environnement de test développé, écran compris (E12a) : services lus dans le fichier des services de test du dépôt, à sa branche courante, jamais dans une branche d'agent ; modes Automatique, Choisir et Aucun ; l'application elle-même et les images node écartées ; seules l'image, les variables, la commande et la vérification d'état sont gardées, le reste est retiré et nommé (ports publiés, volumes nommés, dossiers du poste, droits étendus) ; services sur le réseau privé de la tâche, joints par leur nom, 1 Go et 1 processeur chacun, attente de 180 s au plus, échec non bloquant et agent prévenu ; image de l'agent par dépôt ; dernier lancement avec le temps de chaque service et l'heure de suppression. Vérifié sur de vraies tâches : Redis joint par son nom, puis un service introuvable sans bloquer la tâche. Écart : les options gardées se limitent à celles-ci ; un service qui dépend d'un fichier du dépôt monté ne démarre pas.)**
@@ -281,6 +347,7 @@ Règles de l'écran :
 - **CA-CONT-03** · [E9a](#e9a) · Étant donné une décision seulement proposée par un agent, quand la personne ouvre le contexte du dépôt, alors le bandeau de validation s'affiche avec son compteur, repris sur l'entrée « Contexte » de la barre latérale, la décision n'est pas transmise, et « Examiner » ouvre la décision (RF-CONT-02).
 - **CA-CONT-04** · [E9a](#e9a) · Étant donné aucune décision à valider, quand la personne ouvre le contexte du dépôt, alors le bandeau n'apparaît pas (RF-CONT-02).
 - **CA-CONT-05** · [E9a](#e9a) · Étant donné le contexte d'un dépôt, quand la personne choisit « Nouvelle décision », « Aperçu du texte transmis » ou « Gérer les socles », alors elle arrive respectivement sur [E9c](#e9c), [E9f](#e9f) et [E14a](#e14a) (RF-CONT-10).
+- **CA-CONT-86** · [E9a](#e9a) · Étant donné des dépôts connus dont seuls certains ont une décision à eux, proposée ou acceptée, quand la personne ouvre le choix du dépôt, alors il ne propose que ces dépôts, plus celui qu'elle vient d'ouvrir ; quand aucun dépôt n'a de décision, l'écran affiche « Aucun dépôt n'a encore de décision : elles arrivent proposées par un agent, ou écrites ici. » avec « Nouvelle décision » (RF-CONT-10).
 
 ### <a id="e9b-decision-proposee-par-un-agent-a-valider"></a>E9b · Décision proposée par un agent, à valider
 
@@ -296,6 +363,7 @@ Règles de l'écran :
 - **CA-CONT-12** · [E9c](#e9c) · Étant donné le formulaire « Nouvelle décision », quand la personne laisse vide le titre, le contexte ou la décision, alors la création est refusée car ces trois champs sont obligatoires (RF-CONT-10).
 - **CA-CONT-13** · [E9c](#e9c) · Étant donné une décision de dépôt, quand la personne renseigne « Fait exception à » avec une décision d'un socle, alors cette décision est retirée du socle pour ce seul dépôt et sans changement ailleurs ; le champ n'apparaît pas pour une décision de socle (RF-CONT-03).
 - **CA-CONT-14** · [E9c](#e9c) · Étant donné une nouvelle décision, quand la personne choisit « Accepter la décision », alors elle est transmise aux prochains agents, et quand elle choisit « Garder en proposition », alors elle reste hors du contexte transmis (RF-CONT-01, RF-CONT-10).
+- **CA-CONT-87** · [E9c](#e9c) · Étant donné une nouvelle décision de dépôt, quand la personne ouvre « Porte sur », alors tous les dépôts connus y figurent, même sans décision ; une décision acceptée pour un dépôt qui n'en avait pas le fait apparaître dans le choix du dépôt d'[E9a](#e9a) (RF-CONT-10).
 
 ### <a id="e9d-decision-acceptee-et-historique"></a>E9d · Décision acceptée et historique
 
@@ -384,3 +452,31 @@ Règles de l'écran :
 
 - **CA-CONT-65** · [E14c](#e14c) · Étant donné un socle existant, quand la personne clique sur « Modifier le socle », alors le formulaire du nouveau socle s'ouvre prérempli (nom, portée, héritage, dépôts) ; une fois enregistré, les prochains agents des dépôts qu'il couvre désormais reçoivent ses décisions (RF-CONT-03).
 - **CA-CONT-66** · [E14c](#e14c) · Étant donné une décision d'un socle écrite et acceptée d'emblée, ou changée par une nouvelle version, quand la personne enregistre, alors la même confirmation compte les dépôts concernés, socles qui en héritent compris ; une décision seulement proposée s'enregistre sans confirmation (RF-CONT-03, RF-CONT-11).
+
+### <a id="e19a-conteneurs-en-cours-panneau-deplie"></a>E19a · Conteneurs en cours : panneau déplié
+
+- **CA-CONT-70** · [E19a](#e19a) · Étant donné que rien ne tourne, quand la personne regarde le bas de la barre latérale, alors « Conteneurs » n'y figure pas ; dès qu'un agent, un service de test ou un tour de session pilotée tourne, il apparaît avec le nombre d'agents et la mémoire au total, mis à jour toutes les 5 s (RF-CONT-13).
+- **CA-CONT-71** · [E19a](#e19a) · Étant donné le résumé « Conteneurs », quand la personne clique dessus, alors le panneau se déplie par-dessus la page, qui reste utilisable ; il reste déplié d'une page à l'autre, et l'appareil s'en souvient après un rechargement ; un nouveau clic ou « Replier » le replie.
+- **CA-CONT-72** · [E19a](#e19a) · Étant donné des agents, des services et une session pilotée en cours, quand la personne lit le panneau, alors il montre trois groupes : les agents du worker (une ligne par tâche), les services de test sous la tâche qui les a lancés, les sessions pilotées dont un tour est en cours ; aucun autre conteneur du poste ni aucune session ouverte dans un terminal n'y figure.
+- **CA-CONT-73** · [E19a](#e19a) · Étant donné un conteneur à 80 % ou plus de son plafond de processeur ou de mémoire (2 cœurs et 4 Go par agent, 1 cœur et 1 Go par service), quand le panneau s'affiche, alors sa valeur passe en orange avec « Proche du plafond » ; une session pilotée, sans plafond, affiche sa valeur seule.
+- **CA-CONT-74** · [E19a](#e19a) · Étant donné les lignes du panneau, quand la personne agit, alors « Voir la tâche » ouvre son détail ([E13d](taches.md#e13d)), « Arrêter » un agent ouvre la confirmation d'annulation de sa tâche ([E13c](taches.md#e13c)), « Journal » d'un service affiche ses 300 dernières lignes, « Arrêter le tour » interrompt la session pilotée, qui se reprend ensuite ([E2g](sessions.md#e2g)) ; aucun bouton ne démarre un conteneur.
+- **CA-CONT-75** · [E19a](#e19a) · Étant donné le pied du panneau, quand la personne le lit, alors il donne les agents au travail sur le plafond et la mémoire disponible au-delà de la marge gardée libre ([E11a](#e11a)).
+- **CA-CONT-76** · [E19a](#e19a) · Étant donné un mobile, quand la personne touche la ligne du worker de l'onglet Tâches, alors un écran poussé montre une carte par élément ; arrêter un agent ou un tour et redémarrer un service s'y font avec la même confirmation, « Journal » et « Voir la tâche » restant sur le poste.
+
+### <a id="e19b-conteneurs-en-cours-redemarrer-un-service-de-test"></a>E19b · Conteneurs en cours : redémarrer un service de test
+
+- **CA-CONT-77** · [E19b](#e19b) · Étant donné un service de test, quand la personne clique sur « Redémarrer », alors la confirmation nomme la tâche qui l'utilise et ce qu'elle perd ; « Garder le service » ferme sans rien faire ; un agent n'a pas d'action « Redémarrer ».
+- **CA-CONT-78** · [E19b](#e19b) · Étant donné la confirmation, quand la personne redémarre le service, alors il redémarre sans être recréé (ses données de test restent), sa ligne affiche « Redémarrage… » puis ses valeurs reviennent dès que sa vérification d'état répond, et le journal de la tâche note le redémarrage avec l'heure ; l'agent n'est pas prévenu.
+- **CA-CONT-79** · [E19b](#e19b) · Étant donné un service qui ne répond pas dans les 180 s après son redémarrage, quand l'attente se termine, alors sa ligne passe « En échec » et le journal de la tâche le note.
+
+### <a id="e19c-conteneurs-en-cours-docker-ne-repond-pas"></a>E19c · Conteneurs en cours : Docker ne répond pas
+
+- **CA-CONT-80** · [E19c](#e19c) · Étant donné que Docker ne répond plus, quand la personne regarde la barre latérale, alors « Conteneurs » reste affiché, en orange, avec « Docker ne répond pas ».
+- **CA-CONT-81** · [E19c](#e19c) · Étant donné le panneau ouvert pendant la panne, quand la personne le lit, alors un encadré dit depuis quand Docker ne répond pas et ce qui ne marche plus, et les dernières mesures restent visibles, grisées et datées, leurs actions désactivées.
+- **CA-CONT-82** · [E19c](#e19c) · Étant donné la panne, quand la personne clique sur « Réessayer », alors la connexion est retentée tout de suite ; sinon Bosco réessaie toutes les 30 s, et dès que Docker répond, le panneau revient à [E19a](#e19a) avec des valeurs à jour.
+
+### <a id="e19d-conteneurs-en-cours-restes-apres-une-tache"></a>E19d · Conteneurs en cours : restés après une tâche
+
+- **CA-CONT-83** · [E19d](#e19d) · Étant donné un conteneur dont la tâche est finie (validée, rejetée, en échec, annulée), resté après un arrêt brutal de Bosco ou une suppression qui a échoué, quand la personne ouvre le panneau, alors il figure en tête dans « Restés après leur tâche », avec l'heure de la prochaine suppression automatique.
+- **CA-CONT-84** · [E19d](#e19d) · Étant donné des conteneurs restés, quand Bosco démarre puis toutes les heures, alors il les supprime ; « Supprimer » et « Tout supprimer maintenant » les suppriment tout de suite, sans confirmation.
+- **CA-CONT-85** · [E19d](#e19d) · Étant donné des conteneurs restés, quand la personne lit les totaux, alors ils ne comptent ni dans le processeur, ni dans la mémoire, ni dans la capacité du worker, ni dans le résumé de la barre latérale ; seule la place prise sur le disque est indiquée.

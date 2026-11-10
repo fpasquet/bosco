@@ -21,6 +21,7 @@
 | Application Android | Expo (React Native), react-native-webview, expo-camera, expo-secure-store, expo-notifications, react-native-safe-area-context, dernières versions (DT-33) ; correctif de react-native-webview (pnpm patch) et module natif local `bosco-trust` | Choix du porteur du projet ; coquille autour de l'interface téléphone, appairage par QR code, trousseau, notifications locales | React Native complet, application web installable |
 | Zone de message | Tiptap, dernière version, avec son extension de mentions (DT-31) | Choix du porteur du projet ; puces non modifiables pour un fichier (« @ ») ou une commande (« / »), suggestions au clavier, texte simple en sortie | Zone de texte simple, Lexical |
 | Fil d'un agent | Patterns d'AI Elements (composants shadcn/ui `trace`, `code-block`, `message`, `bubble`), Streamdown pour le Markdown, Shiki pour le code (DT-26) | Choix du porteur du projet ; réflexions, outils, sorties et réponses rendus comme dans les outils d'agents, sur les classes du projet | Rendu Markdown maison, react-markdown |
+| Graphes | `@xyflow/react` 12.12, placement par `@dagrejs/dagre` 3.1 (DT-34) | Choix du porteur du projet ; nœuds en composants React, déplacement, zoom et ajustement à la vue fournis ; placement de haut en bas sans chevauchement | Dessin maison en SVG, `elkjs` |
 | Icônes | `lucide-react` | Mêmes icônes que les maquettes | Autres jeux |
 | MCP | SDK MCP officiel | Serveur HTTP | Implémentation maison |
 | Agents | Claude Agent SDK | DT-09 | Lancer la CLI |
