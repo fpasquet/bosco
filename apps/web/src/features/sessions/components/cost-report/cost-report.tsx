@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import type { CostReportDto } from '@bosco/domain';
 import { cn } from '@/lib/cn';
+import { useElementWidth } from '../../hooks/use-element-width';
 import { formatCost, modelName } from '../../lib/format';
 import { axisMax, chartSeries, seriesCost } from '../../lib/history';
 
@@ -15,7 +16,8 @@ export interface CostReportProps {
 const FILLS = ['fill-primary', 'fill-info', 'fill-warning', 'fill-muted'];
 const SWATCHES = ['bg-primary', 'bg-info', 'bg-warning', 'bg-muted'];
 
-const CHART = { height: 180, gap: 4, left: 36 };
+/** `top` laisse la place à l'étiquette du haut de l'axe ; `slot` est la largeur minimale d'un jour, au-delà de laquelle le graphique défile. */
+const CHART = { height: 180, top: 12, gap: 4, left: 36, slot: 16 };
 
 function usd(value: number): string {
   return formatCost({ unpriced: false, usd: value });
@@ -39,10 +41,12 @@ function Chart({ now, report }: CostReportProps) {
   const top = series.filter((entry) => entry.name !== '*').map((entry) => entry.name);
   const totals = report.days.map((day) => day.repositories.reduce((total, entry) => total + entry.usd, 0));
   const max = axisMax(totals);
-  const width = Math.max(report.days.length * 24, 240);
+  // Le graphique occupe toute la carte, et défile seulement quand les jours n'y tiennent plus.
+  const [container, measured] = useElementWidth<HTMLDivElement>();
+  const width = Math.max(measured ?? 0, CHART.left + report.days.length * CHART.slot, 240);
   const bar = (width - CHART.left) / Math.max(report.days.length, 1) - CHART.gap;
   const today = now.toLocaleDateString('sv');
-  const y = (value: number) => CHART.height - (value / max) * CHART.height;
+  const y = (value: number) => CHART.top + CHART.height - (value / max) * CHART.height;
   return (
     <figure className="flex flex-col gap-2">
       <figcaption className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted">
@@ -55,12 +59,12 @@ function Chart({ now, report }: CostReportProps) {
           </span>
         ))}
       </figcaption>
-      <div className="overflow-x-auto">
+      <div ref={container} className="overflow-x-auto">
         <svg
           role="img"
           aria-label="Coût estimé par jour ouvré, par dépôt"
           width={width}
-          height={CHART.height + 24}
+          height={CHART.top + CHART.height + 24}
           className="text-muted"
         >
           {[0, 0.5, 1].map((ratio) => (
@@ -97,7 +101,7 @@ function Chart({ now, report }: CostReportProps) {
                 {isToday && (
                   <text
                     x={x + bar / 2}
-                    y={Math.max(12, y(total) - 4)}
+                    y={Math.max(CHART.top, y(total) - 4)}
                     textAnchor="middle"
                     className="fill-ink text-xs font-semibold"
                   >
@@ -106,7 +110,7 @@ function Chart({ now, report }: CostReportProps) {
                 )}
                 <text
                   x={x + bar / 2}
-                  y={CHART.height + 16}
+                  y={CHART.top + CHART.height + 16}
                   textAnchor="middle"
                   className={cn('text-xs', isToday ? 'fill-ink' : 'fill-muted')}
                 >
