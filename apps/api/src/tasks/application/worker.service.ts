@@ -10,6 +10,10 @@ export const AGENT_LIMITS = { memory: 4 * 1024 ** 3, cpus: 2, processes: 512 } a
 export const RESERVED_MEMORY = 4 * 1024 ** 3;
 
 export interface WorkerStatus {
+  /** Mémoire qu'un agent réserve en partant, en octets */
+  agentMemory: number;
+  /** Mémoire libre au-delà de la marge gardée libre, en octets (E6a, E11a) */
+  availableMemory: number;
   capacity: number;
   running: number;
   /** null quand le worker est disponible ; sinon pourquoi les tâches attendent (« Worker indisponible ») */
@@ -76,13 +80,19 @@ export class WorkerService {
   private readonly runs = new Map<number, AgentRun>();
   /** Tâches lancées dans ce passage, dont l'agent n'a pas encore démarré : leur place est déjà prise */
   private readonly starting = new Map<number, string>();
-  private status: WorkerStatus = { capacity: 0, running: 0, unavailable: null, waiting: {} };
+  private status: Pick<WorkerStatus, 'unavailable' | 'waiting'> = { unavailable: null, waiting: {} };
   private ticking = false;
 
   constructor(private readonly deps: WorkerDeps) {}
 
   current(): WorkerStatus {
-    return { ...this.status, capacity: this.deps.maxAgents(), running: this.busy() };
+    return {
+      ...this.status,
+      agentMemory: AGENT_LIMITS.memory,
+      availableMemory: Math.max(0, this.deps.freeMemory() - RESERVED_MEMORY),
+      capacity: this.deps.maxAgents(),
+      running: this.busy(),
+    };
   }
 
   private busy(): number {
@@ -116,7 +126,7 @@ export class WorkerService {
           void this.run(task);
         }
       }
-      this.status = { capacity: this.deps.maxAgents(), running: this.busy(), unavailable, waiting };
+      this.status = { unavailable, waiting };
       return this.current();
     } finally {
       this.ticking = false;

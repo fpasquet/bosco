@@ -12,10 +12,11 @@
 - **RF-TACH-06** · **6. Rien n'est fusionné sans toi** : valider une tâche débloque les suivantes, mais Bosco ne fusionne jamais. Selon le réglage du dépôt, la validation peut aussi **pousser la branche et ouvrir une PR en brouillon** : Jamais (par défaut), Demander à chaque fois ou Toujours. Seule la branche de la tâche est poussée, jamais la branche principale, avec git et GitHub CLI du poste : l'ouverture de PR est réservée aux dépôts GitHub.
 - **RF-TACH-07** · **7. Une tâche peut être annulée à tout moment** : le worker arrête l'agent en quelques secondes ; une session interactive est prévenue qu'elle doit s'arrêter.
 - **RF-TACH-08** · **8. Une tâche se modifie tant qu'elle n'a pas démarré, et se relance après un échec** : la relance repart de sa branche ou de zéro, avec un budget revu si besoin. Annuler une tâche fait échouer celles qui l'attendent, après confirmation.
+- **RF-TACH-09** · **9. Un ticket GitHub peut tenir lieu de consigne** : une tâche liée à un ticket GitHub n'a pas besoin de consigne écrite. Bosco lit le ticket au lancement et le transmet à l'agent comme consigne ; la copie transmise est gardée dans le journal de la tâche, même si le ticket change ensuite. Sans ticket, la consigne reste obligatoire.
 
 ## <a id="e5"></a>E5 · File de tâches
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `taches/e5.html` · implémentation : **Livré (File de tâches développée (E5a, E5b, E5c) : file vide, file triée par urgence en trois onglets, filtres, enchaînement, raison de l'attente ; indicateur du worker (agents au travail) et bandeau « Worker indisponible » avec « Réessayer » quand Docker ou l'abonnement manque, les tâches restant en file.)**
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `taches/e5.html` · implémentation : **À faire évoluer (E5b : l'indicateur du worker ouvre le panneau des conteneurs (E19a) quand un agent travaille. Déjà livré : file triée par urgence en trois onglets, filtres, raison de l'attente, indicateur du worker et bandeau « Worker indisponible » avec « Réessayer » quand Docker ou l'abonnement manque, les tâches restant en file ; enchaînement dessiné, une flèche de chaque préalable à la tâche qui l'attend, rangé seul de haut en bas, à déplacer, zoomer et recentrer, jamais réduit au point d'être illisible, la chaîne survolée dans la liste mise en évidence et le reste estompé, une tâche s'ouvrant d'un clic.)**
 
 ### <a id="e5a"></a>E5a · File de tâches : vide
 
@@ -42,11 +43,12 @@ Tout le travail préparé pour Claude Code, du plus urgent au plus lointain : d'
 
 Règles de l'écran :
 
-1. Le worker fait travailler au plus 4 agents à la fois, tous dépôts confondus, et chaque dépôt peut fixer sa propre limite (1 pour api-voix, voir [E8a](#e8a)). Il lui faut aussi assez de mémoire libre ([E11a](contexte.md#e11a)). Une tâche prête mais sans place ou sans mémoire suffisante reste « En file », avec la raison, et part dès que c'est possible (règle 5).
+1. Le worker fait travailler au plus 4 agents à la fois, tous dépôts confondus, et chaque dépôt peut fixer sa propre limite (1 pour api-voix, voir [E8a](#e8a)). Il lui faut aussi assez de mémoire libre ([E11a](contexte.md#e11a)). Une tâche prête mais sans place ou sans mémoire suffisante reste « En file », avec la raison, et part dès que c'est possible (règle 5). Quand un agent travaille, l'indicateur ouvre le panneau des conteneurs ([E19a](contexte.md#e19a)).
 2. « Attend » liste les tâches préalables avec leur état. Une tâche part quand toutes sont validées (règle 3). Si une préalable échoue, est rejetée sans relance ou est annulée, la tâche passe « En échec » avec le motif « Préalable T-… en échec », et celles qui l'attendent aussi.
-3. L'enchaînement dessine les tâches actives liées entre elles. Au survol d'une tâche de la liste, sa chaîne se met en évidence. T-13 est dans le même dépôt que T-12 : elle partira de la branche de T-12 tant que celle-ci n'est pas fusionnée (règle 4). T-15 est dans un autre dépôt : seul l'ordre compte.
+3. L'enchaînement dessine les tâches actives liées entre elles : une flèche va d'une préalable à la tâche qui l'attend, et les tâches se rangent seules de haut en bas, sans se chevaucher. Au survol d'une ligne de la liste, sa chaîne se met en évidence : ses tâches sont entourées, ses flèches colorées, et les autres tâches et flèches s'estompent ; un clic sur une tâche du dessin ouvre son détail ([E13a](#e13a)). « même branche » sur une flèche : T-13 est dans le même dépôt que T-12 et partira de sa branche tant que celle-ci n'est pas fusionnée (règle 4). T-15 est dans un autre dépôt : seul l'ordre compte.
 4. Une tâche « Ma session » attend qu'une session Claude Code la prenne : on demande dans la session « prends la prochaine tâche Bosco », dans le bon dépôt. La session reçoit la consigne et le contexte, signale ses étapes (visibles en direct ici), puis clôt la tâche, qui passe « À relire ». Deux sessions ne prennent jamais la même tâche.
 5. Budget : dépensé sur prévu. Toute ligne ouvre le détail de la tâche ([E13a](#e13a)) ; « Relire » ouvre directement sa revue ([E7a](#e7a)). La même tâche apparaît dans la vue d'ensemble comme une session du profil worker « À relire » ([E2c](sessions.md#e2c)). Tri de la liste : à relire, en attente d'une session, en cours, en file, bloquées ; puis la plus ancienne en premier.
+6. Le dessin se déplace en le faisant glisser et se zoome à la molette ou avec + et − ; « Recentrer » remet les tâches en vue, comme à l'ouverture de la page. Le cadre prend la hauteur de l'enchaînement, et le dessin ne se réduit jamais au point de rendre les tâches illisibles : un enchaînement trop large pour le cadre se parcourt en le déplaçant. Les tâches ne se déplacent pas à la main : leur place suit l'enchaînement.
 
 **Mobile** : la liste devient des cartes dans le même ordre ; l'enchaînement est remplacé par les puces « Attend » sur chaque carte. Le bouton flottant crée une tâche ([E6a](#e6a)). Une tâche « Ma session » ne peut pas être prise depuis le téléphone, d'où la mention « À prendre depuis Claude Code sur le poste ».
 
@@ -68,7 +70,7 @@ Règles de l'écran :
 
 ## <a id="e6"></a>E6 · Nouvelle tâche
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `taches/e6.html` · implémentation : **Livré (Formulaire de tâche développé (E6a, E6b) : dépôt des sources surveillées, dossier, consigne, mode, préalables, branche de départ, contexte, garde-fous plafonnés par les droits du dépôt choisi, récapitulatif ; erreurs liées à leur champ avec un bandeau qui y renvoie. Mode « Ma session » : une session Claude Code interactive prend la tâche avec « prends la prochaine tâche Bosco », par le serveur MCP de Bosco (installé dans un profil avec bosco mcp install), signale ses étapes dans le journal et la termine avec son compte rendu ; elle passe alors « À relire » ; une session peut aussi préparer une tâche. Vérifié avec une vraie session. Écart : modèle et effort ne se choisissent pas encore.)**
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `taches/e6.html` · implémentation : **À faire évoluer (E6a : une tâche liée à un ticket GitHub n'a plus besoin de consigne écrite, Bosco transmet le ticket comme consigne et en garde une copie dans le journal (règle 9). Déjà livré : dépôt des sources surveillées, dossier, consigne, mode, préalables, branche de départ, contexte, garde-fous plafonnés par les droits du dépôt choisi, récapitulatif, ligne du bas qui dit si la tâche partira tout de suite ou attendra une place avec la capacité du moment, erreurs liées à leur champ ; mode « Ma session » par le serveur MCP de Bosco (installé dans un profil avec bosco mcp install), vérifié avec une vraie session. Écart : modèle et effort ne se choisissent pas encore.)**
 
 ### <a id="e6a"></a>E6a · Nouvelle tâche : formulaire
 
@@ -83,8 +85,8 @@ Règles de l'écran :
 2. Un mode par tâche (règle 1). Worker : sans terminal, dans une copie jetable du dépôt. Ma session : la tâche attend qu'une session Claude Code la prenne dans le dépôt.
 3. Une tâche part quand toutes ses préalables sont validées, de n'importe quel dépôt (règle 3). Si une préalable du même dépôt n'est pas encore fusionnée, la tâche part de sa branche et le champ « Branche de départ » est grisé ; sinon elle part de la branche principale du dépôt (règle 4).
 4. Les garde-fous sont plafonnés par les droits du dépôt : une tâche peut les resserrer, jamais les dépasser (règle 5). Modèle et effort sont hérités tant qu'on n'en choisit pas d'autres ; les outils sont ceux du dépôt, qu'on peut restreindre. Voir les droits dans [E8a](#e8a). Si le mode « Ma session » est choisi, le bloc Garde-fous disparaît, remplacé par « Les réglages de ta session s'appliquent. »
-5. Le contexte (ticket, PR, décision) est facultatif : il est transmis à l'agent avec la consigne.
-6. Pas de programmation à une heure donnée en V2 : la tâche part dès que ses conditions sont remplies. La programmation est écartée de cette version.
+5. Le contexte (ticket, PR, décision) est facultatif : il est transmis à l'agent avec la consigne. Quand un ticket GitHub est lié, la consigne devient facultative : Bosco transmet à l'agent le contenu du ticket comme consigne, et en garde une copie dans le journal de la tâche ; une consigne écrite le complète (dossier, contraintes, ce qui n'est pas à faire) (règle 9).
+6. La tâche part dès que ses conditions sont remplies : préalables validées, puis une place dans le worker (plafond d'agents du worker et du dépôt, mémoire au-delà de la marge gardée libre, [E11a](contexte.md#e11a)). La ligne dit ce qui la retiendra, avec la place disponible maintenant : « 2 / 4 agents » ou « api-voix : 1 agent sur 1, attend une place ». Elle n'apparaît que pour le worker. Pas de programmation à une heure donnée : elle est écartée de cette version.
 
 **Mobile** : le formulaire tient en une colonne dans un écran poussé. Le mode devient un sélecteur à deux segments ; le dossier (racine du dépôt) n'est pas affiché et la branche de départ est rappelée sous les préalables ; les garde-fous sont repliés derrière un résumé « 1,50 $ · 30 tours · Sonnet 5.5 ». Le bouton « Créer la tâche » est collé en bas, à 44 px de haut.
 
@@ -187,7 +189,7 @@ Règles de l'écran :
 
 ## <a id="e13"></a>E13 · Détail d'une tâche
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `taches/e13.html` · implémentation : **Livré (Détail d'une tâche développé (E13a, E13b, E13c) : consigne, préalables et leur état, branche de départ, garde-fous, journal ; modifier avant le départ ; annuler avec la confirmation qui nomme les tâches en cascade ; relancer un échec depuis la branche ou de zéro, budget revu. « Voir la session » ouvre la session de la tâche. Une tâche que personne n'attend s'annule d'un clic ; « Annuler l'annulation » la remet dans la file tant que le message est affiché, si elle n'avait pas démarré.)**
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `taches/e13.html` · implémentation : **À faire évoluer (E13d, nouvel état : ressources d'une tâche du worker en cours (agent et services de test), pic de mémoire noté dans le journal. Déjà livré : consigne, préalables et leur état, branche de départ, garde-fous, journal ; modifier avant le départ ; annuler avec la confirmation qui nomme les tâches en cascade ; relancer un échec ; « Voir la session » ; « Annuler l'annulation » tant que le message est affiché.)**
 
 ### <a id="e13a"></a>E13a · Détail d'une tâche : bloquée
 
@@ -240,6 +242,22 @@ Règles de l'écran :
 
 **Mobile** : feuille en bas de l'écran, boutons empilés en 44 px. Les deux cas d'une tâche déjà démarrée sont résumés en une phrase, donc pas de pastille 4.
 
+### <a id="e13d"></a>E13d · Détail d'une tâche : en cours, avec ses ressources
+
+Une tâche du worker au travail : en plus de sa consigne et de son journal, on voit ce que consomment son agent et ses services de test, sans ouvrir le panneau des conteneurs.
+
+- **Depuis** [E5b](#e5b) en ouvrant une tâche en cours · [E19a](contexte.md#e19a) avec « Voir la tâche »
+- **Ensuite** [E19a](contexte.md#e19a) avec « Tous les conteneurs » · [E13c](#e13c) avec « Annuler la tâche » · [E2a](sessions.md#e2a) avec « Voir la session »
+
+Règles de l'écran :
+
+1. Le même écran qu'[E13a](#e13a), pour une tâche en cours : « Modifier » a disparu, « Voir la session » ouvre son fil en direct, « Annuler la tâche » arrête l'agent ([E13c](#e13c)).
+2. « Ressources » ne concerne qu'une tâche du worker en cours : processeur et mémoire de son agent, mémoire de chacun de ses services, rapportés à leur plafond et mis à jour toutes les 5 s, avec les mêmes jauges et le même orange à 80 % que le panneau des conteneurs. « Tous les conteneurs » ouvre ce panneau ([E19a](contexte.md#e19a)), où se redémarre un service.
+3. Le journal note le départ avec la place prise (au plus 1 agent pour api-voix, 4 pour le worker), le temps de démarrage de chaque service, et, s'il y en a, chaque redémarrage de service fait depuis [E19b](contexte.md#e19b), avec l'heure.
+4. À la fin, les conteneurs sont supprimés et le bloc disparaît. Le journal garde le pic de mémoire de l'agent et de chaque service : c'est ce qui permet d'ajuster les plafonds ([E11a](contexte.md#e11a), [E12a](contexte.md#e12a)).
+
+**Mobile** : les ressources tiennent dans une carte, la mémoire des services sur une ligne ; « Tous les conteneurs » ouvre l'écran poussé d'[E19a](contexte.md#e19a). Pas de pastille 4 : la mention du pic se lit dans le journal une fois la tâche finie.
+
 ## <a id="criteres-dacceptation"></a>Critères d'acceptation
 
 ### <a id="e5-file-de-taches"></a>E5 · File de tâches
@@ -262,6 +280,12 @@ Règles de l'écran :
 - **CA-TACH-16** · [E5c](#e5c) · Étant donné le bandeau « Worker indisponible », quand Docker répond de nouveau ou que la personne clique sur « Réessayer », alors le bandeau disparaît et les tâches prêtes partent selon la place et la mémoire (RF-TACH-05).
 - **CA-TACH-17** · [E5c](#e5c) · Étant donné que Docker est indisponible, quand la personne utilise les tâches « Ma session », « Relire » et « Valider », alors ces actions restent possibles.
 - **CA-TACH-18** · [E5c](#e5c) · Étant donné une tâche en cours au moment de la coupure de Docker, quand la personne ouvre la file, alors la tâche est « En échec » avec le motif « Docker ne répond pas », visible dans l'onglet Échecs, et se relance depuis son détail une fois Docker revenu.
+- **CA-TACH-73** · [E5b](#e5b) · Étant donné des tâches actives liées, quand la personne lit l'enchaînement, alors une flèche va de chaque préalable à la tâche qui l'attend (T-15 en reçoit deux, de T-13 et de T-14), les tâches sont rangées seules de haut en bas sans se chevaucher, et « même branche » est écrit sur la flèche d'une préalable du même dépôt pas encore fusionnée (RF-TACH-03, RF-TACH-04).
+- **CA-TACH-74** · [E5b](#e5b) · Étant donné l'enchaînement, quand la personne fait glisser le dessin, zoome à la molette ou avec + et −, ou clique sur « Recentrer », alors le dessin se déplace, change d'échelle ou remet toutes les tâches en vue comme à l'ouverture de la page ; les tâches elles-mêmes ne se déplacent pas à la main.
+- **CA-TACH-75** · [E5b](#e5b) · Étant donné une tâche du dessin de l'enchaînement, quand la personne clique dessus, alors son détail s'ouvre ([E13a](#e13a)).
+- **CA-TACH-76** · [E5b](#e5b) · Étant donné qu'un agent du worker travaille, quand la personne clique sur l'indicateur du worker, alors le panneau des conteneurs s'ouvre ([E19a](contexte.md#e19a)).
+- **CA-TACH-77** · [E5c](#e5c) · Étant donné que Docker ne répond pas, quand la personne lit l'enchaînement, alors il est dessiné comme en [E5b](#e5b) et son résumé dit qu'une tâche débloquée ne partira qu'au retour de Docker.
+- **CA-TACH-83** · [E5b](#e5b) · Étant donné un enchaînement plus large que son cadre, quand la personne ouvre la file, alors le cadre prend la hauteur du dessin, qui ne se réduit pas au point de rendre les tâches illisibles et se parcourt en le déplaçant ; au survol d'une ligne de la liste, les tâches hors de sa chaîne et leurs flèches s'estompent, sans perdre le contraste de leur texte (RF-TACH-03, NF-18).
 
 ### <a id="e6-nouvelle-tache"></a>E6 · Nouvelle tâche
 
@@ -278,6 +302,9 @@ Règles de l'écran :
 - **CA-TACH-29** · [E6b](#e6b) · Étant donné une préalable déjà en échec, quand la personne clique sur « Créer la tâche », alors le message demande de la relancer ou de retirer la préalable (RF-TACH-03).
 - **CA-TACH-30** · [E6b](#e6b) · Étant donné un formulaire avec des erreurs, quand la personne clique sur « Créer la tâche », alors un bandeau récapitule les erreurs avec un renvoi vers chaque champ, le focus se place sur le premier champ en erreur et « Créer la tâche » reste actif pour relancer la vérification.
 - **CA-TACH-31** · [E6b](#e6b) · Étant donné des droits du dépôt resserrés depuis la création de la tâche, quand elle se lance, alors le surplus est écarté et noté dans le journal de la tâche.
+- **CA-TACH-78** · [E6a](#e6a) · Étant donné le formulaire, quand la personne le lit, alors la ligne du bas dit ce qui retiendra la tâche (ses préalables, puis une place dans le worker : plafond d'agents du worker et du dépôt, mémoire au-delà de la marge gardée libre) avec la capacité du moment (« maintenant : 0 / 4 agents, 28 Go disponibles ») ; sur mobile, « Après T-12, s'il y a de la place · maintenant 0 / 4 agents ».
+- **CA-TACH-84** · [E6a](#e6a) · Étant donné une tâche liée à un ticket GitHub, quand la personne la crée sans consigne, alors la tâche est acceptée et l'agent reçoit le contenu du ticket comme consigne ; sans ticket lié, la consigne reste obligatoire (RF-TACH-09).
+- **CA-TACH-85** · [E6a](#e6a) · Étant donné une tâche lancée avec un ticket GitHub pour consigne, quand le ticket change ensuite, alors le journal de la tâche garde la copie transmise à l'agent au lancement (RF-TACH-09).
 
 ### <a id="e7-revue-dune-tache"></a>E7 · Revue d'une tâche
 
@@ -327,4 +354,8 @@ Règles de l'écran :
 - **CA-TACH-69** · [E13c](#e13c) · Étant donné une tâche prise par une session interactive, quand elle est annulée, alors la session est prévenue à sa prochaine étape qu'elle doit s'arrêter, sans être coupée de force (RF-TACH-07).
 - **CA-TACH-70** · [E13c](#e13c) · Étant donné une tâche annulée, quand la personne ouvre la file, alors elle est « Annulée », barrée, dans l'onglet Terminées, et son journal garde l'annulation et son motif ; « Garder la tâche » ramène au détail sans rien changer.
 - **CA-TACH-71** · [E13c](#e13c) · Étant donné une tâche qui n'avait pas démarré, annulée directement, quand la personne clique sur « Annuler l'annulation » tant que le message est affiché (8 secondes), alors la tâche revient dans la file avec son état d'avant et son journal le note ; une tâche déjà démarrée, ou dont l'annulation a fait échouer d'autres tâches, ne se rétablit pas ainsi et se relance (RF-TACH-07, RF-TACH-08).
+- **CA-TACH-79** · [E13d](#e13d) · Étant donné une tâche du worker en cours, quand la personne ouvre son détail, alors « Modifier » a disparu, « Voir la session » ouvre son fil en direct, et le bloc « Ressources » donne le processeur et la mémoire de l'agent et la mémoire de chaque service, rapportés à leur plafond, mis à jour toutes les 5 s, en orange avec « Proche du plafond » à partir de 80 %.
+- **CA-TACH-80** · [E13d](#e13d) · Étant donné le bloc « Ressources », quand la personne clique sur « Tous les conteneurs », alors le panneau des conteneurs s'ouvre ([E19a](contexte.md#e19a)) ; sur mobile, son écran poussé.
+- **CA-TACH-81** · [E13d](#e13d) · Étant donné une tâche du worker lancée, quand la personne lit son journal, alors il note le départ avec la place prise (« 1 agent sur 1 pour api-voix, 2 / 4 »), le temps de démarrage de chaque service et chaque redémarrage de service fait depuis [E19b](contexte.md#e19b), avec l'heure.
+- **CA-TACH-82** · [E13d](#e13d) · Étant donné une tâche du worker qui se termine, quand la personne rouvre son détail, alors ses conteneurs ont été supprimés, le bloc « Ressources » a disparu et le journal garde le pic de mémoire de l'agent et de chaque service.
 - **CA-TACH-72** · [E8a](#e8a) · Étant donné les lignes « Abonnement Claude » et « Compte GitHub » d'un dépôt, quand la personne en choisit un, alors les tâches du worker de ce dépôt prennent cet abonnement, et Bosco pousse leur branche, ouvre leur PR en brouillon et lit leurs liens GitHub avec ce compte ; seuls les profils qui ont un accès et les comptes connectés à GitHub CLI sont proposés, et « Revenir au général » reprend ceux par défaut de [E11b](contexte.md#e11b) (RF-TACH-05, RF-TACH-06).

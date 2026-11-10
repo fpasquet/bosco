@@ -47,7 +47,7 @@ Feature: Context of the agents
     Then the response property "versions.length" should equal "2"
     And the response property "versions.1.note" should equal "Les colonnes aussi"
 
-  @CA-CONT-70
+  @CA-CONT-86
   Scenario: Only the repositories with a decision of their own, proposed or accepted, are offered
     When I send POST request to "/api/socles" with the JSON "fixtures/context/global-socle.json"
     And I send POST request to "/api/decisions" with the JSON "fixtures/context/socle-decision.json"

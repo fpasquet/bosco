@@ -94,6 +94,15 @@ describe('WorkerService', () => {
     );
   });
 
+  it('reports the memory available beyond the margin kept free, for the departure line (CA-TACH-78)', () => {
+    const { worker } = setup([]);
+    expect(worker.current()).toMatchObject({
+      agentMemory: 4 * 1024 ** 3,
+      availableMemory: 28 * 1024 ** 3,
+      capacity: 4,
+    });
+  });
+
   it('runs a ready task, then brings it to review with its outcome', async () => {
     const { create, settle, tasks, worker } = setup([
       { kind: 'session', sessionId: 'd7f3a20e' },

@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import type { TaskDraftDto, TaskIssueDto } from '@bosco/domain';
 import { PageSkeleton } from '@/shared/components/page-skeleton';
-import { createTask, editTask, repositoriesQuery, rightsQuery, TaskIssues } from '../../api/tasks';
+import { createTask, editTask, repositoriesQuery, rightsQuery, TaskIssues, workerQuery } from '../../api/tasks';
 import { useLiveTasks } from '../../hooks/use-live-tasks';
 import { TaskForm } from '../task-form';
 
@@ -13,6 +13,7 @@ export function TaskEditor({ id, title }: { id?: number; title: string }) {
   const router = useRouter();
   const tasks = useLiveTasks();
   const { data: repositories } = useQuery(repositoriesQuery);
+  const { data: worker } = useQuery(workerQuery);
   const rights = useQueries({ queries: (repositories ?? []).map(({ name }) => rightsQuery(name)) });
   const [issues, setIssues] = useState<TaskIssueDto[]>([]);
   const save = useMutation({
@@ -27,7 +28,17 @@ export function TaskEditor({ id, title }: { id?: number; title: string }) {
     repositories.flatMap(({ name }, index) => {
       const effective = rights[index]?.data?.effective;
       return effective
-        ? [[name, { budgetUsd: effective.maxBudgetUsd, maxTurns: effective.maxTurns, tools: effective.tools }]]
+        ? [
+            [
+              name,
+              {
+                budgetUsd: effective.maxBudgetUsd,
+                concurrency: effective.concurrency,
+                maxTurns: effective.maxTurns,
+                tools: effective.tools,
+              },
+            ],
+          ]
         : [];
     }),
   );
@@ -41,6 +52,7 @@ export function TaskEditor({ id, title }: { id?: number; title: string }) {
         limits={limits}
         repositories={repositories}
         tasks={tasks.filter((task) => task.state !== 'cancelled')}
+        worker={worker}
         onCancel={() => router.back()}
         onSubmit={(draft) => save.mutate(draft)}
       />
