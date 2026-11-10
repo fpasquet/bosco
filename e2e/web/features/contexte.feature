@@ -96,14 +96,14 @@ Fonctionnalité: Contexte des agents
     Alors je suis sur la page « /context/socles »
     Et je vois le lien « Tests avec Vitest »
 
-  @CA-CONT-70
+  @CA-CONT-86
   Scénario: Le choix du dépôt ne propose que les dépôts qui ont une décision
     Étant donné le profil Claude Code « .claude » contient le transcript « session-api-voix-fastify.jsonl » de la session « a41f07c2 »
     Et le dépôt « labo-ia » a la décision acceptée « Garder Jest pour les tests »
     Quand j'ouvre la page « /context »
     Alors le choix « Dépôt » propose « labo-ia »
 
-  @CA-CONT-71
+  @CA-CONT-87
   @NF-18
   Scénario: Sans décision, la première s'écrit pour un dépôt choisi parmi les dépôts connus
     Étant donné le profil Claude Code « .claude » contient le transcript « session-api-voix-fastify.jsonl » de la session « a41f07c2 »
