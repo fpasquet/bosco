@@ -7,6 +7,7 @@ import { cn } from '@/lib/cn';
 import { PageSkeleton } from '@/shared/components/page-skeleton';
 import { Button } from '@/shared/ui/button';
 import { checkWorker, workerQuery } from '../../api/tasks';
+import { useContainersPanel } from '../../hooks/use-containers-panel';
 import { useLiveTasks } from '../../hooks/use-live-tasks';
 import { chainOf, sortTasks, tabOf, type TaskTab } from '../../lib/tasks';
 import { TaskChain } from '../task-chain';
@@ -19,6 +20,35 @@ const TABS: { label: string; value: TaskTab }[] = [
   { label: 'Terminées', value: 'finished' },
   { label: 'Échecs', value: 'failed' },
 ];
+
+/**
+ * Indicateur du worker (E5b) : quand un agent travaille, il ouvre le panneau des conteneurs sur le poste, et leur écran
+ * sur le téléphone (CA-TACH-76).
+ */
+function WorkerIndicator({ running, text, unavailable }: { running: number; text: string; unavailable: boolean }) {
+  const openPanel = useContainersPanel((state) => state.setOpen);
+  const content = (
+    <>
+      <span aria-hidden className={cn('size-2 rounded-full', unavailable ? 'bg-danger' : 'bg-success')} />
+      Worker : {text}
+    </>
+  );
+  if (running === 0 && !unavailable) return <p className="flex items-center gap-1.5 text-xs text-muted">{content}</p>;
+  return (
+    <>
+      <button
+        type="button"
+        className="hidden items-center gap-1.5 text-xs text-muted hover:text-ink md:flex"
+        onClick={() => openPanel(true)}
+      >
+        {content}
+      </button>
+      <Link href="/tasks/containers" className="flex items-center gap-1.5 text-xs text-muted md:hidden">
+        {content}
+      </Link>
+    </>
+  );
+}
 
 /** File de tâches (E5a, E5b) : tout le travail préparé pour Claude Code, du plus urgent au plus lointain. */
 export function TasksScreen({ title }: { title: string }) {
@@ -51,10 +81,11 @@ export function TasksScreen({ title }: { title: string }) {
     <div className="flex flex-col gap-4 p-4 md:px-8 md:pt-6">
       <div className="flex flex-wrap items-end gap-3">
         <div>
-          <p className="flex items-center gap-1.5 text-xs text-muted">
-            <span aria-hidden className={cn('size-2 rounded-full', worker?.unavailable ? 'bg-danger' : 'bg-success')} />
-            Worker : {worker?.unavailable ? 'indisponible' : `${running} / ${worker?.capacity ?? 4} agents au travail`}
-          </p>
+          <WorkerIndicator
+            running={running}
+            text={worker?.unavailable ? 'indisponible' : `${running} / ${worker?.capacity ?? 4} agents au travail`}
+            unavailable={Boolean(worker?.unavailable)}
+          />
           <h1 className="mt-1 hidden font-display text-2xl font-semibold tracking-tight md:block">{title}</h1>
         </div>
         <Link href="/tasks/rights" className="link text-xs text-muted md:ml-auto">
