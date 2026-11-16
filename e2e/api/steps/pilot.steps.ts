@@ -13,6 +13,7 @@ interface SessionView {
   pilot: null | {
     pending: null | { text: string };
     running: boolean;
+    sandbox?: null | { branch: string; from: string; state: string };
     settings: { effort: null | string; model: null | string; permissionMode: string };
   };
   repository: null | { name: string };
@@ -238,4 +239,38 @@ Given('the session {string} has its Bosco channel open', async ({ bosco, request
 Then('the Bosco channel receives {string}', async ({}, text: string) => {
   await expect.poll(() => channelMessages.join('|')).toContain(text);
   channelStream?.abort();
+});
+
+Then(
+  '{string} should run in a sandbox on the branch {string} from {string}, {string}',
+  async ({ request }, session: string, branch: string, from: string, state: string) => {
+    await eventually(
+      request,
+      idOf(session),
+      (view) =>
+        view.pilot?.sandbox?.branch === branch &&
+        view.pilot.sandbox.from === from &&
+        view.pilot.sandbox.state === state,
+    );
+  },
+);
+
+When('I stop the sandbox of {string}', async ({ last, request }, session: string) => {
+  const response = await request.post(`/api/sessions/${idOf(session)}/sandbox/stop`);
+  last.response = { status: response.status(), body: null };
+});
+
+When('I delete the sandbox of {string}', async ({ last, request }, session: string) => {
+  const response = await request.delete(`/api/sessions/${idOf(session)}/sandbox`);
+  last.response = { status: response.status(), body: null };
+});
+
+When('I retrieve the branch of {string}', async ({ last, request }, session: string) => {
+  const response = await request.post(`/api/sessions/${idOf(session)}/sandbox/retrieve`);
+  last.response = { status: response.status(), body: (await response.json()) as unknown };
+});
+
+When('I read the refused exits of {string}', async ({ last, request }, session: string) => {
+  const response = await request.get(`/api/sessions/${idOf(session)}/sandbox/refusals`);
+  last.response = { status: response.status(), body: (await response.json()) as unknown };
 });

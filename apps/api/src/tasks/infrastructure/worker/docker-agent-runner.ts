@@ -17,7 +17,7 @@ import { servicesNote } from '../../domain/test-services.ts';
 import { DockerTestServices, ensureImage } from './docker-test-services.ts';
 import { agentEventsOf } from './stream-json.ts';
 
-const DOCKER = '/usr/bin/docker';
+export const DOCKER = '/usr/bin/docker';
 const run = promisify(execFile);
 
 /** Image de l'agent : git, ripgrep, Python et Node ; Claude Code vient du poste (même version que tes sessions). */
@@ -27,7 +27,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends git ripgrep pyt
   && rm -rf /var/lib/apt/lists/*
 `;
 
-const LIMITS = [
+export const LIMITS = [
   '--memory',
   String(AGENT_LIMITS.memory),
   '--cpus',
@@ -37,7 +37,7 @@ const LIMITS = [
 ];
 
 /** Sans droits d'administration, ni moyen d'en regagner. */
-const UNPRIVILEGED = ['--cap-drop', 'ALL', '--security-opt', 'no-new-privileges'];
+export const UNPRIVILEGED = ['--cap-drop', 'ALL', '--security-opt', 'no-new-privileges'];
 
 /** Script du proxy de sortie, à côté de ce fichier : .ts en développement, .js une fois construit. */
 const PROXY_SCRIPT = fileURLToPath(
@@ -46,7 +46,7 @@ const PROXY_SCRIPT = fileURLToPath(
 // Le proxy se joint en clair sur le réseau privé de la tâche ; le trafic vers Internet reste chiffré de bout en bout
 // (tunnel CONNECT)
 // eslint-disable-next-line sonarjs/no-clear-text-protocols
-const PROXY = 'http://egress:3128';
+export const PROXY = 'http://egress:3128';
 /** Relecture des refus notés par le proxy pendant la tâche. */
 const REFUSALS_POLL_MS = 1000;
 
@@ -207,17 +207,32 @@ export class DockerAgentRunner implements AgentRunner, WorkerHealth {
 
   /** Réseau privé de la tâche, sans route vers Internet, et son proxy, seul relié aux deux réseaux. */
   private async isolate(taskId: number, dir: string): Promise<{ network: string; proxy: string; refusals: string }> {
-    const network = `bosco-t${taskId}`;
-    const proxy = `bosco-t${taskId}-egress`;
-    const log = join(dir, 'egress');
+    return this.isolation({ name: `bosco-t${taskId}`, label: `bosco.task=${taskId}`, dir, keep: false });
+  }
+
+  /**
+   * Réseau privé et proxy de sortie, pour une tâche ou le bac à sable d'une session (DT-37) : seul le proxy est relié
+   * aux deux réseaux, et ne laisse passer que les domaines autorisés. keep : le proxy survit à son arrêt, pour être
+   * relancé avec le bac à sable.
+   */
+  async isolation(target: {
+    dir: string;
+    keep: boolean;
+    label: string;
+    name: string;
+  }): Promise<{ network: string; proxy: string; refusals: string }> {
+    if (!(await imageExists())) await buildImage();
+    const network = target.name;
+    const proxy = `${target.name}-egress`;
+    const log = join(target.dir, 'egress');
     await mkdir(log, { recursive: true });
-    const label = ['--label', `bosco.task=${taskId}`];
+    const label = ['--label', target.label];
     await run(DOCKER, ['network', 'create', '--internal', ...label, network]);
     const script = `/bosco/egress-proxy${extname(PROXY_SCRIPT)}`;
     await run(DOCKER, [
       'run',
       '--detach',
-      '--rm',
+      ...(target.keep ? [] : ['--rm']),
       '--name',
       proxy,
       ...label,

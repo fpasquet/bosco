@@ -1,0 +1,7 @@
+{
+  "profile": "{{profiles}}/.claude-perso",
+  "text": "Monte TypeScript en version 6",
+  "images": [],
+  "settings": { "permissionMode": "acceptEdits", "model": null, "effort": null },
+  "sandbox": { "branch": "main", "startBranch": null }
+}

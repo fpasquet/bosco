@@ -23,6 +23,14 @@ import {
   questionsOf,
   SessionOpenInTerminal,
 } from '../domain/pilot.ts';
+import {
+  checkSandboxBranch,
+  housekeepingOf,
+  sandboxBranchOf,
+  SandboxError,
+  type SandboxInfo,
+  stopsAt,
+} from '../domain/sandbox.ts';
 
 /** Un tour à lancer : `claude -p` dans le dossier du dépôt, avec le profil, une session nouvelle ou reprise (DT-31). */
 export interface TurnRequest {
@@ -30,10 +38,48 @@ export interface TurnRequest {
   configDir: string;
   cwd: string;
   message: PilotMessage;
+  /** Commande d'un tour en bac à sable (DT-37) : l'agent tourne dans le conteneur de la session ; null : sur le poste */
+  launch: null | TurnLaunch;
   /** false : une nouvelle session, créée avec cet identifiant */
   resume: boolean;
   sessionId: string;
   settings: PilotSettings;
+}
+
+/** Exécution d'un tour ailleurs que sur le poste : le programme et ses premiers arguments, avant ceux du tour. */
+export interface TurnLaunch {
+  args: string[];
+  file: string;
+}
+
+/** État du conteneur d'un bac à sable. */
+export type SandboxState = 'missing' | 'running' | 'stopped';
+
+/**
+ * Bacs à sable des sessions (règle 12, DT-37) : copie du dépôt sur la branche de la session et dossier personnel de
+ * l'agent, gardés hors du conteneur ; conteneur isolé comme un agent du worker.
+ */
+export interface Sandboxes {
+  /** Profil où les conversations des bacs à sable sont gardées, rangées avec leur dépôt : une source surveillée */
+  readonly profile: string;
+  currentBranch(repositoryRoot: string): Promise<null | string>;
+  /** Démarre le conteneur, le crée s'il manque ; la commande d'un tour, null : sur le poste (scénarios) */
+  ensure(sessionId: string, repositoryRoot: string): Promise<null | TurnLaunch>;
+  prepare(input: {
+    branch: string;
+    profile: string;
+    repositoryRoot: string;
+    sessionId: string;
+    startBranch: null | string;
+  }): Promise<{ base: string; from: string }>;
+  refusals(sessionId: string): Promise<{ at: Date; host: string }[]>;
+  remove(sessionId: string): Promise<void>;
+  /** Enregistre le travail en cours dans la branche, puis la rapatrie dans le dépôt ; la branche reçue */
+  retrieve(input: { branch: string; repositoryRoot: string; sessionId: string }): Promise<string>;
+  state(sessionId: string): Promise<SandboxState>;
+  stop(sessionId: string): Promise<void>;
+  /** null quand un bac à sable peut démarrer ; sinon la raison (« Docker ne répond pas ») */
+  unavailable(): Promise<null | string>;
 }
 
 /** Ce que l'agent d'un tour demande ou signale, par le protocole de contrôle. */
@@ -66,6 +112,8 @@ export interface TurnRunner {
 /** Une session pilotée par Bosco : où elle tourne et ses réglages, gardés d'un tour à l'autre. */
 export interface PilotRecord {
   cwd: string;
+  /** Bac à sable de la session (règle 12) ; null : elle tourne sur le poste */
+  sandbox: null | SandboxInfo;
   sessionId: string;
   settings: PilotSettings;
   since: Date;
@@ -88,6 +136,14 @@ export interface PilotProfiles {
 export interface PilotView {
   pending: null | { images: number; text: string };
   running: boolean;
+  sandbox: null | {
+    branch: string;
+    from: string;
+    removed: boolean;
+    retrievedAt: Date | null;
+    state: SandboxState;
+    stopsAt: Date;
+  };
   settings: PilotSettings;
   since: Date;
 }
@@ -103,6 +159,14 @@ interface Turn {
 type Signals = Pick<LiveSignalService, 'receive' | 'requestAnswers' | 'requestPermission'>;
 
 const NO_PROFILES: PilotProfiles = { of: () => Promise.resolve({ choices: [], effective: null }) };
+
+/** Ce que le bac à sable demande en plus au démarrage : la source de ses conversations, et la notification de la veille. */
+interface SandboxDeps {
+  ensureSource: (path: string) => Promise<{ id: string }>;
+  sandboxes: Sandboxes;
+  /** La branche a du travail non récupéré : le bac à sable sera supprimé demain (CA-SESS-115) */
+  warn: (sessionId: string, branch: string) => Promise<void>;
+}
 
 /** Ce que l'agent veut faire, comme le montre la carte d'autorisation : la commande, le fichier ou l'adresse. */
 function detailOf(input: Record<string, unknown>): null | string {
@@ -122,6 +186,9 @@ export class PilotService {
   private readonly turns = new Map<string, Turn>();
   private readonly pending = new Map<string, PilotMessage>();
   private profiles: PilotProfiles = NO_PROFILES;
+  private sandbox: null | SandboxDeps = null;
+  /** État de chaque conteneur, relu par l'entretien : la vue de la session le montre sans attendre Docker */
+  private readonly sandboxStates = new Map<string, SandboxState>();
   private channel: Pick<ChannelService, 'isConnected' | 'send'> = { isConnected: () => false, send: () => false };
 
   constructor(
@@ -143,6 +210,11 @@ export class PilotService {
     for (const record of await this.repository.list()) this.records.set(record.sessionId, record);
   }
 
+  /** Bacs à sable des sessions (DT-37), branchés au démarrage. */
+  useSandboxes(deps: SandboxDeps): void {
+    this.sandbox = deps;
+  }
+
   /** Abonnements par dépôt, tenus par les droits des agents (E8a), branchés au démarrage. */
   useProfiles(profiles: PilotProfiles): void {
     this.profiles = profiles;
@@ -161,9 +233,18 @@ export class PilotService {
     const record = this.records.get(sessionId);
     if (!record) return null;
     const pending = this.pending.get(sessionId);
+    const { sandbox } = record;
     return {
       pending: pending ? { images: pending.images.length, text: pending.text } : null,
       running: this.turns.has(sessionId),
+      sandbox: sandbox && {
+        branch: sandbox.branch,
+        from: sandbox.from,
+        removed: sandbox.removedAt !== null,
+        retrievedAt: sandbox.retrievedAt,
+        state: sandbox.removedAt ? 'missing' : (this.sandboxStates.get(sessionId) ?? 'stopped'),
+        stopsAt: stopsAt(sandbox),
+      },
       settings: record.settings,
       since: record.since,
     };
@@ -171,13 +252,15 @@ export class PilotService {
 
   /** Ouverte dans un terminal : le registre de Claude Code la dit ouverte, sans tour piloté en cours (CA-SESS-98). */
   openInTerminal(sourceId: string, sessionId: string): boolean {
+    if (this.records.get(sessionId)?.sandbox) return false;
     return !this.turns.has(sessionId) && this.registry.isOpen(sourceId, sessionId) === true;
   }
 
   /** Formulaire d'une nouvelle session (E16a) : dépôts connus, abonnements et celui de chaque dépôt. */
   async options(): Promise<{
     profiles: { account: null | string; label: string; path: string }[];
-    repositories: { defaultProfile: null | string; name: string; root: string }[];
+    repositories: { branch: null | string; defaultProfile: null | string; name: string; root: string }[];
+    sandboxUnavailable: null | string;
   }> {
     const sources = await this.sources.list();
     const watched = new Set(sources.filter((source) => source.watched).map(({ path }) => path));
@@ -187,13 +270,17 @@ export class PilotService {
     for (const { name, root } of known) {
       const { choices, effective } = await this.profiles.of(name);
       profiles = choices.filter(({ path }) => watched.has(path));
-      repositories.push({ defaultProfile: effective && watched.has(effective) ? effective : null, name, root });
+      const branch = this.sandbox ? await this.sandbox.sandboxes.currentBranch(root).catch(() => null) : null;
+      repositories.push({ branch, defaultProfile: effective && watched.has(effective) ? effective : null, name, root });
     }
     if (known.length === 0) {
       const general = await this.profiles.of('');
       profiles = general.choices.filter(({ path }) => watched.has(path));
     }
-    return { profiles, repositories };
+    const sandboxUnavailable = this.sandbox
+      ? await this.sandbox.sandboxes.unavailable()
+      : 'Bac à sable indisponible sur ce poste';
+    return { profiles, repositories, sandboxUnavailable };
   }
 
   /** « Démarrer la session » (CA-SESS-91) : une nouvelle session dans le dossier du dépôt, avec le profil choisi. */
@@ -201,6 +288,8 @@ export class PilotService {
     message: PilotMessage;
     profile: null | string;
     repository: string;
+    /** Dans un bac à sable (E16b) : branche de départ et branche de la session, null : proposées */
+    sandbox?: null | { branch: null | string; startBranch: null | string };
     settings: PilotSettings;
   }): Promise<string> {
     const message = checkPilotMessage(input.message);
@@ -213,16 +302,140 @@ export class PilotService {
     const source = sources.find(({ path, watched }) => watched && path === profile);
     if (!source)
       throw new PilotTargetNotFound('Choisis un abonnement Claude parmi les profils surveillés par Bosco (Sources).');
-    const record: PilotRecord = {
-      cwd: repository.root,
-      sessionId: this.ids.next(),
-      settings: input.settings,
-      since: this.clock.now(),
-      sourceId: source.id,
-    };
+    const sessionId = this.ids.next();
+    const record: PilotRecord = input.sandbox
+      ? await this.sandboxed(sessionId, repository.root, source.path, message, input.sandbox)
+      : {
+          cwd: repository.root,
+          sandbox: null,
+          sessionId,
+          settings: input.settings,
+          since: this.clock.now(),
+          sourceId: source.id,
+        };
+    record.settings = input.settings;
     await this.keep(record);
     await this.run(record, message, false);
     return record.sessionId;
+  }
+
+  /**
+   * Prépare le bac à sable d'une nouvelle session (CA-SESS-106) : la copie du dépôt sur sa branche, l'accès à
+   * l'abonnement du profil choisi ; ses conversations rejoignent le profil des bacs à sable, une source surveillée.
+   */
+  private async sandboxed(
+    sessionId: string,
+    root: string,
+    profile: string,
+    message: PilotMessage,
+    choice: { branch: null | string; startBranch: null | string },
+  ): Promise<PilotRecord> {
+    const deps = this.sandbox;
+    const unavailable = deps ? await deps.sandboxes.unavailable() : 'Bac à sable indisponible sur ce poste';
+    if (!deps || unavailable) throw new SandboxError('sandboxUnavailable', unavailable ?? 'Bac à sable indisponible');
+    const branch = checkSandboxBranch(choice.branch ?? sandboxBranchOf(message.text));
+    const source = await deps.ensureSource(deps.sandboxes.profile);
+    const startBranch = choice.startBranch?.trim() || (await deps.sandboxes.currentBranch(root));
+    const { base, from } = await deps.sandboxes.prepare({
+      branch,
+      profile,
+      repositoryRoot: root,
+      sessionId,
+      startBranch,
+    });
+    const now = this.clock.now();
+    return {
+      cwd: root,
+      sandbox: { base, branch, from, lastMessageAt: now, profile, removedAt: null, retrievedAt: null, warnedAt: null },
+      sessionId,
+      settings: DEFAULT_PILOT_SETTINGS,
+      since: now,
+      sourceId: source.id,
+    };
+  }
+
+  /** Le bac à sable de la session, encore là ; sinon une erreur qui dit pourquoi. */
+  private sandboxOf(sessionId: string): { deps: SandboxDeps; record: PilotRecord; sandbox: SandboxInfo } {
+    const record = this.records.get(sessionId);
+    const sandbox = record?.sandbox;
+    if (!record || !sandbox || !this.sandbox)
+      throw new PilotTargetNotFound(`La session ${sessionId} ne tourne pas dans un bac à sable.`);
+    if (sandbox.removedAt)
+      throw new SandboxError('sandboxRemoved', 'Ce bac à sable a été supprimé : la session ne se reprend plus.');
+    return { deps: this.sandbox, record, sandbox };
+  }
+
+  /** Entre deux tours seulement : un tour en cours écrit encore dans la copie. */
+  private idleSandbox(sessionId: string) {
+    const found = this.sandboxOf(sessionId);
+    if (this.turns.has(sessionId))
+      throw new SandboxError('sandboxBusy', 'Un tour est en cours : attends qu’il finisse.');
+    return found;
+  }
+
+  /** « Récupérer la branche » (CA-SESS-112) : le travail rejoint le dépôt du poste, sans toucher à sa branche courante. */
+  async retrieve(sessionId: string): Promise<string> {
+    const { deps, record, sandbox } = this.idleSandbox(sessionId);
+    const branch = await deps.sandboxes.retrieve({ branch: sandbox.branch, repositoryRoot: record.cwd, sessionId });
+    await this.keep({ ...record, sandbox: { ...sandbox, retrievedAt: this.clock.now() } });
+    await this.publish(sessionId);
+    return branch;
+  }
+
+  /** « Arrêter le bac à sable » : le conteneur s'arrête, la copie reste ; le message suivant le relance. */
+  async stopSandbox(sessionId: string): Promise<void> {
+    const { deps } = this.idleSandbox(sessionId);
+    await deps.sandboxes.stop(sessionId);
+    this.sandboxStates.set(sessionId, 'stopped');
+    await this.publish(sessionId);
+  }
+
+  /** « Supprimer le bac à sable » (CA-SESS-114) : conteneur et copie effacés ; la session reste lisible. */
+  async removeSandbox(sessionId: string): Promise<void> {
+    const { deps, record, sandbox } = this.idleSandbox(sessionId);
+    await deps.sandboxes.remove(sessionId);
+    this.sandboxStates.set(sessionId, 'missing');
+    await this.keep({ ...record, sandbox: { ...sandbox, removedAt: this.clock.now() } });
+    await this.publish(sessionId);
+  }
+
+  /** Sorties réseau refusées du bac à sable, lues à la demande (CA-SESS-108). */
+  async refusals(sessionId: string): Promise<{ at: Date; host: string }[]> {
+    const record = this.records.get(sessionId);
+    if (!record?.sandbox || !this.sandbox) return [];
+    return this.sandbox.sandboxes.refusals(sessionId);
+  }
+
+  /**
+   * Entretien des bacs à sable (règle 12) : l'état de chaque conteneur est relu ; un conteneur sans message depuis
+   * 30 min s'arrête, la veille de la suppression une notification part si la branche a du travail, puis le bac à
+   * sable est supprimé au bout de 7 jours.
+   */
+  async housekeeping(): Promise<void> {
+    const deps = this.sandbox;
+    if (!deps) return;
+    const now = this.clock.now();
+    for (const record of this.records.values()) {
+      const { sandbox, sessionId } = record;
+      if (!sandbox || sandbox.removedAt) continue;
+      const state = await deps.sandboxes.state(sessionId).catch((): SandboxState => 'missing');
+      this.sandboxStates.set(sessionId, state);
+      const action = housekeepingOf(sandbox, now, { running: state === 'running', turn: this.turns.has(sessionId) });
+      if (action === 'stop') {
+        await deps.sandboxes.stop(sessionId).catch(() => undefined);
+        this.sandboxStates.set(sessionId, 'stopped');
+      } else if (action === 'warn') {
+        // Seule une branche qui a avancé depuis sa dernière récupération mérite l'avertissement
+        const unretrieved = !sandbox.retrievedAt || sandbox.retrievedAt < sandbox.lastMessageAt;
+        if (unretrieved) await deps.warn(sessionId, sandbox.branch).catch(() => undefined);
+        await this.keep({ ...record, sandbox: { ...sandbox, warnedAt: now } });
+      } else if (action === 'remove') {
+        await deps.sandboxes.remove(sessionId).catch(() => undefined);
+        this.sandboxStates.set(sessionId, 'missing');
+        await this.keep({ ...record, sandbox: { ...sandbox, removedAt: now } });
+      }
+      if (action) await this.publish(sessionId);
+    }
   }
 
   /**
@@ -236,12 +449,15 @@ export class PilotService {
   ): Promise<'channel' | 'queued' | 'sent'> {
     const message = checkPilotMessage(input.message);
     const record = await this.recordOf(sessionId);
+    if (record.sandbox) this.sandboxOf(sessionId);
     // Sans registre des sessions ouvertes, une session du terminal qui tourne ou attend y est encore ouverte
     const inTerminal =
       this.openInTerminal(record.sourceId, sessionId) ||
       (!this.records.has(sessionId) && (await this.isLive(sessionId)));
     if (inTerminal) return this.throughChannel(sessionId, message);
-    await this.keep({ ...record, settings: input.settings });
+    // Un message repousse l'arrêt et la suppression du bac à sable (règle 12)
+    const sandbox = record.sandbox && { ...record.sandbox, lastMessageAt: this.clock.now(), warnedAt: null };
+    await this.keep({ ...record, sandbox, settings: input.settings });
     if (this.turns.has(sessionId)) {
       this.pending.set(sessionId, joinMessages(this.pending.get(sessionId) ?? null, message));
       await this.publish(sessionId);
@@ -297,7 +513,14 @@ export class PilotService {
     const snapshot = session?.toSnapshot();
     const cwd = snapshot?.repoPath ?? snapshot?.repoRoot;
     if (!snapshot || !cwd) throw new PilotTargetNotFound(`Bosco ne connaît pas la session ${sessionId}.`);
-    return { cwd, sessionId, settings: DEFAULT_PILOT_SETTINGS, since: this.clock.now(), sourceId: snapshot.sourceId };
+    return {
+      cwd,
+      sandbox: null,
+      sessionId,
+      settings: DEFAULT_PILOT_SETTINGS,
+      since: this.clock.now(),
+      sourceId: snapshot.sourceId,
+    };
   }
 
   private async isLive(sessionId: string): Promise<boolean> {
@@ -317,6 +540,12 @@ export class PilotService {
     const source = sources.find(({ id }) => id === record.sourceId);
     if (!source) throw new PilotTargetNotFound(`Le profil de la session ${record.sessionId} n'est plus surveillé.`);
     const origin = { cwd: record.cwd, sessionId: record.sessionId, sourceId: record.sourceId };
+    // Le conteneur du bac à sable démarre (ou se recrée) avant le tour ; ses hooks ne joignent pas Bosco : c'est le
+    // flux du tour qui dit sa fin (CA-SESS-109, CA-SESS-111)
+    const launch =
+      record.sandbox && this.sandbox ? await this.sandbox.sandboxes.ensure(record.sessionId, record.cwd) : null;
+    if (record.sandbox) this.sandboxStates.set(record.sessionId, 'running');
+    const liveTracking = source.liveTracking && !record.sandbox;
     // Le tour commence : la session apparaît (ou reprend) tout de suite, sans attendre les hooks ni le transcript
     await this.signals.receive(origin, { kind: 'prompt' }, 'pilot');
     const turn: Turn = {
@@ -328,6 +557,7 @@ export class PilotService {
     const request: TurnRequest = {
       configDir: source.path,
       cwd: record.cwd,
+      launch,
       message,
       resume,
       sessionId: record.sessionId,
@@ -340,10 +570,10 @@ export class PilotService {
       result: (last) => {
         turn.result = true;
         // Sans suivi en direct, c'est Bosco qui signale la fin du tour ; avec, le hook Stop le fait déjà
-        if (!source.liveTracking) void this.signals.receive(origin, { kind: 'stop', message: last }, 'pilot');
+        if (!liveTracking) void this.signals.receive(origin, { kind: 'stop', message: last }, 'pilot');
         turn.process.finish();
       },
-      exited: (error) => void this.exited(origin, turn, error, source.liveTracking),
+      exited: (error) => void this.exited(origin, turn, error, liveTracking),
     });
     this.turns.set(record.sessionId, turn);
     await this.publish(record.sessionId);

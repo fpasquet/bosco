@@ -57,13 +57,13 @@ export class ClaudeTurnRunner implements TurnRunner {
     // Le profil par défaut (~/.claude) se lance sans CLAUDE_CONFIG_DIR, comme dans un terminal
     const defaultProfile = request.configDir === join(homedir(), '.claude');
     const env = { ...process.env };
-    if (defaultProfile) delete env.CLAUDE_CONFIG_DIR;
+    if (defaultProfile || request.launch) delete env.CLAUDE_CONFIG_DIR;
     else env.CLAUDE_CONFIG_DIR = request.configDir;
-    const child: ChildProcess = spawn(this.claudeBinary, turnArguments(request), {
-      cwd: request.cwd,
-      env,
-      stdio: ['pipe', 'pipe', 'pipe'],
-    });
+    // En bac à sable, le tour s'exécute dans le conteneur de la session, entrée ouverte (DT-37)
+    const [file, args] = request.launch
+      ? [request.launch.file, [...request.launch.args, ...turnArguments(request)]]
+      : [this.claudeBinary, turnArguments(request)];
+    const child: ChildProcess = spawn(file, args, { cwd: request.cwd, env, stdio: ['pipe', 'pipe', 'pipe'] });
     let stderr = '';
     let exited = false;
     child.stderr?.on('data', (chunk: Buffer) => {
