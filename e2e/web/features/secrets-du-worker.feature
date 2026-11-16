@@ -1,6 +1,7 @@
 # language: fr
 @RF-CONT-05
 @RF-CONT-12
+@RF-CONT-14
 Fonctionnalité: Secrets des tâches du worker
   En tant que développeur, je veux choisir l'abonnement Claude et l'accès npm que reçoivent les tâches du worker, afin
   qu'elles installent depuis mes registres privés et comptent dans l'abonnement que j'ai choisi.
@@ -49,3 +50,14 @@ Fonctionnalité: Secrets des tâches du worker
     Et la page est accessible
     Quand je clique sur le bouton « Revenir au général : Compte GitHub »
     Alors je ne vois pas le bouton « Revenir au général : Compte GitHub »
+
+  @CA-CONT-93
+  @CA-CONT-96
+  @NF-18
+  Scénario: La lecture de Jira et Confluence par les agents s'active, et son domaine rejoint la liste par défaut
+    Quand j'ouvre la page « /settings/isolation/egress »
+    Alors l’interrupteur « Lecture Jira et Confluence par les agents » est « désactivé »
+    Quand je bascule l’interrupteur « Lecture Jira et Confluence par les agents »
+    Alors l’interrupteur « Lecture Jira et Confluence par les agents » est « activé »
+    Et la liste « Domaines par défaut » contient « mcp-proxy.anthropic.com »
+    Et la page est accessible

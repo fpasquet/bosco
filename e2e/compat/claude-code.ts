@@ -1,6 +1,7 @@
 // Vérification de compatibilité avec le Claude Code installé (NF-09, RQ-01) : le hook PermissionRequest reçoit
-// la réponse de Bosco, autorisation comme refus avec motif, et SessionEnd termine la session. À lancer à chaque
-// nouvelle version de Claude Code avec `make claude-compat` : deux sessions courtes sur Haiku, sur l'abonnement.
+// la réponse de Bosco, autorisation comme refus avec motif, et SessionEnd termine la session ; avec l'attente des
+// connecteurs, celui d'Atlassian est branché dès le démarrage (DT-36). À lancer à chaque nouvelle version de Claude
+// Code avec `make claude-compat` : trois sessions courtes sur Haiku, sur l'abonnement.
 import { execFile, spawn } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -38,6 +39,35 @@ function claude(prompt: string, settings: string, cwd: string): Promise<string> 
     child.stderr.on('data', (chunk: Buffer) => (output += chunk.toString()));
     child.on('error', reject);
     child.on('exit', (code) => (code === 0 ? resolve(output) : reject(new Error(`claude exited ${code}: ${output}`))));
+  });
+}
+
+/** Outils et connecteurs de claude.ai au démarrage d'une session `claude -p`, lus dans son premier message. */
+function startingTools(env: Record<string, string>, cwd: string): Promise<{ servers: string[]; tools: string[] }> {
+  return new Promise((resolve, reject) => {
+    const child = spawn(
+      // eslint-disable-next-line sonarjs/no-os-command-from-path
+      'claude',
+      ['-p', 'Réponds OK.', '--output-format', 'stream-json', '--verbose', '--max-turns', '1', '--model', MODEL],
+      { cwd, env: { ...process.env, ...env }, stdio: ['ignore', 'pipe', 'ignore'] },
+    );
+    let output = '';
+    child.stdout.on('data', (chunk: Buffer) => (output += chunk.toString()));
+    child.on('error', reject);
+    child.on('exit', () => {
+      const init = output
+        .split('\n')
+        .map((line) => {
+          try {
+            return JSON.parse(line) as { mcp_servers?: { name: string }[]; subtype?: string; tools?: string[] };
+          } catch {
+            return null;
+          }
+        })
+        .find((line) => line?.subtype === 'init');
+      if (!init) reject(new Error(`No init message: ${output.slice(0, 300)}`));
+      else resolve({ servers: (init.mcp_servers ?? []).map(({ name }) => name), tools: init.tools ?? [] });
+    });
   });
 }
 
@@ -112,6 +142,14 @@ try {
   const { sessions } = await json<{ sessions: { state: string }[] }>(`${bosco.url}/api/sessions`);
   if (!sessions.every((session) => session.state === 'ended')) throw new Error('A session did not end');
   checks.push('SessionEnd fait passer les sessions en Terminée');
+
+  // 4. Lecture de Jira et Confluence par les agents (DT-36) : avec l'attente des connecteurs, réglage non documenté,
+  // le connecteur Atlassian est branché dès le démarrage, si le compte de l'abonnement l'a
+  const { servers, tools } = await startingTools({ CLAUDE_CODE_MCP_CONNECTOR_PREWAIT_MS: '30000' }, work);
+  if (!servers.includes('claude.ai Atlassian')) checks.push('Connecteur Atlassian absent de ce compte : non vérifié');
+  else if (!tools.includes('mcp__claude_ai_Atlassian__getJiraIssue'))
+    throw new Error('The Atlassian connector was not plugged in when the session started');
+  else checks.push('Le connecteur Atlassian est branché dès le démarrage, avec l’attente des connecteurs');
 
   const passed = checks.map((check) => '- ' + check).join('\n');
   console.log(`Claude Code ${version.trim()} : compatible.\n${passed}`);

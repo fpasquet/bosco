@@ -212,6 +212,7 @@ const SCENARIO_FREE_MEMORY = 64 * 1024 ** 3;
           // Dans les scénarios, la mémoire libre ne dépend pas de la machine : la CI en a parfois moins de 8 Go
           freeMemory: config.testing ? () => SCENARIO_FREE_MEMORY : freemem,
           maxAgents: () => isolation.maxAgents(),
+          atlassianRead: () => isolation.atlassianRead(),
           rightsOf: (repository) => rights.rightsOf(repository),
           claudeProfileOf: async (repository) => {
             const own = await accounts.of(repository);

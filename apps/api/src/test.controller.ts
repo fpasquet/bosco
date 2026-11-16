@@ -47,11 +47,12 @@ export class TestController {
     await this.isolation.refused({ at: new Date(), host: body.host, taskId: body.taskId });
   }
 
-  /** Simule un Docker qui ne répond plus, ou qui revient (E5c). */
+  /** Simule un Docker qui ne répond plus, ou qui revient (E5c), et un connecteur Atlassian absent (CA-CONT-95). */
   @Post('worker')
   @HttpCode(204)
-  setWorker(@Body() body: { unavailable?: null | string }): void {
+  setWorker(@Body() body: { atlassianConnector?: boolean; unavailable?: null | string }): void {
     this.agent.unavailable = body.unavailable ?? null;
+    this.agent.atlassianConnector = body.atlassianConnector ?? true;
   }
 
   /** Notifications du bureau envoyées depuis la dernière remise à zéro (RF-SESS-08). */
@@ -66,6 +67,7 @@ export class TestController {
     await this.watcher.close();
     await this.access.disable();
     this.agent.unavailable = null;
+    this.agent.atlassianConnector = true;
     await this.agent.forget();
     this.liveSignals.forget();
     this.channel.forget();

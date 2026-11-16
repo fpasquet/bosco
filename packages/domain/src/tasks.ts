@@ -180,6 +180,8 @@ export interface ValidationDto {
 
 /** Secrets transmis à chaque tâche du worker (E11b) : abonnement Claude du profil choisi, .npmrc du poste. */
 export interface WorkerSecretsDto {
+  /** Lecture de Jira et Confluence par les agents, par le connecteur Atlassian de claude.ai (E11b) ; false par défaut */
+  atlassianRead: boolean;
   claude: {
     account: null | string;
     available: boolean;

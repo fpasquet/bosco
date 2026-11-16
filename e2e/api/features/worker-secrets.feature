@@ -1,5 +1,6 @@
 @RF-CONT-05
 @RF-CONT-12
+@RF-CONT-14
 Feature: Secrets of the worker tasks
   As the developer, I want to choose the Claude subscription and the npm access that the worker tasks receive, so
   that they install from my private registries and count against the subscription I chose.
@@ -58,3 +59,16 @@ Feature: Secrets of the worker tasks
     And the response property "accounts.claude.origin" should equal "dépôt"
     And the response property "accounts.github.effective" should equal "camille-dev"
     And the response property "accounts.github.origin" should equal "dépôt"
+
+  @CA-CONT-91
+  @CA-CONT-93
+  @CA-CONT-96
+  Scenario: The reading of Jira and Confluence by the agents is off by default, and its domain comes with it
+    When I send GET request to "/api/isolation"
+    Then the response property "secrets.atlassianRead" should equal "false"
+    And the response property "domains.locked" should not contain "mcp-proxy.anthropic.com"
+    When I send PUT request to "/api/isolation/secrets" with the JSON "fixtures/isolation/atlassian-read.json"
+    Then the response property "secrets.atlassianRead" should equal "true"
+    And the response property "domains.locked" should contain "mcp-proxy.anthropic.com"
+    When I send DELETE request to "/api/isolation/domains/mcp-proxy.anthropic.com"
+    Then the response code should be 400

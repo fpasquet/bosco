@@ -39,11 +39,17 @@ export interface AgentUsage {
 
 /** Ce que l'agent signale pendant qu'il travaille, puis à la fin (flux JSON de Claude Code). */
 export type AgentEvent =
+  /** Connecteur Atlassian de claude.ai branché ou non au démarrage de l'agent (RF-CONT-14) */
+  | { kind: 'connector'; available: boolean }
+  /** Lecture dans Jira ou Confluence par le connecteur, notée au journal de la tâche (CA-CONT-94) */
+  | { kind: 'read'; event: 'Lu dans Confluence' | 'Lu dans Jira'; detail: string }
   | { kind: 'result'; ok: boolean; report: null | string; stop: 'error' | 'max_turns' | 'success'; turns: number }
   | { kind: 'session'; sessionId: string }
   | { kind: 'usage'; model: null | string; usage: AgentUsage };
 
 export interface AgentSpec {
+  /** Lecture de Jira et Confluence par le connecteur Atlassian de claude.ai, en lecture seule (E11b, RF-CONT-14) */
+  atlassianRead: boolean;
   /** Outils interdits du dépôt, en plus de ceux que Claude Code refuse déjà */
   deniedTools: string[];
   folder: string;

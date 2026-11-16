@@ -17,6 +17,7 @@ const domainSchema = z.object({ domain: z.string().max(253) });
 const capacitySchema = z.object({ maxAgents: z.number().int() });
 const secretsSchema = z
   .object({
+    atlassianRead: z.boolean(),
     github: z.string().max(100).nullable(),
     npmrc: z.string().max(1024).nullable(),
     profile: z.string().max(4096).nullable(),
@@ -72,7 +73,7 @@ export class IsolationController {
     return settle(this.isolation.addDomain(parseBody(domainSchema, body).domain));
   }
 
-  /** Profil de l'abonnement Claude et .npmrc transmis aux tâches suivantes (E11b). */
+  /** Profil de l'abonnement Claude, .npmrc et lecture de Jira et Confluence, pour les tâches suivantes (E11b). */
   @Put('secrets')
   secrets(@Body() body: unknown): Promise<IsolationDto> {
     return settle(this.isolation.setSecrets(parseBody(secretsSchema, body)));

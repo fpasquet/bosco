@@ -58,6 +58,7 @@ function setup(events: AgentEvent[], options: { budgetUsd?: number; hang?: boole
     health: { check: () => Promise.resolve(options.health ?? null) },
     freeMemory: () => 32 * 1024 ** 3,
     maxAgents: () => 4,
+    atlassianRead: () => false,
     contextOf: () => Promise.resolve({ text: '', versions: '' }),
     propose: () => Promise.resolve(null),
     environmentOf: () => Promise.resolve({ image: null, services: [] }),

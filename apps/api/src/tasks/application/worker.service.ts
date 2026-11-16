@@ -23,6 +23,8 @@ export interface WorkerStatus {
 }
 
 export interface WorkerDeps {
+  /** Lecture de Jira et Confluence par le connecteur Atlassian de claude.ai, activée dans l'isolation (E11b) */
+  atlassianRead: () => boolean;
   /** Contexte du dépôt transmis à l'agent au lancement (avec la façon de proposer une décision), et les versions des
    * décisions envoyées (RF-CONT-01) */
   contextOf: (task: TaskView) => Promise<{ text: string; versions: string }>;
@@ -176,7 +178,9 @@ export class WorkerService {
       if (context.versions) await this.deps.tasks.record(task.id, 'Contexte transmis', context.versions);
       if (environment.services.length > 0) servicesStarted = true;
       const claudeProfile = await this.deps.claudeProfileOf(task.repository.name);
+      const atlassianRead = this.deps.atlassianRead();
       const run = await this.deps.runner.start({
+        atlassianRead,
         claudeProfile,
         taskId: task.id,
         workspace,
@@ -192,7 +196,7 @@ export class WorkerService {
         tools,
       });
       this.runs.set(task.id, run);
-      await this.follow(task, run, Math.min(task.guardrails.budgetUsd, rights.maxBudgetUsd), workspace);
+      await this.follow(task, run, Math.min(task.guardrails.budgetUsd, rights.maxBudgetUsd), workspace, atlassianRead);
     } catch (error) {
       // Une tâche annulée ou effacée pendant son lancement n'a plus d'état à recevoir
       await this.deps.tasks
@@ -209,8 +213,14 @@ export class WorkerService {
   }
 
   /** Suit l'agent jusqu'à sa fin et donne à la tâche son état final. */
-  private async follow(task: TaskView, run: AgentRun, budgetUsd: number, workspace: Workspace): Promise<void> {
-    const progress = { sessionId: null as null | string, spent: 0 };
+  private async follow(
+    task: TaskView,
+    run: AgentRun,
+    budgetUsd: number,
+    workspace: Workspace,
+    atlassianRead: boolean,
+  ): Promise<void> {
+    const progress = { atlassianRead, sessionId: null as null | string, spent: 0 };
     for await (const event of run.events) {
       const done = await this.handle(task, run, budgetUsd, workspace, progress, event);
       if (done) return;
@@ -224,9 +234,23 @@ export class WorkerService {
     run: AgentRun,
     budgetUsd: number,
     workspace: Workspace,
-    progress: { sessionId: null | string; spent: number },
+    progress: { atlassianRead: boolean; sessionId: null | string; spent: number },
     event: AgentEvent,
   ): Promise<boolean> {
+    // Connecteur absent du compte : la tâche continue sans lui (CA-CONT-95)
+    if (event.kind === 'connector') {
+      if (progress.atlassianRead && !event.available)
+        await this.deps.tasks.record(
+          task.id,
+          'Connecteur Atlassian indisponible',
+          'pas branché sur le compte claude.ai de l’abonnement : la tâche continue sans lire Jira ni Confluence',
+        );
+      return false;
+    }
+    if (event.kind === 'read') {
+      await this.deps.tasks.record(task.id, event.event, event.detail);
+      return false;
+    }
     if (event.kind === 'session') {
       progress.sessionId = event.sessionId;
       await this.deps.tasks.progress(task.id, progress.spent, { sessionId: event.sessionId, branch: workspace.branch });

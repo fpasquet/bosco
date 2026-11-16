@@ -2,7 +2,14 @@
 // scénarios vérifient le parcours d'une tâche ; l'agent réel se vérifie sur le poste (make claude-compat).
 import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import type { AgentRun, AgentRunner, AgentSpec, WorkerHealth, Workspaces } from '../../application/ports.ts';
+import type {
+  AgentEvent,
+  AgentRun,
+  AgentRunner,
+  AgentSpec,
+  WorkerHealth,
+  Workspaces,
+} from '../../application/ports.ts';
 import { projectDir } from './docker-agent-runner.ts';
 
 /** Fil écrit d'avance d'une session d'agent, rattaché au dépôt comme le fait le worker réel. */
@@ -22,9 +29,27 @@ function transcriptOf(spec: AgentSpec, cwd: string, report: string): string {
     .join('\n');
 }
 
+/**
+ * Lectures de l'agent quand la lecture de Jira et Confluence est activée (RF-CONT-14) : le connecteur, puis chaque
+ * ticket Jira dont l'adresse figure dans sa consigne, comme le ferait l'agent réel par le connecteur.
+ */
+function connectorEvents(spec: AgentSpec, connector: boolean): AgentEvent[] {
+  if (!spec.atlassianRead) return [];
+  const keys = connector
+    ? [...new Set([...spec.prompt.matchAll(/\/browse\/([A-Z][A-Z0-9]+-\d+)/g)].map((m) => m[1]))]
+    : [];
+  return [
+    { kind: 'connector', available: connector },
+    ...keys.map((key) => ({ kind: 'read' as const, event: 'Lu dans Jira' as const, detail: key ?? '' })),
+  ];
+}
+
 export class ScriptedAgentRunner implements AgentRunner, WorkerHealth {
   /** Indisponibilité simulée par les scénarios (E5c) */
   unavailable: null | string = null;
+
+  /** Connecteur Atlassian branché sur le compte claude.ai de l'abonnement, simulé par les scénarios (CA-CONT-95) */
+  atlassianConnector = true;
 
   /** Remise à zéro des scénarios : un agent lancé avant ne garde plus sa session */
   private epoch = 0;
@@ -53,9 +78,11 @@ export class ScriptedAgentRunner implements AgentRunner, WorkerHealth {
           readySeconds: 1,
         })),
       );
-    const events = (async function* () {
+    const connector = connectorEvents(spec, this.atlassianConnector);
+    const events = (async function* (): AsyncGenerator<AgentEvent> {
       await new Promise((resolve) => setTimeout(resolve, 100));
       yield { kind: 'session' as const, sessionId: `scripted-${spec.taskId}` };
+      yield* connector;
       yield {
         kind: 'usage' as const,
         model: spec.model,
