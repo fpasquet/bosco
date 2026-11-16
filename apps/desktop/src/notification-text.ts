@@ -9,6 +9,7 @@ const KIND_LABELS: Record<NotificationDto['kind'], string> = {
   permission: 'Autorisation',
   question: 'Question de l’agent',
   review: 'À relire',
+  sandbox: 'Bac à sable',
   'turn-question': 'Question',
 };
 
