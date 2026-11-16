@@ -1,5 +1,5 @@
 'use client';
-import { CircleCheck, CircleX, Flag, Hand, ListChecks, LogOut, MessageCircleQuestion } from 'lucide-react';
+import { Box, CircleCheck, CircleX, Flag, Hand, ListChecks, LogOut, MessageCircleQuestion } from 'lucide-react';
 import type { NotificationDto } from '@bosco/domain';
 import { cn } from '@/lib/cn';
 import { Button } from '@/shared/ui/button';
@@ -12,6 +12,7 @@ const LOOKS: Record<NotificationDto['kind'], { icon: typeof Hand; tone: string }
   permission: { icon: Hand, tone: 'bg-warning-soft text-warning' },
   question: { icon: ListChecks, tone: 'bg-warning-soft text-warning' },
   review: { icon: CircleCheck, tone: 'bg-primary-soft text-primary' },
+  sandbox: { icon: Box, tone: 'bg-warning-soft text-warning' },
   'turn-question': { icon: MessageCircleQuestion, tone: 'bg-warning-soft text-warning' },
 };
 

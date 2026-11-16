@@ -1,12 +1,20 @@
 'use client';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import type { JournalEntryDto, SessionDto } from '@bosco/domain';
 import { PageSkeleton } from '@/shared/components/page-skeleton';
+import { useNotices } from '@/shared/hooks/use-notices';
 import { useNow } from '@/shared/hooks/use-now';
-import { answerQuestion, cancelPending } from '../../api/pilot';
+import {
+  answerQuestion,
+  cancelPending,
+  removeSandbox,
+  retrieveBranch,
+  sandboxRefusalsQuery,
+  stopSandbox,
+} from '../../api/pilot';
 import { sessionConversationQuery, sessionDetailQuery, sessionsQuery } from '../../api/sessions';
 import { sourcesQuery } from '../../api/sources';
 import { useCopy } from '../../hooks/use-copy';
@@ -22,6 +30,8 @@ import { PendingMessage } from '../pending-message';
 import { PermissionCard } from '../permission-card';
 import { PilotPanel } from '../pilot-panel';
 import { QuestionCard } from '../question-card';
+import { SandboxCard } from '../sandbox-card';
+import { SandboxRefusals } from '../sandbox-refusals';
 import { SessionFeed } from '../session-feed';
 import { SessionHeader } from '../session-header';
 import { SessionSide } from '../session-side';
@@ -59,6 +69,28 @@ export function SessionDetailScreen({ id }: { id: string }) {
   useEffect(() => {
     if (taskId !== undefined) router.replace(`/tasks/${taskId}`);
   }, [router, taskId]);
+  const notify = useNotices((state) => state.push);
+  const sandboxed = Boolean(data?.session.pilot?.sandbox);
+  const { data: refusals } = useQuery({
+    ...sandboxRefusalsQuery(id),
+    enabled: sandboxed,
+    refetchInterval: running ? CONVERSATION_REFRESH_MS : false,
+  });
+  const failed = (error: unknown) =>
+    notify(error instanceof Error ? error.message : 'Le bac à sable n’a pas répondu.', 'warning');
+  const retrieve = useMutation({
+    mutationFn: () => retrieveBranch(id),
+    onSuccess: (branch) => {
+      const asked = data?.session.pilot?.sandbox?.branch;
+      notify(
+        branch === asked ? `Branche récupérée : ${branch}` : `Branche modifiée sur le poste : récupérée sous ${branch}`,
+        'success',
+      );
+    },
+    onError: failed,
+  });
+  const stop = useMutation({ mutationFn: () => stopSandbox(id), onError: failed });
+  const remove = useMutation({ mutationFn: () => removeSandbox(id), onError: failed });
   const settlement = useSettlements((state) => state.settlements[id] ?? null);
   const offline = useOffline();
   const answers = usePermissionAnswers({
@@ -78,7 +110,8 @@ export function SessionDetailScreen({ id }: { id: string }) {
   }
   if (!data || !sources || taskId !== undefined) return <PageSkeleton variant="detail" rows={8} />;
   const { journal, session } = data;
-  const resume = resumeCommand(session, sources.sources, sources.home);
+  // Une session en bac à sable ne se reprend que dans Bosco (règle 12)
+  const resume = session.pilot?.sandbox ? null : resumeCommand(session, sources.sources, sources.home);
   return (
     <div className="flex min-h-full flex-col gap-4 p-4 md:h-full md:px-8 md:pt-6">
       <ConnectionStatus />
@@ -122,6 +155,7 @@ export function SessionDetailScreen({ id }: { id: string }) {
                     }}
                   />
                 )}
+                {refusals && <SandboxRefusals refusals={refusals.refusals} />}
                 {session.pilot?.pending && (
                   <PendingMessage
                     {...session.pilot.pending}
@@ -134,7 +168,23 @@ export function SessionDetailScreen({ id }: { id: string }) {
             footer={<PilotPanel key={session.id} session={session} />}
           />
         </div>
-        <SessionSide session={session} now={now} resume={resume} onCopy={copy} />
+        <SessionSide
+          session={session}
+          now={now}
+          resume={resume}
+          onCopy={copy}
+          sandbox={
+            session.pilot?.sandbox && (
+              <SandboxCard
+                sandbox={session.pilot.sandbox}
+                busy={session.pilot.running || retrieve.isPending || stop.isPending || remove.isPending}
+                onRetrieve={() => retrieve.mutate()}
+                onStop={() => stop.mutate()}
+                onRemove={() => remove.mutate()}
+              />
+            )
+          }
+        />
       </div>
       <AllowDialog session={answers.confirming} onCancel={answers.cancel} onConfirm={answers.confirm} />
     </div>
