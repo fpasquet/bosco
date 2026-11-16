@@ -43,7 +43,7 @@ Versions : les versions stables de NestJS, Next.js, TanStack Query, Zustand, Rea
 |---|---|---|
 | `apps/api/src/<contexte>/domain` | Agrégats, objets valeur, événements et erreurs d'un contexte (`sessions`, `devices`, `tasks`, `policies`, `knowledge`), sans décorateur | son domaine, `src/shared/domain` |
 | `apps/api/src/<contexte>/application` | Un service par agrégat (découvrir une session, autoriser, lancer une tâche, valider, accepter une décision) et `ports.ts` | son domaine, `src/shared` |
-| `apps/api/src/<contexte>/infrastructure` | Adaptateurs des ports : dépôts MikroORM, lecture des transcripts, Docker, GitHub, Jira, Confluence, `git` et `gh`, notifications | ports |
+| `apps/api/src/<contexte>/infrastructure` | Adaptateurs des ports : dépôts MikroORM, lecture des transcripts, Docker, GitHub, `git` et `gh`, notifications | ports |
 | `apps/api/src/<contexte>/interface/http` | Contrôleurs REST, flux SSE, entrée des hooks, serveur MCP, schémas zod | application |
 | `apps/api/src/<contexte>/<contexte>.module.ts` | Module NestJS du contexte : chaque port relié à son adaptateur (jetons de `tokens.ts`) | tout le contexte |
 | `apps/api/src/shared` | Noyau partagé : erreur de base, horloge, persistance commune (MikroORM, migrations), hébergement de Next.js | rien |
