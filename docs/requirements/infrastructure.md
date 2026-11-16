@@ -43,14 +43,15 @@ Le service NestJS porte l'API, les flux SSE, Next.js et l'écoute HTTPS du tél�
 - **Limites** : 4 Go de mémoire, 2 processeurs, 512 processus par agent ; 1 Go et 1 processeur par service.
 - **Capacité** : 4 agents au plus, 4 Go de mémoire gardés libres.
 - **Nettoyage** : à la fin de chaque tâche, puis au démarrage du worker pour les restes (NF-12).
+- **Bacs à sable des sessions** : même image et mêmes limites qu'un agent, un conteneur par session, démarré pendant la session et arrêté après 30 min sans message ; leur copie du dépôt et leur dossier personnel sont gardés dans `~/.local/share/bosco/sandboxes/` (DT-37). Ils ne comptent pas dans la capacité du worker.
 
 ## <a id="85-cicd"></a>8.5 CI/CD
 
-GitHub Actions à chaque push, chaque étape par `turbo run` avec le cache de Turborepo conservé entre deux exécutions (DT-22) : ESLint, `prettier --check` (code et `.feature`), contrôle des `.feature`, typage par `tsc -b` (TypeScript 6), tests Vitest, build, les deux suites Gherkin (API, puis web) en mode `replay`, recherche de secrets dans les enregistrements. Aucun déploiement : l'installation se fait sur le poste, depuis le dépôt. Travail sur branches, relecture humaine avant fusion. Retour arrière : réinstaller la version précédente ; les migrations de base sont additives.
+GitHub Actions à chaque push, chaque étape par `turbo run` avec le cache de Turborepo conservé entre deux exécutions (DT-22) : ESLint, `prettier --check` (code et `.feature`), contrôle des `.feature`, typage par `tsc -b` (TypeScript 6), tests Vitest, build, les deux suites Gherkin (API, puis web) en mode `replay`, recherche de secrets dans les enregistrements. Aucun déploiement : l'installation se fait sur le poste, depuis le dépôt. Travail sur branches, relecture humaine avant fusion. Essai d'une branche avant sa fusion : `make beta BRANCH=<branche>` la construit dans un worktree à part (`~/.cache/bosco/beta`) et installe son paquet .deb à la place de l'application, sur les vraies données. Retour arrière : réinstaller la version précédente (`make beta BRANCH=main`), possible tant que la version essayée n'a pas migré la base ; les migrations de base sont additives.
 
 ## <a id="86-configuration-secrets-et-infrastructure-as-code"></a>8.6 Configuration, secrets et infrastructure as code
 
-Configuration dans `~/.config/bosco/`, droits `600`. Jetons d'intégration dans le trousseau du système si disponible, sinon dans ce dossier. Pas d'IaC : un script d'installation crée le service utilisateur.
+Configuration dans `~/.config/bosco/`, droits `600`. Aucun jeton d'intégration gardé : GitHub se lit avec GitHub CLI du poste, et Jira et Confluence ne sont lus que par les agents, par le connecteur Atlassian de leur compte claude.ai (DT-36). Pas d'IaC : un script d'installation crée le service utilisateur.
 
 ## <a id="87-observabilite"></a>8.7 Observabilité
 
