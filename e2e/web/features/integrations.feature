@@ -1,6 +1,7 @@
 # language: fr
 @RF-CONT-04
 @RF-CONT-05
+@RF-CONT-14
 Fonctionnalité: Intégrations et liens d'une tâche
   En tant que développeur, je veux coller les liens d'une tâche et que Bosco lise leur titre et leur état, afin que
   l'agent les connaisse sans jamais recevoir les accès aux services.
@@ -22,11 +23,13 @@ Fonctionnalité: Intégrations et liens d'une tâche
     Alors la liste « Liens de la tâche » contient « Ouverte »
     Et la page est accessible
 
-  @CA-CONT-29
+  @CA-CONT-88
   @NF-18
-  Scénario: Les intégrations disent ce qu'elles lisent, et leurs accès restent dans Bosco
+  Scénario: Les intégrations disent ce qu'elles lisent, et renvoient Jira et Confluence aux agents
     Quand j'ouvre la page « /settings »
     Alors je suis sur la page « /settings/integrations »
-    Et je vois le texte « Tickets : titre, état, responsable »
     Et je vois le texte « Lu avec GitHub CLI du poste : aucun jeton n’est gardé. »
+    Et je vois le texte « Reconnus à leur adresse : clé du ticket, titre de la page »
     Et la page est accessible
+    Quand je clique sur le lien « Lecture par les agents »
+    Alors je suis sur la page « /settings/isolation/egress »

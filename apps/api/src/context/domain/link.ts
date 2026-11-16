@@ -1,16 +1,13 @@
-/** Service d'un lien : lu par son intégration, ou la seule page pour une adresse inconnue (RF-CONT-04). */
+/**
+ * Service d'un lien (RF-CONT-04) : GitHub lu par son intégration, Jira et Confluence reconnus à leur adresse sans être
+ * lus (l'agent les lit lui-même, RF-CONT-14), ou la seule page pour une adresse inconnue.
+ */
 export type LinkService = 'confluence' | 'decision' | 'github' | 'jira' | 'page';
 
 export interface Recognized {
   /** « Pull request », « Ticket », « Commit », « Page », « Décision » */
   kind: string;
   service: LinkService;
-}
-
-/** Adresses des intégrations configurées, pour reconnaître leurs liens. */
-export interface IntegrationHosts {
-  confluence: null | string;
-  jira: null | string;
 }
 
 const GITHUB = /^https:\/\/github\.com\/[^/]+\/[^/]+\/(pull|issues|commit|tree)\/[^/?#]+/;
@@ -29,19 +26,38 @@ function hostOf(url: string): null | string {
   }
 }
 
+// Jira et Confluence d'Atlassian : un site *.atlassian.net, sans réglage
+const ATLASSIAN = /^[a-z0-9-]+\.atlassian\.net$/;
+const JIRA_KEY = /\/browse\/([A-Z][A-Z0-9]+-\d+)/;
+
 /** Le service d'une adresse collée, reconnu avant l'ajout (CA-CONT-34) ; toute adresse est acceptée (CA-CONT-35). */
-export function recognize(url: string, hosts: IntegrationHosts): Recognized {
+export function recognize(url: string): Recognized {
   const trimmed = url.trim();
   if (/^DEC-\d+$/i.test(trimmed) || /\/context\/decisions\/\d+/.test(trimmed))
     return { service: 'decision', kind: 'Décision' };
   const github = GITHUB.exec(trimmed);
   if (github) return { service: 'github', kind: GITHUB_KINDS[github[1] ?? ''] ?? 'Lien' };
   const host = hostOf(trimmed);
-  if (host && hosts.confluence && host === hostOf(hosts.confluence) && trimmed.includes('/wiki/'))
+  if (host && ATLASSIAN.test(host) && new URL(trimmed).pathname.startsWith('/wiki/'))
     return { service: 'confluence', kind: 'Page' };
-  if (host && hosts.jira && host === hostOf(hosts.jira) && /\/browse\/[A-Z][A-Z0-9]+-\d+/.test(trimmed))
-    return { service: 'jira', kind: 'Ticket' };
+  if (host && ATLASSIAN.test(host) && JIRA_KEY.test(trimmed)) return { service: 'jira', kind: 'Ticket' };
   return { service: 'page', kind: 'Page' };
+}
+
+/**
+ * Ce que Bosco garde d'un lien Jira ou Confluence, tiré de sa seule adresse (CA-CONT-90) : la clé du ticket, ou le
+ * titre d'une page quand l'adresse le contient (…/pages/123/Lexique+de+prononciation), sinon l'adresse.
+ */
+export function readingFromAddress(service: 'confluence' | 'jira', url: string): LinkReading {
+  const empty = { state: null, person: null };
+  if (service === 'jira') return { title: JIRA_KEY.exec(url)?.[1] ?? url, ...empty };
+  const slug = /\/pages\/\d+\/([^/?#]+)/.exec(url)?.[1];
+  if (!slug) return { title: url, ...empty };
+  try {
+    return { title: decodeURIComponent(slug.replaceAll('+', ' ')), ...empty };
+  } catch {
+    return { title: url, ...empty };
+  }
 }
 
 /** Ce que Bosco a lu d'un lien : titre, état, auteur ou responsable (CA-CONT-36). */

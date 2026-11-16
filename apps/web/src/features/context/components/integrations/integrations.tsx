@@ -1,18 +1,17 @@
 'use client';
 import { RefreshCw, ShieldCheck } from 'lucide-react';
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import Link from 'next/link';
 import type { IntegrationDto } from '@bosco/domain';
 import { cn } from '@/lib/cn';
 import { Button } from '@/shared/ui/button';
 
 const NAMES: Record<IntegrationDto['name'], { label: string; reads: string }> = {
   github: { label: 'GitHub', reads: 'PR, tickets, commits, branches' },
-  jira: { label: 'Jira', reads: 'Tickets : titre, état, responsable' },
-  confluence: { label: 'Confluence', reads: 'Pages : titre, version' },
+  atlassian: { label: 'Jira et Confluence', reads: 'Reconnus à leur adresse : clé du ticket, titre de la page' },
 };
 
 const STATES: Record<IntegrationDto['state'], { badge: string; label: string }> = {
+  agents: { label: 'Par les agents', badge: 'badge-ghost' },
   connected: { label: 'Connecté', badge: 'badge-soft badge-success' },
   error: { label: 'En erreur', badge: 'badge-soft badge-error' },
   unconfigured: { label: 'Non configuré', badge: 'badge-ghost' },
@@ -22,80 +21,17 @@ const TIME = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digi
 
 export interface IntegrationsProps {
   busy: boolean;
-  error: null | string;
   integrations: IntegrationDto[];
   lastRefresh: null | string;
   nextRefresh: null | string;
-  onConfigure: (name: 'confluence' | 'jira', access: { baseUrl: string; email: string; token: string }) => void;
   onRefresh: () => void;
 }
 
-function AccessForm({
-  busy,
-  error,
-  integration,
-  onCancel,
-  onSubmit,
-}: {
-  busy: boolean;
-  error: null | string;
-  integration: IntegrationDto;
-  onCancel: () => void;
-  onSubmit: (access: { baseUrl: string; email: string; token: string }) => void;
-}) {
-  const { handleSubmit, register } = useForm({
-    defaultValues: { baseUrl: integration.address ?? '', email: '', token: '' },
-  });
-  const id = `access-${integration.name}`;
-  return (
-    <form
-      className="flex flex-col gap-2 border-t border-line px-4 py-3"
-      onSubmit={(event) => void handleSubmit(onSubmit)(event)}
-    >
-      <label className="flex flex-col gap-1">
-        <span className="text-xs font-medium">Adresse du site</span>
-        <input
-          id={`${id}-url`}
-          className="input w-full font-mono input-sm"
-          placeholder="https://equipe.atlassian.net"
-          {...register('baseUrl')}
-        />
-      </label>
-      <label className="flex flex-col gap-1">
-        <span className="text-xs font-medium">Compte</span>
-        <input className="input w-full input-sm" autoComplete="email" {...register('email')} />
-      </label>
-      <label className="flex flex-col gap-1">
-        <span className="text-xs font-medium">Jeton d’API</span>
-        <input type="password" className="input w-full input-sm" autoComplete="off" {...register('token')} />
-      </label>
-      {error && <p className="text-xs text-danger">{error}</p>}
-      <div className="flex gap-2">
-        <Button type="submit" size="sm" disabled={busy}>
-          Enregistrer
-        </Button>
-        <Button type="button" size="sm" variant="ghost" onClick={onCancel}>
-          Annuler
-        </Button>
-      </div>
-    </form>
-  );
-}
-
 /**
- * Intégrations (E10a) : l'état de chaque connexion, ce qu'elle lit, le nombre de liens et leur relecture. Les accès
- * restent dans Bosco, jamais chez les agents.
+ * Intégrations (E10a) : l'état de la connexion à GitHub, ce qu'elle lit, le nombre de liens et leur relecture ; Jira et
+ * Confluence sont reconnus à leur adresse et lus par les agents du worker (E11b). Les accès restent dans Bosco.
  */
-export function Integrations({
-  busy,
-  error,
-  integrations,
-  lastRefresh,
-  nextRefresh,
-  onConfigure,
-  onRefresh,
-}: IntegrationsProps) {
-  const [editing, setEditing] = useState<'confluence' | 'jira' | null>(null);
+export function Integrations({ busy, integrations, lastRefresh, nextRefresh, onRefresh }: IntegrationsProps) {
   // Sur le téléphone, une intégration en erreur passe en tête
   const ordered = integrations.toSorted((a, b) => Number(b.state === 'error') - Number(a.state === 'error'));
   return (
@@ -108,7 +44,6 @@ export function Integrations({
           {ordered.map((integration) => {
             const { label, reads } = NAMES[integration.name];
             const state = STATES[integration.state];
-            const manageable = integration.name !== 'github';
             return (
               <li key={integration.name}>
                 <div className="flex flex-wrap items-start gap-3 px-4 py-3">
@@ -132,37 +67,22 @@ export function Integrations({
                     {integration.name === 'github' && (
                       <p className="text-xs text-muted">Lu avec GitHub CLI du poste : aucun jeton n’est gardé.</p>
                     )}
+                    {integration.name === 'atlassian' && (
+                      <p className="text-xs text-muted">
+                        Lus par les agents du worker avec ton connecteur Atlassian de claude.ai : Bosco ne garde aucun
+                        accès.
+                      </p>
+                    )}
                   </div>
                   <span className="text-sm text-muted">
                     {integration.links} lien{integration.links > 1 ? 's' : ''}
                   </span>
-                  {manageable && (
-                    <Button
-                      size="xs"
-                      variant="outline"
-                      className="hidden md:inline-flex"
-                      disabled={busy}
-                      onClick={() => setEditing(integration.name as 'confluence' | 'jira')}
-                    >
-                      {integration.state === 'error' ? 'Renouveler le jeton' : 'Gérer'}
+                  {integration.name === 'atlassian' && (
+                    <Button asChild size="xs" variant="outline" className="hidden md:inline-flex">
+                      <Link href="/settings/isolation/egress">Lecture par les agents</Link>
                     </Button>
                   )}
-                  {manageable && integration.state === 'error' && (
-                    <span className="text-xs text-muted md:hidden">Renouveler sur le poste</span>
-                  )}
                 </div>
-                {editing === integration.name && (
-                  <AccessForm
-                    integration={integration}
-                    busy={busy}
-                    error={error}
-                    onCancel={() => setEditing(null)}
-                    onSubmit={(access) => {
-                      onConfigure(integration.name as 'confluence' | 'jira', access);
-                      setEditing(null);
-                    }}
-                  />
-                )}
               </li>
             );
           })}
@@ -195,8 +115,9 @@ export function Integrations({
         <section className="flex items-start gap-3 rounded-card border border-line bg-surface-alt p-4">
           <ShieldCheck aria-hidden className="mt-0.5 size-4 shrink-0 text-primary" />
           <p className="text-sm">
-            <b className="font-semibold">Ces accès restent dans Bosco.</b> Les accès à GitHub, Jira et Confluence ne
-            sont jamais transmis aux agents : ils ne reçoivent que le titre, l’état et l’adresse des liens d’une tâche.
+            <b className="font-semibold">Ces accès restent dans Bosco.</b> L’accès à GitHub n’est jamais transmis aux
+            agents : ils reçoivent le titre, l’état et l’adresse des liens d’une tâche, et lisent eux-mêmes ceux de Jira
+            et Confluence si la lecture est activée.
           </p>
         </section>
       </div>

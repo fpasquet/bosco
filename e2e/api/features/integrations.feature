@@ -1,8 +1,9 @@
 @RF-CONT-04
 @RF-CONT-05
+@RF-CONT-14
 Feature: Integrations and task links
   As the developer, I want to paste the links of a task and have Bosco read their title and state, so that the agent
-  knows them without ever receiving the accesses to the services.
+  knows them without ever receiving the accesses to the services; Jira and Confluence are read by the agent itself.
 
   Background:
     Given the Claude Code profile ".claude" has the transcript "session-labo-ia-rag.jsonl" for the session "5e0a91c3"
@@ -21,20 +22,20 @@ Feature: Integrations and task links
     When I send GET request to "/api/context/preview?repository=labo-ia&task=1"
     Then the response property "text" should contain "Pull request · Ouverte · https://github.com/groupe/labo-ia/pull/42"
 
-  @CA-CONT-30
-  @CA-CONT-37
-  Scenario: A link of an integration in error stays, not refreshed, and the integration says why
-    When I send PUT request to "/api/integrations/jira" with the JSON "fixtures/links/jira-access.json"
-    And I send POST request to "/api/tasks/1/links" with the JSON "fixtures/links/jira-ticket.json"
-    Then the response property "title" should equal "TTS-142 · Prononciation des sigles"
-    When I send PUT request to "/api/integrations/jira" with the JSON "fixtures/links/jira-expired.json"
-    And I send POST request to "/api/integrations/refresh"
-    And I send GET request to "/api/tasks/1/links"
-    Then the response property "links.0.title" should equal "TTS-142 · Prononciation des sigles"
-    And the response property "links.0.error" should equal "Jeton refusé ou expiré"
+  @CA-CONT-88
+  @CA-CONT-90
+  Scenario: A Jira ticket and a Confluence page are recognized by their address, without being read by Bosco
+    When I send POST request to "/api/tasks/1/links" with the JSON "fixtures/links/jira-ticket.json"
+    Then the response property "service" should equal "jira"
+    And the response property "title" should equal "TTS-142"
+    And the response property "state" should equal "null"
+    When I send POST request to "/api/tasks/1/links" with the JSON "fixtures/links/confluence-page.json"
+    Then the response property "service" should equal "confluence"
+    And the response property "title" should equal "Lexique de prononciation"
     When I send GET request to "/api/integrations"
-    Then the response property "integrations.1.state" should equal "error"
-    And the response property "integrations.1.links" should equal "1"
+    Then the response property "integrations.1.name" should equal "atlassian"
+    And the response property "integrations.1.state" should equal "agents"
+    And the response property "integrations.1.links" should equal "2"
 
   @CA-CONT-35
   @CA-CONT-38

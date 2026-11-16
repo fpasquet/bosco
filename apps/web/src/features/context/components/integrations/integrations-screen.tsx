@@ -1,32 +1,15 @@
 'use client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
 import { SectionSkeleton } from '@/shared/components/section-skeleton';
 import { SettingsTabs } from '@/shared/layouts/settings-tabs';
-import { configureIntegration, ContextRefused, integrationsQuery, refreshLinks } from '../../api/context';
+import { integrationsQuery, refreshLinks } from '../../api/context';
 import { Integrations } from './integrations';
 
 /** Réglages › Intégrations (E10a) ; en lecture seule sur le téléphone. */
 export function IntegrationsScreen({ title }: { title: string }) {
   const client = useQueryClient();
   const { data } = useQuery(integrationsQuery);
-  const [error, setError] = useState<null | string>(null);
   const refresh = () => client.invalidateQueries({ queryKey: ['integrations'] });
-  const configure = useMutation({
-    mutationFn: ({
-      access,
-      name,
-    }: {
-      access: Parameters<typeof configureIntegration>[1];
-      name: 'confluence' | 'jira';
-    }) => configureIntegration(name, access),
-    onSuccess: async () => {
-      setError(null);
-      await refresh();
-    },
-    onError: (failure) =>
-      setError(failure instanceof ContextRefused ? failure.message : 'L’accès n’a pas pu être enregistré.'),
-  });
   const reread = useMutation({ mutationFn: refreshLinks, onSuccess: refresh });
   return (
     <div className="flex flex-col gap-4 p-4 md:px-8 md:pt-6">
@@ -41,9 +24,7 @@ export function IntegrationsScreen({ title }: { title: string }) {
           integrations={data.integrations}
           lastRefresh={data.lastRefresh}
           nextRefresh={data.nextRefresh}
-          busy={configure.isPending || reread.isPending}
-          error={error}
-          onConfigure={(name, access) => configure.mutate({ name, access })}
+          busy={reread.isPending}
           onRefresh={() => reread.mutate()}
         />
       )}

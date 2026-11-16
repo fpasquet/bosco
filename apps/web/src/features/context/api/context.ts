@@ -101,23 +101,6 @@ export const integrationsQuery = {
   queryFn: () => read<IntegrationsDto>('/api/integrations'),
   refetchInterval: 30_000,
 };
-
-export async function configureIntegration(
-  name: 'confluence' | 'jira',
-  access: { baseUrl: string; email: string; token: string },
-): Promise<void> {
-  const response = await fetch(`/api/integrations/${name}`, {
-    method: 'PUT',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(access),
-  });
-  if (response.status === 400) {
-    const { message } = (await response.json()) as { message?: string };
-    throw new ContextRefused(message ?? 'Accès refusé.');
-  }
-  if (!response.ok) throw new Error(`PUT integration answered ${response.status}`);
-}
-
 export async function refreshLinks(): Promise<void> {
   const response = await fetch('/api/integrations/refresh', { method: 'POST' });
   if (!response.ok) throw new Error(`POST refresh answered ${response.status}`);

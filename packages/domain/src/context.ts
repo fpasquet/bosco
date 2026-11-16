@@ -90,8 +90,9 @@ export interface IntegrationDto {
   error: null | string;
   failingSince: null | string;
   links: number;
-  name: 'confluence' | 'github' | 'jira';
-  state: 'connected' | 'error' | 'unconfigured';
+  /** atlassian : Jira et Confluence, reconnus à leur adresse et lus par les agents du worker, pas par Bosco */
+  name: 'atlassian' | 'github';
+  state: 'agents' | 'connected' | 'error' | 'unconfigured';
 }
 
 export interface IntegrationsDto {
