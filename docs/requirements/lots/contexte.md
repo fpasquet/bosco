@@ -123,39 +123,22 @@ Règles de l'écran :
 
 **Mobile** : écran poussé plein écran, en lecture seule. Le texte se fait défiler ; « Copier » reste en barre basse (44 px). Le choix de la tâche se fait au-dessus du texte.
 
-## <a id="e10"></a>E10 · Intégrations
+## <a id="e10"></a>E10 · Liens d'une tâche
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e10.html` · implémentation : **À faire évoluer (E10a et E10b : Bosco ne lit plus Jira ni Confluence et ne garde plus leur jeton ; leurs liens sont reconnus à leur adresse (clé du ticket, titre tiré de l'adresse) et marqués « Lu par l'agent ». Déjà livré : une adresse collée sur une tâche est reconnue avant l'ajout ; GitHub se lit avec GitHub CLI du poste, sans jeton gardé ; toute autre adresse avec le titre de sa page ; titre, état et auteur relus toutes les heures, et « Rafraîchir maintenant » ; un lien illisible reste, « Non rafraîchi », avec ses dernières informations ; retirer un lien ne le supprime que de la tâche. Écart : les liens s'ajoutent aux tâches seulement, pas encore aux sessions ni aux décisions.)**
-
-### <a id="e10a"></a>E10a · Intégrations : connexions
-
-Les services dont Bosco lit les liens (GitHub) : état de la connexion, ce qui est lu, nombre de liens et rafraîchissement. Les liens Jira et Confluence sont reconnus à leur adresse, et les agents du worker les lisent eux-mêmes par ton connecteur Atlassian de claude.ai. Les accès de Bosco restent dans Bosco, jamais chez les agents.
-
-- **Depuis** l'entrée « Réglages » de la barre latérale · [E10b](#e10b) avec le lien « Non rafraîchi »
-- **Ensuite** [E11b](#e11b) avec « Lecture par les agents » · [E11a](#e11a) avec l'onglet « Isolation du worker » · [E12a](#e12a) avec « Environnements de test »
-
-Règles de l'écran :
-
-1. Chaque intégration indique ce qu'elle reconnaît et lit dans un lien : pour GitHub, titre, état et auteur. Le nombre de liens est celui des liens déjà ajoutés aux tâches, sessions et décisions (règle 4). Quand la connexion échoue (GitHub CLI déconnecté), la ligne passe en erreur avec la cause et la conséquence ; les liens restent affichés avec leurs dernières informations connues.
-2. Bosco ne lit plus Jira ni Confluence et ne garde aucun accès à ces services : leurs liens sont reconnus à leur adresse (un site *.atlassian.net), avec la clé du ticket ou le titre de la page tiré de l'adresse, sans état ni responsable. Les agents du worker les lisent eux-mêmes par ton connecteur Atlassian de claude.ai, si la lecture est activée ([E11b](#e11b), règle 14). « Lecture par les agents » y mène.
-3. Les accès aux intégrations de Bosco restent dans Bosco : ils ne sont jamais transmis aux agents, qui reçoivent le titre, l'état et l'adresse d'un lien (règle 5). Ces réglages sont réservés à toi, aucune session ni aucun agent ne peut les modifier (règle 9).
-4. Les liens sont rafraîchis toutes les heures ; « Rafraîchir maintenant » relance la lecture sans attendre. Un lien dont les informations ne peuvent pas être lues est gardé tel quel, avec son adresse (règle 4).
-5. Une adresse d'un service inconnu est tout de même acceptée : elle est gardée avec le titre de la page seulement, sans état ni auteur.
-
-**Mobile** : écran poussé depuis l'onglet Sources, en lecture seule. Les intégrations sont des lignes compactes ; une intégration en erreur passe en tête. L'onglet Isolation du worker et les environnements de test ne sont pas repris.
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e10.html` · implémentation : **À faire évoluer (E10a retiré : les réglages n'ont plus d'onglet Intégrations, GitHub étant le seul service que Bosco lit. E10b : Bosco ne lit plus Jira ni Confluence et ne garde plus leur jeton ; leurs liens sont reconnus à leur adresse (clé du ticket, titre tiré de l'adresse) et marqués « Lu par l'agent » ; un lien GitHub « Non rafraîchi » renvoie au compte GitHub (E11b). Déjà livré : une adresse collée sur une tâche est reconnue avant l'ajout ; GitHub se lit avec GitHub CLI du poste, sans jeton gardé ; toute autre adresse avec le titre de sa page ; titre, état et auteur relus toutes les heures ; un lien illisible reste, « Non rafraîchi », avec ses dernières informations ; retirer un lien ne le supprime que de la tâche. Écart : les liens s'ajoutent aux tâches seulement, pas encore aux sessions ni aux décisions.)**
 
 ### <a id="e10b"></a>E10b · Liens d'une tâche
 
 Les décisions, tickets, pages et PR liés à une tâche, ajoutés en collant une adresse. Bosco reconnaît le service, lit le titre et l'état d'une PR ou d'une page, puis transmet le tout à l'agent avec sa consigne ; les tickets Jira et les pages Confluence, l'agent les lit lui-même.
 
 - **Depuis** [Lot 2 · E7a](taches.md#e7a) (revue de T-12)
-- **Ensuite** [Lot 2 · E7a](taches.md#e7a) une fois le lien ajouté · [E10a](#e10a) avec « Non rafraîchi »
+- **Ensuite** [Lot 2 · E7a](taches.md#e7a) une fois le lien ajouté · [E11b](#e11b) avec « Non rafraîchi »
 
 Règles de l'écran :
 
 1. On colle une adresse : tout lien est accepté, ceux de GitHub, Jira et Confluence sont reconnus automatiquement et le service s'affiche avant l'ajout (règle 4). Une adresse non reconnue s'ajoute aussi, avec le titre de la page seulement.
 2. Pour un lien GitHub, Bosco affiche les informations lues : titre, état, auteur, et l'heure de la dernière lecture, relues toutes les heures. Un ticket Jira est reconnu à son adresse (un site *.atlassian.net, /browse/CLÉ) : Bosco n'en garde que la clé et le marque « Lu par l'agent », sans titre ni état.
-3. Une page Confluence est reconnue à son adresse (/wiki/) : son titre est tiré de l'adresse quand elle le contient, sinon c'est l'adresse qui s'affiche. Bosco ne la lit pas ; l'agent du worker la lit par ton connecteur Atlassian de claude.ai si la lecture est activée ([E11b](#e11b), règle 14). Un lien GitHub dont la connexion est en erreur reste dans la liste, signalé « Non rafraîchi », avec ses dernières informations connues, et un renvoi aux connexions ([E10a](#e10a)).
+3. Une page Confluence est reconnue à son adresse (/wiki/) : son titre est tiré de l'adresse quand elle le contient, sinon c'est l'adresse qui s'affiche. Bosco ne la lit pas ; l'agent du worker la lit par ton connecteur Atlassian de claude.ai si la lecture est activée ([E11b](#e11b), règle 14). Un lien GitHub dont la connexion est en erreur reste dans la liste, signalé « Non rafraîchi », avec ses dernières informations connues, et un renvoi au compte GitHub par défaut ([E11b](#e11b)), dont la liste dit si GitHub CLI est connecté. Les liens sont relus toutes les heures, sans action à mener.
 4. L'agent reçoit les liens avec sa consigne : titre, état et adresse. Il ne reçoit ni le contenu des pages ni les accès aux intégrations de Bosco (règles 1 et 5) ; il lit lui-même les tickets Jira et les pages Confluence, liés ou cités, si la lecture est activée (règle 14).
 5. Les liens s'ajoutent de la même façon sur une session ou sur une décision ; ce panneau ne concerne que la tâche. Retirer un lien (croix) ne le supprime que de cette tâche.
 
@@ -390,24 +373,25 @@ Règles de l'écran :
 - **CA-CONT-27** · [E9f](#e9f) · Étant donné aucune tâche choisie, quand la personne ouvre l'aperçu, alors les liens ne sont pas comptés dans l'estimation des tokens (RF-CONT-01).
 - **CA-CONT-28** · [E9f](#e9f) · Étant donné une décision acceptée, modifiée ou abandonnée depuis l'ouverture, quand la personne rouvre le panneau, alors le texte est recalculé à partir des décisions du moment (RF-CONT-11).
 
-### <a id="e10a-integrations-connexions"></a>E10a · Intégrations : connexions
+### <a id="e10a-integrations-connexions-retire-le-16112026"></a>E10a · Intégrations : connexions (retiré le 16/11/2026)
 
-- ~~**CA-CONT-29** · [E10a](#e10a) · Étant donné les intégrations GitHub, Jira et Confluence, quand la personne ouvre l'écran, alors chaque ligne indique ce qui est reconnu et lu dans un lien (titre, état, auteur ou responsable, selon le service) et le nombre de liens déjà ajoutés aux tâches, sessions et décisions (RF-CONT-04).~~ Retiré (16/11/2026, Bosco ne lit plus Jira ni Confluence ; remplacé par CA-CONT-88).
-- ~~**CA-CONT-30** · [E10a](#e10a) · Étant donné une connexion Confluence en échec, quand la personne ouvre l'écran, alors la ligne passe en erreur avec la cause et la conséquence : 3 liens Confluence ne sont plus rafraîchis mais restent affichés avec leurs dernières informations connues, « Renouveler le jeton » est proposé et le reste continue de fonctionner (RF-CONT-04).~~ Retiré (16/11/2026, plus de jeton Jira ni Confluence ; remplacé par CA-CONT-89).
-- **CA-CONT-31** · [E10a](#e10a) · Étant donné des liens rafraîchis toutes les heures, quand la personne clique sur « Rafraîchir maintenant », alors la lecture est relancée sans attendre, et un lien dont les informations ne peuvent pas être lues est gardé tel quel, avec son adresse (RF-CONT-04).
-- **CA-CONT-32** · [E10a](#e10a) · Étant donné l'adresse d'un service non configuré ou inconnu, quand elle est ajoutée, alors elle est acceptée et gardée avec le titre de la page seulement, sans état ni auteur (RF-CONT-04).
-- **CA-CONT-33** · [E10a](#e10a) · Étant donné les accès aux intégrations, quand un agent est lancé, alors il ne reçoit que le titre, l'état et l'adresse d'un lien et jamais les accès, et aucune session ni aucun agent ne peut modifier ces réglages (RF-CONT-05, RF-CONT-09).
-- **CA-CONT-88** · [E10a](#e10a) · Étant donné les intégrations, quand la personne ouvre l'écran, alors la ligne GitHub indique ce qui est lu dans un lien (titre, état, auteur) et le nombre de liens, et une ligne « Jira et Confluence » dit qu'ils sont reconnus à leur adresse et lus par les agents, avec le nombre de liens et un renvoi à la lecture par les agents ([E11b](#e11b)), sans connexion ni jeton à régler (RF-CONT-04, RF-CONT-14).
-- **CA-CONT-89** · [E10a](#e10a) · Étant donné la connexion GitHub en échec (GitHub CLI déconnecté), quand la personne ouvre l'écran, alors la ligne passe en erreur avec la cause et la conséquence, et les liens GitHub restent affichés avec leurs dernières informations connues (RF-CONT-04).
+- ~~**CA-CONT-29** · E10a · Étant donné les intégrations GitHub, Jira et Confluence, quand la personne ouvre l'écran, alors chaque ligne indique ce qui est reconnu et lu dans un lien (titre, état, auteur ou responsable, selon le service) et le nombre de liens déjà ajoutés aux tâches, sessions et décisions (RF-CONT-04).~~ Retiré (16/11/2026, Bosco ne lit plus Jira ni Confluence ; remplacé par CA-CONT-88).
+- ~~**CA-CONT-30** · E10a · Étant donné une connexion Confluence en échec, quand la personne ouvre l'écran, alors la ligne passe en erreur avec la cause et la conséquence : 3 liens Confluence ne sont plus rafraîchis mais restent affichés avec leurs dernières informations connues, « Renouveler le jeton » est proposé et le reste continue de fonctionner (RF-CONT-04).~~ Retiré (16/11/2026, plus de jeton Jira ni Confluence ; remplacé par CA-CONT-89).
+- ~~**CA-CONT-31** · E10a · Étant donné des liens rafraîchis toutes les heures, quand la personne clique sur « Rafraîchir maintenant », alors la lecture est relancée sans attendre, et un lien dont les informations ne peuvent pas être lues est gardé tel quel, avec son adresse (RF-CONT-04).~~ Retiré (16/11/2026, écran E10a retiré).
+- ~~**CA-CONT-32** · E10a · Étant donné l'adresse d'un service non configuré ou inconnu, quand elle est ajoutée, alors elle est acceptée et gardée avec le titre de la page seulement, sans état ni auteur (RF-CONT-04).~~ Retiré (16/11/2026, écran E10a retiré).
+- ~~**CA-CONT-33** · E10a · Étant donné les accès aux intégrations, quand un agent est lancé, alors il ne reçoit que le titre, l'état et l'adresse d'un lien et jamais les accès, et aucune session ni aucun agent ne peut modifier ces réglages (RF-CONT-05, RF-CONT-09).~~ Retiré (16/11/2026, écran E10a retiré).
+- ~~**CA-CONT-88** · E10a · Étant donné les intégrations, quand la personne ouvre l'écran, alors la ligne GitHub indique ce qui est lu dans un lien (titre, état, auteur) et le nombre de liens, et une ligne « Jira et Confluence » dit qu'ils sont reconnus à leur adresse et lus par les agents, avec le nombre de liens et un renvoi à la lecture par les agents ([E11b](#e11b)), sans connexion ni jeton à régler (RF-CONT-04, RF-CONT-14).~~ Retiré (16/11/2026, écran E10a retiré).
+- ~~**CA-CONT-89** · E10a · Étant donné la connexion GitHub en échec (GitHub CLI déconnecté), quand la personne ouvre l'écran, alors la ligne passe en erreur avec la cause et la conséquence, et les liens GitHub restent affichés avec leurs dernières informations connues (RF-CONT-04).~~ Retiré (16/11/2026, écran E10a retiré).
 
 ### <a id="e10b-liens-dune-tache"></a>E10b · Liens d'une tâche
 
 - **CA-CONT-34** · [E10b](#e10b) · Étant donné une adresse GitHub, Jira ou Confluence collée, quand la personne la saisit, alors le service est reconnu et affiché avant l'ajout (RF-CONT-04).
 - **CA-CONT-35** · [E10b](#e10b) · Étant donné une adresse non reconnue, quand la personne l'ajoute, alors le lien est ajouté avec le titre de la page seulement (RF-CONT-04).
 - ~~**CA-CONT-36** · [E10b](#e10b) · Étant donné un lien ajouté, quand la personne consulte la liste, alors elle voit pour chaque lien le titre, l'état, l'auteur ou responsable et l'heure de la dernière lecture, relues toutes les heures (RF-CONT-04).~~ Retiré (16/11/2026, les liens Jira et Confluence ne sont plus lus par Bosco ; remplacé par CA-CONT-90).
-- **CA-CONT-37** · [E10b](#e10b) · Étant donné un lien dont l'intégration est en erreur, quand la personne consulte la liste, alors il reste dans la liste, signalé « Non rafraîchi », avec ses dernières informations connues, et le renvoi mène aux connexions ([E10a](#e10a)) (RF-CONT-04).
+- ~~**CA-CONT-37** · [E10b](#e10b) · Étant donné un lien dont l'intégration est en erreur, quand la personne consulte la liste, alors il reste dans la liste, signalé « Non rafraîchi », avec ses dernières informations connues, et le renvoi mène aux connexions (E10a) (RF-CONT-04).~~ Retiré (16/11/2026, le renvoi mène au compte GitHub ; remplacé par CA-CONT-97).
 - **CA-CONT-38** · [E10b](#e10b) · Étant donné un lien retiré par la croix, quand la personne confirme le retrait, alors il n'est supprimé que de cette tâche, et l'agent reçoit les liens avec sa consigne : titre, état et adresse, sans le contenu des pages ni les accès aux intégrations (RF-CONT-01, RF-CONT-05).
 - **CA-CONT-90** · [E10b](#e10b) · Étant donné des liens ajoutés, quand la personne consulte la liste, alors un lien GitHub montre son titre, son état, son auteur et l'heure de la dernière lecture, relues toutes les heures ; un ticket Jira (site `*.atlassian.net`, `/browse/CLÉ`) montre sa clé, et une page Confluence (`/wiki/`) le titre tiré de son adresse, ou l'adresse, tous deux marqués « Lu par l'agent », sans état ni lecture par Bosco (RF-CONT-04).
+- **CA-CONT-97** · [E10b](#e10b) · Étant donné un lien GitHub dont la lecture échoue (GitHub CLI déconnecté), quand la personne consulte la liste, alors il reste dans la liste, signalé « Non rafraîchi » avec la cause et ses dernières informations connues, et le renvoi mène au compte GitHub par défaut ([E11b](#e11b)) (RF-CONT-04).
 
 ### <a id="e11a-isolation-du-worker-mode-et-ressources"></a>E11a · Isolation du worker : mode et ressources
 

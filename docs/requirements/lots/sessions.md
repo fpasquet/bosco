@@ -336,7 +336,7 @@ Règles de l'écran :
 6. Bosco garde sa propre copie des sessions : Claude Code efface ses fichiers après 30 jours par défaut, mais l'historique reste lisible dans Bosco. Une session effacée par Claude Code ne se reprend plus (règle 10).
 7. Le canal de Bosco, lui aussi installé profil par profil, permet d'écrire depuis Bosco à une session ouverte dans un terminal. « Installer » ouvre [E4f](#e4f).
 
-**Mobile** : les entrées « Contexte » et « Réglages » de la barre latérale passent ici, sous forme de deux boutons ([E9a](contexte.md#e9a), [E10a](contexte.md#e10a)). Les sources deviennent des cartes, les réglages une liste d'options à ouvrir. L'ajout d'un dossier n'existe que sur le poste, avec un renvoi explicite à l'ordinateur (pastille 6) ; l'appairage d'un téléphone se déclenche aussi depuis le poste.
+**Mobile** : les entrées « Contexte » et « Réglages » de la barre latérale passent ici, sous forme de deux boutons ([E9a](contexte.md#e9a), [E4d](#e4d)). Les sources deviennent des cartes, les réglages une liste d'options à ouvrir. L'ajout d'un dossier n'existe que sur le poste, avec un renvoi explicite à l'ordinateur (pastille 6) ; l'appairage d'un téléphone se déclenche aussi depuis le poste.
 
 ### <a id="e4b"></a>E4b · Sources : installation du suivi en direct
 
