@@ -16,7 +16,7 @@ export interface TaskDetailProps {
   /** Tâches qui échoueraient avec l'annulation : la confirmation les nomme (E13c) */
   failing: TaskDto[];
   onCancel: () => void;
-  onRelaunch: (changes: { budgetUsd: number; fromBranch: boolean; instruction?: string }) => void;
+  onRelaunch: (changes: { fromBranch: boolean; instruction?: string }) => void;
   /** Fil de la tâche et ses modifications, comme pour une session (RF-TACH-10) */
   panel: ReactNode;
   /** Ressources d'une tâche du worker en cours, sous l'en-tête (E13d) */
@@ -63,23 +63,21 @@ function CancelConfirmation({
 
 const relaunchSchema = z.object({
   start: z.enum(['branch', 'scratch']),
-  budgetUsd: z.number({ error: 'Un budget en dollars.' }).positive('Un budget au-dessus de 0 $.'),
   instruction: z.string().max(5000),
 });
 
 type RelaunchValues = z.infer<typeof relaunchSchema>;
 
-function Relaunch({ busy, onRelaunch, task }: Pick<TaskDetailProps, 'busy' | 'onRelaunch' | 'task'>) {
-  const { formState, handleSubmit, register } = useForm<RelaunchValues>({
+function Relaunch({ busy, onRelaunch }: Pick<TaskDetailProps, 'busy' | 'onRelaunch'>) {
+  const { handleSubmit, register } = useForm<RelaunchValues>({
     resolver: zodResolver(relaunchSchema),
     defaultValues: {
       start: 'branch',
-      budgetUsd: Math.min(2, Number((task.guardrails.budgetUsd * 1.5).toFixed(2))),
       instruction: '',
     },
   });
-  const relaunch = handleSubmit(({ budgetUsd, instruction, start }) =>
-    onRelaunch({ budgetUsd, fromBranch: start === 'branch', instruction: instruction.trim() || undefined }),
+  const relaunch = handleSubmit(({ instruction, start }) =>
+    onRelaunch({ fromBranch: start === 'branch', instruction: instruction.trim() || undefined }),
   );
   return (
     <form
@@ -102,23 +100,9 @@ function Relaunch({ busy, onRelaunch, task }: Pick<TaskDetailProps, 'busy' | 'on
           Repartir de zéro
         </label>
       </fieldset>
-      <label className="flex flex-col gap-1.5">
-        <span className="text-xs font-medium">Budget ($)</span>
-        <input
-          type="number"
-          min={0.1}
-          step={0.1}
-          className="input w-40"
-          aria-invalid={formState.errors.budgetUsd ? true : undefined}
-          aria-describedby={formState.errors.budgetUsd ? 'relaunch-budget-error' : undefined}
-          {...register('budgetUsd', { valueAsNumber: true })}
-        />
-        {formState.errors.budgetUsd && (
-          <span id="relaunch-budget-error" className="text-xs text-danger">
-            {formState.errors.budgetUsd.message}
-          </span>
-        )}
-      </label>
+      <p className="text-xs text-muted">
+        Elle repart quand le quota de son abonnement repasse sous le seuil d’attente.
+      </p>
       <label className="flex flex-col gap-1.5">
         <span className="text-xs font-medium">Consigne en plus (facultatif)</span>
         <textarea className="textarea w-full" rows={2} {...register('instruction')} />
@@ -208,7 +192,7 @@ export function TaskDetail({ busy, failing, onCancel, onRelaunch, panel, resourc
         <div className="flex min-h-0 min-w-0 flex-col md:col-span-2">{panel}</div>
         <aside className="flex flex-col gap-4">
           {resources}
-          {failed && <Relaunch busy={busy} onRelaunch={onRelaunch} task={task} />}
+          {failed && <Relaunch busy={busy} onRelaunch={onRelaunch} />}
           <section aria-labelledby="waits-title" className="rounded-card border border-line bg-surface p-4 shadow-card">
             <h2 id="waits-title" className="mb-2 text-xs font-semibold text-muted">
               Elle attend
@@ -243,15 +227,13 @@ export function TaskDetail({ busy, failing, onCancel, onRelaunch, panel, resourc
               </h2>
               <dl className="flex flex-col gap-1 text-sm">
                 <div className="flex justify-between gap-3">
-                  <dt className="text-muted">Budget</dt>
-                  <dd className="font-mono text-xs">
-                    {usd(task.spentUsd)} / {usd(task.guardrails.budgetUsd)}
-                  </dd>
+                  <dt className="text-muted">Coût estimé</dt>
+                  <dd className="font-mono text-xs">{usd(task.spentUsd)}</dd>
                 </div>
                 <div className="flex justify-between gap-3">
                   <dt className="text-muted">Tours</dt>
                   <dd className="font-mono text-xs">
-                    {task.outcome.turns > 0 ? `${task.outcome.turns} / ` : ''}
+                    {task.outcome.turns > 0 ? `${task.outcome.turns} sur ` : 'au plus '}
                     {task.guardrails.maxTurns}
                   </dd>
                 </div>

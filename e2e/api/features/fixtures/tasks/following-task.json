@@ -3,5 +3,7 @@
   "instruction": "Documente le découpage des tableaux dans le README du paquet.",
   "mode": "worker",
   "prerequisites": [1],
-  "guardrails": { "budgetUsd": 1, "maxTurns": 20 }
+  "guardrails": {
+    "maxTurns": 20
+  }
 }

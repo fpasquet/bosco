@@ -15,6 +15,11 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {};
 
-export const BudgetSpent: Story = {
-  args: { task: { ...STORY_REVIEW_TASK, spentUsd: STORY_REVIEW_TASK.guardrails.budgetUsd } },
+export const TurnsSpent: Story = {
+  args: {
+    task: {
+      ...STORY_REVIEW_TASK,
+      outcome: { ...STORY_REVIEW_TASK.outcome, turns: STORY_REVIEW_TASK.guardrails.maxTurns },
+    },
+  },
 };

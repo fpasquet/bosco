@@ -7,7 +7,7 @@ export interface RepositoryRights {
   concurrency: number;
   /** Outils interdits, passés à Claude Code : ceux du général et du dépôt s'additionnent */
   deniedTools: string[];
-  maxBudgetUsd: number;
+  /** Plafond de tours d'un agent : une sécurité contre un agent qui tourne en rond (RF-TACH-05) */
   maxTurns: number;
   model: string;
   pullRequest: PullRequestMode;
@@ -20,8 +20,7 @@ export type RightsField = keyof RepositoryRights;
 export const DEFAULT_RIGHTS: RepositoryRights = {
   concurrency: 1,
   deniedTools: [],
-  maxBudgetUsd: 2,
-  maxTurns: 30,
+  maxTurns: 200,
   model: 'claude-sonnet-5-5',
   pullRequest: 'never',
   tools: ['Read', 'Write', 'Edit', 'Grep', 'Glob', 'Bash'],
@@ -39,7 +38,6 @@ export function effectiveRights(
 ): { origins: Record<RightsField, RightsOrigin>; rights: RepositoryRights } {
   const rights = { ...general, ...repository };
   // Des réglages généraux resserrés depuis valent aussi pour le dépôt
-  rights.maxBudgetUsd = Math.min(rights.maxBudgetUsd, general.maxBudgetUsd);
   rights.maxTurns = Math.min(rights.maxTurns, general.maxTurns);
   rights.tools = rights.tools.filter((tool) => covers(general.tools, tool));
   const origins = Object.fromEntries(
@@ -69,8 +67,6 @@ export function isTool(value: string): boolean {
  * outils interdits s'ajoutent, ils ne resserrent rien.
  */
 export function overreach(general: RepositoryRights, repository: Partial<RepositoryRights>): null | string {
-  if (repository.maxBudgetUsd !== undefined && repository.maxBudgetUsd > general.maxBudgetUsd)
-    return 'Le budget du dépôt ne dépasse pas celui des réglages généraux.';
   if (repository.maxTurns !== undefined && repository.maxTurns > general.maxTurns)
     return 'Le nombre de tours du dépôt ne dépasse pas celui des réglages généraux.';
   if (repository.tools?.some((tool) => !covers(general.tools, tool)))

@@ -183,7 +183,7 @@ const HANDLERS: Record<string, (deps: ToolDeps, args: unknown) => Promise<ToolRe
         mode: input.mode,
         prerequisites: [],
         context: null,
-        guardrails: { budgetUsd: 1, maxTurns: 30, model: null, tools: null },
+        guardrails: { maxTurns: null, model: null, tools: null },
       },
       'session',
     );

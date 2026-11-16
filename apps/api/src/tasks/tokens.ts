@@ -11,3 +11,4 @@ export const REVIEW_SERVICE = Symbol('ReviewService');
 export const ACCOUNTS_SERVICE = Symbol('AccountsService');
 export const CONTAINERS_SERVICE = Symbol('ContainersService');
 export const CONTAINER_EVENTS = Symbol('ContainerEvents');
+export const QUOTA_SERVICE = Symbol('QuotaService');

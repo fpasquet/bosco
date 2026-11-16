@@ -16,7 +16,8 @@ import {
 export interface TaskDraft {
   context: null | string;
   folder: string;
-  guardrails: Guardrails;
+  /** Plafond de tours : null, celui du dépôt (le formulaire ne le demande plus, RF-TACH-05) */
+  guardrails: Omit<Guardrails, 'maxTurns'> & { maxTurns: null | number };
   instruction: string;
   mode: TaskMode;
   prerequisites: number[];
@@ -25,7 +26,7 @@ export interface TaskDraft {
 
 export interface TaskIssue {
   /** Champ du formulaire en cause, pour y placer le focus (E6b) */
-  field: 'budgetUsd' | 'instruction' | 'maxTurns' | 'prerequisites' | 'repository' | 'tools';
+  field: 'instruction' | 'maxTurns' | 'prerequisites' | 'repository' | 'tools';
   message: string;
 }
 
@@ -52,19 +53,10 @@ export interface TaskView extends TaskSnapshot {
   waitingFor: { id: number; state: TaskSnapshot['state']; title: string }[];
 }
 
-function usd(value: number): string {
-  return `${value.toFixed(2).replace('.', ',')} $`;
-}
-
 function guardrailIssues(draft: TaskDraft, rights: RepositoryRights): TaskIssue[] {
-  const { budgetUsd, maxTurns, tools } = draft.guardrails;
+  const { maxTurns, tools } = draft.guardrails;
   const issues: TaskIssue[] = [];
-  if (budgetUsd <= 0 || budgetUsd > rights.maxBudgetUsd)
-    issues.push({
-      field: 'budgetUsd',
-      message: `Le budget dépasse le plafond de ${draft.repository} : ${usd(rights.maxBudgetUsd)} au plus. Baisse-le, ou relève le plafond dans les droits du dépôt.`,
-    });
-  if (maxTurns <= 0 || maxTurns > rights.maxTurns)
+  if (maxTurns !== null && (maxTurns <= 0 || maxTurns > rights.maxTurns))
     issues.push({
       field: 'maxTurns',
       message: `Le nombre de tours dépasse le plafond de ${draft.repository} : ${rights.maxTurns} au plus.`,
@@ -131,16 +123,19 @@ export class TaskService {
 
   async create(draft: TaskDraft, createdBy: 'person' | 'session' = 'person'): Promise<TaskView> {
     const tasks = await this.tasks.list();
-    const repository = await this.check(draft, tasks, null);
-    const task = Task.create({ ...draft, repository, id: await this.tasks.nextId(), createdBy }, this.clock.now());
+    const { guardrails, repository } = await this.check(draft, tasks, null);
+    const task = Task.create(
+      { ...draft, guardrails, repository, id: await this.tasks.nextId(), createdBy },
+      this.clock.now(),
+    );
     return this.commit([...tasks, task], [task], task.id);
   }
 
   async edit(id: number, draft: TaskDraft): Promise<TaskView> {
     const tasks = await this.tasks.list();
     const task = this.find(tasks, id);
-    const repository = await this.check(draft, tasks, id);
-    task.edit({ ...draft }, this.clock.now());
+    const { guardrails, repository } = await this.check(draft, tasks, id);
+    task.edit({ ...draft, guardrails }, this.clock.now());
     task.toSnapshot();
     if (repository.name !== task.repository)
       throw new InvalidTask([
@@ -169,25 +164,16 @@ export class TaskService {
     return this.commit(tasks, [task], id);
   }
 
-  /** Relance d'un échec : la tâche repasse en file avec le même numéro, et celles qui l'attendaient avec elle (E13b). */
-  async relaunch(
-    id: number,
-    changes: { budgetUsd: number; fromBranch: boolean; instruction?: string },
-  ): Promise<TaskView> {
+  /**
+   * Relance d'un échec : la tâche repasse en file avec le même numéro, et celles qui l'attendaient avec elle (E13b) ;
+   * elle part quand le quota de l'abonnement le permet (DT-39).
+   */
+  async relaunch(id: number, changes: { fromBranch: boolean; instruction?: string }): Promise<TaskView> {
     const tasks = await this.tasks.list();
     const task = this.find(tasks, id);
     const snapshot = task.toSnapshot();
-    const rights = await this.rights.rightsOf(snapshot.repository.name);
-    if (changes.budgetUsd > rights.maxBudgetUsd)
-      throw new InvalidTask([
-        { field: 'budgetUsd', message: `Le budget dépasse le plafond du dépôt : ${usd(rights.maxBudgetUsd)} au plus.` },
-      ]);
     const at = this.clock.now();
-    task.relaunch(
-      { ...snapshot.guardrails, budgetUsd: changes.budgetUsd },
-      at,
-      changes.fromBranch ? 'depuis sa branche' : 'de zéro',
-    );
+    task.relaunch(snapshot.guardrails, at, changes.fromBranch ? 'depuis sa branche' : 'de zéro');
     if (changes.instruction?.trim())
       task.edit({ instruction: `${snapshot.instruction}\n\n${changes.instruction.trim()}` }, at);
     const revived = new TaskBoard(tasks).revive(id, at);
@@ -297,33 +283,21 @@ export class TaskService {
   }
 
   /**
-   * Reprise à la relecture (RF-TACH-10) : le message repart à l'agent, dans le budget et les tours qui restent ; un
-   * budget ou des tours relevés restent sous les plafonds du dépôt (CA-TACH-90).
+   * Reprise à la relecture (RF-TACH-10) : le message repart à l'agent, dans les tours qui restent ; un plafond de
+   * tours relevé reste sous celui du dépôt (CA-TACH-98).
    */
-  async resume(id: number, message: string, raise: { budgetUsd?: number; maxTurns?: number } = {}): Promise<TaskView> {
+  async resume(id: number, message: string, raise: { maxTurns?: number } = {}): Promise<TaskView> {
     const tasks = await this.tasks.list();
     const task = this.find(tasks, id);
     const snapshot = task.toSnapshot();
     const rights = await this.rights.rightsOf(snapshot.repository.name);
-    const issues: TaskIssue[] = [];
-    if (raise.budgetUsd !== undefined && raise.budgetUsd > rights.maxBudgetUsd)
-      issues.push({
-        field: 'budgetUsd',
-        message: `Le budget dépasse le plafond du dépôt : ${usd(rights.maxBudgetUsd)} au plus.`,
-      });
     if (raise.maxTurns !== undefined && raise.maxTurns > rights.maxTurns)
-      issues.push({
-        field: 'maxTurns',
-        message: `Le nombre de tours dépasse le plafond du dépôt : ${rights.maxTurns} au plus.`,
-      });
-    if (issues.length > 0) throw new InvalidTask(issues);
+      throw new InvalidTask([
+        { field: 'maxTurns', message: `Le nombre de tours dépasse le plafond du dépôt : ${rights.maxTurns} au plus.` },
+      ]);
     task.resume(
       message,
-      {
-        ...snapshot.guardrails,
-        budgetUsd: raise.budgetUsd ?? snapshot.guardrails.budgetUsd,
-        maxTurns: raise.maxTurns ?? snapshot.guardrails.maxTurns,
-      },
+      { ...snapshot.guardrails, maxTurns: raise.maxTurns ?? snapshot.guardrails.maxTurns },
       this.clock.now(),
     );
     return this.commit(tasks, [task], id);
@@ -353,22 +327,27 @@ export class TaskService {
     return task;
   }
 
-  /** Vérifie une tâche contre les droits de son dépôt ; toutes les erreurs à la fois (E6b). */
-  private async check(draft: TaskDraft, tasks: Task[], self: null | number): Promise<{ name: string; root: string }> {
+  /**
+   * Vérifie une tâche contre les droits de son dépôt ; toutes les erreurs à la fois (E6b). Ses garde-fous prennent le
+   * plafond de tours du dépôt quand le brouillon n'en donne pas.
+   */
+  private async check(
+    draft: TaskDraft,
+    tasks: Task[],
+    self: null | number,
+  ): Promise<{ guardrails: Guardrails; repository: { name: string; root: string } }> {
     const repositories = await this.catalog.list();
     const repository = repositories.find((candidate) => candidate.name === draft.repository);
     const issues: TaskIssue[] = [];
     if (!repository) issues.push({ field: 'repository', message: 'Choisis un dépôt des sources surveillées.' });
     if (!draft.instruction.trim()) issues.push({ field: 'instruction', message: 'Écris la consigne de la tâche.' });
     // Les garde-fous ne valent que pour le worker : en mode Ma session, ceux de la session s'appliquent (RF-TACH-05)
-    if (draft.mode === 'worker') {
-      const rights = await this.rights.rightsOf(draft.repository);
-      issues.push(...guardrailIssues(draft, rights));
-    }
+    const rights = await this.rights.rightsOf(draft.repository);
+    if (draft.mode === 'worker') issues.push(...guardrailIssues(draft, rights));
     const prerequisite = prerequisiteIssue(tasks, draft.prerequisites, self);
     if (prerequisite) issues.push(prerequisite);
     if (issues.length > 0 || !repository) throw new InvalidTask(issues);
-    return repository;
+    return { guardrails: { ...draft.guardrails, maxTurns: draft.guardrails.maxTurns ?? rights.maxTurns }, repository };
   }
 
   private view(task: Task, tasks: readonly Task[]): TaskView {

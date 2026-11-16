@@ -146,6 +146,17 @@ export class IsolationService {
     return this.choice.atlassianRead;
   }
 
+  /** Profils Claude qui ont un accès à un abonnement : ceux dont le quota se montre (E11a). */
+  subscriptions(): Promise<{ label: string; path: string }[]> {
+    return this.secrets.reader.profiles();
+  }
+
+  /** Profil Claude d'une tâche : celui du dépôt, sinon celui choisi, sinon celui de l'accès par défaut (DT-39). */
+  profileOf(repositoryProfile: null | string): string {
+    const credentials = this.secrets.defaults.credentials;
+    return repositoryProfile ?? this.choice.profile ?? credentials.slice(0, credentials.lastIndexOf('/'));
+  }
+
   /** Compte GitHub par défaut : celui choisi, sinon null pour le compte actif de gh. */
   defaultGithubAccount(): null | string {
     return this.choice.github;

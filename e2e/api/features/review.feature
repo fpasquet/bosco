@@ -44,11 +44,11 @@ Feature: Task review
     And the response property "outcome.branch" should equal "bosco/t-1-ajoute-un-test-du-decoupage-des-tableaux"
     And the response property "outcome.report" should equal "Fait : Ajoute aussi un tableau vide."
 
-  @CA-TACH-90
-  Scenario: A resume asks for a message, and keeps the budget under the cap of the repository
+  @CA-TACH-98
+  Scenario: A resume raises the turns only under the cap of the repository
     When I send POST request to "/api/tasks/1/resume" with the JSON "fixtures/review/resume-over-cap.json"
     Then the response code should be 400
-    And the response property "issues.0.field" should equal "budgetUsd"
+    And the response property "issues.0.field" should equal "maxTurns"
 
   @CA-TACH-91
   Scenario: A rejected task is abandoned, and a reason is required

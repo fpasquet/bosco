@@ -6,6 +6,7 @@ import type { NotificationService } from './sessions/application/notification.se
 import type { PilotService } from './sessions/application/pilot.service.ts';
 import type { SourceService } from './sessions/application/source.service.ts';
 import type { IsolationService } from './tasks/application/isolation.service.ts';
+import type { QuotaService } from './tasks/application/quota.service.ts';
 import type { ScriptedAgentRunner } from './tasks/infrastructure/worker/scripted-agent.ts';
 import { GitSandboxes } from './sessions/infrastructure/sandbox/git-sandboxes.ts';
 import { ScriptedSandboxes } from './sessions/infrastructure/sandbox/scripted-sandboxes.ts';
@@ -13,7 +14,7 @@ import { NOTIFICATION_SERVICE, PILOT_SERVICE, SOURCE_SERVICE } from './sessions/
 import { CONFIG } from './shared/tokens.ts';
 import { DockerAgentRunner } from './tasks/infrastructure/worker/docker-agent-runner.ts';
 import { DockerSandboxContainers } from './tasks/infrastructure/worker/docker-sandbox-containers.ts';
-import { AGENT_RUNNER, ISOLATION_SERVICE } from './tasks/tokens.ts';
+import { AGENT_RUNNER, ISOLATION_SERVICE, QUOTA_SERVICE } from './tasks/tokens.ts';
 
 /** Entretien des bacs à sable : arrêt après 30 min sans message, notification de la veille, suppression (règle 12). */
 const HOUSEKEEPING_MS = 60 * 1000;
@@ -33,6 +34,7 @@ export class SandboxWiring implements OnApplicationBootstrap, OnApplicationShutd
     @Inject(NOTIFICATION_SERVICE) private readonly notifications: NotificationService,
     @Inject(AGENT_RUNNER) private readonly runner: DockerAgentRunner | ScriptedAgentRunner,
     @Inject(ISOLATION_SERVICE) private readonly isolation: IsolationService,
+    @Inject(QUOTA_SERVICE) private readonly quota: QuotaService,
   ) {}
 
   onApplicationBootstrap(): void {
@@ -68,6 +70,8 @@ export class SandboxWiring implements OnApplicationBootstrap, OnApplicationShutd
         );
       },
     });
+    // Le quota de l'abonnement se lit aussi dans les tours pilotés : le worker voit l'usage de tes sessions (DT-39)
+    this.pilot.useQuota((profile, windows) => void this.quota.record(profile, windows).catch(() => undefined));
     this.timer = setInterval(() => void this.pilot.housekeeping().catch(() => undefined), HOUSEKEEPING_MS);
     this.timer.unref();
   }

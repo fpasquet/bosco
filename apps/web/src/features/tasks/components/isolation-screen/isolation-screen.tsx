@@ -9,12 +9,16 @@ import {
   addDomain,
   isolationQuery,
   IsolationRefused,
+  quotaQuery,
+  QuotaRefused,
   removeDomain,
   setMaxAgents,
+  setQuotaThresholds,
   setSecrets,
 } from '../../api/isolation';
 import { IsolationEgress } from '../isolation-egress';
 import { IsolationResources } from '../isolation-resources';
+import { QuotaPanel } from '../quota-panel';
 
 export type IsolationView = 'egress' | 'resources';
 
@@ -51,7 +55,19 @@ export function IsolationScreen({ title, view }: { title: string; view: Isolatio
     onError: (failure) =>
       setSecretsError(failure instanceof IsolationRefused ? failure.message : 'Le réglage n’a pas pu être enregistré.'),
   });
-  const busy = add.isPending || remove.isPending || capacity.isPending || secrets.isPending;
+  // Quota de l'abonnement (DT-39) : son refus s'affiche dans son bloc
+  const { data: quota } = useQuery(quotaQuery);
+  const [quotaError, setQuotaError] = useState<null | string>(null);
+  const thresholds = useMutation({
+    mutationFn: setQuotaThresholds,
+    onSuccess: (next) => {
+      setQuotaError(null);
+      client.setQueryData(quotaQuery.queryKey, next);
+    },
+    onError: (failure) =>
+      setQuotaError(failure instanceof QuotaRefused ? failure.message : 'Les seuils n’ont pas pu être enregistrés.'),
+  });
+  const busy = add.isPending || remove.isPending || capacity.isPending || secrets.isPending || thresholds.isPending;
   return (
     <div className="flex flex-col gap-4 p-4 md:px-8 md:pt-6">
       <div className="flex flex-col gap-3">
@@ -74,7 +90,17 @@ export function IsolationScreen({ title, view }: { title: string; view: Isolatio
       {!data && <SectionSkeleton rows={4} />}
       {data &&
         (view === 'resources' ? (
-          <IsolationResources isolation={data} busy={busy} onMaxAgents={(agents) => capacity.mutate(agents)} />
+          <>
+            <IsolationResources isolation={data} busy={busy} onMaxAgents={(agents) => capacity.mutate(agents)} />
+            {quota && (
+              <QuotaPanel
+                quota={quota}
+                busy={busy}
+                error={quotaError}
+                onThresholds={(next) => thresholds.mutate(next)}
+              />
+            )}
+          </>
         ) : (
           <IsolationEgress
             isolation={data}

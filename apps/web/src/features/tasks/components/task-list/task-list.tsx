@@ -3,11 +3,10 @@ import type { TaskDto } from '@bosco/domain';
 import { usd, whyWaiting } from '../../lib/tasks';
 import { TaskStateBadge } from '../task-state-badge';
 
-/** Budget : dépensé sur prévu ; les garde-fous ne valent pas pour une tâche « Ma session » (E5b, annotation 5). */
-function budgetOf(task: TaskDto): string {
-  if (task.mode === 'session') return '—';
-  const planned = usd(task.guardrails.budgetUsd);
-  return task.spentUsd > 0 ? `${usd(task.spentUsd)} / ${planned}` : planned;
+/** Coût estimé, sans plafond : le quota de l'abonnement retient le worker (DT-39) ; rien pour « Ma session » (E5b). */
+function costOf(task: TaskDto): string {
+  if (task.mode === 'session' || task.spentUsd === 0) return '—';
+  return `${usd(task.spentUsd)} estimés`;
 }
 
 /** File des tâches (E5b) : toute ligne ouvre le détail de la tâche (CA-TACH-13). */
@@ -30,7 +29,7 @@ export function TaskList({
           <tr className="h-9 border-b border-line">
             <th className="pl-4 font-medium">Tâche</th>
             <th className="w-28 font-medium">Attend</th>
-            <th className="w-32 pr-4 text-right font-medium">Budget</th>
+            <th className="w-32 pr-4 text-right font-medium">Coût estimé</th>
           </tr>
         </thead>
         <tbody>
@@ -73,7 +72,7 @@ export function TaskList({
               <td className="font-mono text-xs text-muted">
                 {task.waitingFor.length > 0 ? task.waitingFor.map(({ id }) => `T-${id}`).join(' ') : '—'}
               </td>
-              <td className="pr-4 text-right font-mono text-xs tabular-nums">{budgetOf(task)}</td>
+              <td className="pr-4 text-right font-mono text-xs tabular-nums">{costOf(task)}</td>
             </tr>
           ))}
         </tbody>

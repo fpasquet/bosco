@@ -38,15 +38,13 @@ const draftSchema = z.object({
   prerequisites: z.array(z.number().int().positive()).default([]),
   context: z.string().trim().max(500).nullish(),
   guardrails: z.object({
-    budgetUsd: z.number(),
-    maxTurns: z.number().int(),
+    maxTurns: z.number().int().nullish(),
     model: z.string().nullish(),
     tools: z.array(z.string()).nullish(),
   }),
 });
 
 const relaunchSchema = z.object({
-  budgetUsd: z.number().positive(),
   fromBranch: z.boolean(),
   instruction: z.string().max(5000).optional(),
 });
@@ -56,7 +54,11 @@ function draftOf(body: unknown): TaskDraft {
   return {
     ...draft,
     context: draft.context || null,
-    guardrails: { ...draft.guardrails, model: draft.guardrails.model ?? null, tools: draft.guardrails.tools ?? null },
+    guardrails: {
+      maxTurns: draft.guardrails.maxTurns ?? null,
+      model: draft.guardrails.model ?? null,
+      tools: draft.guardrails.tools ?? null,
+    },
   };
 }
 

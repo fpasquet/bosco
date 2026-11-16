@@ -1,3 +1,4 @@
+import type { QuotaWindows } from '../../shared/domain/subscription-quota.ts';
 import type { RepositoryRights } from '../domain/rights.ts';
 import type { ServiceLaunch, TestService } from '../domain/test-services.ts';
 import type { AgentEvent, AgentRun, AgentRunner, AgentUsage, WorkerHealth, Workspace, Workspaces } from './ports.ts';
@@ -42,6 +43,16 @@ export interface WorkerDeps {
   rightsOf: (repository: string) => Promise<RepositoryRights>;
   /** Abonnement Claude propre au dépôt (E8a) ; null : celui par défaut */
   claudeProfileOf: (repository: string) => Promise<null | string>;
+  /**
+   * Quota de l'abonnement (DT-39) : profil Claude d'une tâche, usage lu à chaque tour, et ce qui retient le worker ou
+   * arrête un agent
+   */
+  quota: {
+    profileOf: (repositoryProfile: null | string) => string;
+    record: (profile: string, windows: QuotaWindows) => Promise<void>;
+    stopReason: (profile: string) => null | string;
+    waitReason: (profile: string) => null | string;
+  };
   runner: AgentRunner;
   /** Dernier lancement des services d'un dépôt, montré dans l'environnement de test ; removed à la fin de la tâche */
   servicesLaunched: (task: TaskView, launches: ServiceLaunch[] | 'removed') => Promise<void>;
@@ -154,7 +165,10 @@ export class WorkerService {
     );
     const busy = running.length + starting.length;
     if (busy >= rights.concurrency) return `${task.repository.name} : ${rights.concurrency} agent au plus à la fois`;
-    return null;
+    // L'abonnement de la tâche au-delà de son seuil d'attente : la place reste à tes sessions (CA-TACH-99)
+    const repositoryProfile = await this.deps.claudeProfileOf(task.repository.name);
+    const profile = this.deps.quota.profileOf(repositoryProfile);
+    return this.deps.quota.waitReason(profile);
   }
 
   private async run(task: TaskView): Promise<void> {
@@ -212,7 +226,7 @@ export class WorkerService {
       await this.follow(
         task,
         run,
-        Math.min(task.guardrails.budgetUsd, rights.maxBudgetUsd),
+        this.deps.quota.profileOf(claudeProfile),
         workspace,
         atlassianRead,
         resume,
@@ -236,7 +250,7 @@ export class WorkerService {
   private async follow(
     task: TaskView,
     run: AgentRun,
-    budgetUsd: number,
+    profile: string,
     workspace: Workspace,
     atlassianRead: boolean,
     resume: null | Resume,
@@ -249,7 +263,7 @@ export class WorkerService {
       turns: resume?.turns ?? 0,
     };
     for await (const event of run.events) {
-      const done = await this.handle(task, run, budgetUsd, workspace, progress, event);
+      const done = await this.handle(task, run, profile, workspace, progress, event);
       if (done) return;
     }
     // Plus d'événement sans résultat : l'agent a été arrêté (annulation) ou coupé
@@ -259,7 +273,7 @@ export class WorkerService {
   private async handle(
     task: TaskView,
     run: AgentRun,
-    budgetUsd: number,
+    profile: string,
     workspace: Workspace,
     progress: { atlassianRead: boolean; sessionId: null | string; spent: number; turns: number },
     event: AgentEvent,
@@ -283,12 +297,18 @@ export class WorkerService {
       await this.deps.tasks.progress(task.id, progress.spent, { sessionId: event.sessionId, branch: workspace.branch });
       return false;
     }
+    // Le coût reste une estimation, sans plafond : c'est le quota de l'abonnement qui arrête l'agent (DT-39)
     if (event.kind === 'usage') {
       progress.spent += this.deps.priceOf(event.model, event.usage) ?? 0;
       await this.deps.tasks.progress(task.id, progress.spent, {});
-      if (progress.spent <= budgetUsd) return false;
+      return false;
+    }
+    if (event.kind === 'quota') {
+      await this.deps.quota.record(profile, event.windows);
+      const reason = this.deps.quota.stopReason(profile);
+      if (!reason) return false;
       await run.stop();
-      await this.deps.tasks.fail(task.id, `Budget atteint : ${usd(progress.spent)} sur ${usd(budgetUsd)}`);
+      await this.deps.tasks.fail(task.id, reason);
       return true;
     }
     if (!event.ok) {
@@ -359,8 +379,4 @@ export function servicesEntry(launches: readonly ServiceLaunch[]): [string, stri
   if (failed.length > 0)
     return ['Services en échec', failed.map((launch) => `${launch.name} : ${launch.error ?? ''}`).join(' · ')];
   return ['Services prêts', launches.map((launch) => `${launch.name} en ${launch.readySeconds ?? 0} s`).join(' · ')];
-}
-
-function usd(value: number): string {
-  return `${value.toFixed(2).replace('.', ',')} $`;
 }

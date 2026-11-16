@@ -20,7 +20,7 @@ function task(overrides: Partial<TaskDto> & Pick<TaskDto, 'id' | 'instruction' |
     editable: ['blocked', 'queued', 'awaiting_session'].includes(overrides.state),
     failure: null,
     folder: '',
-    guardrails: { budgetUsd: 2, maxTurns: 30, model: null, tools: null },
+    guardrails: { maxTurns: 200, model: null, tools: null },
     log: [{ at: at('14:00'), event: 'Créée', detail: null }],
     mode: 'worker',
     outcome: {
@@ -75,7 +75,7 @@ export const STORY_TASKS: TaskDto[] = [
     instruction: 'Publier le digest avec la nouvelle voix.',
     state: 'blocked',
     prerequisites: [13, 14],
-    guardrails: { budgetUsd: 1.5, maxTurns: 30, model: null, tools: null },
+    guardrails: { maxTurns: 200, model: null, tools: null },
     repository: { name: 'labo-ia', root: '/home/dev/labo-ia' },
     folder: 'packages/veille-presse',
     waitingFor: [
@@ -90,7 +90,7 @@ export const STORY_TASKS: TaskDto[] = [
     state: 'failed',
     failure: 'Budget atteint : 0,35 $ sur 0,35 $',
     spentUsd: 0.35,
-    guardrails: { budgetUsd: 0.35, maxTurns: 30, model: null, tools: null },
+    guardrails: { maxTurns: 200, model: null, tools: null },
   }),
 ];
 
@@ -167,8 +167,7 @@ export const STORY_TEST_ENVIRONMENT: TestEnvironmentDto = {
 const GENERAL_RIGHTS: RightsValuesDto = {
   tools: ['Read', 'Write', 'Edit', 'Grep', 'Glob', 'Bash'],
   deniedTools: ['Bash(curl:*)', 'Read(.env*)'],
-  maxTurns: 40,
-  maxBudgetUsd: 5,
+  maxTurns: 200,
   model: 'claude-sonnet-5-5',
   concurrency: 4,
   pullRequest: 'never',
@@ -199,8 +198,7 @@ export const STORY_RIGHTS: RightsDto = {
   repository: {
     tools: ['Read', 'Write', 'Edit', 'Grep', 'Bash(npm test)', 'Bash(npm run lint)'],
     deniedTools: ['Bash(npm publish:*)', 'Edit(.env*)'],
-    maxTurns: 30,
-    maxBudgetUsd: 2,
+    maxTurns: 100,
     concurrency: 1,
     pullRequest: 'ask',
   },
@@ -208,8 +206,7 @@ export const STORY_RIGHTS: RightsDto = {
     ...GENERAL_RIGHTS,
     tools: ['Read', 'Write', 'Edit', 'Grep', 'Bash(npm test)', 'Bash(npm run lint)'],
     deniedTools: ['Bash(curl:*)', 'Read(.env*)', 'Bash(npm publish:*)', 'Edit(.env*)'],
-    maxTurns: 30,
-    maxBudgetUsd: 2,
+    maxTurns: 100,
     concurrency: 1,
     pullRequest: 'ask',
   },
@@ -217,7 +214,6 @@ export const STORY_RIGHTS: RightsDto = {
     tools: 'dépôt',
     deniedTools: 'général + dépôt',
     maxTurns: 'dépôt',
-    maxBudgetUsd: 'dépôt',
     model: 'général',
     concurrency: 'dépôt',
     pullRequest: 'dépôt',

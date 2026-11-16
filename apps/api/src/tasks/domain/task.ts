@@ -15,9 +15,12 @@ export type TaskState =
 /** Worker : sans terminal, dans une copie jetable du dépôt ; Ma session : une session interactive la prend (RF-TACH-01). */
 export type TaskMode = 'session' | 'worker';
 
-/** Garde-fous d'une tâche, plafonnés par les droits du dépôt (RF-TACH-05). */
+/**
+ * Garde-fous d'une tâche, plafonnés par les droits du dépôt (RF-TACH-05). Plus de budget en dollars : le quota de
+ * l'abonnement retient le worker (DT-39) ; le coût reste estimé.
+ */
 export interface Guardrails {
-  budgetUsd: number;
+  /** Plafond de tours, celui du dépôt à la création ; relevé à la reprise, sous le plafond du dépôt */
   maxTurns: number;
   /** Modèle choisi ; null : celui hérité du dépôt */
   model: null | string;
@@ -153,8 +156,11 @@ export class Task {
   }
 
   static restore(snapshot: TaskSnapshot): Task {
+    // Une tâche gardée avant le quota de l'abonnement a encore un budget : il ne compte plus (DT-39)
+    const { maxTurns, model, tools } = snapshot.guardrails;
     return new Task({
       ...snapshot,
+      guardrails: { maxTurns, model, tools },
       log: [...snapshot.log],
       prerequisites: [...snapshot.prerequisites],
       outcome: snapshot.outcome ?? { branch: null, changes: null, report: null, sessionId: null, turns: 0 },
@@ -271,8 +277,7 @@ export class Task {
 
   /**
    * Reprise à la relecture (RF-TACH-10) : le message relance l'agent dans la même conversation, sur la même branche,
-   * dans le budget et les tours qui restent, éventuellement relevés. La tâche repasse en file, le journal garde le
-   * message.
+   * dans les tours qui restent, éventuellement relevés. La tâche repasse en file, le journal garde le message.
    */
   resume(message: string, guardrails: Guardrails, at: Date): void {
     if (this.snapshot.state !== 'to_review')
@@ -280,13 +285,12 @@ export class Task {
     const { branch, sessionId, turns } = this.snapshot.outcome;
     if (this.snapshot.mode !== 'worker' || !branch || !sessionId)
       throw new TaskError('taskNotResumable', `Task T-${this.id} has no agent session to resume`);
-    if (guardrails.budgetUsd <= this.snapshot.spentUsd || guardrails.maxTurns <= turns)
-      throw new TaskError('taskBudgetSpent', `Task T-${this.id} has spent its budget or its turns`);
+    if (guardrails.maxTurns <= turns) throw new TaskError('taskTurnsSpent', `Task T-${this.id} has reached its turns`);
     this.snapshot = { ...this.snapshot, guardrails };
     this.move('queued', at, RESUME_EVENT, message);
   }
 
-  /** Relance d'un échec ou d'un rejet : même numéro, journal gardé, budget revu si besoin (RF-TACH-08). */
+  /** Relance d'un échec ou d'un rejet : même numéro, journal gardé (RF-TACH-08). */
   relaunch(guardrails: Guardrails, at: Date, detail: null | string): void {
     if (!['failed', 'rejected'].includes(this.snapshot.state))
       throw new TaskError('taskNotFailed', `Task T-${this.id} has not failed`);

@@ -201,3 +201,8 @@ Then('the session {string} should have the task state {string}', async ({ reques
     )
     .toBe(state);
 });
+
+Given('the subscription of the worker is at {int} % of its 5 h window', async ({ request }, usage: number) => {
+  const response = await request.post('/__test/quota', { data: { fiveHour: usage } });
+  expect(response.status()).toBe(204);
+});

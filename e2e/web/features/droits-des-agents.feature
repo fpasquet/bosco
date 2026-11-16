@@ -9,21 +9,21 @@ Fonctionnalité: Droits des agents
     Et Bosco surveille les profils « .claude » et « .claude-perso »
 
   @NF-18
-  Scénario: Le budget d'un dépôt se resserre, puis revient au général
+  Scénario: Le plafond de tours d'un dépôt se resserre, puis revient au général
     Quand j'ouvre la page « /tasks »
     Et je clique sur le lien « Droits des agents »
     Alors je vois le titre « Droits des agents »
     Et la page est accessible
-    Quand je clique sur le bouton « Modifier : Budget au plus »
-    Et je saisis « 1,5 » dans le champ « Budget au plus »
+    Quand je clique sur le bouton « Modifier : Tours au plus »
+    Et je saisis « 150 » dans le champ « Tours au plus »
     Et je clique sur le bouton « Enregistrer »
-    Et je clique sur le bouton « Revenir au général : Budget au plus »
-    Alors je ne vois pas le bouton « Revenir au général : Budget au plus »
+    Et je clique sur le bouton « Revenir au général : Tours au plus »
+    Alors je ne vois pas le bouton « Revenir au général : Tours au plus »
 
   @mobile
   @NF-18
   Scénario: Sur le téléphone, les droits se lisent sans rien modifier
     Quand j'ouvre la page « /tasks/rights »
     Alors je vois le texte « Modifiable depuis le poste. Ces droits sont réservés à toi. »
-    Et je ne vois pas le bouton « Modifier : Budget au plus »
+    Et je ne vois pas le bouton « Modifier : Tours au plus »
     Et la page est accessible

@@ -1,4 +1,4 @@
-import type { IsolationDto } from '@bosco/domain';
+import type { IsolationDto, QuotaDto, QuotaThresholdsDto } from '@bosco/domain';
 
 /** Réglage refusé par l'API (400) : son message s'affiche sous le champ. */
 export class IsolationRefused extends Error {}
@@ -39,3 +39,31 @@ export const setSecrets = (changes: {
   npmrc?: null | string;
   profile?: null | string;
 }) => change('PUT', '/api/isolation/secrets', changes);
+
+/** Quota de l'abonnement (E11a, DT-39) : l'usage de chaque abonnement et les seuils. */
+export const quotaQuery = {
+  queryKey: ['quota'],
+  queryFn: async (): Promise<QuotaDto> => {
+    const response = await fetch('/api/quota');
+    if (!response.ok) throw new Error(`GET /api/quota answered ${response.status}`);
+    return (await response.json()) as QuotaDto;
+  },
+  refetchInterval: 30_000,
+};
+
+/** Seuils refusés (400) : le message dit pourquoi (CA-CONT-99). */
+export class QuotaRefused extends Error {}
+
+export async function setQuotaThresholds(thresholds: QuotaThresholdsDto): Promise<QuotaDto> {
+  const response = await fetch('/api/quota/thresholds', {
+    method: 'PUT',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(thresholds),
+  });
+  if (response.status === 400) {
+    const { message } = (await response.json()) as { message?: string };
+    throw new QuotaRefused(message ?? 'Seuils refusés.');
+  }
+  if (!response.ok) throw new Error(`PUT /api/quota/thresholds answered ${response.status}`);
+  return (await response.json()) as QuotaDto;
+}

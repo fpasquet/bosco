@@ -13,8 +13,9 @@ export type TaskStateDto =
 
 export type TaskModeDto = 'session' | 'worker';
 
+/** Garde-fous d'une tâche (RF-TACH-05) : plus de budget en dollars, le quota de l'abonnement retient le worker. */
 export interface GuardrailsDto {
-  budgetUsd: number;
+  /** Plafond de tours ; dans un brouillon, null prend celui du dépôt */
   maxTurns: number;
   model: null | string;
   tools: null | string[];
@@ -58,7 +59,8 @@ export interface TaskDto {
 export interface TaskDraftDto {
   context: null | string;
   folder: string;
-  guardrails: GuardrailsDto;
+  /** Plafond de tours : null, celui du dépôt (le formulaire ne le demande plus) */
+  guardrails: Omit<GuardrailsDto, 'maxTurns'> & { maxTurns: null | number };
   instruction: string;
   mode: TaskModeDto;
   prerequisites: number[];
@@ -67,7 +69,7 @@ export interface TaskDraftDto {
 
 /** Erreurs du formulaire, chacune liée à son champ (E6b). */
 export interface TaskIssueDto {
-  field: 'budgetUsd' | 'instruction' | 'maxTurns' | 'prerequisites' | 'repository' | 'tools';
+  field: 'instruction' | 'maxTurns' | 'prerequisites' | 'repository' | 'tools';
   message: string;
 }
 
@@ -78,11 +80,31 @@ export interface WorkerStatusDto {
   /** Mémoire libre au-delà de la marge gardée libre, en octets : ce qui décide si un agent de plus peut partir (E11a) */
   availableMemory: number;
   capacity: number;
+  /** Quota de l'abonnement par défaut (CA-TACH-102) ; null tant qu'aucun tour ne l'a lu */
+  quota: null | { fiveHour: null | number; label: string; sevenDay: null | number };
   running: number;
   /** null quand le worker est disponible ; sinon la raison (« Docker ne répond pas ») */
   unavailable: null | string;
   /** Pourquoi une tâche prête reste en file, par numéro de tâche */
   waiting: Record<number, string>;
+}
+
+/** Une fenêtre de l'abonnement : la part utilisée, en pourcentage, et sa remise à zéro. */
+export interface QuotaWindowDto {
+  resetsAt: string;
+  usage: number;
+}
+
+/** Seuils du quota, en pourcentage : attente des nouvelles tâches, arrêt de l'agent (DT-39). */
+export interface QuotaThresholdsDto {
+  fiveHour: { stop: number; wait: number };
+  sevenDay: { stop: number; wait: number };
+}
+
+/** Quota de l'abonnement (E11a) : l'usage de chaque abonnement et les seuils qui valent pour toutes les tâches. */
+export interface QuotaDto {
+  subscriptions: { fiveHour: null | QuotaWindowDto; label: string; path: string; sevenDay: null | QuotaWindowDto }[];
+  thresholds: QuotaThresholdsDto;
 }
 
 /** Connexion d'un agent refusée par le proxy de sa tâche (E11b). */
@@ -134,7 +156,6 @@ export type PullRequestModeDto = 'always' | 'ask' | 'never';
 export interface RightsValuesDto {
   concurrency: number;
   deniedTools: string[];
-  maxBudgetUsd: number;
   maxTurns: number;
   model: string;
   pullRequest: PullRequestModeDto;
