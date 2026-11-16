@@ -1,6 +1,7 @@
 // Flux JSON de `claude -p --output-format stream-json` : seules les lignes utiles au worker sont lues, le reste est
 // ignoré (format interne de Claude Code, NF-08).
 import type { AgentEvent } from '../../application/ports.ts';
+import { connectorReadOf, hasAtlassianConnector } from '../../domain/atlassian-read.ts';
 
 type Line = Record<string, unknown>;
 
@@ -29,6 +30,18 @@ function usageOf(message: Line): AgentEvent {
   };
 }
 
+/** Lectures dans Jira et Confluence demandées par un message de l'agent (CA-CONT-94). */
+function readsOf(message: Line): AgentEvent[] {
+  const content = Array.isArray(message.content) ? (message.content as unknown[]) : [];
+  return content.flatMap((part) => {
+    if (typeof part !== 'object' || part === null) return [];
+    const { input, name, type } = part as Line;
+    if (type !== 'tool_use' || typeof name !== 'string') return [];
+    const read = connectorReadOf(name, input);
+    return read ? [{ kind: 'read' as const, ...read }] : [];
+  });
+}
+
 const STOPS: Record<string, 'max_turns' | 'success'> = { error_max_turns: 'max_turns', success: 'success' };
 
 function resultOf(line: Line): AgentEvent {
@@ -42,13 +55,20 @@ function resultOf(line: Line): AgentEvent {
   };
 }
 
-export function agentEventOf(raw: string): AgentEvent | null {
+export function agentEventsOf(raw: string): AgentEvent[] {
   const line = parse(raw);
-  if (!line) return null;
-  if (line.type === 'system' && line.subtype === 'init' && typeof line.session_id === 'string')
-    return { kind: 'session', sessionId: line.session_id };
-  if (line.type === 'assistant' && typeof line.message === 'object' && line.message !== null)
-    return usageOf(line.message as Line);
-  if (line.type === 'result') return resultOf(line);
-  return null;
+  if (!line) return [];
+  if (line.type === 'system' && line.subtype === 'init' && typeof line.session_id === 'string') {
+    const tools = Array.isArray(line.tools) ? line.tools.filter((tool) => typeof tool === 'string') : [];
+    return [
+      { kind: 'session', sessionId: line.session_id },
+      { kind: 'connector', available: hasAtlassianConnector(tools) },
+    ];
+  }
+  if (line.type === 'assistant' && typeof line.message === 'object' && line.message !== null) {
+    const message = line.message as Line;
+    return [usageOf(message), ...readsOf(message)];
+  }
+  if (line.type === 'result') return [resultOf(line)];
+  return [];
 }

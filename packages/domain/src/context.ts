@@ -83,19 +83,3 @@ export interface LinkDto {
   title: string;
   url: string;
 }
-
-export interface IntegrationDto {
-  address: null | string;
-  checkedAt: null | string;
-  error: null | string;
-  failingSince: null | string;
-  links: number;
-  name: 'confluence' | 'github' | 'jira';
-  state: 'connected' | 'error' | 'unconfigured';
-}
-
-export interface IntegrationsDto {
-  integrations: IntegrationDto[];
-  lastRefresh: null | string;
-  nextRefresh: null | string;
-}

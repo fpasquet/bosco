@@ -1,5 +1,6 @@
 @RF-TACH-05
 @RF-CONT-06
+@RF-CONT-14
 Feature: Worker
   As the developer, I want the worker to run each ready task in its own disposable copy, so that I only have to review
   its branch, and nothing runs when the worker cannot.
@@ -44,3 +45,25 @@ Feature: Worker
     When I send GET request to "/api/sessions/scripted-1"
     Then the response property "session.repository.name" should equal "labo-ia"
     And the response property "session.task.id" should equal "1"
+
+  @CA-CONT-92
+  @CA-CONT-94
+  Scenario: With the reading on, each Jira read of the agent goes to the journal of its task
+    Given I send PUT request to "/api/isolation/secrets" with the JSON "fixtures/isolation/atlassian-read.json"
+    When I send POST request to "/api/tasks" with the JSON "fixtures/tasks/worker-task-jira.json"
+    Then the task 1 should become "to_review"
+    And the journal of the task 1 should have "Lu dans Jira" with "TTS-142"
+
+  @CA-CONT-91
+  Scenario: With the reading off, the agent reads nothing in Jira
+    When I send POST request to "/api/tasks" with the JSON "fixtures/tasks/worker-task-jira.json"
+    Then the task 1 should become "to_review"
+    And the journal of the task 1 should not have "Lu dans Jira"
+
+  @CA-CONT-95
+  Scenario: Without the Atlassian connector on the account, the journal says so and the task goes on
+    Given I send PUT request to "/api/isolation/secrets" with the JSON "fixtures/isolation/atlassian-read.json"
+    And the Atlassian connector is not plugged into the claude.ai account
+    When I send POST request to "/api/tasks" with the JSON "fixtures/tasks/worker-task-jira.json"
+    Then the task 1 should become "to_review"
+    And the journal of the task 1 should have "Connecteur Atlassian indisponible" with "la tâche continue"

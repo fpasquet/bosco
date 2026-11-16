@@ -20,12 +20,16 @@ export const ProfileAndNpmrc: Story = {};
 export const Missing: Story = {
   args: {
     secrets: {
+      atlassianRead: false,
       claude: { account: null, available: false, choices: [], label: null, profile: null },
       github: { account: null, choices: [] },
       npmrc: { exists: false, path: '~/.npmrc', registries: [] },
     },
   },
 };
+
+/** Lecture de Jira et Confluence par les agents activée (E11b). */
+export const AtlassianRead: Story = { args: { secrets: { ...STORY_ISOLATION.secrets, atlassianRead: true } } };
 
 /** Un chemin relatif refusé par Bosco. */
 export const Refused: Story = { args: { error: 'Écris le chemin du fichier comme dans le terminal : ~/.npmrc.' } };

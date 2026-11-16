@@ -12,9 +12,10 @@ import { promisify } from 'node:util';
 import type { AgentEvent, AgentRun, AgentRunner, AgentSpec, WorkerHealth } from '../../application/ports.ts';
 import type { EgressRefusal } from '../../domain/egress.ts';
 import { AGENT_LIMITS } from '../../application/worker.service.ts';
+import { ATLASSIAN_READ_TOOLS } from '../../domain/atlassian-read.ts';
 import { servicesNote } from '../../domain/test-services.ts';
 import { DockerTestServices, ensureImage } from './docker-test-services.ts';
-import { agentEventOf } from './stream-json.ts';
+import { agentEventsOf } from './stream-json.ts';
 
 const DOCKER = '/usr/bin/docker';
 const run = promisify(execFile);
@@ -49,6 +50,9 @@ const PROXY = 'http://egress:3128';
 /** Relecture des refus notés par le proxy pendant la tâche. */
 const REFUSALS_POLL_MS = 1000;
 
+/** Attente du branchement des connecteurs de claude.ai au démarrage de l'agent : vérifiée sur le poste en 9 à 12 s */
+const CONNECTOR_PREWAIT_MS = 30_000;
+
 export interface DockerWorkerOptions {
   /** Exécutable de Claude Code du poste, monté dans le conteneur */
   claudeBinary: string;
@@ -66,6 +70,17 @@ export interface DockerWorkerOptions {
   onSessionSaved: () => void;
   profile: string;
   user: string;
+}
+
+/**
+ * Connecteurs de claude.ai (RF-CONT-14) : coupés, sauf quand la lecture de Jira et Confluence est activée ; l'agent
+ * attend alors leur branchement, qui se fait en arrière-plan (réglage non documenté, vérifié par make claude-compat).
+ * Les outils permis restent limités à la lecture par --allowedTools, en mode dontAsk.
+ */
+function connectorEnv(atlassianRead: boolean): string[] {
+  return atlassianRead
+    ? ['--env', `CLAUDE_CODE_MCP_CONNECTOR_PREWAIT_MS=${CONNECTOR_PREWAIT_MS}`]
+    : ['--env', 'ENABLE_CLAUDEAI_MCP_SERVERS=false'];
 }
 
 /** Dossier d'un projet tel que Claude Code le nomme : le chemin, chaque caractère hors lettres et chiffres en « - ». */
@@ -266,9 +281,7 @@ export class DockerAgentRunner implements AgentRunner, WorkerHealth {
         // Pas de télémétrie ni de rapport d'erreur : seule l'API de Claude est jointe
         '--env',
         'CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1',
-        // Ni les connecteurs de claude.ai : l'agent n'a aucun serveur MCP (E11a)
-        '--env',
-        'ENABLE_CLAUDEAI_MCP_SERVERS=false',
+        ...connectorEnv(spec.atlassianRead),
         '--env',
         'HOME=/home/agent',
         '--env',
@@ -297,7 +310,7 @@ export class DockerAgentRunner implements AgentRunner, WorkerHealth {
         '--permission-mode',
         'dontAsk',
         '--allowedTools',
-        spec.tools.join(','),
+        [...spec.tools, ...(spec.atlassianRead ? ATLASSIAN_READ_TOOLS : [])].join(','),
         ...(spec.deniedTools.length > 0 ? ['--disallowedTools', spec.deniedTools.join(',')] : []),
       ],
       { stdio: ['ignore', 'pipe', 'pipe'] },
@@ -318,10 +331,7 @@ export class DockerAgentRunner implements AgentRunner, WorkerHealth {
       await run(DOCKER, ['network', 'rm', isolation.network]).catch(() => undefined);
     });
     async function* events(): AsyncGenerator<AgentEvent> {
-      for await (const line of lines) {
-        const event = agentEventOf(line);
-        if (event) yield event;
-      }
+      for await (const line of lines) yield* agentEventsOf(line);
     }
     return {
       events: events(),

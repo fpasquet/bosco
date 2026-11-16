@@ -28,9 +28,13 @@ export interface TaskLinksProps {
   taskId: number;
 }
 
+/** Tickets Jira et pages Confluence : reconnus à leur adresse, lus par l'agent et non par Bosco (CA-CONT-90). */
+const byAgent = (link: LinkDto) => link.service === 'jira' || link.service === 'confluence';
+
 /**
  * Liens d'une tâche (E10b) : on colle une adresse, Bosco reconnaît le service et lit titre, état et auteur ; l'agent les
- * reçoit avec sa consigne, sans le contenu des pages ni les accès.
+ * reçoit avec sa consigne, sans le contenu des pages ni les accès. Jira et Confluence ne sont pas lus par Bosco :
+ * l'agent les lit lui-même (« Lu par l'agent »).
  */
 export function TaskLinks({ busy, error, links, onAdd, onRemove, onUrlChange, recognized, taskId }: TaskLinksProps) {
   const { control, handleSubmit, register, reset } = useForm({ defaultValues: { url: '' } });
@@ -86,9 +90,12 @@ export function TaskLinks({ busy, error, links, onAdd, onRemove, onUrlChange, re
               <div className="min-w-0 flex-1">
                 <p className="flex flex-wrap items-center gap-x-2 text-xs text-muted">
                   <span className="font-medium text-ink">{SERVICES[link.service]}</span>
+                  {byAgent(link) && <span className="badge badge-ghost badge-sm">Lu par l’agent</span>}
                   {link.state && <span className="badge badge-ghost badge-sm">{link.state}</span>}
                   {link.person && <span>{link.person}</span>}
-                  {link.readAt && !link.error && <span>lu à {TIME.format(new Date(link.readAt))}</span>}
+                  {link.readAt && !link.error && !byAgent(link) && (
+                    <span>lu à {TIME.format(new Date(link.readAt))}</span>
+                  )}
                 </p>
                 <a href={link.url} target="_blank" rel="noreferrer" className="block link truncate">
                   {link.title}
@@ -96,8 +103,8 @@ export function TaskLinks({ busy, error, links, onAdd, onRemove, onUrlChange, re
                 {link.error && (
                   <p className="text-xs text-warning">
                     Non rafraîchi : {link.error} ·{' '}
-                    <Link href="/settings/integrations" className="link">
-                      Voir les intégrations
+                    <Link href="/settings/isolation/egress" className="link">
+                      Voir le compte GitHub
                     </Link>
                   </p>
                 )}

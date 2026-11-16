@@ -17,8 +17,8 @@ const VISIBILITY = [
   },
   {
     kind: 'Secrets',
-    granted: 'Accès Claude temporaire, copie du .npmrc du poste',
-    denied: 'Accès GitHub, Jira, Confluence, tes autres accès, les réglages du poste',
+    granted: 'Accès Claude temporaire, copie du .npmrc du poste, lecture Jira et Confluence si activée',
+    denied: 'Accès GitHub, écriture Jira et Confluence, tes autres connecteurs et accès, les réglages du poste',
   },
   { kind: 'Réseau', granted: 'Domaines autorisés', denied: 'Le reste d’Internet' },
 ] as const;

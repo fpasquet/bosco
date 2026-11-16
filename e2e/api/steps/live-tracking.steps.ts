@@ -143,6 +143,30 @@ Given('Docker does not answer', async ({ request }) => {
   expect(response.status()).toBe(204);
 });
 
+Given('the Atlassian connector is not plugged into the claude.ai account', async ({ request }) => {
+  const response = await request.post('/__test/worker', { data: { atlassianConnector: false } });
+  expect(response.status()).toBe(204);
+});
+
+Then(
+  'the journal of the task {int} should have {string} with {string}',
+  async ({ request }, id: number, event: string, detail: string) => {
+    const response = await request.get(`/api/tasks/${id}`);
+    const { log } = (await response.json()) as { log: { detail: null | string; event: string }[] };
+    const lines = log.filter((entry) => entry.event === event).map((entry) => entry.detail ?? '');
+    expect(
+      lines.some((line) => line.includes(detail)),
+      `${event} : ${lines.join(' | ')}`,
+    ).toBe(true);
+  },
+);
+
+Then('the journal of the task {int} should not have {string}', async ({ request }, id: number, event: string) => {
+  const response = await request.get(`/api/tasks/${id}`);
+  const { log } = (await response.json()) as { log: { event: string }[] };
+  expect(log.map((entry) => entry.event)).not.toContain(event);
+});
+
 Then('the task {int} should become {string}', async ({ request }, id: number, state: string) => {
   await expect
     .poll(

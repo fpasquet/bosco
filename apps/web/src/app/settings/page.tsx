@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 
-/** Réglages : les intégrations, premier onglet. */
+/** Réglages : les dépôts, premier onglet. */
 export default function SettingsPage() {
-  redirect('/settings/integrations');
+  redirect('/settings/repositories');
 }

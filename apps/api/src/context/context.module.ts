@@ -9,19 +9,13 @@ import { CONFIG, ORM } from '../shared/tokens.ts';
 import { ContextService } from './application/context.service.ts';
 import { LinksService, REFRESH_MS } from './application/links.service.ts';
 import { decisionReader } from './infrastructure/links/decision-reader.ts';
-import {
-  confluenceReader,
-  GithubReader,
-  jiraReader,
-  pageReader,
-  scriptedReaders,
-} from './infrastructure/links/readers.ts';
+import { GithubReader, pageReader, scriptedReaders } from './infrastructure/links/readers.ts';
 import {
   MikroOrmArchitectureStore,
   MikroOrmDecisionRepository,
   MikroOrmSocleRepository,
 } from './infrastructure/persistence/context.repositories.ts';
-import { MikroOrmIntegrationStore, MikroOrmLinkRepository } from './infrastructure/persistence/links.repositories.ts';
+import { MikroOrmLinkRepository } from './infrastructure/persistence/links.repositories.ts';
 import { ContextController } from './interface/http/context.controller.ts';
 import { LinksController } from './interface/http/links.controller.ts';
 import { CONTEXT_SERVICE, LINKS_SERVICE } from './tokens.ts';
@@ -52,25 +46,14 @@ const clock = { now: () => new Date() };
       provide: LINKS_SERVICE,
       inject: [CONFIG, ORM, CONTEXT_SERVICE],
       useFactory: (config: Config, orm: MikroORM, context: ContextService) => {
-        const github = config.testing
-          ? scriptedReaders
-          : new GithubReader(config.worker.gh, new GhAccounts(config.worker.gh));
         const readers = config.testing
           ? { ...scriptedReaders, decision: decisionReader(context) }
           : {
-              github: github as GithubReader,
-              jira: jiraReader,
-              confluence: confluenceReader,
+              github: new GithubReader(config.worker.gh, new GhAccounts(config.worker.gh)),
               page: pageReader,
               decision: decisionReader(context),
             };
-        return new LinksService(
-          new MikroOrmLinkRepository(orm),
-          new MikroOrmIntegrationStore(orm),
-          readers,
-          github,
-          clock,
-        );
+        return new LinksService(new MikroOrmLinkRepository(orm), readers, clock);
       },
     },
   ],

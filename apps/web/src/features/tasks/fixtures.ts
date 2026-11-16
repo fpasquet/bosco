@@ -103,6 +103,7 @@ export const STORY_ISOLATION: IsolationDto = {
   },
   image: 'bosco-agent:1',
   secrets: {
+    atlassianRead: false,
     claude: {
       account: 'camille@exemple.dev',
       available: true,

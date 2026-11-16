@@ -1,5 +1,5 @@
 'use client';
-import { GitBranch, KeyRound, Lock, Package } from 'lucide-react';
+import { GitBranch, KeyRound, Lock, Package, Ticket } from 'lucide-react';
 import { useState } from 'react';
 import type { WorkerSecretsDto } from '@bosco/domain';
 import { Button } from '@/shared/ui/button';
@@ -9,7 +9,7 @@ export interface WorkerSecretsProps {
   /** github : compte GitHub par défaut */
   /** Refus de l'API : profil sans accès, chemin relatif */
   error?: null | string;
-  onChange: (changes: { github?: string; npmrc?: string; profile?: string }) => void;
+  onChange: (changes: { atlassianRead?: boolean; github?: string; npmrc?: string; profile?: string }) => void;
   secrets: WorkerSecretsDto;
 }
 
@@ -176,6 +176,26 @@ export function WorkerSecrets({ busy, error = null, onChange, secrets }: WorkerS
               Modifier<span className="sr-only"> le fichier .npmrc</span>
             </Button>
           )}
+        </li>
+        <li className="flex items-start gap-3 px-4 py-3">
+          <Ticket aria-hidden className="mt-0.5 size-4 shrink-0 text-primary" />
+          <div className="min-w-0 flex-1">
+            <p className="font-medium">Lecture Jira et Confluence par les agents</p>
+            <p className="text-muted">
+              Par ton connecteur Atlassian de claude.ai, sur le compte de l’abonnement choisi : tickets, recherches et
+              pages, en lecture seule. Aucun accès n’est copié ; chaque lecture est notée dans le journal de la tâche.
+            </p>
+          </div>
+          <input
+            type="checkbox"
+            role="switch"
+            aria-label="Lecture Jira et Confluence par les agents"
+            className="toggle hidden shrink-0 toggle-primary md:inline-grid"
+            disabled={busy}
+            checked={secrets.atlassianRead}
+            onChange={(event) => onChange({ atlassianRead: event.target.checked })}
+          />
+          <span className="font-medium md:hidden">{secrets.atlassianRead ? 'Activée' : 'Désactivée'}</span>
         </li>
         <li className="flex items-start gap-3 px-4 py-3">
           <Lock aria-hidden className="mt-0.5 size-4 shrink-0 text-muted" />

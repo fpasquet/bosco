@@ -13,7 +13,7 @@ import {
 function memoryStore(): IsolationStore {
   let domains: string[] = [];
   let agents: null | number = null;
-  let secrets: SecretsChoice = { github: null, npmrc: null, profile: null };
+  let secrets: SecretsChoice = { atlassianRead: false, github: null, npmrc: null, profile: null };
   const refusals: EgressRefusal[] = [];
   return {
     secrets: () => Promise.resolve(secrets),

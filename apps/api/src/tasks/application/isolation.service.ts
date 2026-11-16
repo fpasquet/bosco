@@ -1,4 +1,5 @@
 import { DomainError } from '../../shared/domain/domain-error.ts';
+import { CONNECTORS_DOMAIN } from '../domain/atlassian-read.ts';
 import { allows, type EgressRefusal, isDomain, LOCKED_DOMAINS } from '../domain/egress.ts';
 import { npmRegistries, type NpmRegistry } from '../domain/npmrc.ts';
 
@@ -16,6 +17,8 @@ export interface IsolationStore {
 
 /** Ce que chaque tâche reçoit (E11b) : l'accès Claude du profil choisi, et le .npmrc choisi s'il existe. */
 export interface SecretsChoice {
+  /** Lecture de Jira et Confluence par le connecteur Atlassian de claude.ai (RF-CONT-14) ; désactivée par défaut */
+  atlassianRead: boolean;
   /** Compte de GitHub CLI par défaut (E11b) ; null : le compte actif de gh */
   github: null | string;
   /** Fichier .npmrc écrit comme dans le terminal (« ~/.npmrc ») ; null : celui par défaut */
@@ -48,6 +51,7 @@ export interface SecretsDefaults {
 
 /** Secrets vus dans les réglages (E11b) : profil choisi et son compte, .npmrc et ses registres. */
 export interface SecretsView {
+  atlassianRead: boolean;
   claude: {
     account: null | string;
     /** Un accès à l'abonnement existe : sans lui, le worker ne lance aucun agent */
@@ -108,7 +112,7 @@ function expandHome(path: string, home: string): string {
 export class IsolationService {
   private added: string[] = [];
   private agents: number = AGENTS.default;
-  private choice: SecretsChoice = { github: null, npmrc: null, profile: null };
+  private choice: SecretsChoice = { atlassianRead: false, github: null, npmrc: null, profile: null };
   private registries: NpmRegistry[] = [];
 
   constructor(
@@ -137,12 +141,17 @@ export class IsolationService {
     return { credentials: chosen?.credentials ?? this.secrets.defaults.credentials, npmrc };
   }
 
+  /** Lecture de Jira et Confluence par les agents des tâches qui démarrent (CA-CONT-96). */
+  atlassianRead(): boolean {
+    return this.choice.atlassianRead;
+  }
+
   /** Compte GitHub par défaut : celui choisi, sinon null pour le compte actif de gh. */
   defaultGithubAccount(): null | string {
     return this.choice.github;
   }
 
-  /** Profil de l'abonnement, compte GitHub et .npmrc (E11b) ; valent pour les tâches suivantes. */
+  /** Profil de l'abonnement, compte GitHub, .npmrc et lecture de Jira et Confluence (E11b) ; pour les tâches suivantes. */
   async setSecrets(changes: Partial<SecretsChoice>): Promise<IsolationSnapshot> {
     const next = { ...this.choice, ...changes };
     if (changes.profile) {
@@ -175,7 +184,7 @@ export class IsolationService {
   }
 
   allowList(): string[] {
-    const listed = [...LOCKED_DOMAINS, ...this.added];
+    const listed = [...this.locked(), ...this.added];
     return [...listed, ...this.registryHosts().filter((host) => !listed.includes(host))];
   }
 
@@ -185,7 +194,7 @@ export class IsolationService {
     await this.refreshRegistries();
     const refusals = await this.store.refusals(RECENT_REFUSALS);
     return {
-      locked: [...LOCKED_DOMAINS],
+      locked: this.locked(),
       added: [...this.added],
       maxAgents: this.agents,
       refusals: refusals.filter((refusal) => !allows(this.allowList(), refusal.host)),
@@ -209,7 +218,7 @@ export class IsolationService {
   /** Seul un domaine ajouté se retire : la liste par défaut est verrouillée. */
   async removeDomain(value: string): Promise<IsolationSnapshot> {
     const domain = value.trim().toLowerCase();
-    if ((LOCKED_DOMAINS as readonly string[]).includes(domain))
+    if (this.locked().includes(domain))
       throw new InvalidIsolation(`${domain} est nécessaire à Claude Code et aux installations : il reste autorisé.`);
     this.added = this.added.filter((added) => added !== domain);
     await this.store.saveAddedDomains(this.added);
@@ -223,6 +232,11 @@ export class IsolationService {
     this.agents = agents;
     await this.store.saveMaxAgents(agents);
     return this.snapshot();
+  }
+
+  /** Liste par défaut, verrouillée ; le domaine des connecteurs y est tant que la lecture est activée (CA-CONT-93). */
+  private locked(): string[] {
+    return [...LOCKED_DOMAINS, ...(this.choice.atlassianRead ? [CONNECTORS_DOMAIN] : [])];
   }
 
   async refused(refusal: EgressRefusal): Promise<void> {
@@ -272,6 +286,7 @@ export class IsolationService {
     const npmrc = this.npmrcPath();
     const github = await reader.githubAccounts();
     return {
+      atlassianRead: this.choice.atlassianRead,
       github: {
         account: this.choice.github ?? github.find(({ active }) => active)?.login ?? null,
         choices: github.map(({ login }) => login),
