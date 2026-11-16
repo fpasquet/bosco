@@ -2,9 +2,10 @@
 SPECS ?= ../specs
 SKILLS := .claude/skills
 PROFILE ?= $(HOME)/.claude
+BETA_DIR ?= $(HOME)/.cache/bosco/beta
 
 .DEFAULT_GOAL := help
-.PHONY: help install dev start desktop desktop-install desktop-package desktop-package-install desktop-update android build check lint typecheck test format format-check e2e e2e-api e2e-web e2e-record e2e-clean storybook claude-compat db-migration service-install mcp-install mcp-install-dev mcp-remove skills tokens tokens-check requirements requirements-check
+.PHONY: help install dev start desktop desktop-install desktop-package desktop-package-install desktop-update beta android build check lint typecheck test format format-check e2e e2e-api e2e-web e2e-record e2e-clean storybook claude-compat db-migration service-install mcp-install mcp-install-dev mcp-remove skills tokens tokens-check requirements requirements-check
 
 help: ## List the commands
 	@grep -E '^[a-z0-9-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN { FS = ":.*## " } { printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2 }'
@@ -38,6 +39,20 @@ desktop-update: ## Pull the repository, rebuild the .deb package and install it 
 	pnpm install --frozen-lockfile
 	$(MAKE) desktop-package
 	$(MAKE) desktop-package-install
+
+beta: ## Build the .deb package of a branch and install it over the running one (sudo; BRANCH=<origin branch>, this checkout by default)
+ifdef BRANCH
+	@# La branche se construit dans un worktree à part, gardé entre deux essais : le dépôt courant n'est pas touché
+	git fetch origin $(BRANCH)
+	git worktree prune
+	@if [ -d "$(BETA_DIR)" ]; then git -C "$(BETA_DIR)" checkout --quiet --force --detach origin/$(BRANCH); \
+		else git worktree add --detach "$(BETA_DIR)" origin/$(BRANCH); fi
+	@# Dans un worktree neuf, pnpm reprend Electron de son cache sans lancer le script qui télécharge son binaire
+	cd "$(BETA_DIR)" && pnpm install --frozen-lockfile && (cd apps/desktop && node node_modules/electron/install.js) && \
+		$(MAKE) desktop-package desktop-package-install
+else
+	$(MAKE) desktop-package desktop-package-install
+endif
 
 # Outils Android dans le dossier personnel (JDK 17, SDK), comme les a installés le lot 4
 JAVA_HOME ?= $(HOME)/.local/jdk-17
