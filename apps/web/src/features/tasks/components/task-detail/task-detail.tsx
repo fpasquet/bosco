@@ -8,9 +8,8 @@ import { z } from 'zod';
 import type { TaskDto } from '@bosco/domain';
 import { Button } from '@/shared/ui/button';
 import { usd } from '../../lib/tasks';
+import { TaskLog } from '../task-log';
 import { TaskStateBadge } from '../task-state-badge';
-
-const CLOCK = new Intl.DateTimeFormat('fr', { day: 'numeric', hour: '2-digit', minute: '2-digit', month: 'short' });
 
 export interface TaskDetailProps {
   busy: boolean;
@@ -18,6 +17,8 @@ export interface TaskDetailProps {
   failing: TaskDto[];
   onCancel: () => void;
   onRelaunch: (changes: { budgetUsd: number; fromBranch: boolean; instruction?: string }) => void;
+  /** Fil de la tâche et ses modifications, comme pour une session (RF-TACH-10) */
+  panel: ReactNode;
   /** Ressources d'une tâche du worker en cours, sous l'en-tête (E13d) */
   resources?: ReactNode;
   task: TaskDto;
@@ -129,13 +130,18 @@ function Relaunch({ busy, onRelaunch, task }: Pick<TaskDetailProps, 'busy' | 'on
   );
 }
 
-/** Détail d'une tâche (E13a, E13b, E13c) : ce qu'elle fait, ce qu'elle attend, son journal, et ce qu'on peut faire. */
-export function TaskDetail({ busy, failing, onCancel, onRelaunch, resources, task }: TaskDetailProps) {
+/**
+ * Détail d'une tâche (E13a à E13d), à la disposition d'une session (RF-TACH-10) : le fil de l'agent au centre, et à
+ * droite ce qu'elle attend, ses garde-fous, ses ressources, sa relance et son journal.
+ */
+export function TaskDetail({ busy, failing, onCancel, onRelaunch, panel, resources, task }: TaskDetailProps) {
   const [confirming, setConfirming] = useState(false);
   const canCancel = !['cancelled', 'failed', 'rejected', 'validated'].includes(task.state);
+  // Une tâche du worker en cours s'annule depuis la barre du fil (« L'agent travaille seul »)
+  const cancelInHeader = canCancel && !(task.state === 'running' && task.mode === 'worker');
   const failed = task.state === 'failed' || task.state === 'rejected';
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex min-h-full flex-col gap-4">
       <header className="flex flex-wrap items-start gap-3">
         <div className="min-w-0 flex-1">
           <nav aria-label="Fil d’Ariane" className="flex items-center gap-1 text-xs text-muted">
@@ -152,15 +158,8 @@ export function TaskDetail({ busy, failing, onCancel, onRelaunch, resources, tas
           <p className="mt-1 font-mono text-xs text-muted">
             {task.repository.name}
             {task.folder ? ` · ${task.folder}` : ''} · {task.mode === 'worker' ? 'Worker' : 'Ma session'}
+            {task.outcome.branch ? ` · ${task.outcome.branch}` : ''}
             {task.createdBy === 'session' ? ' · créée par une session' : ''}
-            {task.outcome.sessionId && (
-              <>
-                {' · '}
-                <Link href={`/sessions/${task.outcome.sessionId}`} className="link font-sans">
-                  Voir la session
-                </Link>
-              </>
-            )}
           </p>
         </div>
         <div className="flex gap-2">
@@ -169,7 +168,7 @@ export function TaskDetail({ busy, failing, onCancel, onRelaunch, resources, tas
               <Link href={`/tasks/${task.id}/edit`}>Modifier</Link>
             </Button>
           )}
-          {canCancel && (
+          {cancelInHeader && (
             <Button
               variant="outline"
               size="sm"
@@ -191,7 +190,6 @@ export function TaskDetail({ busy, failing, onCancel, onRelaunch, resources, tas
           }}
         />
       )}
-      {resources}
       {task.state === 'awaiting_session' && (
         <p className="rounded-card border border-line bg-surface-alt px-4 py-3">
           À prendre depuis Claude Code sur le poste : dans le dépôt, demande « prends la prochaine tâche Bosco ». Le
@@ -206,55 +204,11 @@ export function TaskDetail({ busy, failing, onCancel, onRelaunch, resources, tas
           </a>
         </p>
       )}
-      {failed && task.failure && (
-        <p role="status" className="rounded-card border border-danger bg-danger-soft px-4 py-3 text-danger">
-          {task.failure}
-        </p>
-      )}
-      <div className="grid gap-4 md:grid-cols-3">
-        <div className="flex flex-col gap-4 md:col-span-2">
-          <section
-            aria-labelledby="instruction-title"
-            className="rounded-card border border-line bg-surface p-4 shadow-card"
-          >
-            <h2 id="instruction-title" className="mb-2 text-xs font-semibold text-muted">
-              Consigne
-            </h2>
-            <p className="whitespace-pre-line">{task.instruction}</p>
-            {task.context && <p className="mt-2 text-sm text-muted">Contexte : {task.context}</p>}
-          </section>
-          {task.outcome.report && (
-            <section
-              aria-labelledby="report-title"
-              className="rounded-card border border-line bg-surface p-4 shadow-card"
-            >
-              <h2 id="report-title" className="mb-2 text-xs font-semibold text-muted">
-                Compte rendu de l’agent
-              </h2>
-              <p className="whitespace-pre-line">{task.outcome.report}</p>
-            </section>
-          )}
-          {failed && <Relaunch busy={busy} onRelaunch={onRelaunch} task={task} />}
-          <section aria-labelledby="log-title" className="rounded-card border border-line bg-surface p-4 shadow-card">
-            <h2 id="log-title" className="mb-2 text-xs font-semibold text-muted">
-              Journal
-            </h2>
-            <ol className="flex flex-col gap-1.5 text-sm">
-              {task.log.map((entry, index) => (
-                <li key={`${entry.at}-${index}`} className="flex gap-3">
-                  <time dateTime={entry.at} className="w-28 shrink-0 font-mono text-xs text-muted">
-                    {CLOCK.format(new Date(entry.at))}
-                  </time>
-                  <span>
-                    {entry.event}
-                    {entry.detail && <span className="text-muted"> · {entry.detail}</span>}
-                  </span>
-                </li>
-              ))}
-            </ol>
-          </section>
-        </div>
+      <div className="grid min-h-0 flex-1 gap-4 md:grid-cols-3">
+        <div className="flex min-h-0 min-w-0 flex-col md:col-span-2">{panel}</div>
         <aside className="flex flex-col gap-4">
+          {resources}
+          {failed && <Relaunch busy={busy} onRelaunch={onRelaunch} task={task} />}
           <section aria-labelledby="waits-title" className="rounded-card border border-line bg-surface p-4 shadow-card">
             <h2 id="waits-title" className="mb-2 text-xs font-semibold text-muted">
               Elle attend
@@ -316,6 +270,7 @@ export function TaskDetail({ busy, failing, onCancel, onRelaunch, resources, tas
               </dl>
             </section>
           )}
+          <TaskLog log={task.log} />
         </aside>
       </div>
     </div>

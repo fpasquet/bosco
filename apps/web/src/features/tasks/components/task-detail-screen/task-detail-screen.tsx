@@ -1,6 +1,7 @@
 'use client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { type ReactNode, useState } from 'react';
+import type { TaskChangesDto, TaskDto, TaskIssueDto } from '@bosco/domain';
 import { PageSkeleton } from '@/shared/components/page-skeleton';
 import { useNotices } from '@/shared/hooks/use-notices';
 import { Button } from '@/shared/ui/button';
@@ -15,31 +16,59 @@ import {
   rejectTask,
   relaunchTask,
   removeLink,
+  resumeTask,
   retryPullRequest,
   reviewQuery,
+  TaskIssues,
   undoCancelTask,
   validateTask,
 } from '../../api/tasks';
 import { useLiveTasks } from '../../hooks/use-live-tasks';
+import { DiffView } from '../diff-view';
 import { RejectDialog } from '../reject-dialog';
+import { RESUME_MESSAGE_ID, ResumeForm, type ResumeValues } from '../resume-form';
 import { TaskDetail } from '../task-detail';
 import { TaskLinks } from '../task-links';
 import { TaskResources } from '../task-resources';
 import { TaskReview } from '../task-review';
+import { TaskThreadPanel } from '../task-thread-panel';
 import { ValidateDialog } from '../validate-dialog';
 
 /** États d'une tâche qui n'a pas démarré : son annulation se défait encore quelques secondes (CA-TACH-71). */
 const NOT_STARTED = new Set(['awaiting_session', 'blocked', 'queued']);
 
-/** Détail d'une tâche, tenu à jour par le flux des tâches (E13) ; revue quand elle est à relire (E7a, E7b, E7c). */
-export function TaskDetailScreen({ id }: { id: number }) {
+/** Onglet Modifications : le diff de la branche ; une session « Ma session » a travaillé dans le dépôt ; sinon rien. */
+function changesViewOf(task: TaskDto, changes: TaskChangesDto | undefined): ReactNode {
+  if (task.mode === 'worker' && task.outcome.base)
+    return changes ? <DiffView changes={changes} /> : <p className="text-muted">Lecture du diff…</p>;
+  if (task.mode === 'session' && task.outcome.sessionId)
+    return (
+      <p className="text-muted">
+        Travail fait par ta session, directement dans le dépôt : relis-le avec git ou ton éditeur.
+      </p>
+    );
+  return null;
+}
+
+export interface TaskDetailScreenProps {
+  id: number;
+  /** Fil de la session de l'agent, rendu par la page avec les composants des sessions (RF-TACH-10) */
+  thread: (task: TaskDto) => ReactNode;
+}
+
+/**
+ * Écran d'une tâche, tenu à jour par le flux des tâches, à la disposition d'une session (RF-TACH-10) : son détail
+ * (E13), puis sa revue quand elle est à relire (E7a, E7b, E7c), où un message fait reprendre l'agent.
+ */
+export function TaskDetailScreen({ id, thread }: TaskDetailScreenProps) {
   const client = useQueryClient();
   const tasks = useLiveTasks();
   const task = tasks?.find((candidate) => candidate.id === id);
   const toReview = task?.state === 'to_review';
   const { data: failing } = useQuery({ ...cancellationQuery(id), enabled: Boolean(task) });
   // Une tâche « Ma session » n'a pas de branche : son travail est déjà dans le dépôt
-  const { data: changes } = useQuery({ ...changesQuery(id), enabled: toReview && Boolean(task?.outcome.base) });
+  const hasBranch = task?.mode === 'worker' && Boolean(task.outcome.base);
+  const { data: changes } = useQuery({ ...changesQuery(id), enabled: hasBranch });
   const { data: review } = useQuery({ ...reviewQuery(id), enabled: toReview || task?.state === 'validated' });
   const [dialog, setDialog] = useState<'reject' | 'validate' | null>(null);
   const { data: links } = useQuery({ ...linksQuery(id), enabled: Boolean(task) });
@@ -94,9 +123,21 @@ export function TaskDetailScreen({ id }: { id: number }) {
     onSuccess: settled,
   });
   const reject = useMutation({
-    mutationFn: (values: { reason: string; relaunch: boolean }) => rejectTask(id, values),
+    mutationFn: (values: { reason: string }) => rejectTask(id, values),
     onSuccess: () => setDialog(null),
   });
+  const resume = useMutation({ mutationFn: (values: ResumeValues) => resumeTask(id, values) });
+  // Les refus de l'API (plafonds du dépôt) reviennent au formulaire, champ par champ (CA-TACH-90)
+  const onResume = async (values: ResumeValues): Promise<null | TaskIssueDto[]> => {
+    try {
+      await resume.mutateAsync(values);
+      return null;
+    } catch (failure) {
+      if (failure instanceof TaskIssues) return failure.issues;
+      notify('Le message n’est pas parti : réessaie.', 'warning');
+      return [];
+    }
+  };
   if (!tasks) return <PageSkeleton variant="detail" rows={6} />;
   if (!task) return <p className="p-4 md:px-8 md:pt-6">Tâche introuvable.</p>;
   const followers = tasks.filter((other) => other.waitingFor.some((prerequisite) => prerequisite.id === id));
@@ -106,9 +147,24 @@ export function TaskDetailScreen({ id }: { id: number }) {
     relaunch.isPending ||
     validate.isPending ||
     reject.isPending ||
+    resume.isPending ||
     retry.isPending;
+  const panel = (
+    <TaskThreadPanel
+      task={task}
+      thread={task.outcome.sessionId ? thread(task) : null}
+      changes={changesViewOf(task, changes)}
+      busy={busy}
+      onCancel={() => cancel.mutate(false)}
+      composer={
+        toReview &&
+        task.mode === 'worker' &&
+        task.outcome.sessionId && <ResumeForm task={task} busy={busy} onResume={onResume} />
+      }
+    />
+  );
   return (
-    <div className="flex flex-col gap-4 p-4 md:px-8 md:pt-6">
+    <div className="flex min-h-full flex-col gap-4 p-4 md:px-8 md:pt-6">
       {pullRequestError && (
         <section
           role="alert"
@@ -125,7 +181,7 @@ export function TaskDetailScreen({ id }: { id: number }) {
       {toReview ? (
         <TaskReview
           task={task}
-          changes={changes}
+          panel={panel}
           followers={followers}
           busy={busy}
           onCopy={(text) => void navigator.clipboard?.writeText(text).catch(() => undefined)}
@@ -141,6 +197,7 @@ export function TaskDetailScreen({ id }: { id: number }) {
           busy={busy}
           onCancel={() => cancel.mutate(NOT_STARTED.has(task.state) && (failing ?? []).length === 0)}
           onRelaunch={(changes) => relaunch.mutate(changes)}
+          panel={panel}
           resources={task.state === 'running' && task.mode === 'worker' ? <TaskResources taskId={task.id} /> : null}
         />
       )}
@@ -162,6 +219,11 @@ export function TaskDetailScreen({ id }: { id: number }) {
           busy={busy}
           onCancel={() => setDialog(null)}
           onReject={(values) => reject.mutate(values)}
+          onWrite={() => {
+            setDialog(null);
+            // La fenêtre se ferme d'abord : le focus revient ensuite à la zone de message
+            requestAnimationFrame(() => document.getElementById(RESUME_MESSAGE_ID)?.focus());
+          }}
         />
       )}
       {toReview && review && (

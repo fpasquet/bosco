@@ -14,6 +14,7 @@ const meta = {
     busy: false,
     onCancel: fn(),
     onReject: fn(),
+    onWrite: fn(),
   },
 } satisfies Meta<typeof RejectDialog>;
 
@@ -21,3 +22,5 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const WithFollowers: Story = {};
+
+export const WithoutFollowers: Story = { args: { followers: [] } };

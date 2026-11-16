@@ -148,8 +148,15 @@ export const validateTask = (id: number, pullRequest: null | { body: string; tit
 export const retryPullRequest = (id: number, pullRequest: { body: string; title: string }) =>
   post<ValidationDto>(`/api/tasks/${id}/pull-request`, pullRequest);
 
-export const rejectTask = (id: number, values: { reason: string; relaunch: boolean }) =>
-  post<TaskDto>(`/api/tasks/${id}/reject`, values);
+/** Rejet (E7b) : la tâche est abandonnée, le motif gardé dans son journal. */
+export const rejectTask = (id: number, values: { reason: string }) => post<TaskDto>(`/api/tasks/${id}/reject`, values);
+
+/**
+ * Message à l'agent d'une tâche à relire (RF-TACH-10) : il reprend sur la même branche ; un budget ou des tours relevés
+ * hors des plafonds du dépôt sont refusés champ par champ (400, TaskIssues).
+ */
+export const resumeTask = (id: number, values: { budgetUsd?: number; maxTurns?: number; message: string }) =>
+  send('POST', `/api/tasks/${id}/resume`, values);
 
 export const linksQuery = (id: number) => ({
   queryKey: ['task-links', id],

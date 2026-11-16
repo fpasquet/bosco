@@ -1,6 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite';
 import { fn } from 'storybook/test';
 import { STORY_CHANGES, STORY_REVIEW_TASK, STORY_TASKS } from '../../fixtures';
+import { DiffView } from '../diff-view';
+import { TaskThreadPanel } from '../task-thread-panel';
 import { TaskReview } from './task-review';
 
 const meta = {
@@ -9,7 +11,13 @@ const meta = {
   parameters: { layout: 'padded', nextjs: { appDirectory: true } },
   args: {
     task: STORY_REVIEW_TASK,
-    changes: STORY_CHANGES,
+    panel: (
+      <TaskThreadPanel
+        task={STORY_REVIEW_TASK}
+        thread={<p className="text-muted">Fil de l’agent de T-12.</p>}
+        changes={<DiffView changes={STORY_CHANGES} />}
+      />
+    ),
     followers: STORY_TASKS.filter((task) => task.id === 13),
     busy: false,
     onCopy: fn(),
@@ -32,6 +40,5 @@ export const MySession: Story = {
       mode: 'session',
       outcome: { ...STORY_REVIEW_TASK.outcome, base: null, branch: null, from: null },
     },
-    changes: undefined,
   },
 };

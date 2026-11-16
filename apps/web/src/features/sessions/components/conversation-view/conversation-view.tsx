@@ -11,6 +11,11 @@ import { SourcesList } from '../sources-list';
 
 export interface ConversationViewProps {
   conversation: SessionConversationDto;
+  /**
+   * Consigne d'une tâche (RF-TACH-10) : la première demande est le texte transmis à l'agent ; elle s'affiche comme la
+   * consigne, avec le texte transmis complet à déplier
+   */
+  instruction?: string;
   /** La session tourne : l'outil sans résultat est en cours, et non interrompu */
   live: boolean;
 }
@@ -20,6 +25,29 @@ function Time({ at }: { at: string }) {
     <time dateTime={at} className="font-mono tabular-nums">
       {clockOf(at)}
     </time>
+  );
+}
+
+/** La consigne transmise à l'agent d'une tâche : son résumé, puis le texte transmis tel quel, à déplier. */
+function InstructionTurn({ instruction, turn }: { instruction: string; turn: ConversationTurnDto }) {
+  const text = turn.parts.map((part) => (part.kind === 'text' ? part.text : '')).join('\n');
+  return (
+    <Message align="end">
+      <MessageContent>
+        <MessageHeader className="gap-1.5">
+          Consigne de la tâche · <Time at={turn.at} />
+        </MessageHeader>
+        <Bubble variant="tinted">
+          <BubbleContent className="flex flex-col gap-2">
+            <p className="whitespace-pre-line">{instruction}</p>
+            <details className="text-xs">
+              <summary className="link cursor-pointer link-primary">Voir le texte transmis</summary>
+              <p className="mt-2 whitespace-pre-line text-muted">{text}</p>
+            </details>
+          </BubbleContent>
+        </Bubble>
+      </MessageContent>
+    </Message>
   );
 }
 
@@ -77,21 +105,25 @@ function AgentTurn({
  * Fil complet d'une session (E2a), sur les patterns d'AI Elements : tes demandes en bulles (Message), les réponses de
  * l'agent en Markdown, ses réflexions (Reasoning) et ses outils (Tool, Terminal, Test Results, Stack Trace, Task).
  */
-export function ConversationView({ conversation, live }: ConversationViewProps) {
+export function ConversationView({ conversation, instruction, live }: ConversationViewProps) {
   const { plans, turns } = planOf(conversation.turns);
   const last = turns.at(-1);
+  // Une session longue dont le début n'est plus affiché n'a plus sa consigne en tête
+  const first = conversation.partial ? null : turns.find((turn) => turn.role === 'user');
   return (
     <div className="flex flex-col gap-5">
       {conversation.partial && (
         <p className="text-xs text-muted">Longue session : seuls ses derniers échanges sont affichés.</p>
       )}
-      {turns.map((turn) =>
-        turn.role === 'user' ? (
+      {turns.map((turn) => {
+        if (turn.role === 'user' && instruction !== undefined && turn === first)
+          return <InstructionTurn key={turn.id} turn={turn} instruction={instruction} />;
+        return turn.role === 'user' ? (
           <UserTurn key={turn.id} turn={turn} />
         ) : (
           <AgentTurn key={turn.id} turn={turn} live={live} current={live && turn === last} plan={plans.get(turn.id)} />
-        ),
-      )}
+        );
+      })}
     </div>
   );
 }
