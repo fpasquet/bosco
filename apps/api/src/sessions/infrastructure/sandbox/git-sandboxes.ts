@@ -3,6 +3,7 @@
 // Le clone se monte au même chemin que le dépôt du poste, et les conversations de ce dépôt dans le profil des bacs à
 // sable, une source surveillée : le fil se lit en direct et se range avec son dépôt.
 import { execFile } from 'node:child_process';
+import { existsSync } from 'node:fs';
 import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
@@ -93,12 +94,21 @@ export class GitSandboxes implements Sandboxes {
     const credentials = await this.credentialsOf(input.profile);
     await cp(credentials, join(dir, 'home', '.claude', '.credentials.json'));
     await writeFile(join(dir, 'home', '.claude', 'settings.json'), JSON.stringify({ autoUpdates: false }));
-    await mkdir(join(this.profile, 'projects', projectDir(input.repositoryRoot)), { recursive: true });
+    // Les points de montage existent avant le conteneur : sinon Docker les crée en root, et la suppression échoue
+    const project = projectDir(input.repositoryRoot);
+    await mkdir(join(this.profile, 'projects', project), { recursive: true });
+    await mkdir(join(dir, 'home', '.claude', 'projects', project), { recursive: true });
     return { base, from };
   }
 
   async ensure(sessionId: string, repositoryRoot: string): Promise<TurnLaunch> {
     const dir = this.dirOf(sessionId);
+    // Sans sa copie, le conteneur monterait un dossier vide que Docker créerait en root : la session ne se reprend plus
+    if (!existsSync(join(dir, 'repo')))
+      throw new SandboxError(
+        'sandboxRemoved',
+        'La copie du dépôt de ce bac à sable a disparu : la session ne se reprend plus.',
+      );
     const project = projectDir(repositoryRoot);
     const key = this.keyOf(sessionId);
     await this.containers.ensure({

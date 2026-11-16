@@ -3,6 +3,7 @@
 import { mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { Sandboxes, SandboxState } from '../../application/pilot.service.ts';
+import { SandboxError } from '../../domain/sandbox.ts';
 
 export class ScriptedSandboxes implements Sandboxes {
   readonly profile: string;
@@ -29,6 +30,8 @@ export class ScriptedSandboxes implements Sandboxes {
   }
 
   ensure(sessionId: string): Promise<null> {
+    if (this.states.get(sessionId) === 'missing')
+      return Promise.reject(new SandboxError('sandboxRemoved', 'La copie du dépôt de ce bac à sable a disparu.'));
     this.states.set(sessionId, 'running');
     return Promise.resolve(null);
   }

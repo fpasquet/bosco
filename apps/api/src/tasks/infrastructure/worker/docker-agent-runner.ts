@@ -232,7 +232,8 @@ export class DockerAgentRunner implements AgentRunner, WorkerHealth {
     await run(DOCKER, [
       'run',
       '--detach',
-      ...(target.keep ? [] : ['--rm']),
+      // Un proxy qui survit s'arrête et repart avec le bac à sable : un init lui transmet le signal d'arrêt
+      ...(target.keep ? ['--init'] : ['--rm']),
       '--name',
       proxy,
       ...label,

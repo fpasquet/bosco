@@ -60,6 +60,8 @@ export class DockerSandboxContainers {
     await run(DOCKER, [
       'run',
       '--detach',
+      // Un init en tête : l'attente s'arrête au signal, sans les 5 s du délai de docker stop
+      '--init',
       '--name',
       names.agent,
       '--label',
