@@ -1,7 +1,8 @@
-// Vérification de compatibilité avec le Claude Code installé (NF-09, RQ-01) : le hook PermissionRequest reçoit
-// la réponse de Bosco, autorisation comme refus avec motif, et SessionEnd termine la session ; avec l'attente des
-// connecteurs, celui d'Atlassian est branché dès le démarrage (DT-36). À lancer à chaque nouvelle version de Claude
-// Code avec `make claude-compat` : trois sessions courtes sur Haiku, sur l'abonnement.
+// Vérification de compatibilité avec le Claude Code installé (NF-09, RQ-01, RQ-14) : le hook PermissionRequest
+// reçoit la réponse de Bosco, autorisation comme refus avec motif, et SessionEnd termine la session ; avec l'attente
+// des connecteurs, celui d'Atlassian est branché dès le démarrage (DT-36) ; le flux JSON d'un tour donne l'usage de
+// l'abonnement (DT-39). À lancer à chaque nouvelle version de Claude Code avec `make claude-compat` : quatre
+// sessions courtes sur Haiku, sur l'abonnement.
 import { execFile, spawn } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -69,6 +70,28 @@ function startingTools(env: Record<string, string>, cwd: string): Promise<{ serv
       else resolve({ servers: (init.mcp_servers ?? []).map(({ name }) => name), tools: init.tools ?? [] });
     });
   });
+}
+
+/** Un tour en flux JSON : l'usage de la fenêtre de 5 h de l'abonnement, tel que Bosco le lit (DT-39). */
+async function fiveHourUsage(cwd: string): Promise<null | number> {
+  const { stdout } = await run(
+    'claude',
+    ['-p', 'Réponds seulement OK.', '--model', MODEL, '--output-format', 'stream-json', '--verbose'],
+    { cwd, maxBuffer: 16 * 1024 * 1024 },
+  );
+  for (const raw of stdout.split('\n')) {
+    try {
+      const line = JSON.parse(raw) as {
+        rate_limit_info?: { unifiedWindows?: { five_hour?: { utilization?: unknown } } };
+        type?: string;
+      };
+      const usage = line.rate_limit_info?.unifiedWindows?.five_hour?.utilization;
+      if (line.type === 'rate_limit_event' && typeof usage === 'number') return usage;
+    } catch {
+      // Une ligne qui n'est pas du JSON : ignorée
+    }
+  }
+  return null;
 }
 
 async function nextPermission(url: string, timeoutMs = 120_000): Promise<Waiting> {
@@ -150,6 +173,12 @@ try {
   else if (!tools.includes('mcp__claude_ai_Atlassian__getJiraIssue'))
     throw new Error('The Atlassian connector was not plugged in when the session started');
   else checks.push('Le connecteur Atlassian est branché dès le démarrage, avec l’attente des connecteurs');
+
+
+  // 5. Le flux JSON d'un tour donne l'usage de l'abonnement : sans lui, le quota ne retient plus le worker (RQ-14)
+  const usage = await fiveHourUsage(work);
+  if (usage === null) throw new Error('No rate_limit_event with unifiedWindows.five_hour.utilization in the stream');
+  checks.push(`Le flux d’un tour donne l’usage de la fenêtre de 5 h (${Math.round(usage * 100)} %)`);
 
   const passed = checks.map((check) => '- ' + check).join('\n');
   console.log(`Claude Code ${version.trim()} : compatible.\n${passed}`);
