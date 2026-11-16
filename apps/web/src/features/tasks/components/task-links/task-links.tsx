@@ -103,8 +103,8 @@ export function TaskLinks({ busy, error, links, onAdd, onRemove, onUrlChange, re
                 {link.error && (
                   <p className="text-xs text-warning">
                     Non rafraîchi : {link.error} ·{' '}
-                    <Link href="/settings/integrations" className="link">
-                      Voir les intégrations
+                    <Link href="/settings/isolation/egress" className="link">
+                      Voir le compte GitHub
                     </Link>
                   </p>
                 )}

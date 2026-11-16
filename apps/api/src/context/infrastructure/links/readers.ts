@@ -1,10 +1,9 @@
 // Lecteurs des liens (RF-CONT-04) : GitHub avec GitHub CLI du poste, toute autre adresse par le titre de sa page.
 // Seuls le titre, l'état et l'auteur sont gardés ; Jira et Confluence ne sont pas lus par Bosco (RF-CONT-14).
 import { execFile } from 'node:child_process';
-import { existsSync } from 'node:fs';
 import { promisify } from 'node:util';
 import type { GithubAccounts } from '../../../shared/infrastructure/github/gh-accounts.ts';
-import type { GithubCheck, LinkReader, ReadOptions } from '../../application/links.service.ts';
+import type { LinkReader, ReadOptions } from '../../application/links.service.ts';
 import type { LinkReading } from '../../domain/link.ts';
 
 const run = promisify(execFile);
@@ -15,19 +14,11 @@ const text = (value: unknown) => (typeof value === 'string' ? value : null);
 const nested = (value: unknown, key: string) => (value && typeof value === 'object' ? (value as Json)[key] : undefined);
 
 /** GitHub : PR, ticket, commit ou branche, par l'API avec l'accès de GitHub CLI. */
-export class GithubReader implements LinkReader, GithubCheck {
+export class GithubReader implements LinkReader {
   constructor(
     private readonly gh: string,
     private readonly accounts: GithubAccounts,
   ) {}
-
-  async status(): Promise<null | string> {
-    if (!existsSync(this.gh)) return 'GitHub CLI n’est pas installé sur le poste';
-    return run(this.gh, ['auth', 'status'], { timeout: TIMEOUT_MS }).then(
-      () => null,
-      () => 'GitHub CLI n’est pas connecté',
-    );
-  }
 
   async read(link: { url: string }, options?: ReadOptions): Promise<LinkReading> {
     const match = /github\.com\/([^/]+)\/([^/]+)\/(pull|issues|commit|tree)\/([^/?#]+)/.exec(link.url);
@@ -70,7 +61,7 @@ export class GithubReader implements LinkReader, GithubCheck {
   }
 }
 
-/** Toute autre adresse : le seul titre de sa page, sans état ni auteur (CA-CONT-32). */
+/** Toute autre adresse : le seul titre de sa page, sans état ni auteur (CA-CONT-35). */
 export const pageReader: LinkReader = {
   async read(link) {
     const response = await fetch(link.url, { signal: AbortSignal.timeout(TIMEOUT_MS), redirect: 'follow' });
@@ -83,8 +74,7 @@ export const pageReader: LinkReader = {
 };
 
 /** Scénarios (BOSCO_TEST=1) : des lectures écrites d'avance, sans réseau. */
-export const scriptedReaders: Record<'github' | 'page', LinkReader> & GithubCheck = {
-  status: () => Promise.resolve(null),
+export const scriptedReaders: Record<'github' | 'page', LinkReader> = {
   github: {
     read: (link) =>
       Promise.resolve({

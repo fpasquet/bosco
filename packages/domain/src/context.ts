@@ -83,20 +83,3 @@ export interface LinkDto {
   title: string;
   url: string;
 }
-
-export interface IntegrationDto {
-  address: null | string;
-  checkedAt: null | string;
-  error: null | string;
-  failingSince: null | string;
-  links: number;
-  /** atlassian : Jira et Confluence, reconnus à leur adresse et lus par les agents du worker, pas par Bosco */
-  name: 'atlassian' | 'github';
-  state: 'agents' | 'connected' | 'error' | 'unconfigured';
-}
-
-export interface IntegrationsDto {
-  integrations: IntegrationDto[];
-  lastRefresh: null | string;
-  nextRefresh: null | string;
-}

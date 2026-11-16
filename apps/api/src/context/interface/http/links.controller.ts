@@ -12,7 +12,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { z } from 'zod';
-import type { IntegrationsDto, LinkDto } from '@bosco/domain';
+import type { LinkDto } from '@bosco/domain';
 import type { LinkSnapshot } from '../../domain/link.ts';
 import { parseBody } from '../../../shared/interface/http/parse-body.ts';
 import { InvalidLink, type LinksService } from '../../application/links.service.ts';
@@ -60,26 +60,5 @@ export class LinksController {
   @HttpCode(204)
   async remove(@Param('id', ParseIntPipe) id: number, @Param('link', ParseIntPipe) link: number): Promise<void> {
     await this.links.remove(id, link);
-  }
-
-  @Get('integrations')
-  async integrations(): Promise<IntegrationsDto> {
-    const { integrations, lastRefresh, nextRefresh } = await this.links.integrations();
-    return {
-      integrations: integrations.map((integration) => ({
-        ...integration,
-        checkedAt: integration.checkedAt?.toISOString() ?? null,
-        failingSince: integration.failingSince?.toISOString() ?? null,
-      })),
-      lastRefresh: lastRefresh?.toISOString() ?? null,
-      nextRefresh: nextRefresh?.toISOString() ?? null,
-    };
-  }
-
-  /** « Rafraîchir maintenant » (CA-CONT-31). */
-  @Post('integrations/refresh')
-  @HttpCode(204)
-  async refresh(): Promise<void> {
-    await this.links.refreshAll();
   }
 }

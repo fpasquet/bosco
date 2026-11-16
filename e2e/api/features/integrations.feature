@@ -12,7 +12,7 @@ Feature: Integrations and task links
     And I send POST request to "/api/tasks" with the JSON "fixtures/tasks/worker-task.json"
 
   @CA-CONT-34
-  @CA-CONT-36
+  @CA-CONT-90
   Scenario: A GitHub pull request is recognized, read, and sent to the agent with its address
     When I send GET request to "/api/links/recognize?url=https://github.com/groupe/labo-ia/pull/42"
     Then the response property "kind" should equal "Pull request"
@@ -22,7 +22,6 @@ Feature: Integrations and task links
     When I send GET request to "/api/context/preview?repository=labo-ia&task=1"
     Then the response property "text" should contain "Pull request · Ouverte · https://github.com/groupe/labo-ia/pull/42"
 
-  @CA-CONT-88
   @CA-CONT-90
   Scenario: A Jira ticket and a Confluence page are recognized by their address, without being read by Bosco
     When I send POST request to "/api/tasks/1/links" with the JSON "fixtures/links/jira-ticket.json"
@@ -32,10 +31,6 @@ Feature: Integrations and task links
     When I send POST request to "/api/tasks/1/links" with the JSON "fixtures/links/confluence-page.json"
     Then the response property "service" should equal "confluence"
     And the response property "title" should equal "Lexique de prononciation"
-    When I send GET request to "/api/integrations"
-    Then the response property "integrations.1.name" should equal "atlassian"
-    And the response property "integrations.1.state" should equal "agents"
-    And the response property "integrations.1.links" should equal "2"
 
   @CA-CONT-35
   @CA-CONT-38

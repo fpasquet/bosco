@@ -6,7 +6,6 @@ import type {
   DecisionDto,
   DecisionTargetDto,
   DecisionTextDto,
-  IntegrationsDto,
   SocleDto,
 } from '@bosco/domain';
 
@@ -95,13 +94,3 @@ export const decidedRepositoriesQuery = {
   queryKey: ['context-repositories'],
   queryFn: async () => (await read<{ repositories: string[] }>('/api/context/repositories')).repositories,
 };
-
-export const integrationsQuery = {
-  queryKey: ['integrations'],
-  queryFn: () => read<IntegrationsDto>('/api/integrations'),
-  refetchInterval: 30_000,
-};
-export async function refreshLinks(): Promise<void> {
-  const response = await fetch('/api/integrations/refresh', { method: 'POST' });
-  if (!response.ok) throw new Error(`POST refresh answered ${response.status}`);
-}

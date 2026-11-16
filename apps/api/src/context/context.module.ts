@@ -46,17 +46,14 @@ const clock = { now: () => new Date() };
       provide: LINKS_SERVICE,
       inject: [CONFIG, ORM, CONTEXT_SERVICE],
       useFactory: (config: Config, orm: MikroORM, context: ContextService) => {
-        const github = config.testing
-          ? scriptedReaders
-          : new GithubReader(config.worker.gh, new GhAccounts(config.worker.gh));
         const readers = config.testing
           ? { ...scriptedReaders, decision: decisionReader(context) }
           : {
-              github: github as GithubReader,
+              github: new GithubReader(config.worker.gh, new GhAccounts(config.worker.gh)),
               page: pageReader,
               decision: decisionReader(context),
             };
-        return new LinksService(new MikroOrmLinkRepository(orm), readers, github, clock);
+        return new LinksService(new MikroOrmLinkRepository(orm), readers, clock);
       },
     },
   ],

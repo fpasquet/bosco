@@ -60,7 +60,7 @@ export function readingFromAddress(service: 'confluence' | 'jira', url: string):
   }
 }
 
-/** Ce que Bosco a lu d'un lien : titre, état, auteur ou responsable (CA-CONT-36). */
+/** Ce que Bosco a lu d'un lien : titre, état, auteur ou responsable (CA-CONT-90). */
 export interface LinkReading {
   person: null | string;
   state: null | string;
