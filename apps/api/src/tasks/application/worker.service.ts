@@ -2,6 +2,7 @@ import type { RepositoryRights } from '../domain/rights.ts';
 import type { ServiceLaunch, TestService } from '../domain/test-services.ts';
 import type { AgentEvent, AgentRun, AgentRunner, AgentUsage, WorkerHealth, Workspace, Workspaces } from './ports.ts';
 import type { TaskService, TaskView } from './task.service.ts';
+import { pendingResume } from '../domain/task.ts';
 
 /** Limites de chaque agent (E11a) : mémoire, processeurs et processus. */
 export const AGENT_LIMITS = { memory: 4 * 1024 ** 3, cpus: 2, processes: 512 } as const;
@@ -159,22 +160,29 @@ export class WorkerService {
   private async run(task: TaskView): Promise<void> {
     if (this.runs.has(task.id)) return;
     const rights = await this.deps.rightsOf(task.repository.name);
-    const branch = branchOf(task);
-    const startBranch = this.startBranchOf(task);
+    const resume = resumeOf(task);
+    const branch = resume?.branch ?? branchOf(task);
+    const startBranch = resume ? resume.branch : this.startBranchOf(task);
     let workspace: null | Workspace = null;
     let servicesStarted = false;
     try {
-      await this.deps.tasks.start(task.id, `branche ${branch} · ${this.placeOf(task, rights.concurrency)}`);
+      const place = this.placeOf(task, rights.concurrency);
+      await this.deps.tasks.start(
+        task.id,
+        resume ? `reprise sur ${branch} · ${place}` : `branche ${branch} · ${place}`,
+      );
       workspace = await this.deps.workspaces.prepare({
         id: task.id,
         branch,
+        keep: resume ? { base: resume.base, from: resume.from } : null,
         repositoryRoot: task.repository.root,
         startBranch,
       });
       // Les droits du dépôt ont pu se resserrer depuis la création : le surplus est écarté (CA-TACH-31)
       const tools = (task.guardrails.tools ?? rights.tools).filter((tool) => rights.tools.includes(tool));
       const environment = await this.deps.environmentOf(task);
-      const context = await this.deps.contextOf(task);
+      // Une reprise continue la conversation : l'agent a déjà reçu la consigne et le contexte
+      const context = resume ? { text: '', versions: '' } : await this.deps.contextOf(task);
       if (context.versions) await this.deps.tasks.record(task.id, 'Contexte transmis', context.versions);
       if (environment.services.length > 0) servicesStarted = true;
       const claudeProfile = await this.deps.claudeProfileOf(task.repository.name);
@@ -193,13 +201,22 @@ export class WorkerService {
           void this.deps.servicesLaunched(task, launches).catch(() => undefined);
           void this.deps.tasks.record(task.id, ...servicesEntry(launches)).catch(() => undefined);
         },
-        prompt: promptOf(task, context.text),
+        prompt: resume ? resume.message : promptOf(task, context.text),
+        resume: resume?.sessionId ?? null,
         model: task.guardrails.model ?? rights.model,
-        maxTurns: Math.min(task.guardrails.maxTurns, rights.maxTurns),
+        // Les tours d'une reprise s'ajoutent à ceux déjà faits : seuls ceux qui restent sont permis
+        maxTurns: Math.min(task.guardrails.maxTurns, rights.maxTurns) - (resume?.turns ?? 0),
         tools,
       });
       this.runs.set(task.id, run);
-      await this.follow(task, run, Math.min(task.guardrails.budgetUsd, rights.maxBudgetUsd), workspace, atlassianRead);
+      await this.follow(
+        task,
+        run,
+        Math.min(task.guardrails.budgetUsd, rights.maxBudgetUsd),
+        workspace,
+        atlassianRead,
+        resume,
+      );
     } catch (error) {
       // Une tâche annulée ou effacée pendant son lancement n'a plus d'état à recevoir
       await this.deps.tasks
@@ -222,8 +239,15 @@ export class WorkerService {
     budgetUsd: number,
     workspace: Workspace,
     atlassianRead: boolean,
+    resume: null | Resume,
   ): Promise<void> {
-    const progress = { atlassianRead, sessionId: null as null | string, spent: 0 };
+    // Une reprise garde la dépense et les tours déjà faits : le budget vaut pour toute la tâche
+    const progress = {
+      atlassianRead,
+      sessionId: resume?.sessionId ?? null,
+      spent: resume ? task.spentUsd : 0,
+      turns: resume?.turns ?? 0,
+    };
     for await (const event of run.events) {
       const done = await this.handle(task, run, budgetUsd, workspace, progress, event);
       if (done) return;
@@ -237,7 +261,7 @@ export class WorkerService {
     run: AgentRun,
     budgetUsd: number,
     workspace: Workspace,
-    progress: { atlassianRead: boolean; sessionId: null | string; spent: number },
+    progress: { atlassianRead: boolean; sessionId: null | string; spent: number; turns: number },
     event: AgentEvent,
   ): Promise<boolean> {
     // Connecteur absent du compte : la tâche continue sans lui (CA-CONT-95)
@@ -270,7 +294,7 @@ export class WorkerService {
     if (!event.ok) {
       await this.deps.tasks.fail(
         task.id,
-        event.stop === 'max_turns' ? `Nombre de tours atteint : ${event.turns}` : 'Erreur de l’agent',
+        event.stop === 'max_turns' ? `Nombre de tours atteint : ${progress.turns + event.turns}` : 'Erreur de l’agent',
       );
       return true;
     }
@@ -290,7 +314,7 @@ export class WorkerService {
       from,
       report: event.report,
       sessionId: progress.sessionId,
-      turns: event.turns,
+      turns: progress.turns + event.turns,
     });
     return true;
   }
@@ -310,6 +334,23 @@ export class WorkerService {
     const prerequisite = task.waitingFor.find(({ id }) => id === task.startFrom);
     return prerequisite ? branchOf(prerequisite) : null;
   }
+}
+
+/** Reprise à la relecture en attente : le message, et ce que la tâche a déjà produit (RF-TACH-10). */
+interface Resume {
+  base: string;
+  branch: string;
+  from: string;
+  message: string;
+  sessionId: string;
+  turns: number;
+}
+
+function resumeOf(task: TaskView): null | Resume {
+  const message = pendingResume(task.log);
+  const { base, branch, from, sessionId, turns } = task.outcome;
+  if (message === null || !base || !branch || !from || !sessionId) return null;
+  return { base, branch, from, message, sessionId, turns };
 }
 
 /** « Services prêts » avec le temps de démarrage de chacun, ou ceux qui ne l'ont pas été (CA-TACH-81, CA-CONT-53). */

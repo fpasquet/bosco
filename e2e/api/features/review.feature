@@ -1,7 +1,7 @@
 @RF-TACH-06
 Feature: Task review
   As the developer, I want to read what an agent changed before validating its task, so that only reviewed work goes
-  on, as a draft PR when I want one, and a rejected task can start again with my reason.
+  on, as a draft PR when I want one, and an agent I ask for a correction picks up its work where it left it.
 
   Background:
     Given the Claude Code profile ".claude" has the transcript "session-labo-ia-rag.jsonl" for the session "5e0a91c3"
@@ -34,13 +34,24 @@ Feature: Task review
     Then the response property "task.state" should equal "validated"
     And the response property "task.outcome.pullRequest" should equal "null"
 
-  Scenario: A task rejected with a reason starts again from its branch
-    When I send POST request to "/api/tasks/1/reject" with the JSON "fixtures/review/reject-relaunch.json"
+  @CA-TACH-89
+  @RF-TACH-10
+  Scenario: A message to the agent of a task to review resumes it on the same branch
+    When I send POST request to "/api/tasks/1/resume" with the JSON "fixtures/review/resume.json"
     Then the task 1 should become "to_review"
     When I send GET request to "/api/tasks/1"
-    Then the response property "instruction" should contain "Relecture : Ajoute aussi un tableau vide."
+    Then the response property "outcome.turns" should equal "28"
+    And the response property "outcome.branch" should equal "bosco/t-1-ajoute-un-test-du-decoupage-des-tableaux"
+    And the response property "outcome.report" should equal "Fait : Ajoute aussi un tableau vide."
 
-  Scenario: A task rejected for good, and a reason is required
+  @CA-TACH-90
+  Scenario: A resume asks for a message, and keeps the budget under the cap of the repository
+    When I send POST request to "/api/tasks/1/resume" with the JSON "fixtures/review/resume-over-cap.json"
+    Then the response code should be 400
+    And the response property "issues.0.field" should equal "budgetUsd"
+
+  @CA-TACH-91
+  Scenario: A rejected task is abandoned, and a reason is required
     When I send POST request to "/api/tasks/1/reject" with the JSON "fixtures/review/reject-empty.json"
     Then the response code should be 400
     When I send POST request to "/api/tasks/1/reject" with the JSON "fixtures/review/reject.json"

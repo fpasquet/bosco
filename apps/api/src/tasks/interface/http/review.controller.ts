@@ -10,7 +10,12 @@ import { guard } from './tasks.controller.ts';
 
 const pullRequestSchema = z.object({ title: z.string().trim().min(1).max(300), body: z.string().max(20_000) });
 const validateSchema = z.object({ pullRequest: pullRequestSchema.nullable().default(null) });
-const rejectSchema = z.object({ reason: z.string().max(2000), relaunch: z.boolean() });
+const rejectSchema = z.object({ reason: z.string().max(2000) });
+const resumeSchema = z.object({
+  message: z.string().max(5000),
+  budgetUsd: z.number().positive().optional(),
+  maxTurns: z.number().int().positive().optional(),
+});
 
 /** Une relecture refusée (motif vide, pas de branche) est une erreur de saisie : 400 ; le reste suit les tâches. */
 function settle<T>(work: () => Promise<T>): Promise<T> {
@@ -66,9 +71,18 @@ export class ReviewController {
 
   @Post('reject')
   reject(@Param('id', ParseIntPipe) id: number, @Body() body: unknown) {
-    const { reason, relaunch } = parseBody(rejectSchema, body);
+    const { reason } = parseBody(rejectSchema, body);
     return settle(async () => {
-      const task = await this.review.reject(id, reason, relaunch);
+      const task = await this.review.reject(id, reason);
+      return presentTask(task);
+    });
+  }
+
+  @Post('resume')
+  resume(@Param('id', ParseIntPipe) id: number, @Body() body: unknown) {
+    const { message, ...raise } = parseBody(resumeSchema, body);
+    return settle(async () => {
+      const task = await this.review.resume(id, message, raise);
       return presentTask(task);
     });
   }

@@ -20,7 +20,7 @@ function serviceWith(mode: PullRequestMode, publish: () => Promise<string>) {
       get: () => Promise.resolve(task),
       validate: () => Promise.resolve(task),
       reject: () => Promise.resolve(task),
-      rejectAndRelaunch: () => Promise.resolve(task),
+      resume: () => Promise.resolve(task),
       attachPullRequest: (_id, url) => {
         published.push(url);
         return Promise.resolve(task);
@@ -52,8 +52,9 @@ describe('ReviewService', () => {
     expect(validation.pullRequestError).toBe('Envoi de la branche refusé : rejected');
   });
 
-  it('asks for a reason to reject', () => {
+  it('asks for a reason to reject, and for a message to resume', () => {
     const { service } = serviceWith('never', () => Promise.resolve(''));
-    expect(() => service.reject(12, '  ', false)).toThrow(ReviewError);
+    expect(() => service.reject(12, '  ')).toThrow(ReviewError);
+    expect(() => service.resume(12, '  ', {})).toThrow(ReviewError);
   });
 });

@@ -86,6 +86,15 @@ export const UNDO_CANCEL_MS = 15_000;
 /** États finaux : rien ne bouge plus, sauf la relance d'un échec ou d'un rejet. */
 export const FINISHED: readonly TaskState[] = ['cancelled', 'failed', 'rejected', 'validated'];
 
+/** Événement du journal qui porte le message d'une reprise à la relecture, lu par le worker au départ. */
+export const RESUME_EVENT = 'Reprise demandée';
+
+/** Message d'une reprise en attente : demandée depuis le dernier départ de l'agent ; null sinon. */
+export function pendingResume(log: readonly TaskLogEntry[]): null | string {
+  const started = log.findLastIndex((entry) => entry.event === 'Démarrée');
+  return log.slice(started + 1).findLast((entry) => entry.event === RESUME_EVENT)?.detail ?? null;
+}
+
 /** Titre court d'une tâche, tiré de sa consigne : sa première phrase. */
 export function titleOf(instruction: string): string {
   const first = instruction.trim().split(/(?<=[.!?:])\s/)[0] ?? instruction;
@@ -258,6 +267,23 @@ export class Task {
       throw new TaskError('taskNotToReview', `Task T-${this.id} is not to review`);
     this.snapshot = { ...this.snapshot, failure: reason ?? 'Rejetée' };
     this.move('rejected', at, 'Rejetée', reason);
+  }
+
+  /**
+   * Reprise à la relecture (RF-TACH-10) : le message relance l'agent dans la même conversation, sur la même branche,
+   * dans le budget et les tours qui restent, éventuellement relevés. La tâche repasse en file, le journal garde le
+   * message.
+   */
+  resume(message: string, guardrails: Guardrails, at: Date): void {
+    if (this.snapshot.state !== 'to_review')
+      throw new TaskError('taskNotToReview', `Task T-${this.id} is not to review`);
+    const { branch, sessionId, turns } = this.snapshot.outcome;
+    if (this.snapshot.mode !== 'worker' || !branch || !sessionId)
+      throw new TaskError('taskNotResumable', `Task T-${this.id} has no agent session to resume`);
+    if (guardrails.budgetUsd <= this.snapshot.spentUsd || guardrails.maxTurns <= turns)
+      throw new TaskError('taskBudgetSpent', `Task T-${this.id} has spent its budget or its turns`);
+    this.snapshot = { ...this.snapshot, guardrails };
+    this.move('queued', at, RESUME_EVENT, message);
   }
 
   /** Relance d'un échec ou d'un rejet : même numéro, journal gardé, budget revu si besoin (RF-TACH-08). */

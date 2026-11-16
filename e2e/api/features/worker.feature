@@ -9,7 +9,7 @@ Feature: Worker
     Given the Claude Code profile ".claude" has the transcript "session-labo-ia-rag.jsonl" for the session "5e0a91c3"
     And Bosco watches the profiles ".claude" and ".claude-perso"
 
-  @CA-TACH-32
+  @RF-TACH-01
   Scenario: A ready task is run by the worker, then waits for review with its outcome
     When I send POST request to "/api/tasks" with the JSON "fixtures/tasks/worker-task.json"
     Then the task 1 should become "to_review"

@@ -60,6 +60,8 @@ export interface AgentSpec {
   /** Résultat du lancement des services de test, avant que l'agent démarre */
   onServices: (launches: ServiceLaunch[]) => void;
   prompt: string;
+  /** Session de l'agent à reprendre avec ce message (reprise à la relecture, RF-TACH-10) ; null : nouvelle session */
+  resume: null | string;
   /** Profil dont la tâche prend l'abonnement Claude (E8a) ; null : celui par défaut (E11b) */
   claudeProfile: null | string;
   /** Racine du dépôt sur le poste : la session de l'agent y est rattachée, pour l'historique et la reprise */
@@ -103,7 +105,17 @@ export interface Workspaces {
     /** Décisions proposées par l'agent dans .bosco/decisions/, retirées de la branche (RF-CONT-02) */
     proposals: string[];
   }>;
-  prepare(task: { branch: string; id: number; repositoryRoot: string; startBranch: null | string }): Promise<Workspace>;
+  /**
+   * Copie du dépôt sur la branche de la tâche ; keep garde le point de départ et la branche de départ d'une reprise,
+   * pour que le diff et la PR partent toujours de l'origine de la tâche (RF-TACH-10).
+   */
+  prepare(task: {
+    branch: string;
+    id: number;
+    keep?: null | { base: string; from: string };
+    repositoryRoot: string;
+    startBranch: null | string;
+  }): Promise<Workspace>;
   remove(workspace: Workspace): Promise<void>;
 }
 
