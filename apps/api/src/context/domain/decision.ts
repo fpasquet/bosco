@@ -3,8 +3,11 @@ import { DomainError } from '../../shared/domain/domain-error.ts';
 /** Proposée par un agent, acceptée par toi, refusée, remplacée par une autre, ou abandonnée (RF-CONT-02, RF-CONT-11). */
 export type DecisionState = 'abandoned' | 'accepted' | 'proposed' | 'refused' | 'replaced';
 
-/** Une décision porte sur un projet ou sur un socle (RF-CONT-03). */
-export type DecisionTarget = { kind: 'project'; name: string } | { kind: 'socle'; id: number };
+/** Une décision porte sur un projet : ce qui vaut pour plusieurs projets s'écrit en instructions d'un groupe. */
+export interface DecisionTarget {
+  kind: 'project';
+  name: string;
+}
 
 /** Texte d'une décision, au format habituel : contexte, décision, conséquences, alternatives écartées. */
 export interface DecisionText {
@@ -24,8 +27,6 @@ export interface DecisionVersion extends DecisionText {
 }
 
 export interface DecisionSnapshot {
-  /** Décision d'un socle que celle-ci retire pour son projet (« fait exception à ») */
-  exceptionTo: null | number;
   /** Tâche de l'agent qui l'a proposée */
   fromTask: null | number;
   id: number;
@@ -70,15 +71,12 @@ export class Decision {
     id: number,
     target: DecisionTarget,
     text: DecisionText,
-    options: { accept: boolean; at: Date; exceptionTo: null | number },
+    options: { accept: boolean; at: Date },
   ): Decision {
-    if (options.exceptionTo !== null && target.kind !== 'project')
-      throw new DecisionError('exceptionOnSocle', 'Seule une décision de projet fait exception à celle d’un socle.');
     return new Decision({
       id,
       target,
       state: options.accept ? 'accepted' : 'proposed',
-      exceptionTo: options.exceptionTo,
       fromTask: null,
       reason: null,
       replacedBy: null,
@@ -93,7 +91,6 @@ export class Decision {
       id,
       target: { kind: 'project', name: project },
       state: 'proposed',
-      exceptionTo: null,
       fromTask: taskId,
       reason: null,
       replacedBy: null,

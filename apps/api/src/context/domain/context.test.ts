@@ -1,8 +1,8 @@
-// Ce que les scénarios ne voient pas : l'empilement des socles, les exceptions et le texte transmis (RF-CONT-01 à 03).
+// Ce que les scénarios ne voient pas : l'ordre exact du texte transmis, les groupes sans instructions et un projet
+// sans groupe.
 import { describe, expect, it } from 'vitest';
-import { contextOf, contextText } from './context-text.ts';
+import { contextOf, contextText, type GroupInstructions } from './context-text.ts';
 import { Decision, type DecisionText } from './decision.ts';
-import { checkInheritance, type SocleSnapshot } from './socle.ts';
 
 const at = new Date('2026-11-06T14:00:00');
 const text = (title: string): DecisionText => ({
@@ -13,56 +13,61 @@ const text = (title: string): DecisionText => ({
   alternatives: null,
 });
 
-const SOCLES: SocleSnapshot[] = [
-  { id: 1, name: 'Socle commun', scope: 'global', inherits: null, projects: [] },
-  { id: 2, name: 'Socle Node.js', scope: 'shared', inherits: null, projects: ['api-voix'] },
+const GROUPS: GroupInstructions[] = [
+  {
+    id: 1,
+    name: 'Tous les projets',
+    system: true,
+    instructions: 'Messages de commit en anglais.\n\nNode 22 au minimum.',
+  },
+  { id: 2, name: 'Club des Trois Lacs', system: false, instructions: '- Les tickets se citent par leur clé.' },
+  { id: 3, name: 'Perso', system: false, instructions: '  ' },
 ];
 
 describe('context', () => {
-  const vitest = Decision.write(1, { kind: 'socle', id: 2 }, text('Tests avec Vitest'), {
-    accept: true,
-    at,
-    exceptionTo: null,
-  });
-  const commits = Decision.write(2, { kind: 'socle', id: 1 }, text('Commits en anglais'), {
-    accept: true,
-    at,
-    exceptionTo: null,
-  });
-  const jest = Decision.write(3, { kind: 'project', name: 'api-voix' }, text('Garder Jest'), {
-    accept: true,
-    at,
-    exceptionTo: 1,
-  });
-  const proposed = Decision.propose(4, 'api-voix', text('Normaliser les sigles'), 12, at);
-  const decisions = [vitest, commits, jest, proposed].map((decision) => decision.toSnapshot());
+  const jest = Decision.write(3, { kind: 'project', name: 'api-tarifs' }, text('Garder Jest'), { accept: true, at });
+  const elsewhere = Decision.write(5, { kind: 'project', name: 'creneaux' }, text('Fastify'), { accept: true, at });
+  const proposed = Decision.propose(4, 'api-tarifs', text('Normaliser les fuseaux horaires'), 12, at);
+  const decisions = [jest, elsewhere, proposed].map((decision) => decision.toSnapshot());
 
-  it('stacks the socles, leaves out the excepted decision and what is only proposed', () => {
-    const context = contextOf('api-voix', decisions, SOCLES, { calls: ['Stockage audio'], calledBy: [] });
-    expect(context.excluded.map(({ id }) => id)).toEqual([1]);
+  it('sends the common instructions, then each group of the project, then its decisions, which prevail', () => {
+    const context = contextOf('api-tarifs', decisions, GROUPS, { calls: ['Service de paiement'], calledBy: [] });
     expect(context.proposed.map(({ id }) => id)).toEqual([4]);
-    const textSent = contextText('api-voix', context);
-    expect(textSent).toContain('DEC-3 Garder Jest (fait exception à « Tests avec Vitest »)');
-    expect(textSent).toContain('Socle commun\n- Commits en anglais');
-    expect(textSent).not.toContain('Normaliser les sigles');
-    expect(textSent).not.toContain('- Tests avec Vitest');
+    expect(contextText('api-tarifs', context)).toBe(
+      [
+        '# Contexte du projet api-tarifs',
+        '',
+        '## Instructions communes (Tous les projets)',
+        '- Messages de commit en anglais.',
+        '- Node 22 au minimum.',
+        '',
+        '## Instructions du groupe Club des Trois Lacs',
+        '- Les tickets se citent par leur clé.',
+        '',
+        '## Décisions du projet (elles l’emportent sur les instructions ci-dessus)',
+        '- DEC-3 Garder Jest',
+        '  Garder Jest.',
+        '',
+        '## Place dans l’architecture',
+        'Appelle : Service de paiement',
+      ].join('\n'),
+    );
   });
 
-  it('applies a global socle to every project, a shared one only to its projects', () => {
-    const elsewhere = contextOf('site-articles', decisions, SOCLES, { calls: [], calledBy: [] });
-    expect(elsewhere.socles.map(({ socle }) => socle.name)).toEqual(['Socle commun']);
-  });
-
-  it('refuses a socle that inherits from itself, even indirectly', () => {
-    const socles = [...SOCLES, { id: 3, name: 'NestJS', scope: 'shared' as const, inherits: 2, projects: [] }];
-    expect(() => checkInheritance(2, 3, socles)).toThrow('Un socle ne peut pas hériter de lui-même');
+  it('sends the decisions alone, without anything to prevail over, when no group has instructions', () => {
+    const context = contextOf('creneaux', decisions, [{ ...GROUPS[0]!, instructions: '' }], {
+      calls: [],
+      calledBy: [],
+    });
+    expect(contextText('creneaux', context)).toBe(
+      '# Contexte du projet creneaux\n\n## Décisions du projet\n- DEC-5 Fastify\n  Fastify.',
+    );
   });
 
   it('keeps every version, and asks for a note to change an accepted decision', () => {
     const decision = Decision.write(5, { kind: 'project', name: 'api-voix' }, text('Cache audio'), {
       accept: true,
       at,
-      exceptionTo: null,
     });
     expect(() => decision.edit(text('Cache audio 30 jours'), ' ', at)).toThrow('Écris une note');
     decision.edit(text('Cache audio 30 jours'), 'Durée précisée', at);

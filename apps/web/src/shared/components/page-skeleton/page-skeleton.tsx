@@ -6,7 +6,7 @@ export interface PageSkeletonProps {
   /** Lignes d'une liste, ou champs d'un formulaire */
   rows?: number;
   /**
-   * Forme de l'écran en chargement : une liste (sessions, tâches, socles), un détail avec sa colonne (session, tâche,
+   * Forme de l'écran en chargement : une liste (sessions, tâches, projets), un détail avec sa colonne (session, tâche,
    * décision), des cartes de réglages (sources, réglages, intégrations), ou un formulaire.
    */
   variant: 'cards' | 'detail' | 'form' | 'list';

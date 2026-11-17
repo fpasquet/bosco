@@ -54,49 +54,6 @@ Fonctionnalité: Contexte des agents
     Et je vois le texte « Les nouveaux tests aussi »
     Et je vois le texte « Version 1 »
 
-  @CA-CONT-55
-  @NF-18
-  Scénario: Un socle partagé se crée pour les projets cochés
-    Quand j'ouvre la page « /context/socles/new »
-    Et je saisis « Socle Node.js » dans le champ « Nom »
-    Et je coche « labo-ia »
-    Et je clique sur le bouton « Créer le socle »
-    Alors je suis sur la page « /context/socles »
-    Et je vois le titre « Socle Node.js partagé »
-    Et la page est accessible
-
-  @CA-CONT-58
-  @CA-CONT-65
-  @NF-18
-  Scénario: Un socle se modifie, après une confirmation qui compte les projets concernés
-    Quand j'ouvre la page « /context/socles/new »
-    Et je saisis « Socle Node.js » dans le champ « Nom »
-    Et je clique sur le bouton « Créer le socle »
-    Et je clique sur le lien « Modifier le socle Socle Node.js »
-    Et je coche « labo-ia »
-    Et je clique sur le bouton « Enregistrer »
-    Alors je vois le texte « Ce changement touche les prochains agents de 1 projet. »
-    Et la page est accessible
-    Quand je clique sur le bouton « Enregistrer » de la confirmation
-    Alors je suis sur la page « /context/socles »
-    Et la liste « Projets » contient « labo-ia »
-
-  @CA-CONT-66
-  Scénario: Une décision d'un socle acceptée d'emblée passe par la même confirmation
-    Quand j'ouvre la page « /context/socles/new »
-    Et je saisis « Socle Node.js » dans le champ « Nom »
-    Et je coche « labo-ia »
-    Et je clique sur le bouton « Créer le socle »
-    Et je clique sur le lien « Nouvelle décision du socle Socle Node.js »
-    Et je saisis « Tests avec Vitest » dans le champ « Titre »
-    Et je saisis « Un seul outil de test. » dans le champ « Contexte »
-    Et je saisis « Écrire les tests avec Vitest. » dans le champ « Décision »
-    Et je clique sur le bouton « Accepter la décision »
-    Alors je vois le texte « Ce changement touche les prochains agents de 1 projet. »
-    Quand je clique sur le bouton « Enregistrer » de la confirmation
-    Alors je suis sur la page « /context/socles »
-    Et je vois le lien « Tests avec Vitest »
-
   @CA-CONT-86
   Scénario: Le choix du projet ne propose que les projets qui ont une décision
     Étant donné le profil Claude Code « .claude » contient le transcript « session-api-voix-fastify.jsonl » de la session « a41f07c2 »

@@ -1,6 +1,7 @@
-import type { GroupRepository } from './ports.ts';
+import type { GroupRepository, SoclesToImport } from './ports.ts';
 import { Group, type GroupSettings, type GroupSnapshot, UnknownGroup } from '../domain/group.ts';
 import { type ProjectSnapshot, UnknownProject } from '../domain/project.ts';
+import { groupsFromSocles } from '../domain/socle-import.ts';
 
 /** Un groupe et ses projets, dans l'ordre : tous les projets pour « Tous les projets ». */
 export interface GroupView extends Omit<GroupSnapshot, 'projects'> {
@@ -28,14 +29,21 @@ export class GroupService {
   constructor(
     private readonly groups: GroupRepository,
     private readonly projects: KnownProjects,
+    private readonly socles: SoclesToImport,
   ) {}
 
-  /** « Tous les projets » existe toujours : créé au premier démarrage (et après une remise à zéro des scénarios). */
+  /**
+   * « Tous les projets » existe toujours : créé au premier démarrage (et après une remise à zéro des scénarios). Au
+   * passage aux groupes, les socles y sont repris, une fois, après les projets.
+   */
   async load(): Promise<void> {
     const groups = await this.groups.list();
-    if (groups.some((group) => group.toSnapshot().system)) return;
+    const found = groups.find((group) => group.toSnapshot().system);
+    if (found) return this.importSocles(found);
     const id = await this.groups.nextId();
-    await this.groups.save([Group.allProjects(id)]);
+    const all = Group.allProjects(id);
+    await this.groups.save([all]);
+    await this.importSocles(all);
   }
 
   /** Les groupes dans l'ordre de leur création, « Tous les projets » en dernier. */
@@ -102,6 +110,37 @@ export class GroupService {
       .filter((group) => group.system || (found !== undefined && group.projects.includes(found.id)))
       .toSorted((a, b) => Number(b.system) - Number(a.system) || a.id - b.id)
       .map(({ id, instructions, name, system }) => ({ id, instructions, name, system }));
+  }
+
+  /** Socle commun : instructions de « Tous les projets » ; socle partagé : un groupe ; une exception : rien à reprendre. */
+  private async importSocles(all: Group): Promise<void> {
+    const pending = await this.socles.pending();
+    if (!pending) return;
+    const [groups, first] = await Promise.all([this.groups.list(), this.groups.nextId()]);
+    const projects = this.projects.listProjects();
+    const found = groupsFromSocles({
+      ...pending,
+      allProjects: projects.map(({ name }) => name),
+      taken: groups.map((group) => group.toSnapshot().name),
+    });
+    const ids = new Map(projects.map(({ id, name }) => [name, id]));
+    const others = groups.map((group) => group.toSnapshot());
+    const created = found.groups.map(({ instructions, name, projects: names }, index) => {
+      const group = Group.create({
+        id: first + index,
+        name,
+        description: null,
+        others,
+        projects: names.flatMap((project) => ids.get(project) ?? []),
+      });
+      group.writeInstructions(instructions);
+      others.push(group.toSnapshot());
+      return group;
+    });
+    const common = [all.toSnapshot().instructions, found.common].filter(Boolean).join('\n');
+    all.writeInstructions(common);
+    await this.groups.save([all, ...created]);
+    await this.socles.settle();
   }
 
   private checkProjects(ids: readonly number[]): void {

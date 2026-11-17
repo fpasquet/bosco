@@ -36,7 +36,6 @@ const SETTINGS = [
   /^\/api\/projects/,
   /^\/api\/groups/,
   /^\/api\/context/,
-  /^\/api\/socles/,
   // Sur le téléphone, une décision proposée s'accepte ou se refuse ; le reste s'écrit sur le poste (E9b mobile)
   /^\/api\/decisions(\/\d+\/(versions|abandon))?$/,
   /^\/api\/integrations/,

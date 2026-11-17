@@ -3,7 +3,6 @@ import { Copy } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import type { ContextPreviewDto } from '@bosco/domain';
 import { Button } from '@/shared/ui/button';
-import { titleOf } from '../../lib/decisions';
 
 export interface PreviewDialogProps {
   onClose: () => void;
@@ -26,12 +25,7 @@ export function PreviewDialog({ onClose, onCopy, open, preview, project }: Previ
     if (open && element && !element.open) element.showModal();
     if (!open && element?.open) element.close();
   }, [open]);
-  const absent = preview
-    ? [
-        ...preview.absent.proposed.map((decision) => `DEC-${decision.id} (proposée, pas encore acceptée)`),
-        ...preview.absent.excluded.map((decision) => `« ${titleOf(decision)} » (écartée par une exception)`),
-      ]
-    : [];
+  const absent = preview?.absent.proposed.map((decision) => `DEC-${decision.id} (proposée, pas encore acceptée)`) ?? [];
   return (
     <dialog
       ref={dialog}
@@ -48,7 +42,11 @@ export function PreviewDialog({ onClose, onCopy, open, preview, project }: Previ
             <pre className="max-h-96 overflow-auto rounded-control bg-surface-alt p-3 font-mono text-xs whitespace-pre-wrap">
               {preview.text}
             </pre>
-            {absent.length > 0 && <p className="text-xs text-muted">Absents : {absent.join(' et ')}.</p>}
+            {absent.length > 0 && (
+              <p className="text-xs text-muted">
+                {absent.length > 1 ? 'Absentes' : 'Absente'} : {absent.join(', ')}.
+              </p>
+            )}
             <p className="text-xs text-muted">
               {preview.tokens.toLocaleString('fr-FR')} tokens environ · calculé à {TIME.format(new Date(preview.at))}
             </p>

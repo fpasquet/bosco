@@ -51,7 +51,7 @@ export type {
   DecisionTargetDto,
   DecisionTextDto,
   DecisionVersionDto,
-  SocleDto,
+  GroupInstructionsDto,
 } from './context.ts';
 export type { ContainersDto, PilotedTurnDto, RunningSandboxDto, UsageDto } from './containers.ts';
 export type {

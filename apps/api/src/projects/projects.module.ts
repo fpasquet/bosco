@@ -13,6 +13,7 @@ import {
   MikroOrmGroupRepository,
   MikroOrmIgnoredFolders,
   MikroOrmProjectRepository,
+  MikroOrmSoclesToImport,
 } from './infrastructure/persistence/projects.repositories.ts';
 import { FoldersController } from './interface/http/folders.controller.ts';
 import { GroupsController } from './interface/http/groups.controller.ts';
@@ -47,7 +48,7 @@ import { GROUP_SERVICE, PROJECT_SERVICE } from './tokens.ts';
       provide: GROUP_SERVICE,
       inject: [ORM, PROJECT_SERVICE],
       useFactory: (orm: MikroORM, projects: ProjectService) =>
-        new GroupService(new MikroOrmGroupRepository(orm), projects),
+        new GroupService(new MikroOrmGroupRepository(orm), projects, new MikroOrmSoclesToImport(orm)),
     },
   ],
   exports: [PROJECT_SERVICE, GROUP_SERVICE],

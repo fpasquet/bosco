@@ -1,6 +1,14 @@
 import type { MikroORM } from '@mikro-orm/sqlite';
-import type { DiscoveryToImport, GroupRepository, IgnoredFolders, ProjectRepository } from '../../application/ports.ts';
+import type {
+  DiscoveryToImport,
+  GroupRepository,
+  IgnoredFolders,
+  ProjectRepository,
+  SoclesToImport,
+} from '../../application/ports.ts';
 import type { DiscoverySettings } from '../../domain/discovered-import.ts';
+import type { RetiredSocle, RetiredSocleDecision } from '../../domain/socle-import.ts';
+import { SocleSchema } from '../../../shared/infrastructure/persistence/retired.schema.ts';
 import { SettingSchema } from '../../../shared/infrastructure/persistence/setting.schema.ts';
 import { Group } from '../../domain/group.ts';
 import { Project } from '../../domain/project.ts';
@@ -128,5 +136,55 @@ function discovery(value: string | undefined): Partial<DiscoverySettings> {
     };
   } catch {
     return {};
+  }
+}
+
+/** Marque posée par la migration des groupes : les socles restent à reprendre en groupes. */
+const SOCLES_PENDING_KEY = 'groups.importSocles';
+
+/** Une version de décision telle qu'elle est gardée en JSON. */
+function lastVersion(versions: unknown): null | { decision: string; title: string } {
+  const list: unknown = typeof versions === 'string' ? JSON.parse(versions) : versions;
+  if (!Array.isArray(list)) return null;
+  const last: unknown = list.at(-1);
+  if (typeof last !== 'object' || last === null) return null;
+  const { decision, title } = last as Record<string, unknown>;
+  return typeof title === 'string' && typeof decision === 'string' ? { decision, title } : null;
+}
+
+/**
+ * Socles et décisions acceptées de chacun, lus une fois dans les tables d'avant les groupes. La table des décisions
+ * appartient au contexte des agents : elle est lue ici sans son schéma, colonne par colonne.
+ */
+export class MikroOrmSoclesToImport implements SoclesToImport {
+  constructor(private readonly orm: MikroORM) {}
+
+  async pending(): Promise<null | { decisions: RetiredSocleDecision[]; socles: RetiredSocle[] }> {
+    const em = this.orm.em.fork();
+    const marker = await em.findOne(SettingSchema, { key: SOCLES_PENDING_KEY });
+    if (!marker) return null;
+    const [socles, rows] = await Promise.all([
+      em.find(SocleSchema, {}, { orderBy: { id: 'asc' } }),
+      em
+        .getConnection()
+        .execute<{ id: number; target: string; versions: string }[]>(
+          "select id, target, versions from decision where state = 'accepted' order by id",
+        ),
+    ]);
+    const decisions = rows.flatMap((row) => {
+      const target = JSON.parse(row.target) as { id?: unknown; kind?: unknown };
+      const version = lastVersion(row.versions);
+      return target.kind === 'socle' && typeof target.id === 'number' && version
+        ? [{ id: row.id, socle: target.id, ...version }]
+        : [];
+    });
+    return {
+      decisions,
+      socles: socles.map(({ id, inherits, name, projects, scope }) => ({ id, inherits, name, projects, scope })),
+    };
+  }
+
+  async settle(): Promise<void> {
+    await this.orm.em.fork().nativeDelete(SettingSchema, { key: SOCLES_PENDING_KEY });
   }
 }

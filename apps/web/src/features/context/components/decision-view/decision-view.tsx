@@ -16,7 +16,7 @@ export interface DecisionViewProps {
   onAbandon: (reason: null | string) => void;
   onAccept: (edited: DecisionTextDto | null) => void;
   onRefuse: (reason: null | string) => void;
-  /** Retour au contexte : le projet, ou la liste des socles */
+  /** Retour au contexte du projet */
   parent: { href: string; label: string };
   targetLabel: string;
 }
@@ -92,10 +92,7 @@ export function DecisionView({
   const version = decision.versions[shown] ?? decision.versions.at(-1)!;
   const state = DECISION_STATES[decision.state];
   const proposed = decision.state === 'proposed';
-  const target =
-    decision.target.kind === 'project'
-      ? `project=${encodeURIComponent(decision.target.name)}`
-      : `socle=${decision.target.id}`;
+  const target = `project=${encodeURIComponent(decision.target.name)}`;
   return (
     <div className="flex flex-col gap-4 pb-20 md:pb-0">
       <header>
@@ -137,7 +134,6 @@ export function DecisionView({
                 mode="review"
                 initial={decision.versions.at(-1)!}
                 targetLabel={targetLabel}
-                exceptionChoices={[]}
                 busy={busy}
                 serverError={null}
                 onCancel={() => setPanel(null)}

@@ -4,7 +4,7 @@ import { DeviceSchema } from './access/infrastructure/persistence/device.schema.
 // Point de composition de la persistance : MikroORM sur SQLite, avec les schémas de chaque contexte.
 // MikroORM sur SQLite : schémas d'entités dans les adaptateurs, migrations listées explicitement (pas de recherche de
 // fichiers, qui dépendrait de l'emplacement de dist/).
-import { DecisionSchema, LinkSchema, SocleSchema } from './context/infrastructure/persistence/context.schema.ts';
+import { DecisionSchema, LinkSchema } from './context/infrastructure/persistence/context.schema.ts';
 import { Migration20261107000000 } from './migrations/Migration20261107000000.ts';
 import { Migration20261107165031 } from './migrations/Migration20261107165031.ts';
 import { Migration20261107172330 } from './migrations/Migration20261107172330.ts';
@@ -26,6 +26,7 @@ import { Migration20261108210000 } from './migrations/Migration20261108210000.ts
 import { Migration20261116200000 } from './migrations/Migration20261116200000.ts';
 import { Migration20261117202824 } from './migrations/Migration20261117202824.ts';
 import { Migration20261117220000 } from './migrations/Migration20261117220000.ts';
+import { Migration20261117230000 } from './migrations/Migration20261117230000.ts';
 import {
   GroupProjectSchema,
   IgnoredFolderSchema,
@@ -40,6 +41,7 @@ import {
   SourceSchema,
   TranscriptCursorSchema,
 } from './sessions/infrastructure/persistence/sessions.schema.ts';
+import { SocleSchema } from './shared/infrastructure/persistence/retired.schema.ts';
 import { EgressRefusalSchema, TaskSchema } from './shared/infrastructure/persistence/set-aside.schema.ts';
 import { SettingSchema } from './shared/infrastructure/persistence/setting.schema.ts';
 
@@ -65,6 +67,7 @@ export const MIGRATIONS = [
   { name: 'Migration20261116200000', class: Migration20261116200000 },
   { name: 'Migration20261117202824', class: Migration20261117202824 },
   { name: 'Migration20261117220000', class: Migration20261117220000 },
+  { name: 'Migration20261117230000', class: Migration20261117230000 },
 ];
 
 export function ormConfig(dbName: string) {

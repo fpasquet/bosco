@@ -6,7 +6,6 @@ import type {
   DecisionDto,
   DecisionTargetDto,
   DecisionTextDto,
-  SocleDto,
 } from '@bosco/domain';
 
 async function read<T>(path: string): Promise<T> {
@@ -54,14 +53,8 @@ export const decisionQuery = (id: number) => ({
   queryFn: () => read<DecisionDetailDto>(`/api/decisions/${id}`),
 });
 
-export const soclesQuery = {
-  queryKey: ['socles'],
-  queryFn: async () => (await read<{ socles: SocleDto[] }>('/api/socles')).socles,
-};
-
 export const writeDecision = (body: {
   accept: boolean;
-  exceptionTo: null | number;
   replaces: null | number;
   target: DecisionTargetDto;
   text: DecisionTextDto;
@@ -77,11 +70,6 @@ export const abandonDecision = (id: number, reason: null | string) =>
   send<DecisionDto>('POST', `/api/decisions/${id}/abandon`, { reason });
 export const saveArchitecture = (project: string, architecture: ArchitectureDto) =>
   send<ArchitectureDto>('PUT', `/api/context/architecture/${encodeURIComponent(project)}`, architecture);
-export const saveSocle = (
-  id: null | number,
-  socle: { inherits: null | number; name: string; projects: string[]; scope: 'global' | 'shared' },
-) => send<SocleDto>(id === null ? 'POST' : 'PUT', id === null ? '/api/socles' : `/api/socles/${id}`, socle);
-
 /** Projets ajoutés par la personne. */
 export const projectsQuery = {
   queryKey: ['projects'],

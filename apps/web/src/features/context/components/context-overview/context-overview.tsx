@@ -1,9 +1,9 @@
 'use client';
-import { Eye, Layers, Plus } from 'lucide-react';
+import { Eye, Plus } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import type { ArchitectureDto, ContextDto, DecisionDto } from '@bosco/domain';
+import type { ArchitectureDto, ContextDto, DecisionDto, GroupInstructionsDto } from '@bosco/domain';
 import { cn } from '@/lib/cn';
 import { Button } from '@/shared/ui/button';
 import { DECISION_STATES, titleOf } from '../../lib/decisions';
@@ -39,13 +39,12 @@ function Card({
   );
 }
 
-function DecisionRow({ decision, excepted }: { decision: DecisionDto; excepted?: DecisionDto }) {
+function DecisionRow({ decision }: { decision: DecisionDto }) {
   const state = DECISION_STATES[decision.state];
   return (
     <li className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5">
       <Link href={`/context/decisions/${decision.id}`} className="min-w-0 flex-1 link-hover">
         <span className="font-mono text-xs text-muted">DEC-{decision.id}</span> {titleOf(decision)}
-        {excepted && <span className="block text-xs text-muted">fait exception à « {titleOf(excepted)} »</span>}
       </Link>
       <span className={cn('badge badge-sm', state.badge)}>{state.label}</span>
     </li>
@@ -104,14 +103,61 @@ function ArchitectureForm({
   );
 }
 
+/** Une consigne par ligne non vide ; une consigne répétée garde une clé à elle. */
+function linesOf(instructions: string): { key: string; line: string }[] {
+  const seen = new Map<string, number>();
+  return instructions
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const count = (seen.get(line) ?? 0) + 1;
+      seen.set(line, count);
+      return { key: `${line}#${count}`, line };
+    });
+}
+
+const groupsLabel = (count: number) => (count > 1 ? `${count} groupes` : `${count} groupe`);
+
+/** Instructions d'un groupe du projet : elles se lisent ici et s'écrivent dans le groupe. */
+function GroupInstructions({ group }: { group: GroupInstructionsDto }) {
+  const lines = linesOf(group.instructions);
+  return (
+    <div className="px-4 py-2.5">
+      <p className="flex items-center gap-2 font-medium">
+        {group.name}
+        <span className="text-xs font-normal text-muted">
+          {lines.length > 1 ? `${lines.length} lignes` : `${lines.length} ligne`}
+        </span>
+        <Link
+          href={`/groups/${group.id}/instructions`}
+          className="ml-auto hidden link text-xs font-normal md:inline"
+          aria-label={`Modifier les instructions de ${group.name}`}
+        >
+          Modifier
+        </Link>
+      </p>
+      {lines.length === 0 ? (
+        <p className="mt-1 text-sm text-muted">Aucune instruction.</p>
+      ) : (
+        <ul className="mt-1 flex flex-col gap-1 text-sm">
+          {lines.map(({ key, line }) => (
+            <li key={key}>{line}</li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 /**
- * Contexte d'un projet (E9a) : tout ce que reçoit un agent au lancement, décisions acceptées du projet, socles qui s'y
- * appliquent et place dans l'architecture. Les décisions proposées par un agent attendent ta validation.
+ * Contexte d'un projet : tout ce que reçoit un agent au lancement, instructions de « Tous les projets » et de ses
+ * groupes, décisions acceptées du projet, qui l'emportent, et place dans l'architecture. Les décisions proposées par un
+ * agent attendent ta validation.
  */
 export function ContextOverview({ busy, context, onPreview, onSaveArchitecture }: ContextOverviewProps) {
   const [editing, setEditing] = useState(false);
   const { architecture, project } = context;
-  const excludedIds = new Set(context.excluded.map(({ id }) => id));
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap gap-2">
@@ -159,68 +205,18 @@ export function ContextOverview({ busy, context, onPreview, onSaveArchitecture }
           ) : (
             <ul className="divide-y divide-line">
               {context.decisions.map((decision) => (
-                <DecisionRow
-                  key={decision.id}
-                  decision={decision}
-                  excepted={context.excluded.find(({ id }) => id === decision.exceptionTo)}
-                />
+                <DecisionRow key={decision.id} decision={decision} />
               ))}
             </ul>
           )}
         </Card>
         <div className="flex flex-col gap-4">
-          <Card
-            id="context-socles"
-            title={`Socles appliqués · ${context.socles.length}`}
-            action={
-              <Link href="/context/socles" className="link text-xs">
-                <Layers aria-hidden className="mr-1 inline size-3.5" />
-                Gérer les socles
-              </Link>
-            }
-          >
-            {context.socles.length === 0 ? (
-              <p className="px-4 py-3 text-muted">Aucun socle ne s’applique à ce projet.</p>
-            ) : (
-              <div className="flex flex-col divide-y divide-line">
-                {context.socles.map(({ decisions: all, socle }) => {
-                  const excluded = context.excluded.filter(
-                    (decision) => decision.target.kind === 'socle' && decision.target.id === socle.id,
-                  );
-                  return (
-                    <div key={socle.id} className="px-4 py-2.5">
-                      <p className="font-medium">
-                        {socle.name}{' '}
-                        <span className="text-xs font-normal text-muted">
-                          {socle.scope === 'global' ? 'global' : 'hérité'} · {all.length + excluded.length}{' '}
-                          {all.length + excluded.length > 1 ? 'décisions' : 'décision'}
-                        </span>
-                      </p>
-                      <ul className="mt-1 flex flex-col gap-1 text-sm">
-                        {all.map((decision) => (
-                          <li key={decision.id}>
-                            <Link href={`/context/decisions/${decision.id}`} className="link-hover">
-                              {titleOf(decision)}
-                            </Link>
-                          </li>
-                        ))}
-                        {excluded.map((decision) => (
-                          <li key={decision.id} className="text-muted">
-                            <span className="line-through">{titleOf(decision)}</span>{' '}
-                            <span className="badge badge-ghost badge-sm">Écartée</span>
-                            <span className="block text-xs">
-                              remplacée ici par DEC-
-                              {context.decisions.find(({ exceptionTo }) => exceptionTo === decision.id)?.id} · non
-                              transmise
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+          <Card id="context-groups" title={`Instructions des groupes · ${groupsLabel(context.groups.length)}`}>
+            <div className="flex flex-col divide-y divide-line">
+              {context.groups.map((group) => (
+                <GroupInstructions key={group.id} group={group} />
+              ))}
+            </div>
           </Card>
           <Card
             id="context-architecture"
@@ -259,9 +255,8 @@ export function ContextOverview({ busy, context, onPreview, onSaveArchitecture }
         </div>
       </div>
       <p className="text-xs text-muted">
-        {context.decisions.length} acceptées · {context.proposed.length} proposées
-        {excludedIds.size === 1 && ' · 1 écartée par une exception'}
-        {excludedIds.size > 1 && ` · ${excludedIds.size} écartées par une exception`}
+        {context.decisions.length} acceptées · {context.proposed.length} proposées · elles l’emportent sur les
+        instructions des groupes
       </p>
       <p className="text-xs text-muted md:hidden">Une nouvelle décision se crée depuis le poste.</p>
     </div>

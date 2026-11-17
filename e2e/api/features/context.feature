@@ -1,9 +1,10 @@
 @RF-CONT-01
 @RF-CONT-02
-@RF-CONT-03
+@RF-CONT-15
 Feature: Context of the agents
-  As the developer, I want every agent to receive the accepted decisions of its project and of the socles that
-  apply to it, so that it works within what was decided, and an agent only proposes, never decides.
+  As the developer, I want every agent to receive the instructions of all the projects and of the groups of its
+  project, then the accepted decisions of its project, which prevail, so that it works within what was decided, and an
+  agent only proposes, never decides.
 
   Background:
     Given the Claude Code profile ".claude" has the transcript "session-labo-ia-rag.jsonl" for the session "5e0a91c3"
@@ -12,15 +13,26 @@ Feature: Context of the agents
 
   @CA-CONT-01
   @CA-CONT-25
-  Scenario: The accepted decisions of the project and of its socles are sent, an excepted one is left out
-    When I send POST request to "/api/socles" with the JSON "fixtures/context/global-socle.json"
-    And I send POST request to "/api/decisions" with the JSON "fixtures/context/socle-decision.json"
-    And I send POST request to "/api/decisions" with the JSON "fixtures/context/exception.json"
-    And I send GET request to "/api/context/preview?project=labo-ia"
-    Then the response property "text" should contain "DEC-2 Garder Jest pour les tests (fait exception à « Tests avec Vitest »)"
-    And the response property "absent.excluded.0.id" should equal "1"
-    When I send GET request to "/api/socles"
-    Then the response property "socles.0.exceptions.0.project" should equal "labo-ia"
+  @CA-CONT-103
+  @CA-CONT-106
+  @CA-CONT-140
+  Scenario: The common instructions come first, then those of each group of the project, then its decisions, which prevail
+    Given I send PUT request to "/api/groups/1/instructions" with the JSON "fixtures/groups/all-instructions.json"
+    And I send POST request to "/api/groups" with the JSON "fixtures/groups/node.json"
+    And I send PUT request to "/api/groups/2/instructions" with the JSON "fixtures/groups/node-instructions.json"
+    And I send POST request to "/api/groups" with the JSON "fixtures/groups/medias.json"
+    And I send PUT request to "/api/groups/3/instructions" with the JSON "fixtures/groups/medias-instructions.json"
+    And I send POST request to "/api/decisions" with the JSON "fixtures/context/project-decision.json"
+    When I send GET request to "/api/context/preview?project=labo-ia"
+    Then the response should match snapshot except for "at"
+    When I send GET request to "/api/context?project=labo-ia"
+    Then the response property "groups" should match the names "Tous les projets,Node.js"
+
+  @CA-CONT-11
+  Scenario: A decision is about a project only: what holds for several projects goes to the instructions of a group
+    When I send POST request to "/api/decisions" with the JSON "fixtures/context/socle-decision.json"
+    Then the response code should be 400
+    And the response property "code" should equal "invalidRequest"
 
   @CA-CONT-03
   @CA-CONT-06
@@ -50,13 +62,11 @@ Feature: Context of the agents
 
   @CA-CONT-86
   Scenario: Only the projects with a decision of their own, proposed or accepted, are offered
-    When I send POST request to "/api/socles" with the JSON "fixtures/context/global-socle.json"
-    And I send POST request to "/api/decisions" with the JSON "fixtures/context/socle-decision.json"
-    And I send POST request to "/api/decisions" with the JSON "fixtures/context/project-decision.json"
+    When I send POST request to "/api/decisions" with the JSON "fixtures/context/project-decision.json"
     And I send POST request to "/api/decisions" with the JSON "fixtures/context/proposed-api-voix.json"
     And I send GET request to "/api/context/projects"
     Then the response property "projects" should equal "api-voix,labo-ia"
-    When I send POST request to "/api/decisions/3/refuse"
+    When I send POST request to "/api/decisions/2/refuse"
     And I send GET request to "/api/context/projects"
     Then the response property "projects" should equal "labo-ia"
 
@@ -70,20 +80,3 @@ Feature: Context of the agents
   Scenario: The MCP server of Bosco requires the secret of the installation
     When a program without the secret calls the Bosco tool "bosco_context"
     Then the Bosco tool is refused with the code 401
-
-  Scenario: A socle never inherits from itself, even indirectly
-    When I send POST request to "/api/socles" with the JSON "fixtures/context/global-socle.json"
-    And I send POST request to "/api/socles" with the JSON "fixtures/context/node-socle.json"
-    And I send PUT request to "/api/socles/1" with the JSON "fixtures/context/looping-socle.json"
-    Then the response code should be 400
-    And the response property "message" should equal "Un socle ne peut pas hériter de lui-même, même indirectement."
-
-  @CA-CONT-65
-  Scenario: A socle changed after its creation reaches the projects it now covers
-    When I send POST request to "/api/socles" with the JSON "fixtures/context/empty-socle.json"
-    And I send POST request to "/api/decisions" with the JSON "fixtures/context/socle-decision.json"
-    And I send GET request to "/api/context/preview?project=labo-ia"
-    Then the response property "text" should not contain "Tests avec Vitest"
-    When I send PUT request to "/api/socles/1" with the JSON "fixtures/context/node-socle-labo-ia.json"
-    And I send GET request to "/api/context/preview?project=labo-ia"
-    Then the response property "text" should contain "Tests avec Vitest"

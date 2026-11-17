@@ -1,7 +1,8 @@
 import { EntitySchema } from '@mikro-orm/core';
 
 export interface DecisionRow {
-  exceptionTo: null | number;
+  /** Ancien lien d'une exception à la décision d'un socle : gardé en base, plus lu */
+  exceptionTo?: null | number;
   fromTask: null | number;
   id: number;
   reason: null | string;
@@ -12,7 +13,10 @@ export interface DecisionRow {
   versions: Record<string, unknown>[];
 }
 
-/** Décisions des projets et des socles (RF-CONT-01) ; versions et cible en JSON. */
+/**
+ * Décisions des projets ; versions et cible en JSON. Celles des anciens socles, devenues des instructions
+ * de groupes, restent en base sans être lues : leur numéro n'est jamais réutilisé.
+ */
 export const DecisionSchema = new EntitySchema<DecisionRow>({
   name: 'Decision',
   tableName: 'decision',
@@ -26,27 +30,6 @@ export const DecisionSchema = new EntitySchema<DecisionRow>({
     replacedBy: { type: 'integer', nullable: true, fieldName: 'replaced_by' },
     specifies: { type: 'json' },
     versions: { type: 'json' },
-  },
-});
-
-export interface SocleRow {
-  id: number;
-  inherits: null | number;
-  name: string;
-  projects: string[];
-  scope: string;
-}
-
-/** Socles de décisions communes à plusieurs projets (RF-CONT-03). */
-export const SocleSchema = new EntitySchema<SocleRow>({
-  name: 'Socle',
-  tableName: 'socle',
-  properties: {
-    id: { type: 'integer', primary: true, autoincrement: false },
-    name: { type: 'string' },
-    scope: { type: 'string' },
-    inherits: { type: 'integer', nullable: true },
-    projects: { type: 'json', fieldName: 'repositories' },
   },
 });
 

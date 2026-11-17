@@ -21,7 +21,7 @@ export const TOOLS: McpTool[] = [
   {
     name: 'bosco_context',
     description:
-      'Rend le contexte du projet où tu travailles : ses décisions acceptées, celles des socles qui s’y appliquent et sa place dans l’architecture. À lire avant de travailler.',
+      'Rend le contexte du projet où tu travailles : les instructions communes et celles de ses groupes, puis ses décisions acceptées, qui l’emportent, et sa place dans l’architecture. À lire avant de travailler.',
     inputSchema: { type: 'object', properties: { path }, required: ['path'] },
   },
   {
