@@ -122,3 +122,15 @@ Fonctionnalité: Sessions à plusieurs projets
     Et je clique sur le lien « Hors projet » de la barre latérale
     Alors je suis sur la page « /projects »
     Et je vois le lien « Ranger les notes de la semaine »
+
+  @mobile
+  @CA-SESS-138
+  @CA-SESS-140
+  Scénario: Sur le téléphone, l'onglet « Projets » du détail reprend la carte des projets et la commande de reprise
+    Étant donné la session pilotée « Affiche les tarifs » tourne dans les projets « labo-ia, api-voix »
+    Quand j'ouvre la page « / »
+    Et je clique sur le lien « Affiche les tarifs »
+    Et je clique sur l'onglet « Projets »
+    Alors je vois le texte « Projets · 2 »
+    Et je vois le texte « --add-dir ~/ »
+    Et la page est accessible
