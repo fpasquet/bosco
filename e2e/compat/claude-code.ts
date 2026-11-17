@@ -174,7 +174,6 @@ try {
     throw new Error('The Atlassian connector was not plugged in when the session started');
   else checks.push('Le connecteur Atlassian est branché dès le démarrage, avec l’attente des connecteurs');
 
-
   // 5. Le flux JSON d'un tour donne l'usage de l'abonnement : sans lui, le quota ne retient plus le worker (RQ-14)
   const usage = await fiveHourUsage(work);
   if (usage === null) throw new Error('No rate_limit_event with unifiedWindows.five_hour.utilization in the stream');

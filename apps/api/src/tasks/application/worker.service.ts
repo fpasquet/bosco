@@ -223,14 +223,7 @@ export class WorkerService {
         tools,
       });
       this.runs.set(task.id, run);
-      await this.follow(
-        task,
-        run,
-        this.deps.quota.profileOf(claudeProfile),
-        workspace,
-        atlassianRead,
-        resume,
-      );
+      await this.follow(task, run, this.deps.quota.profileOf(claudeProfile), workspace, atlassianRead, resume);
     } catch (error) {
       // Une tâche annulée ou effacée pendant son lancement n'a plus d'état à recevoir
       await this.deps.tasks
