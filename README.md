@@ -8,7 +8,7 @@ Poste de pilotage local des sessions Claude Code : Bosco découvre les sessions 
 
 ## Démarrer
 
-Prérequis : Node 26 (`.nvmrc`), pnpm 12 (`corepack enable`).
+Prérequis : Node 26 (`.nvmrc`, `nvm use` ; pnpm refuse d’installer avec une autre version), pnpm 12 (`corepack enable`).
 
 ```bash
 make install          # dépendances et skills épinglés
