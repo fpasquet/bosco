@@ -12,11 +12,36 @@ export interface ProjectSnapshot {
   path: string;
   /** Montré dans la barre latérale même sans session ouverte */
   pinned: boolean;
+  /** Où tourne par défaut une nouvelle session : le dernier choix fait ; null avant le premier */
+  place: null | ProjectPlaceChoice;
+  /** Branche que copie un bac à sable ; null : la branche courante du dossier */
+  startBranch: null | string;
+}
+
+export type ProjectPlaceChoice = 'sandbox' | 'workstation';
+
+/** Ce qui se change d'un projet : sa place dans la barre latérale et les valeurs par défaut de ses sessions. */
+export interface ProjectChanges {
+  pinned?: boolean;
+  place?: null | ProjectPlaceChoice;
+  startBranch?: null | string;
 }
 
 export class ProjectAlreadyAdded extends DomainError {
   constructor(path: string) {
     super('projectAlreadyAdded', `The folder ${path} is already a project`);
+  }
+}
+
+export class ProjectHasRunningSession extends DomainError {
+  constructor(name: string) {
+    super('projectHasRunningSession', `A session piloted by Bosco still runs in ${name}`);
+  }
+}
+
+export class InvalidStartBranch extends DomainError {
+  constructor() {
+    super('invalidStartBranch', 'The start branch is not a valid branch name');
   }
 }
 
@@ -36,6 +61,14 @@ export function projectName(folder: FolderPath, taken: readonly string[]): strin
     const numbered = `${folder.name} (${index})`;
     if (!names.has(numbered)) return numbered;
   }
+}
+
+/** Nom de branche de départ : sans espace ni caractère que git refuse ; vide, la branche courante. */
+function startBranchOf(value: null | string): null | string {
+  const branch = value?.trim() ?? '';
+  if (!branch) return null;
+  if (branch.length > 200 || /[\s~^:?*[\\]|\.\.|@\{|^[-/]|[/.]$/.test(branch)) throw new InvalidStartBranch();
+  return branch;
 }
 
 /** Un projet : un dossier que la personne a ajouté à Bosco. Le retirer ne touche à rien sur le poste. */
@@ -62,6 +95,8 @@ export class Project {
       ),
       path: folder.value,
       pinned: false,
+      place: null,
+      startBranch: null,
     });
   }
 
@@ -71,6 +106,25 @@ export class Project {
 
   get id(): number {
     return this.snapshot.id;
+  }
+
+  get name(): string {
+    return this.snapshot.name;
+  }
+
+  /**
+   * Épingle le projet dans la barre latérale, ou l'en retire (sans rien retirer d'autre), et règle les valeurs par
+   * défaut de ses sessions ; un sans-git ne tourne jamais en bac à sable, la place proposée reste donc le poste.
+   */
+  change(changes: ProjectChanges): void {
+    if (changes.pinned !== undefined) this.snapshot.pinned = changes.pinned;
+    if (changes.place !== undefined) this.rememberPlace(changes.place);
+    if (changes.startBranch !== undefined) this.snapshot.startBranch = startBranchOf(changes.startBranch);
+  }
+
+  /** Dernier choix de « Où elle tourne » : la prochaine session du projet le reprend. */
+  rememberPlace(place: null | ProjectPlaceChoice): void {
+    this.snapshot.place = place === 'sandbox' && !this.snapshot.git ? 'workstation' : place;
   }
 
   toSnapshot(): ProjectSnapshot {

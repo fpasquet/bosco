@@ -103,9 +103,20 @@ export interface StartSessionDto extends PilotMessageDto {
 export interface PilotOptionsDto {
   /** Profils Claude Code surveillés qui ont un accès, et celui du projet choisi */
   profiles: { account: null | string; label: string; path: string }[];
-  /** Branche courante de chaque projet : le départ proposé d'un bac à sable (E16b) */
-  /** git : sans git, un projet ne tourne pas en bac à sable */
-  projects: { branch: null | string; defaultProfile: null | string; git: boolean; name: string; root: string }[];
+  /**
+   * Projets ajoutés : branche courante (départ proposé d'un bac à sable, sauf branche réglée pour le projet), git (sans
+   * git, pas de bac à sable) et dernier « Où elle tourne » choisi pour le projet
+   */
+  projects: {
+    branch: null | string;
+    defaultProfile: null | string;
+    git: boolean;
+    id: number;
+    name: string;
+    place: 'sandbox' | 'workstation' | null;
+    root: string;
+    startBranch: null | string;
+  }[];
   /** null : le bac à sable est disponible ; sinon la raison (« Docker ne répond pas ») */
   sandboxUnavailable: null | string;
 }

@@ -6,8 +6,22 @@ export interface ProjectDto {
   lastSessionAt: null | string;
   name: string;
   path: string;
+  /** Montré dans la barre latérale même sans session ouverte */
   pinned: boolean;
+  /** Où tourne par défaut une nouvelle session : le dernier choix fait ; null avant le premier */
+  place: null | ProjectPlaceDto;
   sessions: number;
+  /** Branche que copie un bac à sable ; null : la branche courante */
+  startBranch: null | string;
+}
+
+export type ProjectPlaceDto = 'sandbox' | 'workstation';
+
+/** Page d'un projet : le projet, la branche courante de son dossier (null sans git) et ce qui empêche de le retirer. */
+export interface ProjectDetailDto extends ProjectDto {
+  branch: null | string;
+  /** Sessions pilotées par Bosco qui tournent encore dans le projet : tant qu'il y en a, il ne se retire pas */
+  running: number;
 }
 
 /** Dossier où une session a tourné hors des projets, proposé pour en devenir un. */

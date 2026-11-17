@@ -3,7 +3,14 @@ import type { SessionState, Waiting } from '../domain/session.ts';
 import type { JournalEntry, TranscriptEvent } from '../domain/transcript-event.ts';
 import type { NotificationService } from './notification.service.ts';
 import type { PilotView } from './pilot.service.ts';
-import type { Clock, ProjectCatalog, SessionEvents, SessionRegistry, SessionRepository } from './ports.ts';
+import type {
+  CatalogProject,
+  Clock,
+  ProjectCatalog,
+  SessionEvents,
+  SessionRegistry,
+  SessionRepository,
+} from './ports.ts';
 import { ASKING } from '../domain/notification.ts';
 import { DEFAULT_INACTIVITY_DELAY_MS, Session } from '../domain/session.ts';
 
@@ -11,7 +18,7 @@ import { DEFAULT_INACTIVITY_DELAY_MS, Session } from '../domain/session.ts';
 const RECENT_QUESTION_MS = 2 * 60 * 1000;
 
 /** Avant que les projets soient branchés, toutes les sessions sont hors projet. */
-const NO_PROJECTS: ProjectCatalog = { list: () => [], placeOf: () => null };
+const NO_PROJECTS: ProjectCatalog = { list: () => [], placeOf: () => null, rememberPlace: () => Promise.resolve() };
 
 export interface SessionView {
   branch: null | string;
@@ -83,8 +90,13 @@ export class SessionService {
   }
 
   /** Projets où l'on démarre une session et dont on lit le contexte : ceux que la personne a ajoutés. */
-  knownProjects(): Promise<{ git: boolean; name: string; root: string }[]> {
+  knownProjects(): Promise<CatalogProject[]> {
     return Promise.resolve(this.projects.list());
+  }
+
+  /** « Où elle tourne » d'une session démarrée : la prochaine du même projet le reprend. */
+  rememberPlace(root: string, place: 'sandbox' | 'workstation'): Promise<void> {
+    return this.projects.rememberPlace(root, place);
   }
 
   /** Dossiers de travail des sessions déjà lues, que les projets rangent et proposent. */

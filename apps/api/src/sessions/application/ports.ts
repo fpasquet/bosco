@@ -79,8 +79,22 @@ export interface ProfileSettings {
 }
 
 /** Projets choisis par la personne, branchés par le point de composition. */
+/** Projet où démarrer une session, avec ce que propose le formulaire par défaut. */
+export interface CatalogProject {
+  git: boolean;
+  id: number;
+  name: string;
+  /** Dernier « Où elle tourne » choisi pour le projet ; null avant le premier */
+  place: 'sandbox' | 'workstation' | null;
+  root: string;
+  /** Branche de départ d'un bac à sable réglée pour le projet ; null : la branche courante */
+  startBranch: null | string;
+}
+
 export interface ProjectCatalog {
-  list(): { git: boolean; name: string; root: string }[];
+  list(): CatalogProject[];
+  /** Note le dernier « Où elle tourne » d'une session démarrée dans le projet : la suivante le reprend */
+  rememberPlace(root: string, place: 'sandbox' | 'workstation'): Promise<void>;
   /** Projet qui contient le dossier de travail d'une session (sa racine git notée à la lecture) ; null hors projet */
   placeOf(
     gitRoot: null | string,

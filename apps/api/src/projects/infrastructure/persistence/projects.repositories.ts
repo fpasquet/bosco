@@ -11,15 +11,20 @@ import type { RetiredSocle, RetiredSocleDecision } from '../../domain/socle-impo
 import { SocleSchema } from '../../../shared/infrastructure/persistence/retired.schema.ts';
 import { SettingSchema } from '../../../shared/infrastructure/persistence/setting.schema.ts';
 import { Group } from '../../domain/group.ts';
-import { Project } from '../../domain/project.ts';
+import { Project, type ProjectPlaceChoice } from '../../domain/project.ts';
 import { GroupProjectSchema, IgnoredFolderSchema, ProjectGroupSchema, ProjectSchema } from './projects.schema.ts';
+
+/** Colonne libre en base : seule une place connue est reprise. */
+function placeOf(value: null | string): null | ProjectPlaceChoice {
+  return value === 'sandbox' || value === 'workstation' ? value : null;
+}
 
 export class MikroOrmProjectRepository implements ProjectRepository {
   constructor(private readonly orm: MikroORM) {}
 
   async list(): Promise<Project[]> {
     const rows = await this.orm.em.fork().find(ProjectSchema, {}, { orderBy: { id: 'asc' } });
-    return rows.map((row) => Project.restore({ ...row }));
+    return rows.map((row) => Project.restore({ ...row, place: placeOf(row.place) }));
   }
 
   async nextId(): Promise<number> {

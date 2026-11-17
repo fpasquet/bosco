@@ -38,6 +38,18 @@ export interface Folders {
   realPath(path: string): Promise<null | string>;
 }
 
+/** Branche courante d'un dépôt, lue dans git sans rien y changer. */
+export interface Branches {
+  /** null hors de git ou sur un commit détaché */
+  currentOf(path: string): Promise<null | string>;
+}
+
+/** Sessions pilotées par Bosco qui tournent encore, branchées par le point de composition. */
+export interface RunningSessions {
+  /** Sessions pilotées dont un tour ou le bac à sable tourne dans ce projet */
+  countIn(projectId: number): Promise<number>;
+}
+
 /** Dossiers de travail des sessions déjà lues, branchés par le point de composition. */
 export interface SessionFolders {
   list(): Promise<SessionFolder[]>;
