@@ -1,8 +1,8 @@
 // Flux JSON de `claude -p --output-format stream-json` : seules les lignes utiles au worker sont lues, le reste est
 // ignoré (format interne de Claude Code, NF-08).
 import type { AgentEvent } from '../../application/ports.ts';
-import { connectorReadOf, hasAtlassianConnector } from '../../domain/atlassian-read.ts';
 import { quotaWindowsOf } from '../../../shared/domain/subscription-quota.ts';
+import { connectorReadOf, hasAtlassianConnector } from '../../domain/atlassian-read.ts';
 
 type Line = Record<string, unknown>;
 
