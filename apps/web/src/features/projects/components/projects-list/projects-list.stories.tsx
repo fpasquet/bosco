@@ -34,3 +34,17 @@ export const WithoutSuggestions: Story = {
 
 /** Sur le téléphone, la liste se lit sans bouton. */
 export const Mobile: Story = { globals: { viewport: { value: 'mobile1' } } };
+
+/** « Hors projet » de la barre latérale ouvre cette section : les sessions hors de tout projet. */
+export const OutsideSessions: Story = {
+  args: {
+    outsideSessions: [
+      {
+        id: 'e7d2b410',
+        title: 'Ranger les notes de la semaine',
+        path: '/home/dev',
+        lastEventAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
+      },
+    ],
+  },
+};

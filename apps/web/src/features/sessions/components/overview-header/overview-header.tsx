@@ -23,6 +23,7 @@ export interface OverviewHeaderProps {
 
 const GROUPINGS: { label: string; value: Grouping }[] = [
   { label: 'Projet', value: 'project' },
+  { label: 'Groupe', value: 'group' },
   { label: 'État', value: 'state' },
 ];
 
@@ -75,7 +76,7 @@ export function OverviewHeader(props: OverviewHeaderProps) {
         />
         <kbd className="kbd kbd-sm">/</kbd>
       </label>
-      {grouping === 'project' && (
+      {grouping !== 'state' && (
         <button
           type="button"
           aria-pressed={hideInactive}

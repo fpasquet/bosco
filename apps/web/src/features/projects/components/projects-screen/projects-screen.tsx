@@ -17,6 +17,7 @@ import {
   projectsOverviewQuery,
   proposalsQuery,
   restoreSuggestion,
+  sessionsQuery,
 } from '../../api/projects';
 import { GroupsList } from '../groups-list';
 import { NoProjects } from '../no-projects';
@@ -39,6 +40,7 @@ export function ProjectsScreen({ title }: { title: string }) {
   const { data } = useQuery(projectsOverviewQuery);
   const { data: groups } = useQuery(groupsQuery);
   const { data: proposals } = useQuery(proposalsQuery);
+  const { data: sessions } = useQuery(sessionsQuery);
   // Sur le téléphone, le projet touché ouvre la feuille de ses actions
   const [opened, setOpened] = useState<null | ProjectDto>(null);
   const change = useMutation({
@@ -102,6 +104,15 @@ export function ProjectsScreen({ title }: { title: string }) {
             onNewGroup={(project) => actions.newGroup([project.id])}
             onRestore={(path) => change.mutate(() => restoreSuggestion(path))}
             onOpen={setOpened}
+            outsideSessions={(sessions ?? [])
+              .filter((session) => session.project === null)
+              .toSorted((a, b) => b.lastEventAt.localeCompare(a.lastEventAt))
+              .map(({ id, lastEventAt, projectPath, title }) => ({
+                id,
+                lastEventAt,
+                path: projectPath,
+                title: title ?? `Session ${id.slice(0, 8)}`,
+              }))}
           />
           <GroupsList groups={groups} />
         </>

@@ -17,7 +17,7 @@ export const useSourcesPreferences = create<SourcesPreferences>()(
   ),
 );
 
-export type Grouping = 'project' | 'state';
+export type Grouping = 'group' | 'project' | 'state';
 
 interface OverviewPreferences {
   grouping: Grouping;

@@ -6,6 +6,7 @@ import type {
   ProjectDto,
   ProjectPlaceDto,
   ProjectsDto,
+  SessionDto,
 } from '@bosco/domain';
 
 /** Refus de Bosco (dossier déjà ajouté, introuvable, session qui tourne), avec le texte à montrer. */
@@ -44,6 +45,12 @@ async function send(path: string, body?: unknown, method: 'DELETE' | 'PATCH' | '
 export const projectsOverviewQuery = {
   queryKey: ['projects', 'overview'],
   queryFn: () => read<ProjectsDto>('/api/projects'),
+};
+
+/** Sessions lues par Bosco : celles hors de tout projet se listent sous « Hors projet ». */
+export const sessionsQuery = {
+  queryKey: ['sessions'],
+  queryFn: async () => (await read<{ sessions: SessionDto[] }>('/api/sessions')).sessions,
 };
 
 /** Page d'un projet : le projet, sa branche courante et ses sessions pilotées qui tournent. */

@@ -1,16 +1,18 @@
-import { FolderGit2 } from 'lucide-react';
+import { FolderGit2, Layers } from 'lucide-react';
 import Link from 'next/link';
 import type { SessionDto } from '@bosco/domain';
 import { cn } from '@/lib/cn';
 import { clockOf } from '../../lib/detail';
 import { actionLabel, elapsed, formatCost, formatTokens, sessions as sessionsLabel } from '../../lib/format';
-import { type ProjectGroup, totalTokens } from '../../lib/overview';
+import { type ProjectGroup, projectLabel, totalTokens } from '../../lib/overview';
 import { SessionStateBadge } from '../session-state-badge';
 
 export interface SessionsTableProps {
   /** Bosco injoignable : les données sont figées, « Vu à » remplace les durées (E1f, CA-SESS-23) */
   frozen?: boolean;
   groups: ProjectGroup[];
+  /** Un intertitre par groupe de lignes ; par défaut, sans colonne « Dossier » ni « Projet » */
+  headings?: boolean;
   /** Marque du profil (« perso ») d'une session lancée avec un autre dossier de configuration que celui par défaut */
   markOf: (session: SessionDto) => null | string;
   now: Date;
@@ -28,7 +30,7 @@ function ProjectLink({ session }: { session: SessionDto }) {
   if (!session.project) return <span className="text-muted">Hors projet</span>;
   return (
     <Link href={`/projects/${session.project.id}/sessions`} className="relative z-10 link link-hover">
-      {session.project.name}
+      {projectLabel(session)}
     </Link>
   );
 }
@@ -42,18 +44,42 @@ export function titleOf(session: SessionDto): string {
   return session.title ?? `Session ${session.id.slice(0, 8)}`;
 }
 
+function projectsLabel(count: number): string {
+  return count > 1 ? `${count} projets` : `${count} projet`;
+}
+
 function groupLabel(group: ProjectGroup, pending: boolean): string {
   const count = sessionsLabel(group.sessions.length);
-  return pending ? `${count} pour l’instant` : count;
+  const projects = group.group ? `${projectsLabel(group.group.projects)} · ` : '';
+  return pending ? `${projects}${count} pour l’instant` : `${projects}${count}`;
+}
+
+/** Intertitre d'un groupe de lignes : son nom et ce qu'il compte ; pour un groupe, « Réglages du groupe » (E1g). */
+function GroupHeading({ group, pending }: { group: ProjectGroup; pending: boolean }) {
+  const Icon = group.group ? Layers : FolderGit2;
+  return (
+    <span className="flex items-center gap-2">
+      <Icon aria-hidden className="size-3.5" />
+      <b className="font-semibold text-ink">{group.name ?? 'Hors projet'}</b>
+      {groupLabel(group, pending)}
+      {group.group && (
+        <Link href={`/groups/${group.group.id}/settings`} className="ml-auto link pr-4 link-hover">
+          Réglages du groupe<span className="sr-only"> {group.name}</span>
+        </Link>
+      )}
+    </span>
+  );
 }
 
 function Row({
+  also,
   column,
   frozen,
   markOf,
   now,
   session,
 }: {
+  also: null | string;
   column: SessionsTableProps['column'];
   frozen: boolean;
   markOf: SessionsTableProps['markOf'];
@@ -79,6 +105,7 @@ function Row({
           {mark && (
             <span className="shrink-0 rounded-sm border border-line px-1 font-mono text-xs text-muted">{mark}</span>
           )}
+          {also && <span className="shrink-0 text-xs text-muted">{also}</span>}
         </span>
       </td>
       {column === 'folder' && (
@@ -113,12 +140,17 @@ function PendingRow({ columns }: { columns: number }) {
   );
 }
 
-function MobileList({ column, groups, now, pendingRows }: Omit<SessionsTableProps, 'markOf'>) {
+function MobileList({ column, groups, headings, now, pendingRows }: Omit<SessionsTableProps, 'markOf'>) {
   return (
     <div className="flex flex-col gap-4 md:hidden">
       {groups.map((group) => (
         <section key={group.name ?? ''} aria-label={group.name ?? 'Hors projet'}>
-          {!column && <h2 className="px-1 pb-1.5 text-xs font-semibold text-muted">{group.name ?? 'Hors projet'}</h2>}
+          {headings && (
+            <h2 className="px-1 pb-1.5 text-xs font-semibold text-muted">
+              {group.name ?? 'Hors projet'}
+              {group.group && ` · ${projectsLabel(group.group.projects)}`}
+            </h2>
+          )}
           <ul className="divide-y divide-line rounded-card border border-line bg-surface">
             {group.sessions.map((session) => (
               <li key={session.id} className="relative flex items-center gap-3 px-3 py-2.5">
@@ -131,7 +163,8 @@ function MobileList({ column, groups, now, pendingRows }: Omit<SessionsTableProp
                     {titleOf(session)}
                   </Link>
                   <span className="block truncate font-mono text-xs text-muted">
-                    {column === 'project' && `${session.project?.name ?? 'Hors projet'} · `}
+                    {column === 'project' && `${projectLabel(session) ?? 'Hors projet'} · `}
+                    {group.also?.[session.id] && `${group.also[session.id]} · `}
                     {column === 'folder' && session.project?.folder && `${session.project.folder} · `}
                     {session.branch ?? '—'} · {lastActionOf(session, now)}
                   </span>
@@ -153,7 +186,15 @@ function MobileList({ column, groups, now, pendingRows }: Omit<SessionsTableProp
  * Tableau des sessions ouvertes, groupées par projet, d'un seul projet avec ses dossiers ou d'un groupe
  * avec leur projet.
  */
-export function SessionsTable({ column, frozen = false, groups, markOf, now, pendingRows = 0 }: SessionsTableProps) {
+export function SessionsTable({
+  column,
+  frozen = false,
+  groups,
+  headings = !column,
+  markOf,
+  now,
+  pendingRows = 0,
+}: SessionsTableProps) {
   const columns = column ? 7 : 6;
   return (
     <>
@@ -174,19 +215,23 @@ export function SessionsTable({ column, frozen = false, groups, markOf, now, pen
           </thead>
           {groups.map((group) => (
             <tbody key={group.name ?? ''}>
-              {!column && (
+              {headings && (
                 <tr className="h-8 border-b border-line bg-surface-alt text-xs text-muted">
                   <th colSpan={columns} scope="colgroup" className="pl-4 font-normal">
-                    <span className="flex items-center gap-2">
-                      <FolderGit2 aria-hidden className="size-3.5" />
-                      <b className="font-semibold text-ink">{group.name ?? 'Hors projet'}</b>
-                      {groupLabel(group, pendingRows > 0)}
-                    </span>
+                    <GroupHeading group={group} pending={pendingRows > 0} />
                   </th>
                 </tr>
               )}
               {group.sessions.map((session) => (
-                <Row key={session.id} frozen={frozen} markOf={markOf} now={now} session={session} column={column} />
+                <Row
+                  key={session.id}
+                  also={group.also?.[session.id] ?? null}
+                  frozen={frozen}
+                  markOf={markOf}
+                  now={now}
+                  session={session}
+                  column={column}
+                />
               ))}
             </tbody>
           ))}
@@ -199,7 +244,7 @@ export function SessionsTable({ column, frozen = false, groups, markOf, now, pen
           )}
         </table>
       </div>
-      <MobileList groups={groups} now={now} pendingRows={pendingRows} column={column} />
+      <MobileList groups={groups} headings={headings} now={now} pendingRows={pendingRows} column={column} />
     </>
   );
 }

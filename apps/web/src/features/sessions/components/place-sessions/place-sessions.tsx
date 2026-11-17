@@ -9,6 +9,7 @@ import { useLiveEvents } from '../../hooks/use-live-events';
 import { usePermissionAnswers } from '../../hooks/use-permission-answers';
 import { useOffline } from '../../lib/connection';
 import {
+  alsoIn,
   endedToday,
   indicatorsOf,
   openSessions,
@@ -42,7 +43,9 @@ export function PlaceSessions({ place }: { place: SessionsPlace }) {
   const offline = useOffline();
   const projects = place.kind === 'project' ? [place.id] : group?.projects.map(({ id }) => id);
   if (!sessions || !sources || !projects) return <SectionSkeleton rows={4} />;
-  const all = sessionsIn(sessions, projects);
+  // Un groupe réunit aussi les sessions qui voient l'un de ses projets ; un projet, celles dont il est le principal
+  const all = sessionsIn(sessions, projects, place.kind === 'group' ? 'also' : 'principal');
+  const also = place.kind === 'project' ? openSessions(alsoIn(sessions, place.id), now) : [];
   const open = openSessions(all, now);
   const indicators = indicatorsOf(open, all, now);
   const liveTracking = sources.sources.some((source) => source.liveTracking);
@@ -77,6 +80,20 @@ export function PlaceSessions({ place }: { place: SessionsPlace }) {
         <p className="rounded-card border border-line bg-surface px-4 py-3 text-muted">
           {inProject ? 'Aucune session ouverte dans ce projet.' : 'Aucune session ouverte dans ce groupe.'}
         </p>
+      )}
+      {also.length > 0 && (
+        <section aria-labelledby="also-in-project" className="flex flex-col gap-2">
+          <h2 id="also-in-project" className="text-xs font-semibold text-muted">
+            Aussi dans ce projet
+          </h2>
+          <SessionsTable
+            groups={[{ name: null, sessions: sortSessions(also) }]}
+            column="project"
+            markOf={(session) => profileMark(session, sources.sources)}
+            now={now}
+            frozen={offline}
+          />
+        </section>
       )}
       <EndedToday
         sessions={ended}

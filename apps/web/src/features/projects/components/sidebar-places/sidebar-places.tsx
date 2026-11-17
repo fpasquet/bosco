@@ -127,10 +127,13 @@ export function SidebarPlaces({
               <span className="ml-auto pr-1.5 font-mono text-xs">{allProjects}</span>
             </Link>
           </li>
-          <li className="flex h-8 items-center gap-3 px-2.5">
-            <FolderOpen aria-hidden className="size-4 shrink-0" />
-            <span className="truncate">Hors projet</span>
-            <Count count={outside.count} waiting={outside.waiting} />
+          <li className={ROW}>
+            {/* Ouvre « Tous les projets » sur sa section « Hors projet » */}
+            <Link href="/projects#outside" className={LINK}>
+              <FolderOpen aria-hidden className="size-4 shrink-0" />
+              <span className="truncate">Hors projet</span>
+              <Count count={outside.count} waiting={outside.waiting} />
+            </Link>
           </li>
         </ul>
       </nav>

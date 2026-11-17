@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite';
-import { STORY_SESSIONS, STORY_SOURCES } from '../../fixtures';
-import { groupByProject, profileMark } from '../../lib/overview';
+import { STORY_GROUPS, STORY_SESSIONS, STORY_SOURCES } from '../../fixtures';
+import { groupByGroup, groupByProject, profileMark } from '../../lib/overview';
 import { SessionsTable } from './sessions-table';
 
 const meta = {
@@ -18,6 +18,11 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const ByProject: Story = {};
+
+/** Vue regroupée par groupe : une session de plusieurs groupes figure dans chacun, « aussi dans … ». */
+export const ByGroup: Story = {
+  args: { groups: groupByGroup(STORY_SESSIONS, STORY_GROUPS), column: 'project', headings: true },
+};
 
 /** Page d'un projet : la colonne « Dossier » remplace les intertitres. */
 export const ProjectPage: Story = {
