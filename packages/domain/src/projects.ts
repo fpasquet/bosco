@@ -1,5 +1,7 @@
 /** Un projet : un dossier ajouté par la personne, avec l'activité de ses sessions. */
 export interface ProjectDto {
+  /** Domaines propres au projet, ajoutés à la liste générale pour ses bacs à sable */
+  domains: string[];
   git: boolean;
   id: number;
   /** Dernière activité de ses sessions ; null sans session */

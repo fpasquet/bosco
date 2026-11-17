@@ -4,11 +4,14 @@ import type { Config } from './config.ts';
 import type { IsolationService } from './isolation/application/isolation.service.ts';
 import type { QuotaService } from './isolation/application/quota.service.ts';
 import type { DockerIsolation } from './isolation/infrastructure/docker/docker-isolation.ts';
+import type { ProjectService } from './projects/application/project.service.ts';
 import type { NotificationService } from './sessions/application/notification.service.ts';
 import type { PilotService } from './sessions/application/pilot.service.ts';
 import type { SourceService } from './sessions/application/source.service.ts';
 import { DockerSandboxContainers } from './isolation/infrastructure/docker/docker-sandbox-containers.ts';
+import { AllowListFile } from './isolation/infrastructure/egress/allow-list-file.ts';
 import { DOCKER_ISOLATION, ISOLATION_SERVICE, QUOTA_SERVICE } from './isolation/tokens.ts';
+import { PROJECT_SERVICE } from './projects/tokens.ts';
 import { GitSandboxes } from './sessions/infrastructure/sandbox/git-sandboxes.ts';
 import { ScriptedSandboxes } from './sessions/infrastructure/sandbox/scripted-sandboxes.ts';
 import { NOTIFICATION_SERVICE, PILOT_SERVICE, SOURCE_SERVICE } from './sessions/tokens.ts';
@@ -18,8 +21,9 @@ import { CONFIG } from './shared/tokens.ts';
 const HOUSEKEEPING_MS = 60 * 1000;
 
 /**
- * Bacs à sable des sessions pilotées (DT-37) : ils croisent deux contextes. Les sessions les pilotent ; l'isolation
- * leur fournit leurs conteneurs (image, limites, proxy de sortie), l'accès à l'abonnement et son quota.
+ * Bacs à sable des sessions pilotées (DT-37) : ils croisent trois contextes. Les sessions les pilotent ; l'isolation
+ * leur fournit leurs conteneurs (image, limites, proxy de sortie), l'accès à l'abonnement et son quota ; les projets,
+ * leurs domaines propres.
  */
 @Injectable()
 export class SandboxWiring implements OnApplicationBootstrap, OnApplicationShutdown {
@@ -33,9 +37,13 @@ export class SandboxWiring implements OnApplicationBootstrap, OnApplicationShutd
     @Inject(DOCKER_ISOLATION) private readonly docker: DockerIsolation,
     @Inject(ISOLATION_SERVICE) private readonly isolation: IsolationService,
     @Inject(QUOTA_SERVICE) private readonly quota: QuotaService,
+    @Inject(PROJECT_SERVICE) private readonly projects: ProjectService,
   ) {}
 
-  onApplicationBootstrap(): void {
+  async onApplicationBootstrap(): Promise<void> {
+    // Les domaines propres à chaque projet rejoignent la liste générale, dans le proxy de ses bacs à sable (E21a)
+    const allowList = new AllowListFile(this.docker.options.allowDir);
+    await this.projects.useDomains({ publish: (projects) => allowList.publishProjects(projects) });
     const root = join(this.config.dataDir, 'sandboxes');
     // Dans les scénarios, des bacs à sable scriptés : ni Docker ni copie du projet
     const sandboxes = this.config.testing

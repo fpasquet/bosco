@@ -6,6 +6,7 @@ import type {
   GitOrigins,
   GroupRepository,
   IgnoredFolders,
+  ProjectDomains,
   ProjectRepository,
   RunningSessions,
   SessionFolders,
@@ -54,6 +55,7 @@ export interface FolderListing {
 
 const NO_SESSIONS: SessionFolders = { list: () => Promise.resolve([]) };
 const NO_RUNNING: RunningSessions = { countIn: () => Promise.resolve(0) };
+const NO_DOMAINS: ProjectDomains = { publish: () => Promise.resolve() };
 
 /**
  * Projets choisis par la personne : les dossiers qu'elle ajoute, où se rangent les sessions. Gardés en mémoire, car la
@@ -63,6 +65,7 @@ export class ProjectService {
   private projects: ProjectSnapshot[] = [];
   private placement: ProjectPlacement;
   private running: RunningSessions = NO_RUNNING;
+  private domains: ProjectDomains = NO_DOMAINS;
   private sessions: SessionFolders = NO_SESSIONS;
 
   constructor(
@@ -90,6 +93,12 @@ export class ProjectService {
   /** Sessions pilotées qui tournent, branchées au démarrage : elles empêchent de retirer leur projet. */
   useRunning(running: RunningSessions): void {
     this.running = running;
+  }
+
+  /** Proxies de sortie des bacs à sable, branchés au démarrage : ils reçoivent aussitôt les domaines de chaque projet. */
+  async useDomains(domains: ProjectDomains): Promise<void> {
+    this.domains = domains;
+    await this.publishDomains();
   }
 
   /** Projets lus au démarrage (et après une remise à zéro des scénarios), après la reprise des dépôts découverts. */
@@ -147,6 +156,23 @@ export class ProjectService {
   async changeProject(id: number, changes: ProjectChanges): Promise<ProjectDetail> {
     const project = await this.loadProject(id);
     project.change(changes);
+    await this.repository.save([project]);
+    await this.refresh();
+    return this.getProject(id);
+  }
+
+  /** Un domaine propre au projet, ajouté à la liste générale pour ses bacs à sable, sans les relancer. */
+  async addDomain(id: number, domain: string): Promise<ProjectDetail> {
+    const project = await this.loadProject(id);
+    project.addDomain(domain);
+    await this.repository.save([project]);
+    await this.refresh();
+    return this.getProject(id);
+  }
+
+  async removeDomain(id: number, domain: string): Promise<ProjectDetail> {
+    const project = await this.loadProject(id);
+    project.removeDomain(domain);
     await this.repository.save([project]);
     await this.refresh();
     return this.getProject(id);
@@ -273,5 +299,10 @@ export class ProjectService {
     const projects = await this.repository.list();
     this.projects = projects.map((project) => project.toSnapshot());
     this.placement = new ProjectPlacement(this.projects, this.git);
+    await this.publishDomains();
+  }
+
+  private async publishDomains(): Promise<void> {
+    await this.domains.publish(this.projects.map(({ domains, path }) => ({ domains, path })));
   }
 }

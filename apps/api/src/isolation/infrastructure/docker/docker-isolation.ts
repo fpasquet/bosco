@@ -7,6 +7,7 @@ import { mkdir } from 'node:fs/promises';
 import { extname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
+import { projectAllowFile } from '../egress/allow-list-file.ts';
 
 export const DOCKER = '/usr/bin/docker';
 const run = promisify(execFile);
@@ -91,7 +92,13 @@ export class DockerIsolation {
    * Réseau privé et proxy de sortie d'un bac à sable : seul le proxy est relié aux deux réseaux, et ne laisse passer
    * que les domaines autorisés. Il survit à son arrêt, pour être relancé avec le bac à sable.
    */
-  async isolation(target: { dir: string; label: string; name: string }): Promise<{ network: string; proxy: string }> {
+  async isolation(target: {
+    dir: string;
+    label: string;
+    name: string;
+    /** Chemins des projets du bac à sable : leurs domaines propres s'ajoutent à la liste générale */
+    projects: readonly string[];
+  }): Promise<{ network: string; proxy: string }> {
     if (!(await imageExists())) await buildImage();
     const network = target.name;
     const proxy = `${target.name}-egress`;
@@ -117,6 +124,8 @@ export class DockerIsolation {
       '--user',
       this.options.user,
       ...UNPRIVILEGED,
+      '--env',
+      `BOSCO_EGRESS_PROJECTS=${target.projects.map(projectAllowFile).join(',')}`,
       '--volume',
       `${this.options.allowDir}:/bosco/allow:ro`,
       '--volume',

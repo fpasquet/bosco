@@ -2,7 +2,12 @@ import { BadRequestException, ConflictException, NotFoundException } from '@nest
 import { DomainError } from '../../../shared/domain/domain-error.ts';
 import { FolderNotFound } from '../../domain/folder.ts';
 import { GroupNameTaken, UnknownGroup } from '../../domain/group.ts';
-import { ProjectAlreadyAdded, ProjectHasRunningSession, UnknownProject } from '../../domain/project.ts';
+import {
+  ProjectAlreadyAdded,
+  ProjectDomainTaken,
+  ProjectHasRunningSession,
+  UnknownProject,
+} from '../../domain/project.ts';
 
 /**
  * Erreurs du domaine en statut HTTP, avec leur code stable : inconnu en 404, déjà pris ou encore utilisé en 409, le
@@ -19,6 +24,7 @@ export async function settle<T>(work: () => Promise<T>): Promise<T> {
     if (
       error instanceof ProjectAlreadyAdded ||
       error instanceof GroupNameTaken ||
+      error instanceof ProjectDomainTaken ||
       error instanceof ProjectHasRunningSession
     )
       throw new ConflictException({ statusCode: 409, ...body });

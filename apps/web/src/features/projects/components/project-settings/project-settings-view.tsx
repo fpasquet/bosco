@@ -1,5 +1,5 @@
 'use client';
-import { Box, Layers, Monitor } from 'lucide-react';
+import { Box, Globe, Layers, Monitor, X } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useId } from 'react';
 import { useForm } from 'react-hook-form';
@@ -13,13 +13,17 @@ import { AddToGroupMenu } from '../add-to-group-menu';
 
 export interface ProjectSettingsViewProps {
   busy: boolean;
+  /** Refus de l'API pour le domaine ajouté, posé sous son champ */
+  domainError: null | string;
   /** Tous les groupes : ceux du projet s'affichent, les autres se proposent */
   groups: GroupDto[];
   now: Date;
+  onAddDomain: (domain: string) => void;
   onAddToGroup: (group: GroupDto) => void;
   onNewGroup: () => void;
   onPlace: (place: ProjectPlaceDto) => void;
   onRemove: () => void;
+  onRemoveDomain: (domain: string) => void;
   onStartBranch: (branch: null | string) => void;
   /** Chemin déjà écrit comme dans le terminal (« ~/www/api-tarifs ») */
   project: ProjectDetailDto;
@@ -92,18 +96,68 @@ function StartBranch({
   );
 }
 
+/** Ajout d'un domaine propre au projet ; le champ se vide une fois le domaine dans la liste. */
+function AddDomain({
+  busy,
+  domains,
+  error,
+  onAdd,
+}: {
+  busy: boolean;
+  domains: string[];
+  error: null | string;
+  onAdd: (domain: string) => void;
+}) {
+  const errorId = useId();
+  const { formState, handleSubmit, register, reset, setError } = useForm({ defaultValues: { domain: '' } });
+  useEffect(() => reset({ domain: '' }), [domains, reset]);
+  useEffect(() => {
+    if (error) setError('domain', { type: 'server', message: error });
+  }, [error, setError]);
+  const message = formState.errors.domain?.message;
+  return (
+    <form
+      noValidate
+      className="flex flex-wrap items-start gap-2"
+      onSubmit={(event) => void handleSubmit(({ domain }) => onAdd(domain.trim()))(event)}
+    >
+      <label className="flex min-w-0 flex-col gap-1.5">
+        <span className="sr-only">Ajouter un domaine</span>
+        <input
+          className="input w-64 font-mono"
+          placeholder="Ajouter un domaine"
+          aria-invalid={message ? true : undefined}
+          aria-describedby={message ? errorId : undefined}
+          {...register('domain', { validate: (value) => value.trim() !== '' || 'Écris un nom de domaine.' })}
+        />
+        {message && (
+          <span id={errorId} className="text-xs text-danger">
+            {message}
+          </span>
+        )}
+      </label>
+      <Button type="submit" size="sm" variant="outline" className="mt-1" disabled={busy}>
+        Ajouter
+      </Button>
+    </form>
+  );
+}
+
 /**
  * Réglages d'un projet : son identité, ses groupes, où tournent ses nouvelles sessions et la branche que copie
- * un bac à sable, puis son retrait, volontairement discret. Sur le téléphone, tout se lit.
+ * un bac à sable, ses domaines propres pour le bac à sable, puis son retrait, volontairement discret. Sur le téléphone, tout se lit.
  */
 export function ProjectSettingsView({
   busy,
+  domainError,
   groups,
   now,
+  onAddDomain,
   onAddToGroup,
   onNewGroup,
   onPlace,
   onRemove,
+  onRemoveDomain,
   onStartBranch,
   project,
   startBranchError,
@@ -187,6 +241,33 @@ export function ProjectSettingsView({
             </p>
           </>
         )}
+      </SectionCard>
+      <SectionCard title="Domaines du projet">
+        <p className="text-xs text-muted">S’ajoutent à la liste générale des domaines autorisés du bac à sable.</p>
+        {project.domains.length === 0 ? (
+          <p className="text-muted">Aucun domaine propre au projet.</p>
+        ) : (
+          <ul aria-label="Domaines du projet" className="flex flex-wrap gap-2">
+            {project.domains.map((domain) => (
+              <li key={domain} className="badge gap-1.5 badge-outline font-mono">
+                <Globe aria-hidden className="size-3" />
+                {domain}
+                <button
+                  type="button"
+                  className="hidden cursor-pointer text-muted hover:text-ink md:inline-flex"
+                  aria-label={`Retirer ${domain}`}
+                  disabled={busy}
+                  onClick={() => onRemoveDomain(domain)}
+                >
+                  <X aria-hidden className="size-3" />
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+        <div className="hidden md:block">
+          <AddDomain busy={busy} domains={project.domains} error={domainError} onAdd={onAddDomain} />
+        </div>
       </SectionCard>
       <SectionCard title="Activité">
         <dl className="flex flex-col gap-2">

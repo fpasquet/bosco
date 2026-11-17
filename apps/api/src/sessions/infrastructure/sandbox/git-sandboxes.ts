@@ -27,7 +27,14 @@ function projectDir(path: string): string {
 
 /** Conteneurs des bacs à sable : l'isolation des agents du worker, branchée au point de composition. */
 export interface SandboxContainers {
-  ensure(spec: { dir: string; key: string; mounts: { from: string; to: string }[]; workdir: string }): Promise<void>;
+  ensure(spec: {
+    dir: string;
+    key: string;
+    mounts: { from: string; to: string }[];
+    /** Chemins des projets du bac à sable : leurs domaines propres s'ajoutent à la liste générale */
+    projects: readonly string[];
+    workdir: string;
+  }): Promise<void>;
   exec(key: string): TurnLaunch;
   remove(key: string): Promise<void>;
   state(key: string): Promise<SandboxState>;
@@ -110,6 +117,7 @@ export class GitSandboxes implements Sandboxes {
     await this.containers.ensure({
       dir,
       key,
+      projects: [projectRoot],
       workdir: projectRoot,
       mounts: [
         { from: join(dir, 'repo'), to: projectRoot },

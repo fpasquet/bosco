@@ -29,7 +29,13 @@ export class DockerSandboxContainers {
   }
 
   /** Démarre le conteneur et son proxy ; les recrée s'ils ont disparu (prune, poste redémarré). */
-  async ensure(spec: { dir: string; key: string; mounts: { from: string; to: string }[]; workdir: string }) {
+  async ensure(spec: {
+    dir: string;
+    key: string;
+    mounts: { from: string; to: string }[];
+    projects: readonly string[];
+    workdir: string;
+  }) {
     const names = this.names(spec.key);
     const state = await this.state(spec.key);
     if (state !== 'missing') {
@@ -42,6 +48,7 @@ export class DockerSandboxContainers {
       name: names.network,
       label: `bosco.session=${spec.key}`,
       dir: spec.dir,
+      projects: spec.projects,
     });
     const proxyEnv = ['HTTPS_PROXY', 'HTTP_PROXY', 'https_proxy', 'http_proxy'].flatMap((key) => [
       '--env',

@@ -11,6 +11,7 @@ import { settle } from './settle.ts';
 const PATH = z.string().min(1).max(4096);
 const addSchema = z.object({ paths: z.array(PATH).min(1).max(200) });
 const folderSchema = z.object({ path: PATH });
+const domainSchema = z.object({ domain: z.string().trim().min(1).max(253) });
 const changeSchema = z.object({
   pinned: z.boolean().optional(),
   place: z.enum(['sandbox', 'workstation']).nullable().optional(),
@@ -20,6 +21,7 @@ const changeSchema = z.object({
 function presentProject(project: ProjectSnapshot | ProjectView): ProjectDto {
   const view = 'sessions' in project ? project : { ...project, lastSessionAt: null, sessions: 0 };
   return {
+    domains: view.domains,
     git: view.git,
     id: view.id,
     lastSessionAt: view.lastSessionAt?.toISOString() ?? null,
@@ -76,6 +78,24 @@ export class ProjectsController {
   async changeProject(@Param('id', ParseIntPipe) id: number, @Body() body: unknown): Promise<ProjectDetailDto> {
     const changes = parseBody(changeSchema, body);
     const project = await settle(() => this.projects.changeProject(id, changes));
+    return presentDetail(project);
+  }
+
+  /** Un domaine propre au projet, pour ses bacs à sable (E21a). */
+  @Post(':id/domains')
+  @HttpCode(200)
+  async addDomain(@Param('id', ParseIntPipe) id: number, @Body() body: unknown): Promise<ProjectDetailDto> {
+    const { domain } = parseBody(domainSchema, body);
+    const project = await settle(() => this.projects.addDomain(id, domain));
+    return presentDetail(project);
+  }
+
+  @Delete(':id/domains/:domain')
+  async removeDomain(
+    @Param('id', ParseIntPipe) id: number,
+    @Param('domain') domain: string,
+  ): Promise<ProjectDetailDto> {
+    const project = await settle(() => this.projects.removeDomain(id, domain));
     return presentDetail(project);
   }
 

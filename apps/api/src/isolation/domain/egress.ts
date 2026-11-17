@@ -1,3 +1,5 @@
+import { isDomainName } from '../../shared/domain/domain-name.ts';
+
 /** Domaines toujours autorisés, nécessaires à Claude Code et aux installations : ils ne se retirent pas (E11b). */
 export const LOCKED_DOMAINS = [
   'api.anthropic.com',
@@ -17,6 +19,4 @@ export function allows(domains: readonly string[], host: string): boolean {
 }
 
 /** Un domaine ajouté : un nom, ou « *. » suivi d'un nom ; sans protocole, chemin ni port. */
-export function isDomain(value: string): boolean {
-  return /^(\*\.)?([a-z0-9-]+\.)+[a-z]{2,}$/i.test(value.trim());
-}
+export const isDomain = isDomainName;

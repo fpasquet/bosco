@@ -19,6 +19,7 @@ export const projectsOverview: ProjectsDto = {
       pinned: false,
       place: null,
       startBranch: null,
+      domains: [],
       sessions: 6,
     },
     {
@@ -30,6 +31,7 @@ export const projectsOverview: ProjectsDto = {
       pinned: false,
       place: null,
       startBranch: null,
+      domains: [],
       sessions: 4,
     },
     {
@@ -41,6 +43,7 @@ export const projectsOverview: ProjectsDto = {
       pinned: false,
       place: null,
       startBranch: null,
+      domains: [],
       sessions: 9,
     },
     {
@@ -52,6 +55,7 @@ export const projectsOverview: ProjectsDto = {
       pinned: false,
       place: null,
       startBranch: null,
+      domains: [],
       sessions: 2,
     },
     {
@@ -63,6 +67,7 @@ export const projectsOverview: ProjectsDto = {
       pinned: false,
       place: null,
       startBranch: null,
+      domains: [],
       sessions: 1,
     },
   ],
