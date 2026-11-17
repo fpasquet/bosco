@@ -304,12 +304,23 @@ export class WorkerService {
       await this.deps.tasks.fail(task.id, reason);
       return true;
     }
+    await this.conclude(task, workspace, progress, event);
+    return true;
+  }
+
+  /** Fin de l'agent : en échec, ou son travail rapatrié et la tâche à relire (E7a). */
+  private async conclude(
+    task: TaskView,
+    workspace: Workspace,
+    progress: { sessionId: null | string; spent: number; turns: number },
+    event: Extract<AgentEvent, { kind: 'result' }>,
+  ): Promise<void> {
     if (!event.ok) {
       await this.deps.tasks.fail(
         task.id,
         event.stop === 'max_turns' ? `Nombre de tours atteint : ${progress.turns + event.turns}` : 'Erreur de l’agent',
       );
-      return true;
+      return;
     }
     const { base, changes, from, proposals } = await this.deps.workspaces.collect(workspace, {
       id: task.id,
@@ -329,7 +340,6 @@ export class WorkerService {
       sessionId: progress.sessionId,
       turns: progress.turns + event.turns,
     });
-    return true;
   }
 
   /** Place prise au départ, notée au journal (CA-TACH-81) : « 1 agent sur 1 pour api-voix, 2 / 4 ». */
