@@ -4,8 +4,8 @@ import Link from 'next/link';
 export interface SessionsSidebarProps {
   liveTracking: boolean;
   profiles: { count: number; label: string; path: string }[];
-  repositories: { count: number; name: string }[];
-  /** Dépôt filtré (E1c) : son lien porte aria-current */
+  projects: { count: number; name: string }[];
+  /** Projet filtré (E1c) : son lien porte aria-current */
   selected: null | string;
   /** L'état des sources se cache quand Bosco est injoignable : il serait périmé (E1f) */
   showStatus?: boolean;
@@ -15,26 +15,26 @@ const ITEM =
   'flex h-8 items-center gap-3 rounded-control px-2.5 aria-current:bg-nav-active aria-current:font-medium aria-current:text-nav-ink';
 const HEADING = 'mt-6 px-2.5 text-xs font-semibold tracking-wider uppercase';
 
-/** Dépôts, profils et état des sources dans la barre latérale ; un clic sur un dépôt filtre la vue d'ensemble. */
+/** Projets, profils et état des sources dans la barre latérale ; un clic sur un projet filtre la vue d'ensemble. */
 export function SessionsSidebar({
   liveTracking,
   profiles,
-  repositories,
+  projects,
   selected,
   showStatus = true,
 }: SessionsSidebarProps) {
   return (
     <>
-      {repositories.length > 0 && (
+      {projects.length > 0 && (
         <>
-          <p id="sidebar-repositories" className={HEADING}>
-            Dépôts
+          <p id="sidebar-projects" className={HEADING}>
+            Projets
           </p>
-          <nav aria-labelledby="sidebar-repositories" className="mt-1.5 flex flex-col gap-0.5">
-            {repositories.map(({ count, name }) => (
+          <nav aria-labelledby="sidebar-projects" className="mt-1.5 flex flex-col gap-0.5">
+            {projects.map(({ count, name }) => (
               <Link
                 key={name}
-                href={`/?repo=${encodeURIComponent(name)}`}
+                href={`/?project=${encodeURIComponent(name)}`}
                 aria-current={selected === name ? 'page' : undefined}
                 className={ITEM}
               >

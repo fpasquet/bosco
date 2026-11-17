@@ -1,5 +1,5 @@
 {
-  "target": { "kind": "repository", "name": "api-voix" },
+  "target": { "kind": "project", "name": "api-voix" },
   "text": {
     "title": "Garder les fichiers audio 30 jours en cache",
     "context": "Générer un même article plusieurs fois coûte cher.",

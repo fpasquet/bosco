@@ -1,6 +1,6 @@
 import { Skeleton } from '@/shared/ui/skeleton';
 
-/** Partie d'écran en chargement (réglages d'un dépôt, contexte, droits) : une carte de lignes animées. */
+/** Partie d'écran en chargement (réglages d'un projet, contexte, droits) : une carte de lignes animées. */
 export function SectionSkeleton({ rows = 3 }: { rows?: number }) {
   return (
     <div

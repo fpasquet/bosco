@@ -1,5 +1,5 @@
 // Texte d'une notification native de l'application du poste (CA-APPS-03) : le même que celui de notify-send (E15b),
-// en texte simple, le type et le dépôt en titre, la session en première ligne.
+// en texte simple, le type et le projet en titre, la session en première ligne.
 import type { NotificationDto } from '@bosco/domain';
 
 const KIND_LABELS: Record<NotificationDto['kind'], string> = {

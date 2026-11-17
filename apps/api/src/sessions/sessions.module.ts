@@ -18,7 +18,7 @@ import { SessionService } from './application/session.service.ts';
 import { SettingsService } from './application/settings.service.ts';
 import { SourceService } from './application/source.service.ts';
 import { SuggestionService } from './application/suggestion.service.ts';
-import { RepositoryDiscovery } from './domain/repository-discovery.ts';
+import { ProjectDiscovery } from './domain/project-discovery.ts';
 import { ClaudeChannelInstaller } from './infrastructure/claude-code/channel-installer.ts';
 import { ClaudeTurnRunner } from './infrastructure/claude-code/claude-turn-runner.ts';
 import { FileConversationReader } from './infrastructure/claude-code/conversation-reader.ts';
@@ -179,8 +179,8 @@ const worktrees = new GitWorktreeOrigins();
           registry,
           () => settings.inactivityDelayMs(),
           (gitRoot, path) =>
-            new RepositoryDiscovery(
-              settings.repositories(),
+            new ProjectDiscovery(
+              settings.projects(),
               config.profilesRoot,
               (root) => worktrees.originOf(root),
               (folder) => worktrees.rootOf(folder),

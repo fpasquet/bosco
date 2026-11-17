@@ -46,10 +46,10 @@ function titleOf(session: Session): string {
   return session.toSnapshot().title ?? `Session ${session.id.slice(0, 8)}`;
 }
 
-/** Dépôt de la session, d'après son dossier : il titre la notification du bureau */
+/** Projet de la session, d'après son dossier : il titre la notification du bureau */
 function placeOf(session: Session): null | string {
-  const { repoPath, repoRoot } = session.toSnapshot();
-  const folder = repoRoot ?? repoPath;
+  const { projectPath, projectRoot } = session.toSnapshot();
+  const folder = projectRoot ?? projectPath;
   return folder ? (folder.split('/').findLast(Boolean) ?? null) : null;
 }
 

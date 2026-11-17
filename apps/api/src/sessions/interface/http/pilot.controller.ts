@@ -48,7 +48,7 @@ const messageSchema = z.object({
 
 const startSchema = messageSchema.extend({
   profile: z.string().min(1).nullable(),
-  repository: z.string().min(1),
+  project: z.string().min(1),
   /** Dans un bac à sable (E16b) : branche de départ et branche de la session, null : proposées */
   sandbox: z
     .object({ branch: z.string().trim().max(200).nullable(), startBranch: z.string().trim().max(200).nullable() })
@@ -95,7 +95,7 @@ export class PilotController {
     @Inject(SUGGESTION_SERVICE) private readonly suggestions: SuggestionService,
   ) {}
 
-  /** Formulaire d'une nouvelle session (E16a) : dépôts et abonnements Claude. */
+  /** Formulaire d'une nouvelle session (E16a) : projets et abonnements Claude. */
   @Get('pilot/options')
   async options(): Promise<PilotOptionsDto> {
     return this.pilot.options();
@@ -109,7 +109,7 @@ export class PilotController {
       const sessionId = await this.pilot.start({
         ...pilotMessage(input),
         profile: input.profile,
-        repository: input.repository,
+        project: input.project,
         sandbox: input.sandbox ?? null,
       });
       return { sessionId };
@@ -204,18 +204,18 @@ export class PilotController {
     }
   }
 
-  /** Suggestions de l'éditeur (CA-SESS-99) : `@` les fichiers, `/` les commandes, pour une session ou un dépôt. */
+  /** Suggestions de l'éditeur (CA-SESS-99) : `@` les fichiers, `/` les commandes, pour une session ou un projet. */
   @Get('pilot/suggestions')
   async suggest(
     @Query('kind') kind: string,
     @Query('q') query = '',
     @Query('session') sessionId?: string,
-    @Query('repository') repository?: string,
+    @Query('project') project?: string,
     @Query('profile') profile?: string,
   ): Promise<{ suggestions: SuggestionDto[] }> {
     if (kind !== 'file' && kind !== 'command') throw new BadRequestException({ code: 'invalidRequest' });
-    if (!sessionId && !repository) throw new BadRequestException({ code: 'invalidRequest' });
-    const target = sessionId ? { sessionId } : { repository: repository ?? '', profile: profile ?? null };
+    if (!sessionId && !project) throw new BadRequestException({ code: 'invalidRequest' });
+    const target = sessionId ? { sessionId } : { project: project ?? '', profile: profile ?? null };
     try {
       const suggestions = await this.suggestions.suggest(kind, target, query.slice(0, 200));
       return { suggestions };

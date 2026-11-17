@@ -2,5 +2,5 @@
 export interface ProfileCandidate {
   lastSessionAt: Date | null;
   path: string;
-  repositoryCount: number;
+  projectCount: number;
 }

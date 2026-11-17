@@ -20,7 +20,7 @@ export interface DecisionFormValues {
 
 export interface DecisionFormProps {
   busy: boolean;
-  /** Décisions des socles du dépôt, que celle-ci peut écarter (« fait exception à ») */
+  /** Décisions des socles du projet, que celle-ci peut écarter (« fait exception à ») */
   exceptionChoices: DecisionDto[];
   initial: DecisionTextDto | null;
   mode: DecisionFormMode;
@@ -30,11 +30,11 @@ export interface DecisionFormProps {
   onSubmit: (values: DecisionFormValues) => void;
   /** Erreur renvoyée par l'API pour la note */
   serverError: null | string;
-  /** Dépôts entre lesquels choisir la cible d'une nouvelle décision ; sans eux, la cible est fixe */
+  /** Projets entre lesquels choisir la cible d'une nouvelle décision ; sans eux, la cible est fixe */
   targetChoices?: string[];
   /** « api-voix », « Socle Node.js » */
   targetLabel: string;
-  onTargetChange?: (repository: string) => void;
+  onTargetChange?: (project: string) => void;
 }
 
 const required = (message: string) => z.string().refine((value) => value.trim().length > 0, message);

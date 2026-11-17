@@ -7,8 +7,8 @@ import {
   elapsed,
   formatCost,
   formatTokens,
+  projects,
   relativePath,
-  repositories,
   sessions,
   sinceNow,
 } from './format';
@@ -36,9 +36,9 @@ describe('displayPath', () => {
   });
 });
 
-describe('repositories', () => {
+describe('projects', () => {
   it('agrees with the count', () => {
-    expect([repositories(1), repositories(29)]).toEqual(['1 dépôt', '29 dépôts']);
+    expect([projects(1), projects(29)]).toEqual(['1 projet', '29 projets']);
   });
 });
 
@@ -79,7 +79,7 @@ describe('sessions and dayLabel', () => {
 });
 
 describe('actionLabel and relativePath', () => {
-  it('reads the actions of the agent in French and writes paths from the repository root', () => {
+  it('reads the actions of the agent in French and writes paths from the project root', () => {
     expect(actionLabel('Read · src/indexer/pdf.ts')).toBe('Lit src/indexer/pdf.ts');
     expect(actionLabel('Bash · yarn test --forceExit')).toBe('Bash · yarn test --forceExit');
     expect(relativePath('/home/dev/labo-ia/src/a.ts', '/home/dev/labo-ia')).toBe('src/a.ts');

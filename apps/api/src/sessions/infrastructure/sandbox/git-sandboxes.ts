@@ -1,7 +1,7 @@
 // Bacs à sable des sessions (DT-37) : un dossier par session, gardé hors du conteneur. repo/ est un clone autonome du
 // dépôt (sans liens physiques : aucun objet partagé avec le dépôt du poste), home/ le dossier personnel de l'agent.
-// Le clone se monte au même chemin que le dépôt du poste, et les conversations de ce dépôt dans le profil des bacs à
-// sable, une source surveillée : le fil se lit en direct et se range avec son dépôt.
+// Le clone se monte au même chemin que le dépôt du poste, et les conversations de ce projet dans le profil des bacs à
+// sable, une source surveillée : le fil se lit en direct et se range avec son projet.
 import { execFile } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
@@ -59,19 +59,19 @@ export class GitSandboxes implements Sandboxes {
     return this.containers.unavailable();
   }
 
-  async currentBranch(repositoryRoot: string): Promise<null | string> {
-    const branch = await git(repositoryRoot, 'rev-parse', '--abbrev-ref', 'HEAD').catch(() => null);
+  async currentBranch(projectRoot: string): Promise<null | string> {
+    const branch = await git(projectRoot, 'rev-parse', '--abbrev-ref', 'HEAD').catch(() => null);
     return branch && branch !== 'HEAD' ? branch : null;
   }
 
   async prepare(input: {
     branch: string;
     profile: string;
-    repositoryRoot: string;
+    projectRoot: string;
     sessionId: string;
     startBranch: null | string;
   }): Promise<{ base: string; from: string }> {
-    const exists = await git(input.repositoryRoot, 'rev-parse', '--verify', '--quiet', `refs/heads/${input.branch}`)
+    const exists = await git(input.projectRoot, 'rev-parse', '--verify', '--quiet', `refs/heads/${input.branch}`)
       .then(() => true)
       .catch(() => false);
     if (exists) throw new SandboxError('invalidSandboxBranch', `La branche ${input.branch} existe déjà dans le dépôt.`);
@@ -79,7 +79,7 @@ export class GitSandboxes implements Sandboxes {
     const repo = join(dir, 'repo');
     await rm(dir, { recursive: true, force: true });
     await mkdir(join(dir, 'home', '.claude'), { recursive: true });
-    await git(this.root, 'clone', '--quiet', '--no-hardlinks', input.repositoryRoot, repo);
+    await git(this.root, 'clone', '--quiet', '--no-hardlinks', input.projectRoot, repo);
     const from = input.startBranch ?? (await git(repo, 'rev-parse', '--abbrev-ref', 'HEAD'));
     const start = input.startBranch ? `origin/${input.startBranch}` : 'HEAD';
     await git(repo, 'checkout', '--quiet', '-B', input.branch, start).catch(() => {
@@ -91,28 +91,28 @@ export class GitSandboxes implements Sandboxes {
     await cp(credentials, join(dir, 'home', '.claude', '.credentials.json'));
     await writeFile(join(dir, 'home', '.claude', 'settings.json'), JSON.stringify({ autoUpdates: false }));
     // Les points de montage existent avant le conteneur : sinon Docker les crée en root, et la suppression échoue
-    const project = projectDir(input.repositoryRoot);
+    const project = projectDir(input.projectRoot);
     await mkdir(join(this.profile, 'projects', project), { recursive: true });
     await mkdir(join(dir, 'home', '.claude', 'projects', project), { recursive: true });
     return { base, from };
   }
 
-  async ensure(sessionId: string, repositoryRoot: string): Promise<TurnLaunch> {
+  async ensure(sessionId: string, projectRoot: string): Promise<TurnLaunch> {
     const dir = this.dirOf(sessionId);
     // Sans sa copie, le conteneur monterait un dossier vide que Docker créerait en root : la session ne se reprend plus
     if (!existsSync(join(dir, 'repo')))
       throw new SandboxError(
         'sandboxRemoved',
-        'La copie du dépôt de ce bac à sable a disparu : la session ne se reprend plus.',
+        'La copie du projet de ce bac à sable a disparu : la session ne se reprend plus.',
       );
-    const project = projectDir(repositoryRoot);
+    const project = projectDir(projectRoot);
     const key = this.keyOf(sessionId);
     await this.containers.ensure({
       dir,
       key,
-      workdir: repositoryRoot,
+      workdir: projectRoot,
       mounts: [
-        { from: join(dir, 'repo'), to: repositoryRoot },
+        { from: join(dir, 'repo'), to: projectRoot },
         { from: join(dir, 'home'), to: '/home/agent' },
         { from: join(this.profile, 'projects', project), to: `/home/agent/.claude/projects/${project}` },
       ],
@@ -138,7 +138,7 @@ export class GitSandboxes implements Sandboxes {
    * n'exécute ni les hooks ni la configuration du clone. La branche courante du poste n'est jamais touchée, ni une
    * branche du poste qui a avancé de son côté : la récupération prend alors un autre nom (CA-SESS-112).
    */
-  async retrieve(input: { branch: string; repositoryRoot: string; sessionId: string }): Promise<string> {
+  async retrieve(input: { branch: string; projectRoot: string; sessionId: string }): Promise<string> {
     const repo = join(this.dirOf(input.sessionId), 'repo');
     await git(repo, 'add', '--all');
     if (await git(repo, 'status', '--porcelain'))
@@ -155,13 +155,13 @@ export class GitSandboxes implements Sandboxes {
       );
     const head = await git(repo, 'rev-parse', 'HEAD');
     const temporary = `refs/bosco/sandboxes/${this.keyOf(input.sessionId)}`;
-    await git(input.repositoryRoot, 'fetch', '--quiet', '--no-tags', repo, `+${input.branch}:${temporary}`);
+    await git(input.projectRoot, 'fetch', '--quiet', '--no-tags', repo, `+${input.branch}:${temporary}`);
     try {
-      const target = await this.targetOf(input.repositoryRoot, input.branch, head);
-      await git(input.repositoryRoot, 'update-ref', `refs/heads/${target}`, head);
+      const target = await this.targetOf(input.projectRoot, input.branch, head);
+      await git(input.projectRoot, 'update-ref', `refs/heads/${target}`, head);
       return target;
     } finally {
-      await git(input.repositoryRoot, 'update-ref', '-d', temporary).catch(() => undefined);
+      await git(input.projectRoot, 'update-ref', '-d', temporary).catch(() => undefined);
     }
   }
 

@@ -19,10 +19,10 @@ export interface StateBoardProps {
 
 const COLUMN_TITLES: Record<SessionStateDto, string> = { ...STATE_LABELS, ended: 'Terminées', inactive: 'Inactives' };
 
-/** « labo-ia/rag » : le dépôt, et le dernier dossier quand la session tourne dans un sous-dossier. */
+/** « labo-ia/rag » : le projet, et le dernier dossier quand la session tourne dans un sous-dossier. */
 function placeOf(session: SessionDto): string {
-  if (!session.repository) return 'Hors dépôt git';
-  const { folder, name } = session.repository;
+  if (!session.project) return 'Hors projet';
+  const { folder, name } = session.project;
   return folder ? `${name}/${folder.split('/').at(-1) ?? folder}` : name;
 }
 

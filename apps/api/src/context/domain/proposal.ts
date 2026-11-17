@@ -13,7 +13,7 @@ const SECTIONS: Record<string, keyof DecisionText> = {
 
 /** Consigne donnée à l'agent du worker pour proposer une décision : un fichier, relevé à la fin de la tâche. */
 export const PROPOSAL_HELP = [
-  'Si ton travail suppose une décision durable pour ce dépôt (convention, choix technique), propose-la : écris un',
+  'Si ton travail suppose une décision durable pour ce projet (convention, choix technique), propose-la : écris un',
   'fichier .bosco/decisions/<nom>.md avec un titre (« # … ») puis les sections « ## Contexte », « ## Décision »,',
   '« ## Conséquences » et « ## Alternatives écartées ». Elle attendra la validation de la personne.',
 ].join(' ');

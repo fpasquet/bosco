@@ -18,7 +18,7 @@ const base: NotificationDto = {
 };
 
 describe('nativeText', () => {
-  it('titles with the kind and the repository, the session on the first line', () => {
+  it('titles with the kind and the project, the session on the first line', () => {
     expect(nativeText(base)).toEqual({
       title: 'Autorisation · labo-ia',
       body: 'Specs du tableau de bord Bosco\nBash · npm run db:migrate',

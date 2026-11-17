@@ -3,7 +3,7 @@ import type { CostReportDto } from '@bosco/domain';
 import { CostReport } from './cost-report';
 
 const day = (offset: number) => new Date(Date.now() - offset * 86_400_000).toLocaleDateString('sv');
-const repo = (name: string, usd: number, sessions = 3) => ({ name, sessions, usd });
+const project = (name: string, usd: number, sessions = 3) => ({ name, sessions, usd });
 
 const report: CostReportDto = {
   totalUsd: 96.4,
@@ -13,14 +13,14 @@ const report: CostReportDto = {
   cacheShare: 68,
   days: [4, 3, 2, 1, 0].map((offset) => ({
     date: day(offset),
-    repositories: [
-      repo('labo-ia', 2 + offset / 2),
-      repo('outils-node', 1.2),
-      repo('api-voix', 0.6),
-      repo('scripts', 0.3),
+    projects: [
+      project('labo-ia', 2 + offset / 2),
+      project('outils-node', 1.2),
+      project('api-voix', 0.6),
+      project('scripts', 0.3),
     ],
   })),
-  byRepository: [
+  byProject: [
     { name: 'labo-ia', sessions: 118, usd: 52.1, share: 54 },
     { name: 'outils-node', sessions: 51, usd: 24.85, share: 26 },
     { name: 'api-voix', sessions: 27, usd: 11.3, share: 12 },

@@ -1,7 +1,7 @@
 import type { DecisionSnapshot } from './decision.ts';
 import { type SocleSnapshot, soclesOf } from './socle.ts';
 
-/** Ce que le dépôt appelle et qui l'appelle, pour mesurer l'effet d'un changement ailleurs (E9a, annotation 4). */
+/** Ce que le projet appelle et qui l'appelle, pour mesurer l'effet d'un changement ailleurs (E9a, annotation 4). */
 export interface Architecture {
   calledBy: string[];
   calls: string[];
@@ -15,11 +15,11 @@ export interface ContextLink {
   url: string;
 }
 
-export interface RepositoryContext {
+export interface ProjectContext {
   architecture: Architecture;
-  /** Décisions acceptées du dépôt */
+  /** Décisions acceptées du projet */
   decisions: DecisionSnapshot[];
-  /** Décisions des socles écartées par une exception du dépôt */
+  /** Décisions des socles écartées par une exception du projet */
   excluded: DecisionSnapshot[];
   proposed: DecisionSnapshot[];
   socles: { decisions: DecisionSnapshot[]; socle: SocleSnapshot }[];
@@ -29,19 +29,17 @@ function title(decision: DecisionSnapshot): string {
   return decision.versions.at(-1)?.title ?? '';
 }
 
-/** Le contexte d'un dépôt : ce qui est transmis, ce qui attend, ce qui est écarté (RF-CONT-01 à 03). */
+/** Le contexte d'un projet : ce qui est transmis, ce qui attend, ce qui est écarté (RF-CONT-01 à 03). */
 export function contextOf(
-  repository: string,
+  project: string,
   decisions: readonly DecisionSnapshot[],
   socles: readonly SocleSnapshot[],
   architecture: Architecture,
-): RepositoryContext {
-  const own = decisions.filter(
-    (decision) => decision.target.kind === 'repository' && decision.target.name === repository,
-  );
+): ProjectContext {
+  const own = decisions.filter((decision) => decision.target.kind === 'project' && decision.target.name === project);
   const accepted = own.filter((decision) => decision.state === 'accepted');
   const exceptions = new Set(accepted.map((decision) => decision.exceptionTo).filter((id) => id !== null));
-  const applied = soclesOf(repository, socles).map((socle) => ({
+  const applied = soclesOf(project, socles).map((socle) => ({
     socle,
     decisions: decisions.filter(
       (decision) =>
@@ -66,11 +64,11 @@ function decisionLines(decision: DecisionSnapshot, prefix: string, suffix = ''):
   return [`- ${prefix}${title(decision)}${suffix}`, `  ${body}`];
 }
 
-function ownSection(context: RepositoryContext): string[] {
+function ownSection(context: ProjectContext): string[] {
   if (context.decisions.length === 0) return [];
   return [
     '',
-    '## Décisions du dépôt',
+    '## Décisions du projet',
     ...context.decisions.flatMap((decision) => {
       const exception = context.excluded.find((excluded) => excluded.id === decision.exceptionTo);
       const suffix = exception ? ` (fait exception à « ${title(exception)} »)` : '';
@@ -79,7 +77,7 @@ function ownSection(context: RepositoryContext): string[] {
   ];
 }
 
-function soclesSection(context: RepositoryContext): string[] {
+function soclesSection(context: ProjectContext): string[] {
   const socles = context.socles.filter(({ decisions }) => decisions.length > 0);
   if (socles.length === 0) return [];
   return [
@@ -112,13 +110,9 @@ function linksSection(links: readonly ContextLink[]): string[] {
 }
 
 /** Texte exact que lit l'agent au lancement (E9f) : décisions acceptées, socles, architecture, liens de la tâche. */
-export function contextText(
-  repository: string,
-  context: RepositoryContext,
-  links: readonly ContextLink[] = [],
-): string {
+export function contextText(project: string, context: ProjectContext, links: readonly ContextLink[] = []): string {
   return [
-    `# Contexte du dépôt ${repository}`,
+    `# Contexte du projet ${project}`,
     ...ownSection(context),
     ...soclesSection(context),
     ...architectureSection(context.architecture),

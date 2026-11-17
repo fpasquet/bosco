@@ -9,7 +9,7 @@ const meta = {
   parameters: { layout: 'padded' },
   args: {
     socles: STORY_SOCLES,
-    repositories: ['api-signets', 'api-quiz', 'api-voix', 'outils-node'],
+    projects: ['api-signets', 'api-quiz', 'api-voix', 'outils-node'],
     busy: false,
     serverError: null,
     onCancel: fn(),

@@ -16,21 +16,21 @@ describe('dayTitle', () => {
 });
 
 describe('chart', () => {
-  const repo = (name: string, usd: number) => ({ name, sessions: 1, share: 0, usd });
+  const project = (name: string, usd: number) => ({ name, sessions: 1, share: 0, usd });
   const report = {
-    byRepository: [
-      repo('labo-ia', 5),
-      repo('outils-node', 3),
-      repo('api-voix', 2),
-      repo('scripts', 1),
-      repo('notes', 1),
+    byProject: [
+      project('labo-ia', 5),
+      project('outils-node', 3),
+      project('api-voix', 2),
+      project('scripts', 1),
+      project('notes', 1),
     ],
-    days: [{ date: '2026-11-06', repositories: [repo('labo-ia', 2), repo('scripts', 1), repo('notes', 0.5)] }],
+    days: [{ date: '2026-11-06', projects: [project('labo-ia', 2), project('scripts', 1), project('notes', 0.5)] }],
   } as unknown as CostReportDto;
 
-  it('keeps three repositories, then puts the others together', () => {
+  it('keeps three projects, then puts the others together', () => {
     const series = chartSeries(report);
-    expect(series.map(({ label }) => label)).toEqual(['labo-ia', 'outils-node', 'api-voix', 'autres dépôts']);
+    expect(series.map(({ label }) => label)).toEqual(['labo-ia', 'outils-node', 'api-voix', 'autres projets']);
     const top = series.slice(0, 3).map(({ name }) => name);
     expect(seriesCost(report.days[0] as never, { name: '*' }, top)).toBe(1.5);
   });

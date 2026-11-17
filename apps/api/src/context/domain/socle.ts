@@ -1,6 +1,6 @@
 import { DomainError } from '../../shared/domain/domain-error.ts';
 
-/** Global : tous les dépôts ; partagé : les seuls dépôts qui l'héritent (RF-CONT-03). */
+/** Global : tous les projets ; partagé : les seuls projets qui l'héritent (RF-CONT-03). */
 export type SocleScope = 'global' | 'shared';
 
 export interface SocleSnapshot {
@@ -8,7 +8,7 @@ export interface SocleSnapshot {
   /** Socle dont il reçoit les décisions, en plus des siennes */
   inherits: null | number;
   name: string;
-  repositories: string[];
+  projects: string[];
   scope: SocleScope;
 }
 
@@ -26,8 +26,8 @@ export function checkInheritance(id: number, inherits: null | number, socles: re
   }
 }
 
-/** Socles qui s'appliquent à un dépôt, dans l'ordre où ils s'empilent : un socle avant ceux qui en héritent. */
-export function soclesOf(repository: string, socles: readonly SocleSnapshot[]): SocleSnapshot[] {
+/** Socles qui s'appliquent à un projet, dans l'ordre où ils s'empilent : un socle avant ceux qui en héritent. */
+export function soclesOf(project: string, socles: readonly SocleSnapshot[]): SocleSnapshot[] {
   const applied = new Map<number, SocleSnapshot>();
   const add = (socle: SocleSnapshot, depth: number) => {
     if (depth > socles.length) return;
@@ -35,6 +35,6 @@ export function soclesOf(repository: string, socles: readonly SocleSnapshot[]): 
     if (parent) add(parent, depth + 1);
     applied.set(socle.id, socle);
   };
-  for (const socle of socles) if (socle.scope === 'global' || socle.repositories.includes(repository)) add(socle, 0);
+  for (const socle of socles) if (socle.scope === 'global' || socle.projects.includes(project)) add(socle, 0);
   return [...applied.values()];
 }

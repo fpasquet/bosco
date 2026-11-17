@@ -1,7 +1,7 @@
 /** Décisions, socles et contexte transmis aux agents (lot 3, E9, E14). */
 export type DecisionStateDto = 'abandoned' | 'accepted' | 'proposed' | 'refused' | 'replaced';
 
-export type DecisionTargetDto = { id: number; kind: 'socle' } | { kind: 'repository'; name: string };
+export type DecisionTargetDto = { id: number; kind: 'socle' } | { kind: 'project'; name: string };
 
 export interface DecisionTextDto {
   alternatives: null | string;
@@ -37,21 +37,21 @@ export interface ArchitectureDto {
 export interface SocleDto {
   applied: string[];
   decisions: DecisionDto[];
-  exceptions: { decision: DecisionDto; replaces: DecisionDto; repository: string }[];
+  exceptions: { decision: DecisionDto; replaces: DecisionDto; project: string }[];
   id: number;
   inherits: null | number;
   name: string;
-  repositories: string[];
+  projects: string[];
   scope: 'global' | 'shared';
 }
 
-/** Contexte d'un dépôt (E9a) : ce qui est transmis, ce qui attend ta validation, ce qui est écarté. */
+/** Contexte d'un projet (E9a) : ce qui est transmis, ce qui attend ta validation, ce qui est écarté. */
 export interface ContextDto {
   architecture: ArchitectureDto;
   decisions: DecisionDto[];
   excluded: DecisionDto[];
   proposed: DecisionDto[];
-  repository: string;
+  project: string;
   socles: { decisions: DecisionDto[]; socle: { id: number; name: string; scope: 'global' | 'shared' } }[];
 }
 

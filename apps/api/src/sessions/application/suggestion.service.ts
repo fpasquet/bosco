@@ -12,14 +12,14 @@ export interface Suggestion {
 export interface Suggestions {
   commandsOf(
     profile: { label: string; path: string },
-    repository: { name: string; root: string },
+    project: { name: string; root: string },
     query: string,
   ): Promise<Suggestion[]>;
   filesOf(cwd: string, query: string): Promise<Suggestion[]>;
 }
 
-/** Où chercher : une session, ou le dépôt et le profil d'une nouvelle session (E16a). */
-export type SuggestionTarget = { profile: null | string; repository: string } | { sessionId: string };
+/** Où chercher : une session, ou le projet et le profil d'une nouvelle session (E16a). */
+export type SuggestionTarget = { profile: null | string; project: string } | { sessionId: string };
 
 /** Suggestions de « @ » et de « / » dans l'éditeur (CA-SESS-99). */
 export class SuggestionService {
@@ -43,20 +43,20 @@ export class SuggestionService {
     if ('sessionId' in target) {
       const session = await this.sessionRepository.find(target.sessionId);
       const snapshot = session?.toSnapshot();
-      const cwd = snapshot?.repoPath ?? snapshot?.repoRoot;
+      const cwd = snapshot?.projectPath ?? snapshot?.projectRoot;
       if (!snapshot || !cwd) throw new PilotTargetNotFound(`Bosco ne connaît pas la session ${target.sessionId}.`);
       const source = sources.find(({ id }) => id === snapshot.sourceId);
       return {
         cwd,
         profile: source ? { label: source.label, path: source.path } : null,
-        root: snapshot.repoRoot ?? cwd,
+        root: snapshot.projectRoot ?? cwd,
       };
     }
     const source = sources.find(({ path }) => path === target.profile);
     return {
-      cwd: target.repository,
+      cwd: target.project,
       profile: source ? { label: source.label, path: source.path } : null,
-      root: target.repository,
+      root: target.project,
     };
   }
 }

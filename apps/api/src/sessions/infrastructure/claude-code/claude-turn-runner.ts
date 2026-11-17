@@ -1,4 +1,4 @@
-// Un tour piloté par Bosco (DT-31) : `claude -p` en flux JSON en entrée et en sortie, dans le dossier du dépôt, avec le
+// Un tour piloté par Bosco (DT-31) : `claude -p` en flux JSON en entrée et en sortie, dans le dossier du projet, avec le
 // dossier de configuration du profil. `--permission-prompt-tool stdio` fait passer les autorisations et les questions de
 // l'agent par le protocole de contrôle : Bosco les reçoit sur la sortie et y répond sur l'entrée. Vérifié sur Claude
 // Code 2.1.319 ; le protocole de contrôle est celui des SDK, à revérifier à chaque version.

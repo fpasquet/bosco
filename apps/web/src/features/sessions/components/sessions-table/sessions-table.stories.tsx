@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite';
 import { STORY_SESSIONS, STORY_SOURCES } from '../../fixtures';
-import { groupByRepository, profileMark } from '../../lib/overview';
+import { groupByProject, profileMark } from '../../lib/overview';
 import { SessionsTable } from './sessions-table';
 
 const meta = {
@@ -8,7 +8,7 @@ const meta = {
   component: SessionsTable,
   parameters: { layout: 'padded' },
   args: {
-    groups: groupByRepository(STORY_SESSIONS),
+    groups: groupByProject(STORY_SESSIONS),
     markOf: (session) => profileMark(session, STORY_SOURCES),
     now: new Date(),
   },
@@ -17,15 +17,15 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const ByRepository: Story = {};
+export const ByProject: Story = {};
 
-export const FilteredByRepository: Story = {
+export const FilteredByProject: Story = {
   args: {
-    groups: groupByRepository(STORY_SESSIONS.filter((session) => session.repository?.name === 'labo-ia')),
+    groups: groupByProject(STORY_SESSIONS.filter((session) => session.project?.name === 'labo-ia')),
     showFolder: true,
   },
 };
 
 export const Loading: Story = {
-  args: { groups: groupByRepository(STORY_SESSIONS.slice(0, 2)), pendingRows: 4 },
+  args: { groups: groupByProject(STORY_SESSIONS.slice(0, 2)), pendingRows: 4 },
 };

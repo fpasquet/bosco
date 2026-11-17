@@ -4,12 +4,12 @@ import { AppShell } from '@/shared/layouts/app-shell';
 
 const TITLE = 'Vue d’ensemble';
 
-/** `?repo=labo-ia` limite la vue d'ensemble à un dépôt (E1c). */
-export default async function OverviewPage({ searchParams }: { searchParams: Promise<{ repo?: string }> }) {
-  const repository = (await searchParams).repo ?? null;
+/** `?project=labo-ia` limite la vue d'ensemble à un projet (E1c). */
+export default async function OverviewPage({ searchParams }: { searchParams: Promise<{ project?: string }> }) {
+  const project = (await searchParams).project ?? null;
   return (
-    <AppShell title={TITLE} sidebar={<OverviewSidebar selected={repository} />}>
-      <OverviewScreen repository={repository} title={TITLE} />
+    <AppShell title={TITLE} sidebar={<OverviewSidebar selected={project} />}>
+      <OverviewScreen project={project} title={TITLE} />
     </AppShell>
   );
 }

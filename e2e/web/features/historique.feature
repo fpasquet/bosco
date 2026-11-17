@@ -26,18 +26,18 @@ Fonctionnalité: Historique et coûts
   @CA-SESS-52
   @CA-SESS-53
   @NF-18
-  Scénario: Les coûts de la période sont des estimations, par jour et par dépôt
+  Scénario: Les coûts de la période sont des estimations, par jour et par projet
     Quand j'ouvre la page « /history?tab=costs »
     Alors je vois le texte « Total de la période »
-    Et je vois le titre « Par dépôt »
+    Et je vois le titre « Par projet »
     Et je vois le texte « Coût par jour »
     Et la page est accessible
 
   @CA-SESS-13
-  Scénario: La vue filtrée sur un dépôt liste ses sessions terminées aujourd'hui
+  Scénario: La vue filtrée sur un projet liste ses sessions terminées aujourd'hui
     Étant donné le suivi en direct est installé dans le profil « .claude-perso »
     Et la session « c41e9a07 » du profil « .claude-perso » se termine
-    Quand j'ouvre la page « /?repo=labo-ia »
-    Alors je vois le texte « Terminées aujourd’hui dans ce dépôt »
+    Quand j'ouvre la page « /?project=labo-ia »
+    Alors je vois le texte « Terminées aujourd’hui dans ce projet »
     Quand je clique sur le lien « Voir l’historique »
     Alors je suis sur la page « /history »

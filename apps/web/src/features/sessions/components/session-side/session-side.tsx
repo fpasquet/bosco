@@ -67,7 +67,7 @@ export function SessionSide({ now, onCopy, resume, sandbox, session }: SessionSi
             {session.changedFiles.map((file) => (
               <li key={file.path} className="flex gap-2">
                 <span className="min-w-0 flex-1 truncate" title={file.path}>
-                  {relativePath(file.path, session.repository?.root)}
+                  {relativePath(file.path, session.project?.root)}
                 </span>
                 <span className="text-success">+{file.added}</span>
                 {file.removed > 0 && <span className="text-danger">−{file.removed}</span>}

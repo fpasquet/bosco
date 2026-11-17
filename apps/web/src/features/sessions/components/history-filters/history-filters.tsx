@@ -9,7 +9,7 @@ export interface HistoryFiltersProps {
   filters: Filters;
   onChange: (filters: Filters) => void;
   profiles: { id: string; label: string }[];
-  repositories: string[];
+  projects: string[];
 }
 
 const PERIODS: { label: string; value: null | number }[] = [
@@ -46,7 +46,7 @@ function Chip({
 }
 
 /** Recherche et filtres en puces de l'historique, qui se cumulent (CA-SESS-47, CA-SESS-48). */
-export function HistoryFilters({ filters, onChange, profiles, repositories }: HistoryFiltersProps) {
+export function HistoryFilters({ filters, onChange, profiles, projects }: HistoryFiltersProps) {
   const search = useRef<HTMLInputElement>(null);
   useEffect(() => {
     const focusSearch = (event: KeyboardEvent) => {
@@ -85,9 +85,9 @@ export function HistoryFilters({ filters, onChange, profiles, repositories }: Hi
             </option>
           ))}
         </Chip>
-        <Chip label="Dépôt" value={filters.repository ?? ''} onChange={(value) => set({ repository: value || null })}>
+        <Chip label="Projet" value={filters.project ?? ''} onChange={(value) => set({ project: value || null })}>
           <option value="">tous</option>
-          {repositories.map((name) => (
+          {projects.map((name) => (
             <option key={name} value={name}>
               {name}
             </option>

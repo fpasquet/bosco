@@ -12,7 +12,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Un socle partagé par 12 dépôts (E14a, annotation 4). */
-export const TwelveRepositories: Story = {};
+/** Un socle partagé par 12 projets (E14a, annotation 4). */
+export const TwelveProjects: Story = {};
 
-export const OneRepository: Story = { args: { count: 1, socle: 'Socle NestJS' } };
+export const OneProject: Story = { args: { count: 1, socle: 'Socle NestJS' } };

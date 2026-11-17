@@ -18,8 +18,8 @@ export function sinceNow(date: Date, now: Date): string {
   return RELATIVE.format(-Math.floor(seconds / size), unit);
 }
 
-export function repositories(count: number): string {
-  return `${count} ${count > 1 ? 'dépôts' : 'dépôt'}`;
+export function projects(count: number): string {
+  return `${count} ${count > 1 ? 'projets' : 'projet'}`;
 }
 
 const NBSP = ' ';
@@ -81,7 +81,7 @@ export function actionLabel(action: string): string {
   return verb ? [verb, rest.join(' · ')].filter(Boolean).join(' ') : action;
 }
 
-/** Chemin écrit depuis la racine du dépôt quand il y est : « src/indexer/pdf.ts ». */
+/** Chemin écrit depuis la racine du projet quand il y est : « src/indexer/pdf.ts ». */
 export function relativePath(path: string, root: null | string | undefined): string {
   return root && path.startsWith(`${root}/`) ? path.slice(root.length + 1) : path;
 }

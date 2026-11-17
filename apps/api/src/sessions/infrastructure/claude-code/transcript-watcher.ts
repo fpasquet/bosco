@@ -101,8 +101,8 @@ export class FileTranscriptWatcher implements TranscriptWatcher {
     const bySession = new Map<string, TranscriptEvent[]>();
     for (const line of buffer.subarray(0, end).toString('utf8').split('\n')) {
       for (const { sessionId, event } of parser.parse(line)) {
-        const repoRoot = event.cwd ? await this.gitRootOf(event.cwd) : null;
-        bySession.set(sessionId, [...(bySession.get(sessionId) ?? []), { ...event, repoRoot }]);
+        const projectRoot = event.cwd ? await this.gitRootOf(event.cwd) : null;
+        bySession.set(sessionId, [...(bySession.get(sessionId) ?? []), { ...event, projectRoot }]);
       }
     }
     for (const [sessionId, events] of bySession)
@@ -120,12 +120,12 @@ async function findGitRoot(cwd: string): Promise<null | string> {
 }
 
 async function recentTranscripts(projects: string, since: Date): Promise<{ mtime: number; path: string }[]> {
-  const repositories = await readdir(projects, { withFileTypes: true }).catch(() => []);
+  const folders = await readdir(projects, { withFileTypes: true }).catch(() => []);
   const files: { mtime: number; path: string }[] = [];
-  for (const repository of repositories.filter((entry) => entry.isDirectory())) {
-    const names = await readdir(join(projects, repository.name)).catch(() => []);
+  for (const folder of folders.filter((entry) => entry.isDirectory())) {
+    const names = await readdir(join(projects, folder.name)).catch(() => []);
     for (const name of names.filter((candidate) => candidate.endsWith('.jsonl'))) {
-      const file = join(projects, repository.name, name);
+      const file = join(projects, folder.name, name);
       const info = await stat(file);
       if (info.mtime >= since) files.push({ path: file, mtime: info.mtimeMs });
     }

@@ -16,7 +16,7 @@ export interface DecisionViewProps {
   onAbandon: (reason: null | string) => void;
   onAccept: (edited: DecisionTextDto | null) => void;
   onRefuse: (reason: null | string) => void;
-  /** Retour au contexte : le dépôt, ou la liste des socles */
+  /** Retour au contexte : le projet, ou la liste des socles */
   parent: { href: string; label: string };
   targetLabel: string;
 }
@@ -93,8 +93,8 @@ export function DecisionView({
   const state = DECISION_STATES[decision.state];
   const proposed = decision.state === 'proposed';
   const target =
-    decision.target.kind === 'repository'
-      ? `repository=${encodeURIComponent(decision.target.name)}`
+    decision.target.kind === 'project'
+      ? `project=${encodeURIComponent(decision.target.name)}`
       : `socle=${decision.target.id}`;
   return (
     <div className="flex flex-col gap-4 pb-20 md:pb-0">

@@ -1,12 +1,12 @@
-// Ce que les scénarios ne voient pas : chaque règle de rangement d'une session dans son dépôt (E4d).
+// Ce que les scénarios ne voient pas : chaque règle de rangement d'une session dans son projet (E4d).
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_DISCOVERY, type DiscoverySnapshot, folderPath, RepositoryDiscovery } from './repository-discovery.ts';
+import { DEFAULT_DISCOVERY, type DiscoverySnapshot, folderPath, ProjectDiscovery } from './project-discovery.ts';
 
 const HOME = '/home/dev';
 const WORKTREES: Record<string, string> = { '/home/dev/www/labo-ia/.claude/worktrees/fix-ui': '/home/dev/www/labo-ia' };
 
 function placeOf(settings: Partial<DiscoverySnapshot>, gitRoot: null | string, path: null | string) {
-  const discovery = new RepositoryDiscovery(
+  const discovery = new ProjectDiscovery(
     { ...DEFAULT_DISCOVERY, ...settings },
     HOME,
     (root) => WORKTREES[root] ?? null,
@@ -14,7 +14,7 @@ function placeOf(settings: Partial<DiscoverySnapshot>, gitRoot: null | string, p
   return discovery.placeOf(gitRoot, path);
 }
 
-describe('RepositoryDiscovery', () => {
+describe('ProjectDiscovery', () => {
   it('keeps the git root and the folder inside it', () => {
     expect(placeOf({}, '/home/dev/www/labo-ia', '/home/dev/www/labo-ia/packages/bosco')).toEqual({
       folder: 'packages/bosco',
@@ -25,7 +25,7 @@ describe('RepositoryDiscovery', () => {
     });
   });
 
-  it('leaves a session outside git without a repository, unless git only is off (CA-SESS-77)', () => {
+  it('leaves a session outside git without a project, unless git only is off (CA-SESS-77)', () => {
     expect(placeOf({}, null, '/home/dev')).toBeNull();
     expect(placeOf({ gitOnly: false }, null, '/home/dev/notes')).toMatchObject({ git: false, name: 'notes' });
   });
@@ -40,7 +40,7 @@ describe('RepositoryDiscovery', () => {
     expect(placeOf({ attachWorktrees: false }, worktree, worktree)).toMatchObject({ name: 'fix-ui', root: worktree });
   });
 
-  it('keeps only the repositories under the repository folders, excluded folders first (CA-SESS-79)', () => {
+  it('keeps only the projects under the project folders, excluded folders first (CA-SESS-79)', () => {
     const settings = { excluded: ['/tmp', '~/www/archives'], roots: ['~/www'] };
     expect(placeOf(settings, '/home/dev/www/api-voix', '/home/dev/www/api-voix')).not.toBeNull();
     expect(placeOf(settings, '/home/dev/projets/site', '/home/dev/projets/site')).toBeNull();
@@ -53,12 +53,12 @@ describe('RepositoryDiscovery', () => {
 
   it('finds the git root of a session read before Bosco noted it', () => {
     const rootOf = (path: string) => (path.startsWith('/home/dev/www/api-voix') ? '/home/dev/www/api-voix' : null);
-    const discovery = new RepositoryDiscovery(DEFAULT_DISCOVERY, HOME, () => null, rootOf);
+    const discovery = new ProjectDiscovery(DEFAULT_DISCOVERY, HOME, () => null, rootOf);
     expect(discovery.placeOf(null, '/home/dev/www/api-voix/src')).toMatchObject({ folder: 'src', name: 'api-voix' });
     expect(discovery.placeOf(null, '/home/dev')).toBeNull();
   });
 
-  it('marks a hidden repository without removing it (CA-SESS-80)', () => {
+  it('marks a hidden project without removing it (CA-SESS-80)', () => {
     const hidden = { hidden: ['/home/dev/www/rules-sandbox'] };
     expect(placeOf(hidden, '/home/dev/www/rules-sandbox', '/home/dev/www/rules-sandbox')).toMatchObject({
       hidden: true,

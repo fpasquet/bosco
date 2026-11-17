@@ -8,19 +8,19 @@ import { titleOf } from '../../lib/decisions';
 
 const SHOWN = 3;
 
-/** « s’applique aux 15 dépôts » pour un socle global, « 12 dépôts » pour un socle partagé. */
+/** « s’applique aux 15 projets » pour un socle global, « 12 projets » pour un socle partagé. */
 function countOf(socle: SocleDto): string {
   const count = socle.applied.length;
-  const repositories = count > 1 ? `${count} dépôts` : `${count} dépôt`;
-  if (socle.scope === 'shared') return repositories;
-  return count > 1 ? `s’applique aux ${repositories}` : `s’applique à ${repositories}`;
+  const projects = count > 1 ? `${count} projets` : `${count} projet`;
+  if (socle.scope === 'shared') return projects;
+  return count > 1 ? `s’applique aux ${projects}` : `s’applique à ${projects}`;
 }
 
-function Repositories({ names }: { names: string[] }) {
+function Projects({ names }: { names: string[] }) {
   const [open, setOpen] = useState(false);
   const shown = open ? names : names.slice(0, SHOWN);
   return (
-    <ul aria-label="Dépôts" className="flex flex-wrap items-center gap-1.5">
+    <ul aria-label="Projets" className="flex flex-wrap items-center gap-1.5">
       {shown.map((name) => (
         <li key={name} className="badge badge-outline font-mono badge-sm">
           {name}
@@ -38,14 +38,14 @@ function Repositories({ names }: { names: string[] }) {
 }
 
 /**
- * Socles (E14a) : pour chacun ses décisions, les dépôts qui en héritent et les exceptions locales. Les socles
- * s'empilent dans le contexte d'un dépôt ; un socle global s'applique à tous.
+ * Socles (E14a) : pour chacun ses décisions, les projets qui en héritent et les exceptions locales. Les socles
+ * s'empilent dans le contexte d'un projet ; un socle global s'applique à tous.
  */
 export function SoclesList({ socles }: { socles: SocleDto[] }) {
   if (socles.length === 0)
     return (
       <p className="text-muted">
-        Aucun socle pour l’instant : un socle regroupe des décisions communes à plusieurs dépôts.
+        Aucun socle pour l’instant : un socle regroupe des décisions communes à plusieurs projets.
       </p>
     );
   return (
@@ -81,12 +81,12 @@ export function SoclesList({ socles }: { socles: SocleDto[] }) {
                 ))}
               </ul>
             )}
-            {socle.scope === 'shared' && <Repositories names={socle.applied} />}
+            {socle.scope === 'shared' && <Projects names={socle.applied} />}
             {socle.exceptions.length > 0 && (
               <ul className="flex flex-col gap-1 text-xs text-muted">
-                {socle.exceptions.map(({ decision, replaces, repository }) => (
+                {socle.exceptions.map(({ decision, replaces, project }) => (
                   <li key={decision.id}>
-                    {repository} : DEC-{decision.id} fait exception à « {titleOf(replaces)} »
+                    {project} : DEC-{decision.id} fait exception à « {titleOf(replaces)} »
                   </li>
                 ))}
               </ul>

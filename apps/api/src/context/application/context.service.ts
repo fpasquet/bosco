@@ -1,5 +1,5 @@
 import { DomainError } from '../../shared/domain/domain-error.ts';
-import { type Architecture, contextOf, contextText, type RepositoryContext, tokensOf } from '../domain/context-text.ts';
+import { type Architecture, contextOf, contextText, type ProjectContext, tokensOf } from '../domain/context-text.ts';
 import { Decision, type DecisionSnapshot, type DecisionTarget, type DecisionText } from '../domain/decision.ts';
 import { checkInheritance, type SocleScope, type SocleSnapshot, soclesOf } from '../domain/socle.ts';
 
@@ -16,12 +16,12 @@ export interface SocleRepository {
 }
 
 export interface ArchitectureStore {
-  of(repository: string): Promise<Architecture>;
-  save(repository: string, architecture: Architecture): Promise<void>;
+  of(project: string): Promise<Architecture>;
+  save(project: string, architecture: Architecture): Promise<void>;
 }
 
-/** Dépôts connus du poste, d'après les sessions des profils surveillés. */
-export interface KnownRepositories {
+/** Projets connus du poste, d'après les sessions des profils surveillés. */
+export interface KnownProjects {
   list(): Promise<{ name: string; root: string }[]>;
 }
 
@@ -31,8 +31,8 @@ export class UnknownDecision extends DomainError {
   }
 }
 
-export interface ContextOverview extends RepositoryContext {
-  repository: string;
+export interface ContextOverview extends ProjectContext {
+  project: string;
 }
 
 export interface ContextPreview {
@@ -44,48 +44,48 @@ export interface ContextPreview {
 }
 
 export interface SocleView extends SocleSnapshot {
-  /** Dépôts auxquels il s'applique vraiment : tous pour un socle global */
+  /** Projets auxquels il s'applique vraiment : tous pour un socle global */
   applied: string[];
   decisions: DecisionSnapshot[];
-  /** Exceptions locales : une décision d'un dépôt qui retire celle du socle (CA-CONT-57) */
-  exceptions: { decision: DecisionSnapshot; repository: string; replaces: DecisionSnapshot }[];
+  /** Exceptions locales : une décision d'un projet qui retire celle du socle (CA-CONT-57) */
+  exceptions: { decision: DecisionSnapshot; project: string; replaces: DecisionSnapshot }[];
 }
 
 /**
- * Contexte transmis aux agents (RF-CONT-01 à 03, 10, 11) : décisions des dépôts et des socles, versionnées, proposées
- * par un agent et validées par toi seul, et place de chaque dépôt dans l'architecture.
+ * Contexte transmis aux agents (RF-CONT-01 à 03, 10, 11) : décisions des projets et des socles, versionnées, proposées
+ * par un agent et validées par toi seul, et place de chaque projet dans l'architecture.
  */
 export class ContextService {
   constructor(
     private readonly decisions: DecisionRepository,
     private readonly socles: SocleRepository,
     private readonly architectures: ArchitectureStore,
-    private readonly repositories: KnownRepositories,
+    private readonly projects: KnownProjects,
     private readonly clock: { now(): Date },
   ) {}
 
-  listRepositories(): Promise<{ name: string; root: string }[]> {
-    return this.repositories.list();
+  listProjects(): Promise<{ name: string; root: string }[]> {
+    return this.projects.list();
   }
 
-  /** Dépôt d'un dossier de travail (le plus profond qui le contient) et son dossier relatif ; null hors des dépôts. */
-  async repositoryOf(path: string): Promise<null | { folder: string; name: string }> {
-    const known = await this.repositories.list();
+  /** Projet d'un dossier de travail (le plus profond qui le contient) et son dossier relatif ; null hors des projets. */
+  async projectOf(path: string): Promise<null | { folder: string; name: string }> {
+    const known = await this.projects.list();
     const found = known
       .filter(({ root }) => path === root || path.startsWith(`${root}/`))
       .toSorted((a, b) => b.root.length - a.root.length)[0];
     return found ? { name: found.name, folder: path.slice(found.root.length + 1) } : null;
   }
 
-  async overview(repository: string): Promise<ContextOverview> {
-    const context = await this.contextOf(repository);
-    return { repository, ...context };
+  async overview(project: string): Promise<ContextOverview> {
+    const context = await this.contextOf(project);
+    return { project, ...context };
   }
 
   /** Texte exact qu'une session lira par le serveur MCP de Bosco (E9f). */
-  async preview(repository: string): Promise<ContextPreview> {
-    const context = await this.contextOf(repository);
-    const text = contextText(repository, context);
+  async preview(project: string): Promise<ContextPreview> {
+    const context = await this.contextOf(project);
+    const text = contextText(project, context);
     return {
       text,
       tokens: tokensOf(text),
@@ -94,12 +94,12 @@ export class ContextService {
     };
   }
 
-  /** Dépôts qui ont une décision à eux, proposée ou acceptée : ceux que l'écran du contexte propose de consulter. */
-  async listDecidedRepositories(): Promise<string[]> {
+  /** Projets qui ont une décision à eux, proposée ou acceptée : ceux que l'écran du contexte propose de consulter. */
+  async listDecidedProjects(): Promise<string[]> {
     const all = await this.decisions.list();
     const names = all.flatMap((decision) => {
       const { state, target } = decision.toSnapshot();
-      return target.kind === 'repository' && (state === 'accepted' || state === 'proposed') ? [target.name] : [];
+      return target.kind === 'project' && (state === 'accepted' || state === 'proposed') ? [target.name] : [];
     });
     return [...new Set(names)].toSorted((a, b) => a.localeCompare(b));
   }
@@ -142,9 +142,9 @@ export class ContextService {
   }
 
   /** Proposée par un agent ou une session : elle attend ta validation (RF-CONT-02). */
-  async propose(repository: string, text: DecisionText, taskId: null | number): Promise<DecisionSnapshot> {
+  async propose(project: string, text: DecisionText, taskId: null | number): Promise<DecisionSnapshot> {
     const id = await this.decisions.nextId();
-    const decision = Decision.propose(id, repository, text, taskId, this.clock.now());
+    const decision = Decision.propose(id, project, text, taskId, this.clock.now());
     await this.decisions.save([decision]);
     return decision.toSnapshot();
   }
@@ -165,10 +165,10 @@ export class ContextService {
     return this.change(id, (decision) => decision.abandon(reason));
   }
 
-  async setArchitecture(repository: string, architecture: Architecture): Promise<Architecture> {
+  async setArchitecture(project: string, architecture: Architecture): Promise<Architecture> {
     const clean = (list: string[]) => [...new Set(list.map((name) => name.trim()).filter(Boolean))];
     const next = { calls: clean(architecture.calls), calledBy: clean(architecture.calledBy) };
-    await this.architectures.save(repository, next);
+    await this.architectures.save(project, next);
     return next;
   }
 
@@ -176,7 +176,7 @@ export class ContextService {
     const [socles, decisions, known] = await Promise.all([
       this.socles.list(),
       this.decisions.list(),
-      this.repositories.list(),
+      this.projects.list(),
     ]);
     const snapshots = decisions.map((decision) => decision.toSnapshot());
     return socles.map((socle) => {
@@ -189,8 +189,8 @@ export class ContextService {
         .filter((name) => soclesOf(name, socles).some(({ id }) => id === socle.id));
       const exceptions = snapshots.flatMap((decision) => {
         const replaces = own.find((candidate) => candidate.id === decision.exceptionTo);
-        return replaces && decision.state === 'accepted' && decision.target.kind === 'repository'
-          ? [{ decision, replaces, repository: decision.target.name }]
+        return replaces && decision.state === 'accepted' && decision.target.kind === 'project'
+          ? [{ decision, replaces, project: decision.target.name }]
           : [];
       });
       return { ...socle, applied, decisions: own, exceptions };
@@ -208,20 +208,20 @@ export class ContextService {
       name: socle.name.trim(),
       scope: socle.scope satisfies SocleScope,
       inherits: socle.inherits,
-      repositories: socle.scope === 'global' ? [] : [...new Set(socle.repositories)],
+      projects: socle.scope === 'global' ? [] : [...new Set(socle.projects)],
     };
     await this.socles.save(saved);
     return saved;
   }
 
-  private async contextOf(repository: string): Promise<RepositoryContext> {
+  private async contextOf(project: string): Promise<ProjectContext> {
     const [decisions, socles, architecture] = await Promise.all([
       this.decisions.list(),
       this.socles.list(),
-      this.architectures.of(repository),
+      this.architectures.of(project),
     ]);
     return contextOf(
-      repository,
+      project,
       decisions.map((decision) => decision.toSnapshot()),
       socles,
       architecture,

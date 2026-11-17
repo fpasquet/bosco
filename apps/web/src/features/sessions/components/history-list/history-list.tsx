@@ -63,7 +63,7 @@ export function HistoryList({ days, now, profileOf }: HistoryListProps) {
         <thead className="text-xs text-muted">
           <tr className="h-9 border-b border-line">
             <th className="w-28 pl-4 font-medium">État</th>
-            <th className="font-medium">Session · dépôt · dossier</th>
+            <th className="font-medium">Session · projet · dossier</th>
             <th className="w-20 font-medium">Profil</th>
             <th className="w-20 font-medium">Durée</th>
             <th className="w-20 font-medium">Coût</th>

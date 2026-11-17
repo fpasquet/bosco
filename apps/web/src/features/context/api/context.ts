@@ -32,14 +32,14 @@ async function send<T>(method: 'POST' | 'PUT', path: string, body: unknown): Pro
   return (await response.json()) as T;
 }
 
-export const contextQuery = (repository: string) => ({
-  queryKey: ['context', repository],
-  queryFn: () => read<ContextDto>(`/api/context?repository=${encodeURIComponent(repository)}`),
+export const contextQuery = (project: string) => ({
+  queryKey: ['context', project],
+  queryFn: () => read<ContextDto>(`/api/context?project=${encodeURIComponent(project)}`),
 });
 
-export const previewQuery = (repository: string) => ({
-  queryKey: ['context-preview', repository],
-  queryFn: () => read<ContextPreviewDto>(`/api/context/preview?repository=${encodeURIComponent(repository)}`),
+export const previewQuery = (project: string) => ({
+  queryKey: ['context-preview', project],
+  queryFn: () => read<ContextPreviewDto>(`/api/context/preview?project=${encodeURIComponent(project)}`),
   staleTime: 0,
 });
 
@@ -75,22 +75,21 @@ export const editDecision = (id: number, text: DecisionTextDto, note: string) =>
   send<DecisionDto>('POST', `/api/decisions/${id}/versions`, { text, note });
 export const abandonDecision = (id: number, reason: null | string) =>
   send<DecisionDto>('POST', `/api/decisions/${id}/abandon`, { reason });
-export const saveArchitecture = (repository: string, architecture: ArchitectureDto) =>
-  send<ArchitectureDto>('PUT', `/api/context/architecture/${encodeURIComponent(repository)}`, architecture);
+export const saveArchitecture = (project: string, architecture: ArchitectureDto) =>
+  send<ArchitectureDto>('PUT', `/api/context/architecture/${encodeURIComponent(project)}`, architecture);
 export const saveSocle = (
   id: null | number,
-  socle: { inherits: null | number; name: string; repositories: string[]; scope: 'global' | 'shared' },
+  socle: { inherits: null | number; name: string; projects: string[]; scope: 'global' | 'shared' },
 ) => send<SocleDto>(id === null ? 'POST' : 'PUT', id === null ? '/api/socles' : `/api/socles/${id}`, socle);
 
-/** Dépôts connus du poste, d'après les sessions surveillées. */
-export const repositoriesQuery = {
-  queryKey: ['repositories'],
-  queryFn: async () =>
-    (await read<{ repositories: { name: string; root: string }[] }>('/api/repositories')).repositories,
+/** Projets connus du poste, d'après les sessions surveillées. */
+export const projectsQuery = {
+  queryKey: ['projects'],
+  queryFn: async () => (await read<{ projects: { name: string; root: string }[] }>('/api/projects')).projects,
 };
 
-/** Dépôts qui ont une décision à eux, proposée ou acceptée : le choix de l'écran du contexte. */
-export const decidedRepositoriesQuery = {
-  queryKey: ['context-repositories'],
-  queryFn: async () => (await read<{ repositories: string[] }>('/api/context/repositories')).repositories,
+/** Projets qui ont une décision à eux, proposée ou acceptée : le choix de l'écran du contexte. */
+export const decidedProjectsQuery = {
+  queryKey: ['context-projects'],
+  queryFn: async () => (await read<{ projects: string[] }>('/api/context/projects')).projects,
 };

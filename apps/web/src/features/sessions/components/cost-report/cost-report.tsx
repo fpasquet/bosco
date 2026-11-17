@@ -12,7 +12,7 @@ export interface CostReportProps {
   report: CostReportDto;
 }
 
-/** Les dépôts n'ont pas de couleur propre : les séries prennent les couleurs du thème (E3b, annotation 2). */
+/** Les projets n'ont pas de couleur propre : les séries prennent les couleurs du thème (E3b, annotation 2). */
 const FILLS = ['fill-primary', 'fill-info', 'fill-warning', 'fill-muted'];
 const SWATCHES = ['bg-primary', 'bg-info', 'bg-warning', 'bg-muted'];
 
@@ -35,11 +35,11 @@ function Kpi({ detail, label, value }: { detail?: string; label: string; value: 
   );
 }
 
-/** Graphique du coût par jour ouvré, empilé par dépôt ; aujourd'hui surligné avec son total (CA-SESS-53, 54). */
+/** Graphique du coût par jour ouvré, empilé par projet ; aujourd'hui surligné avec son total (CA-SESS-53, 54). */
 function Chart({ now, report }: CostReportProps) {
   const series = chartSeries(report);
   const top = series.filter((entry) => entry.name !== '*').map((entry) => entry.name);
-  const totals = report.days.map((day) => day.repositories.reduce((total, entry) => total + entry.usd, 0));
+  const totals = report.days.map((day) => day.projects.reduce((total, entry) => total + entry.usd, 0));
   const max = axisMax(totals);
   // Le graphique occupe toute la carte, et défile seulement quand les jours n'y tiennent plus.
   const [container, measured] = useElementWidth<HTMLDivElement>();
@@ -62,7 +62,7 @@ function Chart({ now, report }: CostReportProps) {
       <div ref={container} className="overflow-x-auto">
         <svg
           role="img"
-          aria-label="Coût estimé par jour ouvré, par dépôt"
+          aria-label="Coût estimé par jour ouvré, par projet"
           width={width}
           height={CHART.top + CHART.height + 24}
           className="text-muted"
@@ -125,20 +125,20 @@ function Chart({ now, report }: CostReportProps) {
   );
 }
 
-/** Détail d'un jour au survol : coût et sessions par dépôt (CA-SESS-54). */
+/** Détail d'un jour au survol : coût et sessions par projet (CA-SESS-54). */
 function dayDetail(day: CostReportDto['days'][number], total: number): string {
-  const parts = day.repositories.map(
-    (entry) => (entry.name ?? 'hors dépôt') + ' ' + usd(entry.usd) + ' (' + entry.sessions + ')',
+  const parts = day.projects.map(
+    (entry) => (entry.name ?? 'hors projet') + ' ' + usd(entry.usd) + ' (' + entry.sessions + ')',
   );
   return [day.date, usd(total), parts.join(', ')].join(' · ');
 }
 
 type Sort = 'name' | 'sessions' | 'usd';
 
-/** Coûts de la période (E3b) : total, moyenne par jour ouvré, graphique, répartition par dépôt et par modèle. */
+/** Coûts de la période (E3b) : total, moyenne par jour ouvré, graphique, répartition par projet et par modèle. */
 export function CostReport({ now, report }: CostReportProps) {
   const [sort, setSort] = useState<Sort>('usd');
-  const repositories = report.byRepository.toSorted((a, b) =>
+  const projects = report.byProject.toSorted((a, b) =>
     sort === 'name' ? (a.name ?? '').localeCompare(b.name ?? '') : b[sort] - a[sort],
   );
   const header = (label: string, key: Sort) => (
@@ -165,34 +165,34 @@ export function CostReport({ now, report }: CostReportProps) {
       </section>
       <div className="grid gap-4 md:grid-cols-3">
         <section
-          aria-labelledby="by-repository"
+          aria-labelledby="by-project"
           className="overflow-x-auto rounded-card border border-line bg-surface shadow-card md:col-span-2"
         >
-          <h2 id="by-repository" className="border-b border-line px-4 py-2.5 text-xs font-semibold text-muted">
-            Par dépôt
+          <h2 id="by-project" className="border-b border-line px-4 py-2.5 text-xs font-semibold text-muted">
+            Par projet
           </h2>
           <table className="table w-full text-left">
             <thead className="text-xs text-muted">
               <tr>
-                {header('Dépôt', 'name')}
+                {header('Projet', 'name')}
                 {header('Sessions', 'sessions')}
                 {header('Coût', 'usd')}
                 <th className="font-medium">Part</th>
               </tr>
             </thead>
             <tbody>
-              {repositories.map((entry) => (
+              {projects.map((entry) => (
                 <tr key={entry.name ?? ''} className="border-t border-line">
                   <td>
                     {entry.name ? (
                       <Link
-                        href={`/history?repo=${encodeURIComponent(entry.name)}`}
+                        href={`/history?project=${encodeURIComponent(entry.name)}`}
                         className="link font-medium link-hover"
                       >
                         {entry.name}
                       </Link>
                     ) : (
-                      'Hors dépôt git'
+                      'Hors projet'
                     )}
                   </td>
                   <td className="tabular-nums">{entry.sessions}</td>

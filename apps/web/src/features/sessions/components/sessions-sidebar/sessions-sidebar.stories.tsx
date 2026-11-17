@@ -14,7 +14,7 @@ const meta = {
   args: {
     liveTracking: false,
     selected: null,
-    repositories: [
+    projects: [
       { name: 'labo-ia', count: 3 },
       { name: 'outils-node', count: 2 },
     ],
@@ -28,6 +28,6 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const AllRepositories: Story = {};
+export const AllProjects: Story = {};
 
-export const RepositorySelected: Story = { args: { selected: 'labo-ia' } };
+export const ProjectSelected: Story = { args: { selected: 'labo-ia' } };

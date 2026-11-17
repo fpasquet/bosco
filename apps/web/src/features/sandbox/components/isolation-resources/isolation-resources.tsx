@@ -10,8 +10,8 @@ export interface IsolationResourcesProps {
 const VISIBILITY = [
   {
     kind: 'Fichiers',
-    granted: 'Sa copie du dépôt, son dossier personnel, ses conversations',
-    denied: 'Tes autres dépôts, tes réglages, Bosco',
+    granted: 'Sa copie du projet, son dossier personnel, ses conversations',
+    denied: 'Tes autres projets, tes réglages, Bosco',
   },
   {
     kind: 'Secrets',
@@ -55,7 +55,7 @@ export function IsolationResources({ isolation }: IsolationResourcesProps) {
         <div className="min-w-0">
           <h2 className="font-semibold">Un conteneur par session</h2>
           <p className="text-muted">
-            Une session en bac à sable tourne dans son conteneur, sur sa copie du dépôt et sa branche. Le conteneur
+            Une session en bac à sable tourne dans son conteneur, sur sa copie du projet et sa branche. Le conteneur
             s’arrête après 30 minutes sans message ; la copie reste jusqu’à ce que tu récupères la branche.
           </p>
         </div>

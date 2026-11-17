@@ -1,6 +1,6 @@
 'use client';
 import { Eye, EyeOff, FolderOpen } from 'lucide-react';
-import type { DiscoverySettingsDto, RepositorySettingsDto } from '@bosco/domain';
+import type { DiscoverySettingsDto, ProjectSettingsDto } from '@bosco/domain';
 import { cn } from '@/lib/cn';
 import { Button } from '@/shared/ui/button';
 import { displayPath, sessions, sinceNow } from '../../lib/format';
@@ -9,9 +9,9 @@ import { FolderList } from './folder-list';
 /** Dossier exclu par défaut : les copies jetables et les essais (CA-SESS-79). */
 const DEFAULT_EXCLUDED = ['/tmp'];
 
-export interface RepositorySettingsProps {
+export interface ProjectSettingsProps {
   busy: boolean;
-  data: RepositorySettingsDto;
+  data: ProjectSettingsDto;
   error: null | string;
   now: Date;
   onChange: (changes: Partial<DiscoverySettingsDto>) => void;
@@ -50,7 +50,7 @@ function Switch({
   );
 }
 
-/** Dépôts trouvés sous un dossier écrit comme dans le terminal. */
+/** Projets trouvés sous un dossier écrit comme dans le terminal. */
 function countsUnder(folders: string[], roots: string[], home: string): Record<string, number> {
   const expand = (folder: string) => (folder === '~' || folder.startsWith('~/') ? `${home}${folder.slice(1)}` : folder);
   return Object.fromEntries(
@@ -62,11 +62,11 @@ function countsUnder(folders: string[], roots: string[], home: string): Record<s
 }
 
 /**
- * Réglages › Dépôts (E4d) : comment Bosco range les sessions par dépôt, et les dépôts trouvés, les plus récents
+ * Réglages › Projets (E4d) : comment Bosco range les sessions par projet, et les projets trouvés, les plus récents
  * d'abord. Sur le téléphone, tout se lit sans se changer.
  */
-export function RepositorySettings({ busy, data, error, now, onChange }: RepositorySettingsProps) {
-  const { home, outside, repositories, settings } = data;
+export function ProjectSettings({ busy, data, error, now, onChange }: ProjectSettingsProps) {
+  const { home, outside, projects, settings } = data;
   const toggleHidden = (root: string) =>
     onChange({
       hidden: settings.hidden.includes(root)
@@ -90,16 +90,16 @@ export function RepositorySettings({ busy, data, error, now, onChange }: Reposit
           </h2>
           <Switch
             label="Dépôts git seulement"
-            hint="Une session hors d’un dépôt git se range sous « Hors dépôt git » : ton dossier personnel ou un dossier temporaire ne deviennent pas des dépôts."
+            hint="Une session hors d’un dépôt git se range sous « Hors projet » : ton dossier personnel ou un dossier temporaire ne deviennent pas des projets."
             checked={settings.gitOnly}
             disabled={busy}
             onChange={(gitOnly) => onChange({ gitOnly })}
           />
           <Switch
-            label="Worktrees rattachés à leur dépôt"
+            label="Worktrees rattachés à leur projet"
             hint={
               <>
-                Un worktree git (<span className="font-mono">.claude/worktrees/…</span>) se range avec son dépôt
+                Un worktree git (<span className="font-mono">.claude/worktrees/…</span>) se range avec son projet
                 d’origine, sous sa branche.
               </>
             }
@@ -109,13 +109,13 @@ export function RepositorySettings({ busy, data, error, now, onChange }: Reposit
           />
         </section>
         <FolderList
-          title="Dossiers de dépôts"
-          hint="Seuls les dépôts sous ces dossiers sont retenus. Sans dossier : partout sur le poste."
+          title="Dossiers de projets"
+          hint="Seuls les projets sous ces dossiers sont retenus. Sans dossier : partout sur le poste."
           placeholder="~/projets"
           folders={settings.roots}
           counts={countsUnder(
             settings.roots,
-            repositories.map(({ root }) => root),
+            projects.map(({ root }) => root),
             home,
           )}
           disabled={busy}
@@ -124,7 +124,7 @@ export function RepositorySettings({ busy, data, error, now, onChange }: Reposit
         <FolderList
           excluded
           title="Dossiers exclus"
-          hint="Jamais de dépôt ici ; leurs sessions restent visibles, sous « Hors dépôt git »."
+          hint="Jamais de projet ici ; leurs sessions restent visibles, sous « Hors projet »."
           placeholder="Chemin d’un dossier"
           folders={settings.excluded}
           defaults={DEFAULT_EXCLUDED}
@@ -139,15 +139,15 @@ export function RepositorySettings({ busy, data, error, now, onChange }: Reposit
         <div className="px-4 py-2.5">
           <div className="flex items-center gap-2">
             <h2 id="found-title" className="text-xs font-semibold text-muted">
-              Dépôts trouvés
+              Projets trouvés
             </h2>
-            <span className="badge badge-ghost font-mono badge-sm">{repositories.length}</span>
+            <span className="badge badge-ghost font-mono badge-sm">{projects.length}</span>
           </div>
-          {/* Un dépôt naît d'une session : Bosco ne parcourt pas le disque */}
+          {/* Un projet naît d'une session : Bosco ne parcourt pas le disque */}
           <p className="mt-0.5 text-xs text-muted">Ceux où une session Claude Code a tourné.</p>
         </div>
         <ul aria-labelledby="found-title" className="divide-y divide-line border-t border-line">
-          {repositories.map(({ hidden, lastActivityAt, name, root }) => (
+          {projects.map(({ hidden, lastActivityAt, name, root }) => (
             <li key={root} className={cn('flex items-center gap-3 px-4 py-2', hidden && 'bg-surface-alt')}>
               <div className="min-w-0 flex-1">
                 <p className={cn('font-medium', hidden && 'text-muted')}>{name}</p>
@@ -170,10 +170,10 @@ export function RepositorySettings({ busy, data, error, now, onChange }: Reposit
               {hidden && <span className="badge badge-ghost badge-sm md:hidden">Masqué</span>}
             </li>
           ))}
-          {repositories.length === 0 && <li className="px-4 py-3 text-muted">Aucun dépôt trouvé pour l’instant.</li>}
+          {projects.length === 0 && <li className="px-4 py-3 text-muted">Aucun projet trouvé pour l’instant.</li>}
           <li className="flex items-center gap-3 px-4 py-2 text-muted">
             <FolderOpen aria-hidden className="size-4 shrink-0" />
-            <p className="min-w-0 flex-1">Hors dépôt git</p>
+            <p className="min-w-0 flex-1">Hors projet</p>
             <span className="font-mono text-xs">{sessions(outside)}</span>
           </li>
         </ul>

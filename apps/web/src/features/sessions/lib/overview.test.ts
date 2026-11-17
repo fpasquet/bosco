@@ -4,12 +4,12 @@ import type { SessionDto, SourceDto } from '@bosco/domain';
 import {
   endedToday,
   filterSessions,
-  groupByRepository,
+  groupByProject,
   groupByState,
   indicatorsOf,
   openSessions,
   profileMark,
-  repositoriesOf,
+  projectsOf,
   sortSessions,
   waitingSessions,
 } from './overview';
@@ -29,8 +29,8 @@ function session(id: string, overrides: Partial<SessionDto> = {}): SessionDto {
     openInTerminal: false,
     pilot: null,
     recentActions: [],
-    repoPath: '/home/dev/www/labo-ia/packages/rag',
-    repository: { folder: 'packages/rag', hidden: false, name: 'labo-ia', root: '/home/dev/www/labo-ia' },
+    projectPath: '/home/dev/www/labo-ia/packages/rag',
+    project: { folder: 'packages/rag', hidden: false, name: 'labo-ia', root: '/home/dev/www/labo-ia' },
     sourceId: 'pro',
     startedAt: new Date('2026-11-06T14:00:00').toISOString(),
     state: 'running',
@@ -73,11 +73,11 @@ describe('sortSessions', () => {
   });
 });
 
-describe('groupByRepository', () => {
-  it('orders repositories by their most urgent session and puts sessions outside git last', () => {
-    const groups = groupByRepository([
-      session('loose', { repository: null }),
-      session('idle', { repository: outilsNode, state: 'inactive' }),
+describe('groupByProject', () => {
+  it('orders projects by their most urgent session and puts sessions outside git last', () => {
+    const groups = groupByProject([
+      session('loose', { project: null }),
+      session('idle', { project: outilsNode, state: 'inactive' }),
       session('rag'),
     ]);
     expect(groups.map(({ name, sessions }) => [name, sessions.length])).toEqual([
@@ -111,13 +111,13 @@ describe('waitingSessions', () => {
 describe('filterSessions', () => {
   const sessions = [
     session('rag', { title: 'Corriger l’indexation des PDF' }),
-    session('logger', { repository: outilsNode, branch: 'feat/logger-otel' }),
-    session('idle', { repository: outilsNode, state: 'inactive' }),
+    session('logger', { project: outilsNode, branch: 'feat/logger-otel' }),
+    session('idle', { project: outilsNode, state: 'inactive' }),
   ];
-  const all = { hideInactive: false, query: '', repository: null };
+  const all = { hideInactive: false, query: '', project: null };
 
-  it('keeps the chosen repository (CA-SESS-11)', () => {
-    expect(filterSessions(sessions, { ...all, repository: 'outils-node' }).map(({ id }) => id)).toEqual([
+  it('keeps the chosen project (CA-SESS-11)', () => {
+    expect(filterSessions(sessions, { ...all, project: 'outils-node' }).map(({ id }) => id)).toEqual([
       'logger',
       'idle',
     ]);
@@ -158,14 +158,10 @@ describe('indicatorsOf', () => {
   });
 });
 
-describe('repositoriesOf', () => {
-  it('lists the repositories with their open sessions, in the order of the table', () => {
+describe('projectsOf', () => {
+  it('lists the projects with their open sessions, in the order of the table', () => {
     expect(
-      repositoriesOf([
-        session('idle', { repository: outilsNode, state: 'inactive' }),
-        session('rag'),
-        session('bosco'),
-      ]),
+      projectsOf([session('idle', { project: outilsNode, state: 'inactive' }), session('rag'), session('bosco')]),
     ).toEqual([
       { name: 'labo-ia', count: 2 },
       { name: 'outils-node', count: 1 },

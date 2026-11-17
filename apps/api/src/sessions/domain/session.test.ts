@@ -13,7 +13,7 @@ const reply = (time: string, usage: TokenUsage | null = null): TranscriptEvent =
   cwd: '/home/dev/labo-ia/packages/bosco',
   branch: 'feat/specs',
   model: 'claude-opus-5-5',
-  repoRoot: '/home/dev/labo-ia',
+  projectRoot: '/home/dev/labo-ia',
   usage,
 });
 

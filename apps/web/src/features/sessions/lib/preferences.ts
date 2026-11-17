@@ -17,7 +17,7 @@ export const useSourcesPreferences = create<SourcesPreferences>()(
   ),
 );
 
-export type Grouping = 'repository' | 'state';
+export type Grouping = 'project' | 'state';
 
 interface OverviewPreferences {
   grouping: Grouping;
@@ -30,11 +30,20 @@ interface OverviewPreferences {
 export const useOverviewPreferences = create<OverviewPreferences>()(
   persist(
     (set) => ({
-      grouping: 'repository',
+      grouping: 'project',
       hideInactive: false,
       setGrouping: (grouping) => set({ grouping }),
       toggleHideInactive: () => set((state) => ({ hideInactive: !state.hideInactive })),
     }),
-    { name: 'bosco.overview' },
+    {
+      name: 'bosco.overview',
+      // Version 0 : le regroupement par projet s'appelait « repository » ; un choix gardé avant le renommage se relit
+      version: 1,
+      migrate: (stored, version) => {
+        const state = stored as Omit<OverviewPreferences, 'grouping'> & { grouping: string };
+        const grouping = version === 0 && state.grouping === 'repository' ? 'project' : (state.grouping as Grouping);
+        return { ...state, grouping };
+      },
+    },
   ),
 );

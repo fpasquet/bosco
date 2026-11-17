@@ -5,9 +5,9 @@ import {
   InvalidNotificationSettings,
   type NotificationSettings,
 } from './notification.ts';
-import { DEFAULT_DISCOVERY, type DiscoverySnapshot, folderPath, InvalidFolder } from './repository-discovery.ts';
+import { DEFAULT_DISCOVERY, type DiscoverySnapshot, folderPath, InvalidFolder } from './project-discovery.ts';
 
-/** Réglages de Bosco : seuil d'inactivité et notification du bureau (E4a), dépôts découverts (E4d). */
+/** Réglages de Bosco : seuil d'inactivité et notification du bureau (E4a), projets découverts (E4d). */
 export interface SettingsSnapshot {
   /** Notification du bureau à chaque nouvelle attente, activée par défaut (RF-SESS-08, CA-SESS-61) */
   desktopNotifications: boolean;
@@ -15,20 +15,20 @@ export interface SettingsSnapshot {
   inactivityMinutes: number;
   /** Ce qui mérite une notification, type par type (E15b) */
   notifications: NotificationSettings;
-  repositories: DiscoverySnapshot;
+  projects: DiscoverySnapshot;
 }
 
-/** Changement de réglages : les réglages des dépôts se changent un par un. */
-export type SettingsChanges = Partial<Omit<SettingsSnapshot, 'notifications' | 'repositories'>> & {
+/** Changement de réglages : les réglages des projets se changent un par un. */
+export type SettingsChanges = Partial<Omit<SettingsSnapshot, 'notifications' | 'projects'>> & {
   notifications?: Partial<NotificationSettings>;
-  repositories?: Partial<DiscoverySnapshot>;
+  projects?: Partial<DiscoverySnapshot>;
 };
 
 export const DEFAULT_SETTINGS: SettingsSnapshot = {
   desktopNotifications: true,
   inactivityMinutes: 15,
   notifications: DEFAULT_NOTIFICATIONS,
-  repositories: DEFAULT_DISCOVERY,
+  projects: DEFAULT_DISCOVERY,
 };
 
 export const INACTIVITY_MINUTES = { max: 60, min: 5 } as const;
@@ -54,8 +54,8 @@ export class Settings {
     return this.snapshot.notifications;
   }
 
-  get repositories(): DiscoverySnapshot {
-    return this.snapshot.repositories;
+  get projects(): DiscoverySnapshot {
+    return this.snapshot.projects;
   }
 
   static restore(snapshot: null | SettingsChanges): Settings {
@@ -63,12 +63,12 @@ export class Settings {
       ...DEFAULT_SETTINGS,
       ...snapshot,
       notifications: { ...DEFAULT_NOTIFICATIONS, ...snapshot?.notifications },
-      repositories: { ...DEFAULT_DISCOVERY, ...snapshot?.repositories },
+      projects: { ...DEFAULT_DISCOVERY, ...snapshot?.projects },
     });
   }
 
   update(changes: SettingsChanges): void {
-    const repositories = { ...this.snapshot.repositories, ...changes.repositories };
+    const projects = { ...this.snapshot.projects, ...changes.projects };
     const notifications = { ...this.snapshot.notifications, ...changes.notifications };
     try {
       checkNotificationSettings(notifications);
@@ -80,11 +80,11 @@ export class Settings {
       ...this.snapshot,
       ...changes,
       notifications,
-      repositories: {
-        ...repositories,
-        excluded: folders(repositories.excluded),
-        hidden: [...new Set(repositories.hidden)],
-        roots: folders(repositories.roots),
+      projects: {
+        ...projects,
+        excluded: folders(projects.excluded),
+        hidden: [...new Set(projects.hidden)],
+        roots: folders(projects.roots),
       },
     };
     const { inactivityMinutes } = next;
@@ -103,7 +103,7 @@ export class Settings {
     return {
       ...this.snapshot,
       notifications: { ...this.snapshot.notifications },
-      repositories: { ...this.snapshot.repositories },
+      projects: { ...this.snapshot.projects },
     };
   }
 }

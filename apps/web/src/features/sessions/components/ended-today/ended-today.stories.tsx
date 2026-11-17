@@ -8,14 +8,14 @@ const meta = {
   title: 'Features/Sessions/EndedToday',
   component: EndedToday,
   parameters: { layout: 'padded' },
-  args: { sessions: ended, repository: 'labo-ia' },
+  args: { sessions: ended, project: 'labo-ia' },
 } satisfies Meta<typeof EndedToday>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const InARepository: Story = {};
+export const InAProject: Story = {};
 
 export const MoreInTheHistory: Story = {
-  args: { repository: null, sessions: [...ended, ...ended.map((session) => ({ ...session, id: `${session.id}-2` }))] },
+  args: { project: null, sessions: [...ended, ...ended.map((session) => ({ ...session, id: `${session.id}-2` }))] },
 };

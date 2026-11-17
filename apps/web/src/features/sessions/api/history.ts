@@ -6,7 +6,7 @@ export interface HistoryFilters {
   days: null | number;
   profile: null | string;
   query: string;
-  repository: null | string;
+  project: null | string;
   state: null | SessionStateDto;
 }
 
@@ -20,7 +20,7 @@ function searchOf(filters: HistoryFilters): string {
   const params = new URLSearchParams();
   if (filters.query.trim()) params.set('q', filters.query.trim());
   if (filters.days) params.set('from', startOf(filters.days));
-  if (filters.repository) params.set('repo', filters.repository);
+  if (filters.project) params.set('project', filters.project);
   if (filters.profile) params.set('source', filters.profile);
   if (filters.state) params.set('state', filters.state);
   const search = params.toString();

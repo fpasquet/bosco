@@ -9,17 +9,17 @@ import { presentSession } from './session.presenter.ts';
 const filtersSchema = z.object({
   q: z.string().default(''),
   from: z.iso.date().optional(),
-  repo: z.string().min(1).optional(),
+  project: z.string().min(1).optional(),
   source: z.string().min(1).optional(),
   state: z.enum(['ended', 'inactive', 'running', 'waiting']).optional(),
 });
 
 function filtersOf(query: unknown): HistoryFilters {
-  const { from, q, repo, source, state } = parseBody(filtersSchema, query);
+  const { from, project, q, source, state } = parseBody(filtersSchema, query);
   return {
     query: q,
     from: from ? new Date(`${from}T00:00:00`) : null,
-    repository: repo ?? null,
+    project: project ?? null,
     sourceId: source ?? null,
     state: state ?? null,
   };

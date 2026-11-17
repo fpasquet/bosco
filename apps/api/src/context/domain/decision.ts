@@ -3,8 +3,8 @@ import { DomainError } from '../../shared/domain/domain-error.ts';
 /** Proposée par un agent, acceptée par toi, refusée, remplacée par une autre, ou abandonnée (RF-CONT-02, RF-CONT-11). */
 export type DecisionState = 'abandoned' | 'accepted' | 'proposed' | 'refused' | 'replaced';
 
-/** Une décision porte sur un dépôt ou sur un socle (RF-CONT-03). */
-export type DecisionTarget = { kind: 'repository'; name: string } | { kind: 'socle'; id: number };
+/** Une décision porte sur un projet ou sur un socle (RF-CONT-03). */
+export type DecisionTarget = { kind: 'project'; name: string } | { kind: 'socle'; id: number };
 
 /** Texte d'une décision, au format habituel : contexte, décision, conséquences, alternatives écartées. */
 export interface DecisionText {
@@ -24,7 +24,7 @@ export interface DecisionVersion extends DecisionText {
 }
 
 export interface DecisionSnapshot {
-  /** Décision d'un socle que celle-ci retire pour son dépôt (« fait exception à ») */
+  /** Décision d'un socle que celle-ci retire pour son projet (« fait exception à ») */
   exceptionTo: null | number;
   /** Tâche de l'agent qui l'a proposée */
   fromTask: null | number;
@@ -72,8 +72,8 @@ export class Decision {
     text: DecisionText,
     options: { accept: boolean; at: Date; exceptionTo: null | number },
   ): Decision {
-    if (options.exceptionTo !== null && target.kind !== 'repository')
-      throw new DecisionError('exceptionOnSocle', 'Seule une décision de dépôt fait exception à celle d’un socle.');
+    if (options.exceptionTo !== null && target.kind !== 'project')
+      throw new DecisionError('exceptionOnSocle', 'Seule une décision de projet fait exception à celle d’un socle.');
     return new Decision({
       id,
       target,
@@ -88,10 +88,10 @@ export class Decision {
   }
 
   /** Proposée par l'agent d'une tâche : elle attend ta validation, et n'est transmise à personne (RF-CONT-02). */
-  static propose(id: number, repository: string, text: DecisionText, taskId: null | number, at: Date): Decision {
+  static propose(id: number, project: string, text: DecisionText, taskId: null | number, at: Date): Decision {
     return new Decision({
       id,
-      target: { kind: 'repository', name: repository },
+      target: { kind: 'project', name: project },
       state: 'proposed',
       exceptionTo: null,
       fromTask: taskId,

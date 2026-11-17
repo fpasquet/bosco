@@ -17,7 +17,7 @@ interface JsonRpcRequest {
 }
 
 /**
- * Serveur MCP de Bosco : le contexte d'un dépôt et ses propositions de décision, pour toute session, en HTTP sur le port du service, sans session : chaque requête JSON-RPC
+ * Serveur MCP de Bosco : le contexte d'un projet et ses propositions de décision, pour toute session, en HTTP sur le port du service, sans session : chaque requête JSON-RPC
  * reçoit sa réponse. Il exige le secret de l'installation, comme l'entrée des hooks.
  */
 @Controller('mcp')
@@ -64,7 +64,7 @@ export class McpController {
           capabilities: { tools: {} },
           serverInfo: { name: APP_NAME.toLowerCase(), version: '1' },
           instructions:
-            'Contexte Bosco : avant de travailler dans un dépôt, lis ses décisions avec bosco_context ; propose une convention durable avec bosco_propose_decision.',
+            'Contexte Bosco : avant de travailler dans un projet, lis ses décisions avec bosco_context ; propose une convention durable avec bosco_propose_decision.',
         });
       case 'ping':
         return ok({});

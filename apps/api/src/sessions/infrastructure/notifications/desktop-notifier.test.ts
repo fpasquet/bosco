@@ -15,7 +15,7 @@ const base = {
 };
 
 describe('desktopText', () => {
-  it('titles with the kind and the repository, the session in bold above the excerpt (CA-SESS-85)', () => {
+  it('titles with the kind and the project, the session in bold above the excerpt (CA-SESS-85)', () => {
     const title = 'Sans rien lire ni modifier, réponds en une phrase : dis que le travail <a> repris';
     expect(desktopText({ ...base, kind: 'turn-question', title })).toEqual({
       title: 'Question · reservations',
@@ -23,7 +23,7 @@ describe('desktopText', () => {
     });
   });
 
-  it('tells the length of a turn, and falls back on the session without a repository (CA-SESS-85)', () => {
+  it('tells the length of a turn, and falls back on the session without a project (CA-SESS-85)', () => {
     const turn = desktopText({
       ...base,
       kind: 'long-turn',

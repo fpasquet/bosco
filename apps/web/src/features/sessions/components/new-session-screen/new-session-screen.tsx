@@ -29,7 +29,7 @@ function openIn(sessions: readonly SessionDto[], root: string): null | SessionDt
   return (
     sessions.find(
       (session) =>
-        session.repository?.root === root &&
+        session.project?.root === root &&
         !session.pilot &&
         (session.openInTerminal || session.state === 'running' || session.state === 'waiting'),
     ) ?? null
@@ -42,7 +42,7 @@ function WorkstationSummary() {
     <>
       <p className="flex gap-2">
         <Monitor aria-hidden className="mt-0.5 size-4 shrink-0 text-muted" />
-        Sur ce poste, dans le dossier du dépôt, comme dans un terminal.
+        Sur ce poste, dans le dossier du projet, comme dans un terminal.
       </p>
       <p className="text-xs font-semibold text-muted">Ensuite</p>
       <p className="flex gap-2">
@@ -80,12 +80,12 @@ function SandboxSummary({ branch, name }: { branch: string; name: string }) {
       </p>
       <p className="flex gap-2 text-muted">
         <EyeOff aria-hidden className="mt-0.5 size-4 shrink-0" />
-        Rien d’autre du poste : ni fichiers, ni accès, ni autres dépôts
+        Rien d’autre du poste : ni fichiers, ni accès, ni autres projets
       </p>
       <p className="text-xs font-semibold text-muted">Ensuite</p>
       <p className="flex gap-2">
         <Download aria-hidden className="mt-0.5 size-4 shrink-0 text-muted" />« Récupérer la branche » ramène le travail
-        dans le dépôt, quand tu veux.
+        dans le projet, quand tu veux.
       </p>
       <p className="flex gap-2">
         <Moon aria-hidden className="mt-0.5 size-4 shrink-0 text-muted" />
@@ -96,7 +96,7 @@ function SandboxSummary({ branch, name }: { branch: string; name: string }) {
 }
 
 /**
- * Nouvelle session (E16a, E16b, CA-SESS-91, CA-SESS-106) : le dépôt et l'abonnement Claude, où elle tourne (sur le
+ * Nouvelle session (E16a, E16b, CA-SESS-91, CA-SESS-106) : le projet et l'abonnement Claude, où elle tourne (sur le
  * poste ou dans un bac à sable, sur sa propre branche), puis le premier message, avec les réglages du tour dans la
  * barre d'outils. Elle s'ouvre dans Bosco.
  */
@@ -106,20 +106,19 @@ export function NewSessionScreen() {
   const push = useNotices((state) => state.push);
   const { data: options } = useQuery(pilotOptionsQuery);
   const { data: sessions } = useQuery(sessionsQuery);
-  const [chosenRepository, setRepository] = useState<null | string>(null);
+  const [chosenProject, setProject] = useState<null | string>(null);
   const [chosenProfile, setProfile] = useState<null | string>(null);
   const [settings, setSettings] = useState<PilotSettingsDto>(DEFAULT_SETTINGS);
   const [where, setWhere] = useState<'sandbox' | 'workstation'>('workstation');
   const [startBranch, setStartBranch] = useState<null | string>(null);
   const [branch, setBranch] = useState('');
   if (!options) return <PageSkeleton variant="detail" rows={6} />;
-  const repository =
-    options.repositories.find(({ root }) => root === chosenRepository) ?? options.repositories[0] ?? null;
-  const profile = chosenProfile ?? repository?.defaultProfile ?? options.profiles[0]?.path ?? null;
+  const project = options.projects.find(({ root }) => root === chosenProject) ?? options.projects[0] ?? null;
+  const profile = chosenProfile ?? project?.defaultProfile ?? options.profiles[0]?.path ?? null;
   const sandboxed = where === 'sandbox' && !options.sandboxUnavailable;
   // Le bac à sable travaille sur sa propre copie : une session du terminal dans le même dossier ne le gêne pas
-  const busy = repository && !sandboxed ? openIn(sessions ?? [], repository.root) : null;
-  const from = startBranch ?? repository?.branch ?? '';
+  const busy = project && !sandboxed ? openIn(sessions ?? [], project.root) : null;
+  const from = startBranch ?? project?.branch ?? '';
   const choose = (next: 'sandbox' | 'workstation') => {
     setWhere(next);
     // L'agent ne peut abîmer que sa copie : les modifications passent sans demander (E16b)
@@ -127,10 +126,10 @@ export function NewSessionScreen() {
       setSettings({ ...settings, permissionMode: 'acceptEdits' });
   };
   const submit = async (value: ComposerValue) => {
-    if (!repository) return;
+    if (!project) return;
     try {
       const sandbox = sandboxed ? { branch: branch.trim() || null, startBranch: from.trim() || null } : null;
-      const sessionId = await startSession({ ...value, profile, repository: repository.root, settings, sandbox });
+      const sessionId = await startSession({ ...value, profile, project: project.root, settings, sandbox });
       await client.invalidateQueries({ queryKey: ['sessions'] });
       router.push(`/sessions/${sessionId}`);
     } catch (error) {
@@ -151,26 +150,26 @@ export function NewSessionScreen() {
       </div>
       <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
         <div className="flex min-w-0 flex-col gap-4 md:col-span-2">
-          {repository ? (
+          {project ? (
             <>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <label className="flex min-w-0 flex-col gap-1.5">
-                  <span className="text-sm font-medium">Dépôt</span>
+                  <span className="text-sm font-medium">Projet</span>
                   <select
                     className="select w-full"
-                    value={repository.root}
+                    value={project.root}
                     onChange={(event) => {
-                      setRepository(event.target.value);
+                      setProject(event.target.value);
                       setProfile(null);
                     }}
                   >
-                    {options.repositories.map(({ name, root }) => (
+                    {options.projects.map(({ name, root }) => (
                       <option key={root} value={root}>
                         {name}
                       </option>
                     ))}
                   </select>
-                  <span className="truncate font-mono text-xs text-muted">{repository.root}</span>
+                  <span className="truncate font-mono text-xs text-muted">{project.root}</span>
                 </label>
                 <label className="flex min-w-0 flex-col gap-1.5">
                   <span className="text-sm font-medium">Abonnement Claude</span>
@@ -184,7 +183,7 @@ export function NewSessionScreen() {
                       <option key={path} value={path}>
                         {label}
                         {account ? ` · ${account}` : ''}
-                        {path === repository.defaultProfile ? ' · défaut du dépôt' : ''}
+                        {path === project.defaultProfile ? ' · défaut du projet' : ''}
                       </option>
                     ))}
                   </select>
@@ -264,22 +263,22 @@ export function NewSessionScreen() {
                 settings={settings}
                 onSettingsChange={setSettings}
                 onSubmit={submit}
-                suggest={(kind, query) => suggestions({ profile, repository: repository.root }, kind, query)}
+                suggest={(kind, query) => suggestions({ profile, project: project.root }, kind, query)}
                 submitLabel="Démarrer"
                 minRows={4}
               />
             </>
           ) : (
             <p className="rounded-card border border-line bg-surface p-4 text-muted">
-              Aucun dépôt connu : Bosco découvre les dépôts par les sessions des profils surveillés.
+              Aucun projet connu : Bosco découvre les projets par les sessions des profils surveillés.
             </p>
           )}
         </div>
         <aside className="flex flex-col gap-3 rounded-card border border-line bg-surface p-4 text-sm shadow-card">
           <h2 className="font-semibold">Récapitulatif</h2>
           <p className="text-xs font-semibold text-muted">Où elle tourne</p>
-          {sandboxed && repository ? (
-            <SandboxSummary name={repository.name} branch={branch.trim() || 'sa propre branche'} />
+          {sandboxed && project ? (
+            <SandboxSummary name={project.name} branch={branch.trim() || 'sa propre branche'} />
           ) : (
             <WorkstationSummary />
           )}

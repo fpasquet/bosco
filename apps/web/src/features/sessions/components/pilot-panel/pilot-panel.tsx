@@ -39,9 +39,9 @@ export function PilotPanel({ session }: { session: SessionDto }) {
   }
   const asking = session.waiting?.kind === 'question';
   const closed = session.pilot === null && !inTerminal;
-  const place = session.repository
-    ? [session.repository.name, session.repository.folder].filter(Boolean).join('/')
-    : session.repoPath;
+  const place = session.project
+    ? [session.project.name, session.project.folder].filter(Boolean).join('/')
+    : session.projectPath;
   const submit = async (value: ComposerValue) => {
     try {
       const status = await sendMessage(session.id, { ...value, settings });

@@ -16,7 +16,7 @@ export interface SuggestionMenuProps {
   phone: boolean;
 }
 
-const TITLE = { command: 'Commandes et skills', file: 'Fichiers du dépôt' };
+const TITLE = { command: 'Commandes et skills', file: 'Fichiers du projet' };
 const EMPTY = { command: 'Aucune commande ne correspond', file: 'Aucun fichier ne correspond' };
 
 export const listIdOf = (baseId: string) => `${baseId}-list`;

@@ -2,7 +2,7 @@ import { BadRequestException, Body, Controller, Get, Inject, Put } from '@nestjs
 import { z } from 'zod';
 import type { SessionService } from '../../application/session.service.ts';
 import type { SettingsService } from '../../application/settings.service.ts';
-import type { DiscoverySnapshot } from '../../domain/repository-discovery.ts';
+import type { DiscoverySnapshot } from '../../domain/project-discovery.ts';
 import { parseBody } from '../../../shared/interface/http/parse-body.ts';
 import { CONFIG } from '../../../shared/tokens.ts';
 import { InvalidSetting, type SettingsSnapshot } from '../../domain/settings.ts';
@@ -29,7 +29,7 @@ const settingsSchema = z
       })
       .partial()
       .strict(),
-    repositories: z
+    projects: z
       .object({
         attachWorktrees: z.boolean(),
         excluded: folders,
@@ -43,16 +43,16 @@ const settingsSchema = z
   .partial()
   .strict();
 
-/** Dépôts découverts (E4d) : réglages, dépôts trouvés et sessions hors dépôt git. */
-export interface RepositorySettingsView {
+/** Projets découverts (E4d) : réglages, projets trouvés et sessions hors projet. */
+export interface ProjectSettingsView {
   /** Dossier personnel, pour écrire les chemins comme dans le terminal (« ~/www ») */
   home: string;
   outside: number;
-  repositories: { git: boolean; hidden: boolean; lastActivityAt: Date; name: string; root: string }[];
+  projects: { git: boolean; hidden: boolean; lastActivityAt: Date; name: string; root: string }[];
   settings: DiscoverySnapshot;
 }
 
-/** Réglages des sources (E4a) et des dépôts découverts (E4d) ; ils ne s'écrivent que depuis le poste. */
+/** Réglages des sources (E4a) et des projets découverts (E4d) ; ils ne s'écrivent que depuis le poste. */
 @Controller('api/settings')
 export class SettingsController {
   constructor(
@@ -67,10 +67,10 @@ export class SettingsController {
     return this.settings.current();
   }
 
-  @Get('repositories')
-  async repositories(): Promise<RepositorySettingsView> {
-    const { outside, repositories } = await this.sessions.discoveredRepositories();
-    return { home: this.config.profilesRoot, outside, repositories, settings: this.settings.repositories() };
+  @Get('projects')
+  async projects(): Promise<ProjectSettingsView> {
+    const { outside, projects } = await this.sessions.discoveredProjects();
+    return { home: this.config.profilesRoot, outside, projects, settings: this.settings.projects() };
   }
 
   @Put()

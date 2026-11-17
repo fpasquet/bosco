@@ -3,7 +3,7 @@
 export interface ProfileCandidateDto {
   lastSessionAt: null | string;
   path: string;
-  repositoryCount: number;
+  projectCount: number;
 }
 
 export interface SourceDto {
@@ -91,28 +91,28 @@ export interface PilotMessageDto {
   text: string;
 }
 
-/** Nouvelle session (E16a) : dépôt (sa racine), profil Claude Code (son dossier ; null : celui du dépôt), premier message. */
+/** Nouvelle session (E16a) : projet (sa racine), profil Claude Code (son dossier ; null : celui du projet), premier message. */
 export interface StartSessionDto extends PilotMessageDto {
   profile: null | string;
-  repository: string;
+  project: string;
   /** Dans un bac à sable (E16b) : branche de départ (null : la courante) et branche de la session (null : proposée) */
   sandbox?: null | { branch: null | string; startBranch: null | string };
 }
 
-/** Ce que propose le formulaire d'une nouvelle session (E16a) : les dépôts et les abonnements Claude. */
+/** Ce que propose le formulaire d'une nouvelle session (E16a) : les projets et les abonnements Claude. */
 export interface PilotOptionsDto {
-  /** Profils Claude Code surveillés qui ont un accès, et celui du dépôt choisi */
+  /** Profils Claude Code surveillés qui ont un accès, et celui du projet choisi */
   profiles: { account: null | string; label: string; path: string }[];
-  /** Branche courante de chaque dépôt : le départ proposé d'un bac à sable (E16b) */
-  repositories: { branch: null | string; defaultProfile: null | string; name: string; root: string }[];
+  /** Branche courante de chaque projet : le départ proposé d'un bac à sable (E16b) */
+  projects: { branch: null | string; defaultProfile: null | string; name: string; root: string }[];
   /** null : le bac à sable est disponible ; sinon la raison (« Docker ne répond pas ») */
   sandboxUnavailable: null | string;
 }
 
-/** Suggestion de l'éditeur (E2h) : un fichier du dépôt après « @ », une commande ou un skill après « / ». */
+/** Suggestion de l'éditeur (E2h) : un fichier du projet après « @ », une commande ou un skill après « / ». */
 export interface SuggestionDto {
   description: null | string;
-  /** Origine d'une commande : « commande », « skill · profil perso », « dépôt api-voix » */
+  /** Origine d'une commande : « commande », « skill · profil perso », « projet api-voix » */
   origin: null | string;
   value: string;
 }
@@ -130,12 +130,12 @@ export interface SessionDto {
   model: null | string;
   /** Trois dernières actions de l'agent, la plus récente en premier */
   recentActions: string[];
-  repoPath: null | string;
+  projectPath: null | string;
   /**
-   * Dépôt : nom de la racine git et dossier de travail à l'intérieur (« labo-ia », « packages/bosco ») ; hidden : masqué
+   * Projet : nom de la racine git et dossier de travail à l'intérieur (« labo-ia », « packages/bosco ») ; hidden : masqué
    * des listes dans les réglages (E4d), ses sessions restent visibles
    */
-  repository: { folder: string; hidden: boolean; name: string; root: string } | null;
+  project: { folder: string; hidden: boolean; name: string; root: string } | null;
   sourceId: string;
   startedAt: string;
   state: SessionStateDto;
@@ -237,7 +237,7 @@ export interface NotificationDto {
   excerpt: null | string;
   id: number;
   kind: 'ended' | 'failed' | 'long-turn' | 'permission' | 'question' | 'review' | 'sandbox' | 'turn-question';
-  /** Dépôt de la session ou de la tâche (« api-voix ») */
+  /** Projet de la session ou de la tâche (« api-voix ») */
   place: null | string;
   readAt: null | string;
   sessionId: null | string;
@@ -271,29 +271,29 @@ export interface HistoryDayDto {
 export interface CostReportDto {
   averagePerWorkingDayUsd: number;
   byModel: { model: null | string; share: number; usd: number }[];
-  byRepository: { name: null | string; sessions: number; share: number; usd: number }[];
+  byProject: { name: null | string; sessions: number; share: number; usd: number }[];
   cacheShare: number;
-  days: { date: string; repositories: { name: null | string; sessions: number; usd: number }[] }[];
+  days: { date: string; projects: { name: null | string; sessions: number; usd: number }[] }[];
   sessions: number;
   totalUsd: number;
   workingDays: number;
 }
 
-/** Réglages des dépôts découverts (E4d). */
+/** Réglages des projets découverts (E4d). */
 export interface DiscoverySettingsDto {
   attachWorktrees: boolean;
   excluded: string[];
   gitOnly: boolean;
-  /** Racines des dépôts masqués */
+  /** Racines des projets masqués */
   hidden: string[];
   roots: string[];
 }
 
-/** Réglages › Dépôts (E4d) : réglages, dépôts trouvés (les plus récents d'abord) et sessions hors dépôt git. */
-export interface RepositorySettingsDto {
+/** Réglages › Projets (E4d) : réglages, projets trouvés (les plus récents d'abord) et sessions hors projet. */
+export interface ProjectSettingsDto {
   home: string;
   outside: number;
-  repositories: { git: boolean; hidden: boolean; lastActivityAt: string; name: string; root: string }[];
+  projects: { git: boolean; hidden: boolean; lastActivityAt: string; name: string; root: string }[];
   settings: DiscoverySettingsDto;
 }
 

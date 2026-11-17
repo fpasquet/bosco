@@ -125,7 +125,7 @@ function firstLine(value: string): string {
   return line.length > 120 ? `${line.slice(0, 119)}…` : line;
 }
 
-/** Nom court d'un fichier : son chemin à partir du dépôt quand on le devine, sinon ses deux derniers dossiers. */
+/** Nom court d'un fichier : son chemin à partir du projet quand on le devine, sinon ses deux derniers dossiers. */
 export function shortPath(path: string): string {
   const parts = path.split('/').filter(Boolean);
   return parts.length > 3 ? `…/${parts.slice(-3).join('/')}` : path;

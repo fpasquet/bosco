@@ -5,8 +5,8 @@ import { formatCost } from '../../lib/format';
 import { titleOf } from '../sessions-table';
 
 export interface EndedTodayProps {
-  /** Dépôt filtré (E1c) : le lien ouvre l'historique déjà filtré sur lui */
-  repository: null | string;
+  /** Projet filtré (E1c) : le lien ouvre l'historique déjà filtré sur lui */
+  project: null | string;
   /** Sessions terminées aujourd'hui, des plus récentes aux plus anciennes */
   sessions: SessionDto[];
 }
@@ -15,9 +15,9 @@ export interface EndedTodayProps {
 const SHOWN = 4;
 
 /** Sessions terminées aujourd'hui, sous la vue d'ensemble, avec « Voir l'historique » (E1c, E1d ; CA-SESS-13). */
-export function EndedToday({ repository, sessions }: EndedTodayProps) {
+export function EndedToday({ project, sessions }: EndedTodayProps) {
   if (sessions.length === 0) return null;
-  const history = repository ? `/history?repo=${encodeURIComponent(repository)}` : '/history';
+  const history = project ? `/history?project=${encodeURIComponent(project)}` : '/history';
   const rest = sessions.length - SHOWN;
   return (
     <section aria-labelledby="ended-today" className="rounded-card border border-line bg-surface shadow-card">
@@ -25,7 +25,7 @@ export function EndedToday({ repository, sessions }: EndedTodayProps) {
         id="ended-today"
         className="flex items-center gap-2 border-b border-line px-4 py-2.5 text-xs font-semibold text-muted"
       >
-        {repository ? 'Terminées aujourd’hui dans ce dépôt' : 'Terminées aujourd’hui'}
+        {project ? 'Terminées aujourd’hui dans ce projet' : 'Terminées aujourd’hui'}
         <span className="badge badge-ghost font-mono badge-sm">{sessions.length}</span>
         <Link href={history} className="ml-auto link font-normal link-primary">
           Voir l’historique

@@ -17,8 +17,8 @@ export interface TranscriptEvent {
   /** Question posée par l'agent (outil AskUserQuestion) : elle attend ta réponse (E15) */
   question?: null | string;
   model: null | string;
-  /** Racine git du dossier de travail, trouvée par l'adaptateur : elle donne le dépôt de la session */
-  repoRoot: null | string;
+  /** Racine git du dossier de travail, trouvée par l'adaptateur : elle donne le projet de la session */
+  projectRoot: null | string;
   /** Texte court : message, nom et argument d'un outil, ou titre */
   text: string;
   usage: null | TokenUsage;

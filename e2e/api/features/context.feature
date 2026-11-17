@@ -2,7 +2,7 @@
 @RF-CONT-02
 @RF-CONT-03
 Feature: Context of the agents
-  As the developer, I want every agent to receive the accepted decisions of its repository and of the socles that
+  As the developer, I want every agent to receive the accepted decisions of its project and of the socles that
   apply to it, so that it works within what was decided, and an agent only proposes, never decides.
 
   Background:
@@ -11,15 +11,15 @@ Feature: Context of the agents
 
   @CA-CONT-01
   @CA-CONT-25
-  Scenario: The accepted decisions of the repository and of its socles are sent, an excepted one is left out
+  Scenario: The accepted decisions of the project and of its socles are sent, an excepted one is left out
     When I send POST request to "/api/socles" with the JSON "fixtures/context/global-socle.json"
     And I send POST request to "/api/decisions" with the JSON "fixtures/context/socle-decision.json"
     And I send POST request to "/api/decisions" with the JSON "fixtures/context/exception.json"
-    And I send GET request to "/api/context/preview?repository=labo-ia"
+    And I send GET request to "/api/context/preview?project=labo-ia"
     Then the response property "text" should contain "DEC-2 Garder Jest pour les tests (fait exception à « Tests avec Vitest »)"
     And the response property "absent.excluded.0.id" should equal "1"
     When I send GET request to "/api/socles"
-    Then the response property "socles.0.exceptions.0.repository" should equal "labo-ia"
+    Then the response property "socles.0.exceptions.0.project" should equal "labo-ia"
 
   @CA-CONT-03
   @CA-CONT-06
@@ -30,16 +30,16 @@ Feature: Context of the agents
       | context  | Les sigles arrivent avec ou sans points. |
       | decision | Retirer les points avant la recherche.   |
     Then the Bosco tool answers "DEC-1 proposée"
-    When I send GET request to "/api/context/preview?repository=labo-ia"
+    When I send GET request to "/api/context/preview?project=labo-ia"
     Then the response property "absent.proposed.0.id" should equal "1"
     When I send POST request to "/api/decisions/1/accept"
-    And I send GET request to "/api/context/preview?repository=labo-ia"
+    And I send GET request to "/api/context/preview?project=labo-ia"
     Then the response property "text" should contain "DEC-1 Normaliser les sigles"
 
   @CA-CONT-21
   @CA-CONT-22
   Scenario: An accepted decision changes with a note, and keeps its versions
-    When I send POST request to "/api/decisions" with the JSON "fixtures/context/repository-decision.json"
+    When I send POST request to "/api/decisions" with the JSON "fixtures/context/project-decision.json"
     And I send POST request to "/api/decisions/1/versions" with the JSON "fixtures/context/version-without-note.json"
     Then the response code should be 400
     And the response property "message" should equal "Écris une note pour dire ce qui change."
@@ -48,23 +48,23 @@ Feature: Context of the agents
     And the response property "versions.1.note" should equal "Les colonnes aussi"
 
   @CA-CONT-86
-  Scenario: Only the repositories with a decision of their own, proposed or accepted, are offered
+  Scenario: Only the projects with a decision of their own, proposed or accepted, are offered
     When I send POST request to "/api/socles" with the JSON "fixtures/context/global-socle.json"
     And I send POST request to "/api/decisions" with the JSON "fixtures/context/socle-decision.json"
-    And I send POST request to "/api/decisions" with the JSON "fixtures/context/repository-decision.json"
+    And I send POST request to "/api/decisions" with the JSON "fixtures/context/project-decision.json"
     And I send POST request to "/api/decisions" with the JSON "fixtures/context/proposed-api-voix.json"
-    And I send GET request to "/api/context/repositories"
-    Then the response property "repositories" should equal "api-voix,labo-ia"
+    And I send GET request to "/api/context/projects"
+    Then the response property "projects" should equal "api-voix,labo-ia"
     When I send POST request to "/api/decisions/3/refuse"
-    And I send GET request to "/api/context/repositories"
-    Then the response property "repositories" should equal "labo-ia"
+    And I send GET request to "/api/context/projects"
+    Then the response property "projects" should equal "labo-ia"
 
-  Scenario: A session reads the context of the repository it works in, and nothing outside of the known ones
-    When I send POST request to "/api/decisions" with the JSON "fixtures/context/repository-decision.json"
+  Scenario: A session reads the context of the project it works in, and nothing outside of the known ones
+    When I send POST request to "/api/decisions" with the JSON "fixtures/context/project-decision.json"
     And a Claude Code session in "labo-ia/packages/rag" calls the Bosco tool "bosco_context"
     Then the Bosco tool answers "DEC-1"
     When a Claude Code session in "ailleurs" calls the Bosco tool "bosco_context"
-    Then the Bosco tool answers "Ce dossier n’est dans aucun dépôt connu de Bosco."
+    Then the Bosco tool answers "Ce dossier n’est dans aucun projet connu de Bosco."
 
   Scenario: The MCP server of Bosco requires the secret of the installation
     When a program without the secret calls the Bosco tool "bosco_context"
@@ -78,11 +78,11 @@ Feature: Context of the agents
     And the response property "message" should equal "Un socle ne peut pas hériter de lui-même, même indirectement."
 
   @CA-CONT-65
-  Scenario: A socle changed after its creation reaches the repositories it now covers
+  Scenario: A socle changed after its creation reaches the projects it now covers
     When I send POST request to "/api/socles" with the JSON "fixtures/context/empty-socle.json"
     And I send POST request to "/api/decisions" with the JSON "fixtures/context/socle-decision.json"
-    And I send GET request to "/api/context/preview?repository=labo-ia"
+    And I send GET request to "/api/context/preview?project=labo-ia"
     Then the response property "text" should not contain "Tests avec Vitest"
     When I send PUT request to "/api/socles/1" with the JSON "fixtures/context/node-socle-labo-ia.json"
-    And I send GET request to "/api/context/preview?repository=labo-ia"
+    And I send GET request to "/api/context/preview?project=labo-ia"
     Then the response property "text" should contain "Tests avec Vitest"

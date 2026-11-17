@@ -105,18 +105,18 @@ function ArchitectureForm({
 }
 
 /**
- * Contexte d'un dépôt (E9a) : tout ce que reçoit un agent au lancement, décisions acceptées du dépôt, socles qui s'y
+ * Contexte d'un projet (E9a) : tout ce que reçoit un agent au lancement, décisions acceptées du projet, socles qui s'y
  * appliquent et place dans l'architecture. Les décisions proposées par un agent attendent ta validation.
  */
 export function ContextOverview({ busy, context, onPreview, onSaveArchitecture }: ContextOverviewProps) {
   const [editing, setEditing] = useState(false);
-  const { architecture, repository } = context;
+  const { architecture, project } = context;
   const excludedIds = new Set(context.excluded.map(({ id }) => id));
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap gap-2">
         <Button asChild size="sm" className="hidden md:inline-flex">
-          <Link href={`/context/decisions/new?repository=${encodeURIComponent(repository)}`}>
+          <Link href={`/context/decisions/new?project=${encodeURIComponent(project)}`}>
             <Plus aria-hidden className="size-4" />
             Nouvelle décision
           </Link>
@@ -153,9 +153,9 @@ export function ContextOverview({ busy, context, onPreview, onSaveArchitecture }
         </section>
       )}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <Card id="context-decisions" title={`Décisions de ${repository} · ${context.decisions.length} acceptées`}>
+        <Card id="context-decisions" title={`Décisions de ${project} · ${context.decisions.length} acceptées`}>
           {context.decisions.length === 0 ? (
-            <p className="px-4 py-3 text-muted">Aucune décision acceptée pour ce dépôt.</p>
+            <p className="px-4 py-3 text-muted">Aucune décision acceptée pour ce projet.</p>
           ) : (
             <ul className="divide-y divide-line">
               {context.decisions.map((decision) => (
@@ -180,7 +180,7 @@ export function ContextOverview({ busy, context, onPreview, onSaveArchitecture }
             }
           >
             {context.socles.length === 0 ? (
-              <p className="px-4 py-3 text-muted">Aucun socle ne s’applique à ce dépôt.</p>
+              <p className="px-4 py-3 text-muted">Aucun socle ne s’applique à ce projet.</p>
             ) : (
               <div className="flex flex-col divide-y divide-line">
                 {context.socles.map(({ decisions: all, socle }) => {

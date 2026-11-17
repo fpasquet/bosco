@@ -16,7 +16,7 @@ export interface SessionRow {
   endedAt: Date | null;
   lastAction: null | string;
   recentActions: string[];
-  repoRoot: null | string;
+  projectRoot: null | string;
   unpricedTokens: number;
   cacheCreationTokens: number;
   cacheReadTokens: number;
@@ -27,7 +27,7 @@ export interface SessionRow {
   model: null | string;
   nextSeq: number;
   outputTokens: number;
-  repoPath: null | string;
+  projectPath: null | string;
   sourceId: string;
   startedAt: Date;
   title: null | string;
@@ -68,8 +68,8 @@ export const SessionSchema = new EntitySchema<SessionRow>({
   properties: {
     id: { type: 'string', primary: true },
     sourceId: { type: 'string', fieldName: 'source_id', index: true },
-    repoPath: { type: 'string', fieldName: 'repo_path', nullable: true },
-    repoRoot: { type: 'string', fieldName: 'repo_root', nullable: true },
+    projectPath: { type: 'string', fieldName: 'repo_path', nullable: true },
+    projectRoot: { type: 'string', fieldName: 'repo_root', nullable: true },
     branch: { type: 'string', nullable: true },
     title: { type: 'string', nullable: true },
     model: { type: 'string', nullable: true },

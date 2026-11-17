@@ -11,22 +11,22 @@ Feature: Piloted sessions
   @CA-SESS-91
   @CA-SESS-92
   @CA-SESS-94
-  Scenario: A session starts in the repository with the settings of the toolbar, then runs a turn per message
-    When I start a session in the repository "labo-ia" with the JSON "fixtures/pilot/start-labo-ia.json"
+  Scenario: A session starts in the project with the settings of the toolbar, then runs a turn per message
+    When I start a session in the project "labo-ia" with the JSON "fixtures/pilot/start-labo-ia.json"
     Then the response code should be 201
     And "the started session" should end its turn with "Reçu : Lis le lexique · mode acceptEdits · modèle claude-opus-5-5 · effort high · images 0"
     And "the started session" should be piloted with:
       | permissionMode | acceptEdits     |
       | model          | claude-opus-5-5 |
       | effort         | high            |
-      | repository     | labo-ia         |
+      | project        | labo-ia         |
     When I write to "the started session" with the JSON "fixtures/pilot/tests-with-image.json"
     Then the response property "status" should equal "sent"
     And "the started session" should end its turn with "Reçu : Et les tests · mode default · modèle défaut · effort défaut · images 1"
 
   @CA-SESS-93
   Scenario: A message sent during a turn waits for its end, a second one joins it, and Arrêter keeps it
-    When I start a session in the repository "labo-ia" with the JSON "fixtures/pilot/start-long.json"
+    When I start a session in the project "labo-ia" with the JSON "fixtures/pilot/start-long.json"
     And I write to "the started session" with the JSON "fixtures/pilot/sigles.json"
     Then the response property "status" should equal "queued"
     And "the started session" should be running with the pending message "Pense aux sigles"
@@ -42,7 +42,7 @@ Feature: Piloted sessions
 
   @CA-SESS-95
   Scenario: A permission of a piloted session is answered in Bosco
-    When I start a session in the repository "labo-ia" with the JSON "fixtures/pilot/start-permission.json"
+    When I start a session in the project "labo-ia" with the JSON "fixtures/pilot/start-permission.json"
     Then "the started session" should wait for the permission "npm run db:migrate"
     When I send GET request to "/api/notifications"
     Then the response property "notifications.0.kind" should equal "permission"
@@ -51,7 +51,7 @@ Feature: Piloted sessions
 
   @CA-SESS-96
   Scenario: A question of the agent is answered in Bosco, or skipped
-    When I start a session in the repository "labo-ia" with the JSON "fixtures/pilot/start-question.json"
+    When I start a session in the project "labo-ia" with the JSON "fixtures/pilot/start-question.json"
     Then "the started session" should ask the question "Quel correctif préfères-tu ?"
     When I answer the question of "the started session" with ""
     Then the response code should be 400
@@ -85,7 +85,7 @@ Feature: Piloted sessions
     And the response property "code" should equal "invalidPilotMessage"
 
   @CA-SESS-99
-  Scenario: The editor suggests the files of the repository and the commands of the profile
+  Scenario: The editor suggests the files of the project and the commands of the profile
     Given the folder "labo-ia/packages/bosco" has the files:
       | src/lexique/lexique.ts    |
       | src/lexique/sigles.ts     |

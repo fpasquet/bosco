@@ -19,8 +19,8 @@ function escapeMarkup(text: string): string {
 }
 
 /**
- * Titre et texte de la notification du bureau : le type et le dépôt en titre (« Question · reservations ») ; en
- * texte, la session ou la tâche en gras sur sa ligne, puis l'extrait. Sans dépôt connu, la session passe en titre.
+ * Titre et texte de la notification du bureau : le type et le projet en titre (« Question · reservations ») ; en
+ * texte, la session ou la tâche en gras sur sa ligne, puis l'extrait. Sans projet connu, la session passe en titre.
  */
 export function desktopText(notification: NotificationRecord): { body: string; title: string } {
   const label =

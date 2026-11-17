@@ -10,7 +10,7 @@ const socleSchema = z.object({
   name: z.string().refine((value) => value.trim().length > 0, 'Donne un nom au socle.'),
   scope: z.enum(['global', 'shared']),
   inherits: z.string(),
-  repositories: z.array(z.string()),
+  projects: z.array(z.string()),
 });
 
 type SocleValues = z.infer<typeof socleSchema>;
@@ -20,31 +20,18 @@ export interface SocleFormProps {
   /** Socle modifié (E14a, « Modifier le socle ») ; rien pour un nouveau socle (E14b) */
   initial?: null | SocleDto;
   onCancel: () => void;
-  onSubmit: (socle: {
-    inherits: null | number;
-    name: string;
-    repositories: string[];
-    scope: 'global' | 'shared';
-  }) => void;
-  repositories: string[];
+  onSubmit: (socle: { inherits: null | number; name: string; projects: string[]; scope: 'global' | 'shared' }) => void;
+  projects: string[];
   /** Erreur renvoyée par l'API pour l'héritage (une boucle) */
   serverError: null | string;
   socles: SocleDto[];
 }
 
 /**
- * Nouveau socle (E14b) : un nom, une portée, un socle dont il hérite, et ses dépôts s'il est partagé. Le même
+ * Nouveau socle (E14b) : un nom, une portée, un socle dont il hérite, et ses projets s'il est partagé. Le même
  * formulaire modifie un socle existant, prérempli.
  */
-export function SocleForm({
-  busy,
-  initial = null,
-  onCancel,
-  onSubmit,
-  repositories,
-  serverError,
-  socles,
-}: SocleFormProps) {
+export function SocleForm({ busy, initial = null, onCancel, onSubmit, projects, serverError, socles }: SocleFormProps) {
   const { control, formState, handleSubmit, register, setError } = useForm<SocleValues>({
     resolver: zodResolver(socleSchema),
     defaultValues: initial
@@ -52,14 +39,14 @@ export function SocleForm({
           name: initial.name,
           scope: initial.scope,
           inherits: initial.inherits === null ? '' : String(initial.inherits),
-          repositories: initial.repositories,
+          projects: initial.projects,
         }
-      : { name: '', scope: 'shared', inherits: '', repositories: [] },
+      : { name: '', scope: 'shared', inherits: '', projects: [] },
   });
   // Un socle n'hérite pas de lui-même ; une boucle plus longue est refusée par Bosco (CA-CONT-62)
   const parents = socles.filter(({ id }) => id !== initial?.id);
   const scope = useWatch({ control, name: 'scope' });
-  const chosen = useWatch({ control, name: 'repositories' });
+  const chosen = useWatch({ control, name: 'projects' });
   useEffect(() => {
     if (serverError) setError('inherits', { type: 'server', message: serverError });
   }, [serverError, setError]);
@@ -73,7 +60,7 @@ export function SocleForm({
             name: values.name,
             scope: values.scope,
             inherits: values.inherits ? Number(values.inherits) : null,
-            repositories: values.repositories,
+            projects: values.projects,
           }),
         )(event)
       }
@@ -96,11 +83,11 @@ export function SocleForm({
         <legend className="mb-1 text-xs font-medium">Portée</legend>
         <label className="flex items-center gap-2">
           <input type="radio" className="radio radio-sm" value="global" {...register('scope')} />
-          Global : tous les dépôts
+          Global : tous les projets
         </label>
         <label className="flex items-center gap-2">
           <input type="radio" className="radio radio-sm" value="shared" {...register('scope')} />
-          Partagé : les seuls dépôts cochés
+          Partagé : les seuls projets cochés
         </label>
       </fieldset>
       <label className="flex flex-col gap-1.5">
@@ -128,17 +115,17 @@ export function SocleForm({
       </label>
       {scope === 'shared' && (
         <fieldset className="flex flex-col gap-1.5">
-          <legend className="mb-1 text-xs font-medium">Dépôts</legend>
+          <legend className="mb-1 text-xs font-medium">Projets</legend>
           <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
-            {repositories.map((name) => (
+            {projects.map((name) => (
               <label key={name} className="flex items-center gap-2 font-mono text-sm">
-                <input type="checkbox" className="checkbox checkbox-sm" value={name} {...register('repositories')} />
+                <input type="checkbox" className="checkbox checkbox-sm" value={name} {...register('projects')} />
                 {name}
               </label>
             ))}
           </div>
           <p className="text-xs text-muted">
-            {chosen.length > 1 ? `${chosen.length} dépôts sélectionnés` : `${chosen.length} dépôt sélectionné`}
+            {chosen.length > 1 ? `${chosen.length} projets sélectionnés` : `${chosen.length} projet sélectionné`}
           </p>
         </fieldset>
       )}

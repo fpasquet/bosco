@@ -1,19 +1,19 @@
 import { DomainError } from '../../shared/domain/domain-error.ts';
 
 /**
- * Réglages des dépôts découverts (E4d). Le dépôt d'une session se calcule à l'affichage (DT-27) : un réglage changé
+ * Réglages des projets découverts (E4d). Le projet d'une session se calcule à l'affichage (DT-27) : un réglage changé
  * vaut aussitôt, sans relire l'historique.
  */
 export interface DiscoverySnapshot {
-  /** Un worktree git se range avec son dépôt d'origine (CA-SESS-78) */
+  /** Un worktree git se range avec son projet d'origine (CA-SESS-78) */
   attachWorktrees: boolean;
-  /** Dossiers où aucun dépôt n'est retenu ; ils l'emportent sur les dossiers de dépôts (CA-SESS-79) */
+  /** Dossiers où aucun projet n'est retenu ; ils l'emportent sur les dossiers de projets (CA-SESS-79) */
   excluded: string[];
-  /** Une session hors d'un dépôt git ne crée pas de dépôt (CA-SESS-77) */
+  /** Une session hors d'un dépôt git ne crée pas de projet (CA-SESS-77) */
   gitOnly: boolean;
-  /** Racines des dépôts masqués des listes (CA-SESS-80) */
+  /** Racines des projets masqués des listes (CA-SESS-80) */
   hidden: string[];
-  /** Seuls les dépôts sous ces dossiers sont retenus ; vide : tout le poste (CA-SESS-79) */
+  /** Seuls les projets sous ces dossiers sont retenus ; vide : tout le poste (CA-SESS-79) */
   roots: string[];
 }
 
@@ -25,7 +25,7 @@ export const DEFAULT_DISCOVERY: DiscoverySnapshot = {
   roots: [],
 };
 
-/** Découverte de la première version : le dossier de travail d'une session hors git compte comme un dépôt. */
+/** Découverte de la première version : le dossier de travail d'une session hors git compte comme un projet. */
 export const LEGACY_DISCOVERY: DiscoverySnapshot = {
   attachWorktrees: false,
   excluded: [],
@@ -34,8 +34,8 @@ export const LEGACY_DISCOVERY: DiscoverySnapshot = {
   roots: [],
 };
 
-/** Dépôt d'une session : nom, racine, dossier de travail à l'intérieur, et ce que les listes en font. */
-export interface RepositoryPlace {
+/** Projet d'une session : nom, racine, dossier de travail à l'intérieur, et ce que les listes en font. */
+export interface ProjectPlace {
   folder: string;
   /** La racine est celle d'un dépôt git (seuls ceux-là reçoivent des tâches, CA-SESS-81) */
   git: boolean;
@@ -71,17 +71,17 @@ export function isInside(path: string, folder: string): boolean {
 }
 
 /**
- * Range une session dans son dépôt d'après la racine git de son dossier de travail (notée à la lecture du transcript)
- * et les réglages : null quand elle va sous « Hors dépôt git ».
+ * Range une session dans son projet d'après la racine git de son dossier de travail (notée à la lecture du transcript)
+ * et les réglages : null quand elle va sous « Hors projet ».
  */
-export class RepositoryDiscovery {
+export class ProjectDiscovery {
   private readonly excluded: string[];
   private readonly roots: string[];
 
   constructor(
     private readonly settings: DiscoverySnapshot,
     home: string,
-    /** Dépôt d'origine d'un worktree git, ou null pour un dépôt ordinaire */
+    /** Projet d'origine d'un worktree git, ou null pour un projet ordinaire */
     private readonly originOf: (root: string) => null | string,
     /** Racine git d'un dossier, pour une session lue avant que Bosco la note */
     private readonly gitRootOf: (path: string) => null | string = () => null,
@@ -90,7 +90,7 @@ export class RepositoryDiscovery {
     this.roots = settings.roots.map((folder) => expandHome(folder, home));
   }
 
-  placeOf(noted: null | string, path: null | string): null | RepositoryPlace {
+  placeOf(noted: null | string, path: null | string): null | ProjectPlace {
     const gitRoot = noted ?? (path ? this.gitRootOf(path) : null);
     const workRoot = gitRoot ?? (this.settings.gitOnly ? null : path);
     if (!workRoot) return null;

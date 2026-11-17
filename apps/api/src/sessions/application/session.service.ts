@@ -5,20 +5,20 @@ import type { NotificationService } from './notification.service.ts';
 import type { PilotView } from './pilot.service.ts';
 import type { Clock, SessionEvents, SessionRegistry, SessionRepository } from './ports.ts';
 import { ASKING } from '../domain/notification.ts';
-import { LEGACY_DISCOVERY, RepositoryDiscovery, type RepositoryPlace } from '../domain/repository-discovery.ts';
+import { LEGACY_DISCOVERY, ProjectDiscovery, type ProjectPlace } from '../domain/project-discovery.ts';
 import { DEFAULT_INACTIVITY_DELAY_MS, Session } from '../domain/session.ts';
 
 /** Une question lue dans le transcript ne notifie que si elle vient d'être posée : jamais l'historique relu. */
 const RECENT_QUESTION_MS = 2 * 60 * 1000;
 
-/** Range une session dans son dépôt (E4d) : racine git notée à la lecture, dossier de travail. */
-export type RepositoryPlaces = (gitRoot: null | string, path: null | string) => null | RepositoryPlace;
+/** Range une session dans son projet (E4d) : racine git notée à la lecture, dossier de travail. */
+export type ProjectPlaces = (gitRoot: null | string, path: null | string) => null | ProjectPlace;
 
-const LEGACY_PLACES: RepositoryPlaces = (gitRoot, path) =>
-  new RepositoryDiscovery(LEGACY_DISCOVERY, '', () => null).placeOf(gitRoot, path);
+const LEGACY_PLACES: ProjectPlaces = (gitRoot, path) =>
+  new ProjectDiscovery(LEGACY_DISCOVERY, '', () => null).placeOf(gitRoot, path);
 
-/** Dépôt trouvé (E4d), avec la dernière activité de ses sessions. */
-export interface DiscoveredRepository {
+/** Projet trouvé (E4d), avec la dernière activité de ses sessions. */
+export interface DiscoveredProject {
   git: boolean;
   hidden: boolean;
   lastActivityAt: Date;
@@ -38,12 +38,12 @@ export interface SessionView {
   recentActions: string[];
   lastMessage: null | string;
   model: null | string;
-  repoPath: null | string;
+  projectPath: null | string;
   /**
-   * Dépôt de la session : nom de la racine git et dossier de travail à l'intérieur (« labo-ia », « packages/bosco ») ;
+   * Projet de la session : nom de la racine git et dossier de travail à l'intérieur (« labo-ia », « packages/bosco ») ;
    * hidden : masqué des listes (E4d), ses sessions restent visibles
    */
-  repository: { folder: string; hidden: boolean; name: string; root: string } | null;
+  project: { folder: string; hidden: boolean; name: string; root: string } | null;
   sourceId: string;
   startedAt: Date;
   state: SessionState;
@@ -90,27 +90,27 @@ export class SessionService {
     private readonly registry: Pick<SessionRegistry, 'isOpen'> = { isOpen: () => null },
     /** Seuil d'inactivité réglé dans les sources (CA-SESS-59) */
     private readonly inactivityDelayMs: () => number = () => DEFAULT_INACTIVITY_DELAY_MS,
-    /** Réglages des dépôts découverts (E4d), lus à chaque affichage (DT-27) */
-    private readonly places: RepositoryPlaces = LEGACY_PLACES,
+    /** Réglages des projets découverts (E4d), lus à chaque affichage (DT-27) */
+    private readonly places: ProjectPlaces = LEGACY_PLACES,
   ) {}
 
   /**
-   * Dépôts où l'on prépare du travail (E6a, E9a) : les dépôts git affichés, d'après les sessions des profils
+   * Projets où l'on prépare du travail (E6a, E9a) : les dépôts git affichés, d'après les sessions des profils
    * surveillés, les plus récents d'abord (CA-SESS-81).
    */
-  async knownRepositories(): Promise<{ name: string; root: string }[]> {
-    const { repositories } = await this.discoveredRepositories();
-    return repositories.filter(({ git, hidden }) => git && !hidden).map(({ name, root }) => ({ name, root }));
+  async knownProjects(): Promise<{ name: string; root: string }[]> {
+    const { projects } = await this.discoveredProjects();
+    return projects.filter(({ git, hidden }) => git && !hidden).map(({ name, root }) => ({ name, root }));
   }
 
-  /** Dépôts trouvés (E4d), masqués compris, les plus récents d'abord ; outside : sessions hors dépôt git. */
-  async discoveredRepositories(): Promise<{ outside: number; repositories: DiscoveredRepository[] }> {
+  /** Projets trouvés (E4d), masqués compris, les plus récents d'abord ; outside : sessions hors projet. */
+  async discoveredProjects(): Promise<{ outside: number; projects: DiscoveredProject[] }> {
     const sessions = await this.sessionRepository.list();
-    const found = new Map<string, DiscoveredRepository>();
+    const found = new Map<string, DiscoveredProject>();
     let outside = 0;
     for (const session of sessions) {
-      const { lastEventAt, repoPath, repoRoot } = session.toSnapshot();
-      const place = this.places(repoRoot, repoPath);
+      const { lastEventAt, projectPath, projectRoot } = session.toSnapshot();
+      const place = this.places(projectRoot, projectPath);
       if (!place) {
         outside += 1;
         continue;
@@ -125,10 +125,10 @@ export class SessionService {
           root: place.root,
         });
     }
-    const repositories = [...found.values()].toSorted(
+    const projects = [...found.values()].toSorted(
       (a, b) => b.lastActivityAt.getTime() - a.lastActivityAt.getTime() || a.name.localeCompare(b.name, 'fr'),
     );
-    return { outside, repositories };
+    return { outside, projects };
   }
 
   /** Sessions pilotées par Bosco, branchées au démarrage (le service de pilotage dépend de celui-ci). */
@@ -172,7 +172,7 @@ export class SessionService {
       if (event.question && event.at && now - event.at.getTime() < RECENT_QUESTION_MS)
         await this.notifications.notify(
           { kind: 'question' },
-          { place: view.repository?.name ?? null, sessionId: view.id, taskId: null, title, excerpt: event.question },
+          { place: view.project?.name ?? null, sessionId: view.id, taskId: null, title, excerpt: event.question },
         );
       else if (event.kind === 'prompt' && event.at && now - event.at.getTime() < RECENT_QUESTION_MS)
         await this.notifications.settle({ sessionId: view.id, kinds: ASKING }, 'Répondu');
@@ -211,7 +211,7 @@ export class SessionService {
       lastEventAt,
       lastMessage,
       model,
-      repoPath,
+      projectPath,
       sourceId,
       startedAt,
       title,
@@ -229,8 +229,8 @@ export class SessionService {
       openInTerminal,
       pilot,
       recentActions: snapshot.recentActions,
-      repoPath,
-      repository: repositoryOf(this.places(snapshot.repoRoot, repoPath)),
+      projectPath,
+      project: projectOf(this.places(snapshot.projectRoot, projectPath)),
       sourceId,
       startedAt,
       state,
@@ -248,7 +248,7 @@ export class SessionService {
   }
 }
 
-/** Dépôt d'une session tel que les écrans le montrent. */
-function repositoryOf(place: null | RepositoryPlace): SessionView['repository'] {
+/** Projet d'une session tel que les écrans le montrent. */
+function projectOf(place: null | ProjectPlace): SessionView['project'] {
   return place && { folder: place.folder, hidden: place.hidden, name: place.name, root: place.root };
 }

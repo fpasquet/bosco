@@ -42,7 +42,7 @@ async function freePort(): Promise<number> {
   return address.port;
 }
 
-/** Dossiers personnels des scénarios : hors de /tmp, exclu des dépôts par défaut, et hors de tout dépôt git. */
+/** Dossiers personnels des scénarios : hors de /tmp, exclu des projets par défaut, et hors de tout dépôt git. */
 const HOMES = join(homedir(), '.cache', 'bosco-e2e');
 
 /** Dossier personnel écrit dans les transcripts d'exemple, remplacé par le dossier du scénario. */
@@ -54,7 +54,7 @@ export async function startBosco(recordings: string): Promise<Bosco> {
   const phonePort = await freePort();
   const configDir = mkdtempSync(join(tmpdir(), 'bosco-claude-'));
   const dataDir = mkdtempSync(join(tmpdir(), 'bosco-data-'));
-  // Dossier personnel du scénario hors de /tmp, que Bosco exclut des dépôts par défaut (CA-SESS-79)
+  // Dossier personnel du scénario hors de /tmp, que Bosco exclut des projets par défaut (CA-SESS-79)
   mkdirSync(HOMES, { recursive: true });
   const profilesRoot = mkdtempSync(join(HOMES, 'bosco-home-'));
   const url = `http://127.0.0.1:${port}`;
@@ -103,21 +103,21 @@ export async function startBosco(recordings: string): Promise<Bosco> {
         rmSync(join(profilesRoot, entry), { recursive: true, force: true });
     },
     writeProfileTranscript(profile, source, sessionId) {
-      // Les dossiers de travail (/home/dev/labo-ia/packages/rag) sont recréés dans le dossier du scénario, chaque dépôt
-      // avec son .git, pour que Bosco trouve les dépôts comme sur le poste.
+      // Les dossiers de travail (/home/dev/labo-ia/packages/rag) sont recréés dans le dossier du scénario, chaque projet
+      // avec son .git, pour que Bosco trouve les projets comme sur le poste.
       const content = readFileSync(source, 'utf8').replaceAll(SAMPLE_HOME, profilesRoot);
       const cwd = /"cwd":\s*"([^"]+)"/.exec(content)?.[1] ?? profilesRoot;
-      const repository = cwd.slice(profilesRoot.length + 1).split('/')[0];
-      if (repository) mkdirSync(join(profilesRoot, repository, '.git'), { recursive: true });
+      const project = cwd.slice(profilesRoot.length + 1).split('/')[0];
+      if (project) mkdirSync(join(profilesRoot, project, '.git'), { recursive: true });
       mkdirSync(cwd, { recursive: true });
-      // Worktree de Claude Code (labo-ia/.claude/worktrees/fix-ui) : son .git est un fichier vers le dépôt d'origine
+      // Worktree de Claude Code (labo-ia/.claude/worktrees/fix-ui) : son .git est un fichier vers le projet d'origine
       const worktree = /^(.+)\/\.claude\/worktrees\/([^/]+)/.exec(cwd);
       if (worktree?.[1] && worktree[2]) {
         const gitdir = join(worktree[1], '.git', 'worktrees', worktree[2]);
         mkdirSync(gitdir, { recursive: true });
         writeFileSync(join(worktree[0], '.git'), `gitdir: ${gitdir}\n`);
       }
-      // Dossier de dépôt nommé comme le fait Claude Code : le chemin de travail, / remplacés par -
+      // Dossier de projet nommé comme le fait Claude Code : le chemin de travail, / remplacés par -
       const dir = join(profilesRoot, profile, 'projects', cwd.replaceAll('/', '-'));
       mkdirSync(dir, { recursive: true });
       const file = join(dir, `${sessionId}.jsonl`);

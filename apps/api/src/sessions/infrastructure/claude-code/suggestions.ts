@@ -1,5 +1,5 @@
-// Suggestions de l'éditeur (E2h, CA-SESS-99) : les fichiers suivis du dépôt après « @ », les commandes et skills du
-// profil et du dépôt après « / ». Lus sur le disque, sans rien modifier.
+// Suggestions de l'éditeur (E2h, CA-SESS-99) : les fichiers suivis du projet après « @ », les commandes et skills du
+// profil et du projet après « / ». Lus sur le disque, sans rien modifier.
 import { execFile } from 'node:child_process';
 import { readdir, readFile } from 'node:fs/promises';
 import { basename, join, relative } from 'node:path';
@@ -136,12 +136,12 @@ export class DiskSuggestions implements Suggestions {
 
   async commandsOf(
     profile: { label: string; path: string },
-    repository: { name: string; root: string },
+    project: { name: string; root: string },
     query: string,
   ): Promise<Suggestion[]> {
     const text = query.toLowerCase();
     const all = [
-      ...(await commandsIn(join(repository.root, '.claude'), `dépôt ${repository.name}`)),
+      ...(await commandsIn(join(project.root, '.claude'), `projet ${project.name}`)),
       ...(await commandsIn(profile.path, `profil ${profile.label}`)),
       ...BUILT_IN,
     ];

@@ -14,8 +14,8 @@ const text = (title: string): DecisionText => ({
 });
 
 const SOCLES: SocleSnapshot[] = [
-  { id: 1, name: 'Socle commun', scope: 'global', inherits: null, repositories: [] },
-  { id: 2, name: 'Socle Node.js', scope: 'shared', inherits: null, repositories: ['api-voix'] },
+  { id: 1, name: 'Socle commun', scope: 'global', inherits: null, projects: [] },
+  { id: 2, name: 'Socle Node.js', scope: 'shared', inherits: null, projects: ['api-voix'] },
 ];
 
 describe('context', () => {
@@ -29,7 +29,7 @@ describe('context', () => {
     at,
     exceptionTo: null,
   });
-  const jest = Decision.write(3, { kind: 'repository', name: 'api-voix' }, text('Garder Jest'), {
+  const jest = Decision.write(3, { kind: 'project', name: 'api-voix' }, text('Garder Jest'), {
     accept: true,
     at,
     exceptionTo: 1,
@@ -48,18 +48,18 @@ describe('context', () => {
     expect(textSent).not.toContain('- Tests avec Vitest');
   });
 
-  it('applies a global socle to every repository, a shared one only to its repositories', () => {
+  it('applies a global socle to every project, a shared one only to its projects', () => {
     const elsewhere = contextOf('site-articles', decisions, SOCLES, { calls: [], calledBy: [] });
     expect(elsewhere.socles.map(({ socle }) => socle.name)).toEqual(['Socle commun']);
   });
 
   it('refuses a socle that inherits from itself, even indirectly', () => {
-    const socles = [...SOCLES, { id: 3, name: 'NestJS', scope: 'shared' as const, inherits: 2, repositories: [] }];
+    const socles = [...SOCLES, { id: 3, name: 'NestJS', scope: 'shared' as const, inherits: 2, projects: [] }];
     expect(() => checkInheritance(2, 3, socles)).toThrow('Un socle ne peut pas hériter de lui-même');
   });
 
   it('keeps every version, and asks for a note to change an accepted decision', () => {
-    const decision = Decision.write(5, { kind: 'repository', name: 'api-voix' }, text('Cache audio'), {
+    const decision = Decision.write(5, { kind: 'project', name: 'api-voix' }, text('Cache audio'), {
       accept: true,
       at,
       exceptionTo: null,

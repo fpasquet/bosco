@@ -6,10 +6,23 @@ import { SettingSchema } from '../../../shared/infrastructure/persistence/settin
 import { Decision, type DecisionSnapshot } from '../../domain/decision.ts';
 import { type DecisionRow, DecisionSchema, SocleSchema } from './context.schema.ts';
 
+// Cible d'une décision en base : « repository » y désigne toujours un projet, écrit avant que les dépôts deviennent
+// des projets ; le genre gardé en base ne change pas pour relire les décisions du poste sans migration.
+const STORED_PROJECT_KIND = 'repository';
+
+function targetOf(stored: DecisionRow['target']): DecisionSnapshot['target'] {
+  const target = stored as DecisionSnapshot['target'] | { kind: typeof STORED_PROJECT_KIND; name: string };
+  return target.kind === STORED_PROJECT_KIND ? { kind: 'project', name: target.name } : target;
+}
+
+function storedTarget(target: DecisionSnapshot['target']): DecisionRow['target'] {
+  return target.kind === 'project' ? { kind: STORED_PROJECT_KIND, name: target.name } : { ...target };
+}
+
 function toDecision(row: DecisionRow): Decision {
   return Decision.restore({
     ...row,
-    target: row.target as DecisionSnapshot['target'],
+    target: targetOf(row.target),
     state: row.state as DecisionSnapshot['state'],
     versions: (row.versions as unknown as (Omit<DecisionSnapshot['versions'][number], 'at'> & { at: string })[]).map(
       (version) => ({ ...version, at: new Date(version.at) }),
@@ -36,7 +49,7 @@ export class MikroOrmDecisionRepository implements DecisionRepository {
       const snapshot = decision.toSnapshot();
       await em.upsert(DecisionSchema, {
         ...snapshot,
-        target: { ...snapshot.target },
+        target: storedTarget(snapshot.target),
         versions: snapshot.versions.map((version) => ({ ...version, at: version.at.toISOString() })),
       });
     }
@@ -61,18 +74,18 @@ export class MikroOrmSocleRepository implements SocleRepository {
   }
 }
 
-/** Place d'un dépôt dans l'architecture, dans la table des réglages du poste. */
+/** Place d'un projet dans l'architecture, dans la table des réglages du poste. */
 export class MikroOrmArchitectureStore implements ArchitectureStore {
   constructor(private readonly orm: MikroORM) {}
 
-  async of(repository: string): Promise<Architecture> {
-    const row = await this.orm.em.fork().findOne(SettingSchema, { key: `context.architecture.${repository}` });
+  async of(project: string): Promise<Architecture> {
+    const row = await this.orm.em.fork().findOne(SettingSchema, { key: `context.architecture.${project}` });
     return row ? (JSON.parse(row.value) as Architecture) : { calls: [], calledBy: [] };
   }
 
-  async save(repository: string, architecture: Architecture): Promise<void> {
+  async save(project: string, architecture: Architecture): Promise<void> {
     await this.orm.em
       .fork()
-      .upsert(SettingSchema, { key: `context.architecture.${repository}`, value: JSON.stringify(architecture) });
+      .upsert(SettingSchema, { key: `context.architecture.${project}`, value: JSON.stringify(architecture) });
   }
 }

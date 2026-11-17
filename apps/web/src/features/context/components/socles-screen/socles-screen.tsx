@@ -6,8 +6,8 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { PageSkeleton } from '@/shared/components/page-skeleton';
 import { Button } from '@/shared/ui/button';
-import { ContextRefused, repositoriesQuery, saveSocle, soclesQuery } from '../../api/context';
-import { concernedRepositories } from '../../lib/socles';
+import { ContextRefused, projectsQuery, saveSocle, soclesQuery } from '../../api/context';
+import { concernedProjects } from '../../lib/socles';
 import { SocleForm } from '../socle-form';
 import { SocleImpactDialog } from '../socle-impact-dialog';
 import { SoclesList } from '../socles-list';
@@ -35,7 +35,7 @@ export function SoclesScreen() {
         </Button>
       </div>
       {socles && <SoclesList socles={socles} />}
-      <p className="text-xs text-muted md:hidden">Créer un socle ou gérer ses dépôts se fait depuis le poste.</p>
+      <p className="text-xs text-muted md:hidden">Créer un socle ou gérer ses projets se fait depuis le poste.</p>
     </div>
   );
 }
@@ -45,7 +45,7 @@ export function NewSocleScreen() {
   const router = useRouter();
   const client = useQueryClient();
   const { data: socles } = useQuery(soclesQuery);
-  const { data: repositories } = useQuery(repositoriesQuery);
+  const { data: projects } = useQuery(projectsQuery);
   const [error, setError] = useState<null | string>(null);
   const create = useMutation({
     mutationFn: (socle: Parameters<typeof saveSocle>[1]) => saveSocle(null, socle),
@@ -56,7 +56,7 @@ export function NewSocleScreen() {
     onError: (failure) =>
       setError(failure instanceof ContextRefused ? failure.message : 'Le socle n’a pas pu être créé.'),
   });
-  if (!socles || !repositories) return <PageSkeleton variant="list" rows={3} />;
+  if (!socles || !projects) return <PageSkeleton variant="list" rows={3} />;
   return (
     <div className="flex flex-col gap-4 p-4 md:px-8 md:pt-6">
       <h1 className="font-display text-2xl font-semibold tracking-tight">Nouveau socle</h1>
@@ -64,7 +64,7 @@ export function NewSocleScreen() {
       <div className="hidden md:block">
         <SocleForm
           socles={socles}
-          repositories={repositories.map(({ name }) => name)}
+          projects={projects.map(({ name }) => name)}
           busy={create.isPending}
           serverError={error}
           onCancel={() => router.back()}
@@ -77,12 +77,12 @@ export function NewSocleScreen() {
 
 type SocleChange = Parameters<typeof saveSocle>[1];
 
-/** Modifier un socle (E14a) : le formulaire de E14b prérempli, puis la confirmation des dépôts concernés (CA-CONT-58). */
+/** Modifier un socle (E14a) : le formulaire de E14b prérempli, puis la confirmation des projets concernés (CA-CONT-58). */
 export function EditSocleScreen({ id }: { id: number }) {
   const router = useRouter();
   const client = useQueryClient();
   const { data: socles } = useQuery(soclesQuery);
-  const { data: repositories } = useQuery(repositoriesQuery);
+  const { data: projects } = useQuery(projectsQuery);
   const [error, setError] = useState<null | string>(null);
   const [pending, setPending] = useState<null | SocleChange>(null);
   const save = useMutation({
@@ -97,10 +97,10 @@ export function EditSocleScreen({ id }: { id: number }) {
       setError(failure instanceof ContextRefused ? failure.message : 'Le socle n’a pas pu être enregistré.');
     },
   });
-  if (!socles || !repositories) return <PageSkeleton variant="form" rows={4} />;
+  if (!socles || !projects) return <PageSkeleton variant="form" rows={4} />;
   const socle = socles.find((candidate) => candidate.id === id);
   if (!socle) return <p className="p-4 md:px-8 md:pt-6">Socle introuvable.</p>;
-  const everywhere = repositories.map(({ name }) => name);
+  const everywhere = projects.map(({ name }) => name);
   return (
     <div className="flex flex-col gap-4 p-4 md:px-8 md:pt-6">
       <div>
@@ -117,7 +117,7 @@ export function EditSocleScreen({ id }: { id: number }) {
         <SocleForm
           initial={socle}
           socles={socles}
-          repositories={everywhere}
+          projects={everywhere}
           busy={save.isPending}
           serverError={error}
           onCancel={() => router.back()}
@@ -130,7 +130,7 @@ export function EditSocleScreen({ id }: { id: number }) {
       <SocleImpactDialog
         open={pending !== null}
         socle={socle.name}
-        count={pending ? concernedRepositories(id, socles, pending, everywhere).length : 0}
+        count={pending ? concernedProjects(id, socles, pending, everywhere).length : 0}
         busy={save.isPending}
         onCancel={() => setPending(null)}
         onConfirm={() => pending && save.mutate(pending)}

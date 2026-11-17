@@ -17,22 +17,14 @@ import { HistoryList } from '../history-list';
 export type HistoryTab = 'costs' | 'list';
 
 /** Historique (E3a) et coûts (E3b) : les deux onglets partagent la recherche et les filtres. */
-export function HistoryScreen({
-  repository,
-  tab,
-  title,
-}: {
-  repository: null | string;
-  tab: HistoryTab;
-  title: string;
-}) {
+export function HistoryScreen({ project, tab, title }: { project: null | string; tab: HistoryTab; title: string }) {
   const now = useNow(60_000);
   useLiveEvents(true);
   const [filters, setFilters] = useState<Filters>({
     days: tab === 'costs' ? 30 : 7,
     profile: null,
     query: '',
-    repository,
+    project,
     state: null,
   });
   // La recherche part pendant la frappe, sans attendre la fin de chaque requête (CA-SESS-47)
@@ -41,11 +33,9 @@ export function HistoryScreen({
   const { data: sessions } = useQuery(sessionsQuery);
   const days = useQuery({ ...historyQuery(deferred), enabled: tab === 'list', placeholderData: keepPreviousData });
   const costs = useQuery({ ...costsQuery(deferred), enabled: tab === 'costs', placeholderData: keepPreviousData });
-  const repositories = [
+  const projects = [
     ...new Set(
-      (sessions ?? []).flatMap((session) =>
-        session.repository && !session.repository.hidden ? [session.repository.name] : [],
-      ),
+      (sessions ?? []).flatMap((session) => (session.project && !session.project.hidden ? [session.project.name] : [])),
     ),
   ].toSorted((a, b) => a.localeCompare(b, 'fr'));
   const profiles = (sources?.sources ?? []).map(({ id, label }) => ({ id, label }));
@@ -72,7 +62,7 @@ export function HistoryScreen({
           {tabLink('costs', 'Coûts')}
         </div>
       </div>
-      <HistoryFilters filters={filters} onChange={setFilters} profiles={profiles} repositories={repositories} />
+      <HistoryFilters filters={filters} onChange={setFilters} profiles={profiles} projects={projects} />
       {tab === 'list' && days.data && <HistoryList days={days.data} now={now} profileOf={profileOf} />}
       {tab === 'costs' && costs.data && <CostReport report={costs.data} now={now} />}
       {((tab === 'list' && !days.data) || (tab === 'costs' && !costs.data)) && <SectionSkeleton rows={6} />}
