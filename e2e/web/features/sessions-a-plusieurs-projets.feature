@@ -134,3 +134,35 @@ Fonctionnalité: Sessions à plusieurs projets
     Alors je vois le texte « Projets · 2 »
     Et je vois le texte « --add-dir ~/ »
     Et la page est accessible
+
+  @CA-SESS-119
+  Scénario: Regroupée par projet, la vue d'ensemble range la session sous son projet principal, nommée d'après lui
+    Étant donné la session pilotée « Affiche les tarifs » tourne dans les projets « labo-ia, api-voix »
+    Quand j'ouvre la page « / »
+    Et je clique sur le bouton « Projet »
+    Alors la vue d’ensemble montre, dans l’ordre :
+      | projet  | session            | état     |
+      | labo-ia | Affiche les tarifs | T’attend |
+    Et le tableau des sessions montre « labo-ia +1 »
+    Quand je clique sur le lien « Affiche les tarifs »
+    Alors je vois le texte « Projets · 2 »
+
+  @CA-CONT-161
+  Scénario: La colonne « Projet » de la page d'un groupe nomme le projet principal et le nombre des autres
+    Étant donné la session pilotée « Affiche les tarifs » tourne dans les projets « labo-ia, api-voix »
+    Quand j'ouvre la page « /groups/2/sessions »
+    Alors je vois le lien « labo-ia +1 »
+    Quand je clique sur le lien « labo-ia +1 »
+    Alors je suis sur la page « /projects/1/sessions »
+
+  @CA-SESS-130
+  Scénario: L'avertissement de session ouverte vaut pour chaque projet sur le poste, et disparaît en bac à sable
+    Étant donné la session « c41e9a07 » est ouverte dans Claude Code
+    Quand j'ouvre la page « /sessions/c41e9a07 »
+    Alors je vois le texte « Ouverte dans un terminal · réponds-y là-bas. »
+    Quand j'ouvre la page « /groups/2/sessions »
+    Et je clique sur le lien « Nouvelle session dans ce groupe »
+    Et je clique sur le bouton « Faire de api-voix le projet principal »
+    Alors je vois le texte « labo-ia : une session est déjà ouverte dans ce dossier »
+    Quand je clique sur le bouton radio « Bac à sable »
+    Alors je ne vois plus le texte « une session est déjà ouverte dans ce dossier »
