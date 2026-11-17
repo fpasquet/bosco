@@ -2,7 +2,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { SectionSkeleton } from '@/shared/components/section-skeleton';
-import { SettingsTabs } from '@/shared/layouts/settings-tabs';
+import { SettingsHeader } from '@/shared/layouts/settings-tabs';
 import {
   isolationQuery,
   IsolationRefused,
@@ -19,7 +19,7 @@ import { SubscriptionPanel } from '../subscription-panel';
  * Réglages › Abonnement Claude (E11) : l'abonnement par défaut des nouvelles sessions, l'usage de chaque abonnement et
  * les seuils du quota. Sur le téléphone, tout se lit sans se changer.
  */
-export function SubscriptionScreen({ title }: { title: string }) {
+export function SubscriptionScreen() {
   const client = useQueryClient();
   const { data: isolation } = useQuery(isolationQuery);
   const { data: quota } = useQuery(quotaQuery);
@@ -49,11 +49,7 @@ export function SubscriptionScreen({ title }: { title: string }) {
   const busy = subscription.isPending || thresholds.isPending || scope.isPending;
   return (
     <div className="flex flex-col gap-4 p-4 md:px-8 md:pt-6">
-      <div className="flex flex-col gap-3">
-        <p className="text-xs text-muted">{title}</p>
-        <SettingsTabs current="/settings/subscription" />
-        <h1 className="font-display text-2xl font-semibold tracking-tight">Abonnement Claude</h1>
-      </div>
+      <SettingsHeader current="subscription" />
       {!isolation || !quota ? (
         <SectionSkeleton rows={4} />
       ) : (

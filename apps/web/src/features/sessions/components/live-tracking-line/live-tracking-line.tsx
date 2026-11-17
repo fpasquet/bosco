@@ -9,7 +9,7 @@ export function LiveTrackingLine() {
       <Zap aria-hidden className="mt-0.5 size-3.5 shrink-0" />
       <span>
         Sans suivi en direct, {APP_NAME} ne sait pas quand une session t’attend.{' '}
-        <Link href="/sources" className="link font-medium link-primary">
+        <Link href="/settings/sources" className="link font-medium link-primary">
           Installer le suivi en direct
         </Link>
       </span>

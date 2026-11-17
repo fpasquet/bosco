@@ -32,5 +32,5 @@ export const MOBILE_TABS: readonly NavItem[] = [
   { href: '/history', label: 'Historique', icon: History, places: ['history'] },
   { href: '/projects', label: 'Projets', icon: FolderGit2, places: ['projects', 'project', 'group'] },
   // Sur le téléphone, la racine des Réglages est l'onglet Sources, suivi des autres onglets
-  { href: '/sources', label: 'Réglages', icon: Settings, places: ['settings'] },
+  { href: '/settings/sources', label: 'Réglages', icon: Settings, places: ['settings'] },
 ];
