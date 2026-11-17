@@ -16,35 +16,35 @@ import {
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import type { GroupDto, PilotSettingsDto, SessionDto } from '@bosco/domain';
+import type { GroupDto, PilotSettingsDto, SessionDto, StartSessionDto } from '@bosco/domain';
 import { PageSkeleton } from '@/shared/components/page-skeleton';
 import { useNotices } from '@/shared/hooks/use-notices';
 import { Breadcrumbs } from '@/shared/ui/breadcrumbs';
-import { groupQuery } from '../../api/groups';
-import { pilotOptionsQuery, startSession, suggestions } from '../../api/pilot';
+import { groupQuery, groupsQuery } from '../../api/groups';
+import { isolationQuery, pilotOptionsQuery, startSession, suggestions } from '../../api/pilot';
 import { sessionsQuery } from '../../api/sessions';
+import {
+  groupProjects,
+  namesList,
+  openIn,
+  type OptionProject,
+  projectsOffer,
+  sandboxDomains,
+  withPrincipal,
+} from '../../lib/new-session';
 import { Composer, type ComposerValue } from '../composer';
 import { DEFAULT_SETTINGS } from '../pilot-panel';
+import { ProjectsField } from '../projects-field';
 
-/** Une session du terminal encore vivante dans ce dossier : deux agents y modifieraient les mêmes fichiers. */
-function openIn(sessions: readonly SessionDto[], root: string): null | SessionDto {
-  return (
-    sessions.find(
-      (session) =>
-        session.project?.root === root &&
-        !session.pilot &&
-        (session.openInTerminal || session.state === 'running' || session.state === 'waiting'),
-    ) ?? null
-  );
-}
-
-/** Récapitulatif d'une session sur le poste (E16a). */
-function WorkstationSummary() {
+/** Récapitulatif d'une session sur le poste (E16a, E16c) : le projet principal, et ceux qu'elle voit en plus. */
+function WorkstationSummary({ others, principal }: { others: string[]; principal: string }) {
   return (
     <>
       <p className="flex gap-2">
         <Monitor aria-hidden className="mt-0.5 size-4 shrink-0 text-muted" />
-        Sur ce poste, dans le dossier du projet, comme dans un terminal.
+        {others.length === 0
+          ? 'Sur ce poste, dans le dossier du projet, comme dans un terminal.'
+          : `Sur ce poste, dans ${principal} ; elle voit aussi ${namesList(others)}.`}
       </p>
       <p className="text-xs font-semibold text-muted">Ensuite</p>
       <p className="flex gap-2">
@@ -53,14 +53,20 @@ function WorkstationSummary() {
       </p>
       <p className="flex gap-2">
         <SquareTerminal aria-hidden className="mt-0.5 size-4 shrink-0 text-muted" />
-        Elle se reprend aussi dans un terminal entre deux tours.
+        {others.length === 0
+          ? 'Elle se reprend aussi dans un terminal entre deux tours.'
+          : 'Elle se reprend aussi dans un terminal entre deux tours, avec les autres projets ajoutés à la commande.'}
       </p>
     </>
   );
 }
 
-/** Récapitulatif d'une session en bac à sable (E16b, règle 12) : ce que voit l'agent, et comment le travail revient. */
-function SandboxSummary({ branch, name }: { branch: string; name: string }) {
+/**
+ * Récapitulatif d'une session en bac à sable (E16b, E16d, règle 12) : ce que voit l'agent, les domaines réunis, et
+ * comment le travail revient.
+ */
+function SandboxSummary({ branch, domains, names }: { branch: string; domains: number; names: string[] }) {
+  const several = names.length > 1;
   return (
     <>
       <p className="flex gap-2">
@@ -70,7 +76,9 @@ function SandboxSummary({ branch, name }: { branch: string; name: string }) {
       <p className="text-xs font-semibold text-muted">Ce que voit l’agent</p>
       <p className="flex gap-2">
         <GitBranch aria-hidden className="mt-0.5 size-4 shrink-0 text-muted" />
-        Une copie de {name}, sur {branch}
+        {several
+          ? `Une copie de chacun des ${names.length} projets, sur ${branch}`
+          : `Une copie de ${names[0]}, sur ${branch}`}
       </p>
       <p className="flex gap-2">
         <KeyRound aria-hidden className="mt-0.5 size-4 shrink-0 text-muted" />
@@ -78,7 +86,14 @@ function SandboxSummary({ branch, name }: { branch: string; name: string }) {
       </p>
       <p className="flex gap-2">
         <Globe aria-hidden className="mt-0.5 size-4 shrink-0 text-muted" />
-        Les domaines autorisés du bac à sable
+        <span>
+          {several
+            ? `${domains} domaines, ceux des ${names.length} projets · `
+            : 'Les domaines autorisés du bac à sable · '}
+          <Link href="/settings/sandbox" className="link">
+            Voir
+          </Link>
+        </span>
       </p>
       <p className="flex gap-2 text-muted">
         <EyeOff aria-hidden className="mt-0.5 size-4 shrink-0" />
@@ -86,8 +101,10 @@ function SandboxSummary({ branch, name }: { branch: string; name: string }) {
       </p>
       <p className="text-xs font-semibold text-muted">Ensuite</p>
       <p className="flex gap-2">
-        <Download aria-hidden className="mt-0.5 size-4 shrink-0 text-muted" />« Récupérer la branche » ramène le travail
-        dans le projet, quand tu veux.
+        <Download aria-hidden className="mt-0.5 size-4 shrink-0 text-muted" />
+        {several
+          ? '« Récupérer les branches » ramène le travail dans chaque projet qui en a, quand tu veux.'
+          : '« Récupérer la branche » ramène le travail dans le projet, quand tu veux.'}
       </p>
       <p className="flex gap-2">
         <Moon aria-hidden className="mt-0.5 size-4 shrink-0 text-muted" />
@@ -133,53 +150,84 @@ export interface NewSessionOrigin {
   project: null | number;
 }
 
+/** « 3 fichiers modifiés du poste non copiés », ou « — » quand la copie prend tout. */
+function uncopied(changes: null | number): string {
+  if (!changes) return '—';
+  return changes > 1 ? `${changes} fichiers modifiés du poste non copiés` : '1 fichier modifié du poste non copié';
+}
+
 /**
- * Nouvelle session (E16a, E16b, CA-SESS-91, CA-SESS-106) : le projet et l'abonnement Claude, où elle tourne (sur le
- * poste ou dans un bac à sable, sur sa propre branche), puis le premier message, avec les réglages du tour dans la
- * barre d'outils. Elle s'ouvre dans Bosco. Partie d'un projet ou d'un groupe, elle le reprend, avec son fil d'Ariane.
+ * Copies d'une session à plusieurs projets en bac à sable (E16d) : pour chaque projet, d'où part sa copie et ce qui
+ * n'y entre pas.
  */
-export function NewSessionScreen({ origin }: { origin: NewSessionOrigin }) {
+function SandboxCopies({
+  from,
+  onFrom,
+  projects,
+}: {
+  from: (project: OptionProject) => string;
+  onFrom: (root: string, branch: string) => void;
+  projects: OptionProject[];
+}) {
+  return (
+    <div className="overflow-x-auto rounded-control border border-line sm:col-span-2">
+      <table className="table table-sm">
+        <caption className="sr-only">Copies des projets</caption>
+        <thead className="text-xs text-muted">
+          <tr>
+            <th className="font-medium">Projet</th>
+            <th className="font-medium">Partir de</th>
+            <th className="font-medium">Copie</th>
+          </tr>
+        </thead>
+        <tbody>
+          {projects.map((project) => (
+            <tr key={project.root}>
+              <td>{project.name}</td>
+              <td>
+                <input
+                  className="input w-40 font-mono input-sm"
+                  aria-label={`Partir de, pour ${project.name}`}
+                  value={from(project)}
+                  onChange={(event) => onFrom(project.root, event.target.value)}
+                />
+              </td>
+              <td className="text-xs text-muted">{uncopied(project.changes)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+/** Origine de l'abonnement proposé : le groupe choisi, sinon le projet principal. */
+function profileOrigin(path: string, group: null | { profile: null | string }, project: OptionProject): string {
+  if (path === group?.profile) return ' · défaut du groupe';
+  return path === project.defaultProfile ? ' · défaut du projet' : '';
+}
+
+/** Projets où une session du terminal est encore ouverte : un avertissement chacun, sauf en bac à sable. */
+function busyProjects(
+  sessions: readonly SessionDto[],
+  chosen: readonly OptionProject[],
+  sandboxed: boolean,
+): { project: OptionProject; session: SessionDto }[] {
+  if (sandboxed) return [];
+  return chosen.flatMap((project) => {
+    const session = openIn(sessions, project.root);
+    return session ? [{ project, session }] : [];
+  });
+}
+
+/** Démarre la session, puis l'ouvre ; un refus de Bosco s'affiche en message bref. */
+function useStartSession(): (input: StartSessionDto) => Promise<void> {
   const router = useRouter();
   const client = useQueryClient();
   const push = useNotices((state) => state.push);
-  const { data: options } = useQuery(pilotOptionsQuery);
-  const { data: sessions } = useQuery(sessionsQuery);
-  const { data: group } = useQuery({ ...groupQuery(origin.group ?? 0), enabled: origin.group !== null });
-  const [chosenProject, setProject] = useState<null | string>(null);
-  const [chosenProfile, setProfile] = useState<null | string>(null);
-  const [settings, setSettings] = useState<PilotSettingsDto>(DEFAULT_SETTINGS);
-  const [chosenWhere, setWhere] = useState<'sandbox' | 'workstation' | null>(null);
-  const [startBranch, setStartBranch] = useState<null | string>(null);
-  const [branch, setBranch] = useState('');
-  if (!options || (origin.group !== null && !group)) return <PageSkeleton variant="detail" rows={6} />;
-  // Le projet d'où l'on vient, ou le projet principal du groupe, est choisi d'office
-  const preferred = origin.project ?? group?.projects[0]?.id ?? null;
-  const project =
-    options.projects.find(({ root }) => root === chosenProject) ??
-    options.projects.find(({ id }) => id === preferred) ??
-    options.projects[0] ??
-    null;
-  const profile = chosenProfile ?? group?.profile ?? project?.defaultProfile ?? options.profiles[0]?.path ?? null;
-  // « Où elle tourne » reprend le dernier choix fait pour le projet
-  const where = chosenWhere ?? project?.place ?? 'workstation';
-  // Un projet sans git ne se copie pas dans un bac à sable : ses sessions tournent seulement sur le poste
-  const sandboxUnavailable =
-    options.sandboxUnavailable ?? (project && !project.git ? `${project.name} n’est pas un dépôt git` : null);
-  const sandboxed = where === 'sandbox' && !sandboxUnavailable;
-  // Le bac à sable travaille sur sa propre copie : une session du terminal dans le même dossier ne le gêne pas
-  const busy = project && !sandboxed ? openIn(sessions ?? [], project.root) : null;
-  const from = startBranch ?? project?.startBranch ?? project?.branch ?? '';
-  const choose = (next: 'sandbox' | 'workstation') => {
-    setWhere(next);
-    // L'agent ne peut abîmer que sa copie : les modifications passent sans demander (E16b)
-    if (next === 'sandbox' && settings.permissionMode === 'ask')
-      setSettings({ ...settings, permissionMode: 'acceptEdits' });
-  };
-  const submit = async (value: ComposerValue) => {
-    if (!project) return;
+  return async (input) => {
     try {
-      const sandbox = sandboxed ? { branch: branch.trim() || null, startBranch: from.trim() || null } : null;
-      const sessionId = await startSession({ ...value, profile, project: project.root, settings, sandbox });
+      const sessionId = await startSession(input);
       await client.invalidateQueries({ queryKey: ['sessions'] });
       router.push(`/sessions/${sessionId}`);
     } catch (error) {
@@ -187,47 +235,281 @@ export function NewSessionScreen({ origin }: { origin: NewSessionOrigin }) {
       throw error;
     }
   };
+}
+
+/**
+ * Avertissement non bloquant, pour chaque projet où une session du terminal est encore ouverte, nommé quand la session
+ * a plusieurs projets ; « Voir la session » ouvre l'autre session (CA-SESS-134).
+ */
+function BusyWarnings({ busy, named }: { busy: { project: OptionProject; session: SessionDto }[]; named: boolean }) {
+  return busy.map(({ project, session }) => (
+    <div key={project.root} role="alert" className="alert alert-soft alert-warning">
+      <TriangleAlert aria-hidden className="size-4" />
+      <span>
+        {named ? (
+          <>
+            <b className="font-semibold">{project.name}</b> : une session est déjà ouverte dans ce dossier
+          </>
+        ) : (
+          'Une session est déjà ouverte dans ce dossier'
+        )}
+        , dans un terminal : les deux agents modifieraient les mêmes fichiers.{' '}
+        <Link href={`/sessions/${session.id}`} className="link font-medium">
+          Voir la session
+        </Link>
+      </span>
+    </div>
+  ));
+}
+
+/** L'agent ne peut abîmer que sa copie : en bac à sable, les modifications passent sans demander (E16b). */
+function settingsWhere(where: 'sandbox' | 'workstation', settings: PilotSettingsDto): PilotSettingsDto {
+  return where === 'sandbox' && settings.permissionMode === 'ask'
+    ? { ...settings, permissionMode: 'acceptEdits' }
+    : settings;
+}
+
+/**
+ * Branches d'une session en bac à sable (E16b, E16d) : d'où part la copie de chaque projet, et la branche de la
+ * session, la même dans chacun.
+ */
+function SandboxFields({
+  branch,
+  chosen,
+  from,
+  onBranch,
+  onFrom,
+}: {
+  branch: string;
+  chosen: OptionProject[];
+  from: (project: OptionProject) => string;
+  onBranch: (branch: string) => void;
+  onFrom: (root: string, branch: string) => void;
+}) {
+  const [principal] = chosen;
+  const several = chosen.length > 1;
+  const start = principal ? from(principal) : '';
+  return (
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      {several || !principal ? (
+        <SandboxCopies projects={chosen} from={from} onFrom={onFrom} />
+      ) : (
+        <label className="flex min-w-0 flex-col gap-1.5">
+          <span className="text-sm font-medium">Partir de</span>
+          <input
+            className="input w-full font-mono"
+            value={start}
+            onChange={(event) => onFrom(principal.root, event.target.value)}
+          />
+        </label>
+      )}
+      <label className="flex min-w-0 flex-col gap-1.5">
+        <span className="text-sm font-medium">Branche de la session</span>
+        <input
+          className="input w-full font-mono"
+          placeholder="bosco/s-… d’après le premier message"
+          value={branch}
+          onChange={(event) => onBranch(event.target.value)}
+        />
+      </label>
+      <p className="text-xs text-muted sm:col-span-2">
+        {several
+          ? `Créée dans chacun des ${chosen.length} projets ; un nom déjà pris dans l’un d’eux est refusé. Chaque copie prend sa branche telle qu’enregistrée.`
+          : `Copie de ${start || 'la branche courante'} telle qu’enregistrée : les fichiers modifiés du poste ne sont pas copiés.`}
+      </p>
+    </div>
+  );
+}
+
+/** En-tête : le fil d'Ariane selon l'origine, le groupe et le projet principal, et « Annuler ». */
+function Header({
+  group,
+  principal,
+  start,
+}: {
+  group: null | string;
+  principal: null | string;
+  start: { back: string; crumbs: { href: string; label: string }[] };
+}) {
+  return (
+    <div className="flex items-end gap-3">
+      <div className="min-w-0">
+        <Breadcrumbs items={[...start.crumbs, { label: 'Nouvelle session' }]} />
+        <h1 className="mt-1 hidden font-display text-2xl font-semibold tracking-tight md:block">Nouvelle session</h1>
+        {group && principal && (
+          <p className="text-xs text-muted">
+            Avec le groupe {group} · projet principal {principal}
+          </p>
+        )}
+      </div>
+      <Link href={start.back} className="ml-auto link text-sm text-muted">
+        Annuler
+      </Link>
+    </div>
+  );
+}
+
+/** Récapitulatif de droite : où la session tourne, ce que voit l'agent et comment elle se poursuit. */
+function Summary({
+  branch,
+  chosen,
+  general,
+  sandboxed,
+}: {
+  branch: string;
+  chosen: OptionProject[];
+  general: string[];
+  sandboxed: boolean;
+}) {
+  const names = chosen.map(({ name }) => name);
+  return (
+    <aside className="flex flex-col gap-3 rounded-card border border-line bg-surface p-4 text-sm shadow-card">
+      <h2 className="font-semibold">Récapitulatif</h2>
+      <p className="text-xs font-semibold text-muted">Où elle tourne</p>
+      {sandboxed && names.length > 0 ? (
+        <SandboxSummary
+          names={names}
+          branch={branch.trim() || 'sa propre branche'}
+          domains={sandboxDomains(general, chosen).length}
+        />
+      ) : (
+        <WorkstationSummary principal={names[0] ?? ''} others={names.slice(1)} />
+      )}
+    </aside>
+  );
+}
+
+/** Branche de départ d'une copie : celle saisie, sinon celle réglée pour le projet, sinon sa branche courante. */
+function startFrom(typed: Readonly<Record<string, string>>, project: OptionProject): string {
+  return typed[project.root] ?? project.startBranch ?? project.branch ?? '';
+}
+
+/** Abonnement proposé : celui du groupe choisi, sinon celui du projet principal, sinon le premier. */
+function proposedProfile(
+  group: null | { profile: null | string },
+  project: null | OptionProject,
+  profiles: readonly { path: string }[],
+): null | string {
+  return group?.profile ?? project?.defaultProfile ?? profiles[0]?.path ?? null;
+}
+
+/** Pourquoi le bac à sable est grisé : Docker, ou un projet de la session sans git ; null s'il est possible. */
+function sandboxReason(unavailable: null | string, chosen: readonly OptionProject[]): null | string {
+  // Un projet sans git ne se copie pas dans un bac à sable : la session tourne alors seulement sur le poste
+  const withoutGit = chosen.find(({ git }) => !git);
+  return unavailable ?? (withoutGit ? `${withoutGit.name} n’est pas un dépôt git` : null);
+}
+
+/** Bac à sable demandé au démarrage : la branche de la session et la branche de départ de chaque projet. */
+function sandboxChoice(branch: string, chosen: readonly OptionProject[], fromOf: (project: OptionProject) => string) {
+  const [principal, ...others] = chosen;
+  return {
+    branch: branch.trim() || null,
+    startBranch: (principal && fromOf(principal).trim()) || null,
+    startBranches: Object.fromEntries(others.map((other) => [other.root, fromOf(other).trim() || null])),
+  };
+}
+
+/** Projets d'une session partie d'un groupe (ses projets, le principal en tête) ou d'un projet. */
+function originRoots(
+  group: GroupDto | undefined,
+  projects: readonly OptionProject[],
+  project: null | number,
+): string[] {
+  if (group) return groupProjects(group, projects);
+  const found = projects.find(({ id }) => id === project) ?? projects[0];
+  return found ? [found.root] : [];
+}
+
+/**
+ * Nouvelle session (E16a à E16d, CA-SESS-128, CA-SESS-132) : les projets, un seul ou ceux d'un groupe, le principal
+ * en tête, et l'abonnement Claude ; où elle tourne (sur le poste ou dans un bac à sable, une copie par projet sur sa
+ * propre branche), puis le premier message, avec les réglages du tour dans la barre d'outils. Elle s'ouvre dans
+ * Bosco. Partie d'un projet ou d'un groupe, elle le reprend, avec son fil d'Ariane.
+ */
+export function NewSessionScreen({ origin }: { origin: NewSessionOrigin }) {
+  const open = useStartSession();
+  const { data: options } = useQuery(pilotOptionsQuery);
+  const { data: sessions } = useQuery(sessionsQuery);
+  const { data: groups } = useQuery(groupsQuery);
+  const { data: isolation } = useQuery(isolationQuery);
+  const { data: group } = useQuery({ ...groupQuery(origin.group ?? 0), enabled: origin.group !== null });
+  const [chosenRoots, setChosenRoots] = useState<null | string[]>(null);
+  const [chosenGroup, setGroup] = useState<null | { id: number; name: string; profile: null | string }>(null);
+  const [chosenProfile, setProfile] = useState<null | string>(null);
+  const [settings, setSettings] = useState<PilotSettingsDto>(DEFAULT_SETTINGS);
+  const [chosenWhere, setWhere] = useState<'sandbox' | 'workstation' | null>(null);
+  const [startBranches, setStartBranches] = useState<Record<string, string>>({});
+  const [branch, setBranch] = useState('');
+  if (!options || (origin.group !== null && !group)) return <PageSkeleton variant="detail" rows={6} />;
+  // Partie d'un groupe, la session prend ses projets, le principal en tête ; d'un projet, ce projet
+  const roots = chosenRoots ?? originRoots(group, options.projects, origin.project);
+  const chosen = roots.flatMap((root) => options.projects.filter((candidate) => candidate.root === root));
+  const project = chosen[0] ?? null;
+  const others = chosen.slice(1);
+  const sessionGroup = chosenRoots === null && group ? group : chosenGroup;
+  const profile = chosenProfile ?? proposedProfile(sessionGroup, project, options.profiles);
+  // « Où elle tourne » reprend le dernier choix fait pour le projet principal
+  const where = chosenWhere ?? project?.place ?? 'workstation';
+  const sandboxUnavailable = sandboxReason(options.sandboxUnavailable, chosen);
+  const sandboxed = where === 'sandbox' && !sandboxUnavailable;
+  // Le bac à sable travaille sur ses propres copies : une session du terminal dans le même dossier ne le gêne pas
+  const busy = busyProjects(sessions ?? [], chosen, sandboxed);
+  const fromOf = (candidate: OptionProject) => startFrom(startBranches, candidate);
+  const changeProjects = (next: string[]) => {
+    setChosenRoots(next);
+    setProfile(null);
+  };
+  const choose = (next: 'sandbox' | 'workstation') => {
+    setWhere(next);
+    setSettings(settingsWhere(next, settings));
+  };
+  const submit = async (value: ComposerValue) => {
+    if (!project) return;
+    await open({
+      ...value,
+      profile,
+      project: project.root,
+      projects: others.map(({ root }) => root),
+      settings,
+      sandbox: sandboxed ? sandboxChoice(branch, chosen, fromOf) : null,
+    });
+  };
   const start = originOf(origin, group ?? null, options.projects);
+  const offer = projectsOffer(groups ?? [], options.projects, roots);
+  const general = isolation ? [...isolation.domains.locked, ...isolation.domains.added] : [];
   return (
     <div className="flex flex-col gap-5 p-4 md:px-8 md:pt-6">
-      <div className="flex items-end gap-3">
-        <div className="min-w-0">
-          <Breadcrumbs items={[...start.crumbs, { label: 'Nouvelle session' }]} />
-          <h1 className="mt-1 hidden font-display text-2xl font-semibold tracking-tight md:block">Nouvelle session</h1>
-          {group && (
-            <p className="text-xs text-muted">
-              Avec le groupe {group.name}
-              {group.projects[0] && ` · projet principal ${group.projects[0].name}`}
-            </p>
-          )}
-        </div>
-        <Link href={start.back} className="ml-auto link text-sm text-muted">
-          Annuler
-        </Link>
-      </div>
+      <Header start={start} group={sessionGroup?.name ?? null} principal={project?.name ?? null} />
       <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
         <div className="flex min-w-0 flex-col gap-4 md:col-span-2">
           {project ? (
             <>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <label className="flex min-w-0 flex-col gap-1.5">
-                  <span className="text-sm font-medium">Projet</span>
-                  <select
-                    className="select w-full"
-                    value={project.root}
-                    onChange={(event) => {
-                      setProject(event.target.value);
+                <div className="flex min-w-0 flex-col gap-1.5">
+                  <ProjectsField
+                    chosen={chosen}
+                    group={sessionGroup ? { id: sessionGroup.id, name: sessionGroup.name } : null}
+                    offer={offer}
+                    onAdd={(root) => changeProjects([...roots, root])}
+                    onChooseGroup={(next) => {
+                      changeProjects(groupProjects(next, options.projects));
+                      setGroup({ id: next.id, name: next.name, profile: next.profile });
+                    }}
+                    onDropGroup={() => {
+                      setChosenRoots(roots);
+                      setGroup(null);
                       setProfile(null);
                     }}
-                  >
-                    {options.projects.map(({ name, root }) => (
-                      <option key={root} value={root}>
-                        {name}
-                      </option>
-                    ))}
-                  </select>
-                  <span className="truncate font-mono text-xs text-muted">{project.root}</span>
-                </label>
+                    onPrincipal={(root) => changeProjects(withPrincipal(roots, root))}
+                    onRemove={(root) => changeProjects(roots.filter((candidate) => candidate !== root))}
+                  />
+                  <span className="truncate font-mono text-xs text-muted">
+                    {project.root}
+                    {project.branch && ` · ${project.branch}`}
+                    {project.changes ? ` · ${project.changes} modifiés` : ''}
+                  </span>
+                </div>
                 <label className="flex min-w-0 flex-col gap-1.5">
                   <span className="text-sm font-medium">Abonnement Claude</span>
                   <select
@@ -240,7 +522,7 @@ export function NewSessionScreen({ origin }: { origin: NewSessionOrigin }) {
                       <option key={path} value={path}>
                         {label}
                         {account ? ` · ${account}` : ''}
-                        {path === project.defaultProfile ? ' · défaut du projet' : ''}
+                        {profileOrigin(path, sessionGroup, project)}
                       </option>
                     ))}
                   </select>
@@ -278,42 +560,15 @@ export function NewSessionScreen({ origin }: { origin: NewSessionOrigin }) {
                 )}
               </fieldset>
               {sandboxed && (
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <label className="flex min-w-0 flex-col gap-1.5">
-                    <span className="text-sm font-medium">Partir de</span>
-                    <input
-                      className="input w-full font-mono"
-                      value={from}
-                      onChange={(event) => setStartBranch(event.target.value)}
-                    />
-                  </label>
-                  <label className="flex min-w-0 flex-col gap-1.5">
-                    <span className="text-sm font-medium">Branche de la session</span>
-                    <input
-                      className="input w-full font-mono"
-                      placeholder="bosco/s-… d’après le premier message"
-                      value={branch}
-                      onChange={(event) => setBranch(event.target.value)}
-                    />
-                  </label>
-                  <p className="text-xs text-muted sm:col-span-2">
-                    Copie de {from || 'la branche courante'} telle qu’enregistrée : les fichiers modifiés du poste ne
-                    sont pas copiés.
-                  </p>
-                </div>
+                <SandboxFields
+                  branch={branch}
+                  chosen={chosen}
+                  from={fromOf}
+                  onBranch={setBranch}
+                  onFrom={(root, value) => setStartBranches({ ...startBranches, [root]: value })}
+                />
               )}
-              {busy && (
-                <div role="alert" className="alert alert-soft alert-warning">
-                  <TriangleAlert aria-hidden className="size-4" />
-                  <span>
-                    Une session est déjà ouverte dans ce dossier, dans un terminal : les deux agents modifieraient les
-                    mêmes fichiers.{' '}
-                    <Link href={`/sessions/${busy.id}`} className="link font-medium">
-                      Voir la session
-                    </Link>
-                  </span>
-                </div>
-              )}
+              <BusyWarnings busy={busy} named={chosen.length > 1} />
               <Composer
                 label="Premier message"
                 placeholder="Que doit faire l’agent ?"
@@ -331,15 +586,7 @@ export function NewSessionScreen({ origin }: { origin: NewSessionOrigin }) {
             </p>
           )}
         </div>
-        <aside className="flex flex-col gap-3 rounded-card border border-line bg-surface p-4 text-sm shadow-card">
-          <h2 className="font-semibold">Récapitulatif</h2>
-          <p className="text-xs font-semibold text-muted">Où elle tourne</p>
-          {sandboxed && project ? (
-            <SandboxSummary name={project.name} branch={branch.trim() || 'sa propre branche'} />
-          ) : (
-            <WorkstationSummary />
-          )}
-        </aside>
+        <Summary branch={branch} chosen={chosen} general={general} sandboxed={sandboxed} />
       </div>
     </div>
   );

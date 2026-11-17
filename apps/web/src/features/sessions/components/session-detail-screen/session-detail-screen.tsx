@@ -10,7 +10,7 @@ import {
   answerQuestion,
   cancelPending,
   removeSandbox,
-  retrieveBranch,
+  retrieveBranches,
   sandboxRefusalsQuery,
   stopSandbox,
 } from '../../api/pilot';
@@ -73,7 +73,10 @@ export function SessionDetailScreen({ id }: { id: string }) {
   const failed = (error: unknown) =>
     notify(error instanceof Error ? error.message : 'Le bac à sable n’a pas répondu.', 'warning');
   const retrieve = useMutation({
-    mutationFn: () => retrieveBranch(id),
+    mutationFn: async () => {
+      const { branch } = await retrieveBranches(id);
+      return branch ?? '';
+    },
     onSuccess: (branch) => {
       const asked = data?.session.pilot?.sandbox?.branch;
       notify(

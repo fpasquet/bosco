@@ -1,6 +1,9 @@
 import type {
+  IsolationDto,
   PilotMessageDto,
   PilotOptionsDto,
+  RetrievedBranchesDto,
+  SandboxBranchesDto,
   SandboxRefusalsDto,
   StartSessionDto,
   SuggestionDto,
@@ -101,12 +104,38 @@ export async function suggestions(
   }
 }
 
-/** « Récupérer la branche » (CA-SESS-112) : la branche reçue dans le dépôt du poste. */
-export async function retrieveBranch(sessionId: string): Promise<string> {
-  const response = await call(`/api/sessions/${encodeURIComponent(sessionId)}/sandbox/retrieve`, { method: 'POST' });
-  const body = (await response.json()) as { branch: string };
-  return body.branch;
+/**
+ * « Récupérer la branche » (CA-SESS-112), « Récupérer les branches » (CA-SESS-141) : un projet (sa racine), ou toutes
+ * les branches qui ont du travail ; les branches reçues dans les dépôts du poste.
+ */
+export async function retrieveBranches(
+  sessionId: string,
+  project: null | string = null,
+): Promise<RetrievedBranchesDto> {
+  const response = await call(`/api/sessions/${encodeURIComponent(sessionId)}/sandbox/retrieve`, {
+    method: 'POST',
+    body: JSON.stringify({ project }),
+  });
+  return (await response.json()) as RetrievedBranchesDto;
 }
+
+/** Branches d'un bac à sable, une par projet, avec les fichiers qu'elles ont changés (E2k). */
+export const sandboxBranchesQuery = (sessionId: string) => ({
+  queryKey: ['session', sessionId, 'branches'],
+  queryFn: async (): Promise<SandboxBranchesDto> => {
+    const response = await call(`/api/sessions/${encodeURIComponent(sessionId)}/sandbox/branches`);
+    return (await response.json()) as SandboxBranchesDto;
+  },
+});
+
+/** Domaines autorisés de la liste générale du bac à sable : le récapitulatif les compte avec ceux des projets. */
+export const isolationQuery = {
+  queryKey: ['isolation'],
+  queryFn: async (): Promise<IsolationDto> => {
+    const response = await call('/api/isolation');
+    return (await response.json()) as IsolationDto;
+  },
+};
 
 /** « Arrêter le bac à sable » : le conteneur s'arrête, la copie reste. */
 export async function stopSandbox(sessionId: string): Promise<void> {
