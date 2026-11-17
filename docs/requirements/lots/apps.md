@@ -11,7 +11,7 @@
 
 ## <a id="e17"></a>E17 · Application desktop
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `apps/e17.html` · implémentation : **Livré (Application du poste développée (Linux) : démarre le service ou s'y relie, fenêtre de l'interface, barre système (pastille, sessions qui t'attendent, Nouvelle session, Suspendre les notifications 1 h, Lancer au démarrage, Quitter Bosco), notifications natives sans notify-send du service. Lancée depuis le dépôt (make desktop, make desktop-install) avec le Node du poste, ou installée par son paquet .deb (make desktop-package), qui embarque le service et Node 26 et active le bac à sable. Mises à jour : version du paquet tirée du dépôt, make desktop-update, mise à jour installée signalée et relance (E17c), données d'un Bosco plus récent refusées (E17d). Vérifié sur le poste (vraie question d'agent notifiée en natif ; application du paquet démarrée sans Node du poste ; mise à jour simulée signalée puis relancée ; base plus récente refusée avec son message). Écarts : E17b est une boîte de dialogue native ; lancée depuis le dépôt sans chrome-sandbox configuré (sudo), elle se lance sans bac à sable ; pas de paquet AppImage.)**
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `apps/e17.html` · implémentation : **Livré (Écarts : E17b est une boîte de dialogue native ; lancée depuis le dépôt sans chrome-sandbox configuré (sudo), l'application se lance sans bac à sable ; pas de paquet AppImage.)**
 
 ### <a id="e17a"></a>E17a · Application du poste : barre système
 
@@ -76,7 +76,7 @@ Règles de l'écran :
 
 ## <a id="e18"></a>E18 · Application Android
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `apps/e18.html` · implémentation : **Livré (Application Android développée : appairage par le lien du QR code (caméra ou saisie), confiance dans le seul certificat dont le QR code porte l'empreinte, trousseau, interface téléphone dans une vue web, poste injoignable avec nouvelle tentative, réglages (oublier le poste, rester connecté en arrière-plan par un service au premier plan, vibrer), notifications locales qui ouvrent leur session. Vérifié dans un émulateur Android 15 relié au poste de développement. Écarts : « Oublier ce poste » ne retire pas le téléphone côté poste (à faire dans Sources) ; la notification n'a pas encore le bouton « Autoriser » ; application en arrière-plan sans l'option, Android la gèle et les notifications attendent son retour.)**
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `apps/e18.html` · implémentation : **Livré (Écarts : « Oublier ce poste » ne retire pas le téléphone côté poste (à faire dans Sources) ; la notification n'a pas encore le bouton « Autoriser » ; en arrière-plan sans l'option, Android gèle l'application et les notifications attendent son retour.)**
 
 ### <a id="e18a"></a>E18a · Application Android : appairage par QR code
 
