@@ -36,6 +36,8 @@ make android                  # APK de l'application Android (JDK 17 et SDK Andr
 
 Le paquet s'installe avec `make desktop-package-install` : l'application va dans `/opt/Bosco`, son entrée dans le menu des applications, et son bac à sable est configuré à l'installation. Elle garde les données de `~/.local/share/bosco`, comme le service lancé depuis le dépôt. Chaque paquet porte la version de l'application suivie de la date et du commit, toujours plus récente pour apt. Installé pendant que Bosco tourne, il se signale dans la barre système : « Relancer Bosco » passe à la nouvelle version. Une version plus ancienne refuse de démarrer sur des données qu'une plus récente a mises à jour.
 
+Sans rien construire sur le poste, les deux applications se téléchargent depuis GitHub : le workflow « Apps » construit le paquet `.deb` et l'APK à chaque push sur `main` (et à la demande, depuis l'onglet Actions), et les garde 30 jours dans les artefacts de l'exécution. Une étiquette `v*` les joint en plus à une release. L'APK est signé avec la clé de débogage du gabarit Expo : il s'installe à la main (sources inconnues autorisées), pas sur un store.
+
 Pour essayer une branche avant sa fusion, `make beta BRANCH=<branche>` la construit dans un worktree à part (`~/.cache/bosco/beta`, gardé d'un essai à l'autre) sans toucher au dépôt courant, puis installe son paquet à la place de l'application, sur les vraies données. Sans `BRANCH`, c'est la copie de travail courante qui est installée. `make beta BRANCH=main` revient à la version stable, à condition que la branche essayée n'ait pas migré la base.
 
 ## Dépôt

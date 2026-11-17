@@ -1,0 +1,85 @@
+name: Apps
+
+# Construit les applications du poste (.deb) et Android (APK), téléchargeables depuis la page de chaque exécution ;
+# une étiquette v* les joint en plus à une release GitHub
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+
+concurrency:
+  group: apps-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  desktop:
+    name: Desktop package (.deb)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          # La version du paquet porte la date et le commit (apps/desktop/scripts/package.mjs)
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: make desktop-package
+      - uses: actions/upload-artifact@v5
+        with:
+          name: bosco-desktop
+          path: apps/desktop/out/*.deb
+          if-no-files-found: error
+          retention-days: 30
+
+  android:
+    name: Android application (APK)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - run: pnpm install --frozen-lockfile
+      - run: make android JAVA_HOME="$JAVA_HOME" ANDROID_HOME="$ANDROID_HOME"
+      # Nom qui dit le commit : l'APK de Gradle s'appelle toujours app-release.apk
+      - name: Name the APK after the commit
+        run: |
+          mkdir -p out
+          cp apps/mobile/android/app/build/outputs/apk/release/app-release.apk "out/bosco-android-${GITHUB_SHA::7}.apk"
+      - uses: actions/upload-artifact@v5
+        with:
+          name: bosco-android
+          path: out/*.apk
+          if-no-files-found: error
+          retention-days: 30
+
+  release:
+    name: Release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [desktop, android]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v5
+        with:
+          path: artifacts
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/*
+          generate_release_notes: true
