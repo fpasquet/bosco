@@ -137,7 +137,7 @@ function AddDomain({
         )}
       </label>
       <Button type="submit" size="sm" variant="outline" className="mt-1" disabled={busy}>
-        Ajouter
+        Ajouter<span className="sr-only"> le domaine</span>
       </Button>
     </form>
   );
