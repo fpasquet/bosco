@@ -1,6 +1,8 @@
 import type { MikroORM } from '@mikro-orm/sqlite';
 import { Body, Controller, Get, HttpCode, Inject, Post } from '@nestjs/common';
 import type { AccessService } from './access/application/access.service.ts';
+import type { IsolationService } from './isolation/application/isolation.service.ts';
+import type { QuotaService } from './isolation/application/quota.service.ts';
 import type { ChannelService } from './sessions/application/channel.service.ts';
 import type { LiveSignalService } from './sessions/application/live-signal.service.ts';
 import type { SessionService } from './sessions/application/session.service.ts';
@@ -8,10 +10,8 @@ import type { SettingsService } from './sessions/application/settings.service.ts
 import type { FileTranscriptWatcher } from './sessions/infrastructure/claude-code/transcript-watcher.ts';
 import type { RecordingNotifier } from './sessions/infrastructure/notifications/desktop-notifier.ts';
 import type { PresenceTracker } from './sessions/infrastructure/notifications/presence.ts';
-import type { IsolationService } from './tasks/application/isolation.service.ts';
-import type { QuotaService } from './tasks/application/quota.service.ts';
-import type { ScriptedAgentRunner } from './tasks/infrastructure/worker/scripted-agent.ts';
 import { ACCESS_SERVICE } from './access/tokens.ts';
+import { ISOLATION_SERVICE, QUOTA_SERVICE } from './isolation/tokens.ts';
 import {
   CHANNEL_SERVICE,
   LIVE_SIGNAL_SERVICE,
@@ -22,7 +22,6 @@ import {
   TRANSCRIPT_WATCHER,
 } from './sessions/tokens.ts';
 import { ORM } from './shared/tokens.ts';
-import { AGENT_RUNNER, ISOLATION_SERVICE, QUOTA_SERVICE } from './tasks/tokens.ts';
 
 /** Route réservée aux scénarios (BOSCO_TEST=1) : remet le service à zéro entre deux scénarios. */
 @Controller('__test')
@@ -35,36 +34,20 @@ export class TestController {
     @Inject(PRESENCE) private readonly presence: PresenceTracker,
     @Inject(SETTINGS_SERVICE) private readonly settings: SettingsService,
     @Inject(ACCESS_SERVICE) private readonly access: AccessService,
-    @Inject(AGENT_RUNNER) private readonly agent: ScriptedAgentRunner,
     @Inject(ISOLATION_SERVICE) private readonly isolation: IsolationService,
     @Inject(SESSION_SERVICE) private readonly sessions: SessionService,
     @Inject(CHANNEL_SERVICE) private readonly channel: ChannelService,
     @Inject(QUOTA_SERVICE) private readonly quota: QuotaService,
   ) {}
 
-  /** Simule l'usage de l'abonnement du worker, comme le donnerait un tour (DT-39) : la fenêtre de 5 h, en %. */
+  /** Simule l'usage de l'abonnement par défaut, comme le donnerait un tour (DT-39) : la fenêtre de 5 h, en %. */
   @Post('quota')
   @HttpCode(204)
-  async setQuota(@Body() body: { fiveHour: number }): Promise<void> {
+  async setQuota(@Body() body: { fiveHour: number; profile?: string }): Promise<void> {
     const resetsAt = new Date(Date.now() + 2 * 60 * 60 * 1000);
-    await this.quota.record(this.isolation.profileOf(null), {
+    await this.quota.record(body.profile ?? this.isolation.profileOf(null), {
       fiveHour: { utilization: body.fiveHour / 100, resetsAt },
     });
-  }
-
-  /** Simule un domaine refusé par le proxy d'une tâche (E11b). */
-  @Post('refusals')
-  @HttpCode(204)
-  async refuse(@Body() body: { host: string; taskId: number }): Promise<void> {
-    await this.isolation.refused({ at: new Date(), host: body.host, taskId: body.taskId });
-  }
-
-  /** Simule un Docker qui ne répond plus, ou qui revient (E5c), et un connecteur Atlassian absent (CA-CONT-95). */
-  @Post('worker')
-  @HttpCode(204)
-  setWorker(@Body() body: { atlassianConnector?: boolean; unavailable?: null | string }): void {
-    this.agent.unavailable = body.unavailable ?? null;
-    this.agent.atlassianConnector = body.atlassianConnector ?? true;
   }
 
   /** Notifications du bureau envoyées depuis la dernière remise à zéro (RF-SESS-08). */
@@ -78,9 +61,6 @@ export class TestController {
   async reset(): Promise<void> {
     await this.watcher.close();
     await this.access.disable();
-    this.agent.unavailable = null;
-    this.agent.atlassianConnector = true;
-    await this.agent.forget();
     this.liveSignals.forget();
     this.channel.forget();
     this.notifier.sent.splice(0);
@@ -91,7 +71,6 @@ export class TestController {
     await this.settings.load();
     await this.isolation.load();
     await this.quota.load();
-    await this.sessions.useTaskLinks();
     (globalThis as { boscoReplayReset?: () => void }).boscoReplayReset?.();
   }
 }

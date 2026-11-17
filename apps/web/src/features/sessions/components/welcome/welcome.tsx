@@ -1,11 +1,11 @@
-import { BellRing, ListChecks, ShieldCheck } from 'lucide-react';
+import { BellRing, Box, ShieldCheck } from 'lucide-react';
 import { Logo } from '@/shared/ui/logo';
 import { APP_NAME } from '@bosco/domain';
 
 const USES = [
   { icon: BellRing, strong: 't’attendent', before: 'Repère les sessions qui ', after: '' },
   { icon: ShieldCheck, strong: 'Autorise', before: '', after: ' depuis Bosco ou ton téléphone' },
-  { icon: ListChecks, strong: 'Confie des tâches', before: '', after: ' au worker, relis avant toute fusion' },
+  { icon: Box, strong: 'Isole une session', before: '', after: ' dans un bac à sable, sur sa propre branche' },
 ];
 
 /** Bienvenue du premier lancement : dans la page, sans fenêtre à fermer (RF-SESS-11). */
@@ -45,7 +45,7 @@ export function Welcome() {
         </div>
         <p className="mt-2 text-xs text-muted">
           Il surveille tes sessions Claude Code et t’appelle quand l’une a besoin de toi : autorise une commande d’ici,
-          confie des tâches au worker et relis-les.
+          isole une session dans un bac à sable.
         </p>
       </div>
     </section>

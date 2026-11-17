@@ -1,9 +1,0 @@
-{
-  "repository": "labo-ia",
-  "instruction": "Documente le découpage des tableaux dans le README du paquet.",
-  "mode": "worker",
-  "prerequisites": [1],
-  "guardrails": {
-    "maxTurns": 20
-  }
-}

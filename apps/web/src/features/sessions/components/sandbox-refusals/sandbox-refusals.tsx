@@ -5,7 +5,7 @@ import { clockOf } from '../../lib/detail';
 
 /**
  * Sorties réseau refusées d'un bac à sable (E2j, CA-SESS-108) : le domaine et l'heure, à la fin du fil ; le domaine
- * s'ajoute à la sortie réseau du worker, sur le poste.
+ * s'ajoute aux domaines autorisés de l'isolation du bac à sable, sur le poste.
  */
 export function SandboxRefusals({ refusals }: SandboxRefusalsDto) {
   if (refusals.length === 0) return null;

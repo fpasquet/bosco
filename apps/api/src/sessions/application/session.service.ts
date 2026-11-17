@@ -26,21 +26,6 @@ export interface DiscoveredRepository {
   root: string;
 }
 
-/** Tâche d'une session du worker (E2c, E2d) : la relecture ou la relance se font depuis la tâche. */
-export interface TaskLink {
-  failure: null | string;
-  id: number;
-  state: string;
-  /** Titre de la tâche : celui de la session, plutôt que la consigne complète transmise à l'agent */
-  title: string;
-}
-
-/** Liens des sessions vers leur tâche, gardés pour l'historique. */
-export interface TaskLinkStore {
-  load(): Promise<Map<string, TaskLink>>;
-  save(sessionId: string, link: TaskLink): Promise<void>;
-}
-
 export interface SessionView {
   branch: null | string;
   /** Fichiers modifiés par l'agent, d'après ses appels d'outils */
@@ -65,8 +50,6 @@ export interface SessionView {
   title: null | string;
   usage: { cacheCreation: number; cacheRead: number; input: number; output: number };
   turns: number;
-  /** Tâche du worker qui a lancé la session ; null pour une session interactive */
-  task: null | TaskLink;
   /** Ce qu'attend la session tant qu'elle t'attend ; rien sinon */
   waiting: null | Waiting;
   /** Ouverte dans un terminal : Bosco ne lui écrit pas (CA-SESS-98) */
@@ -94,8 +77,6 @@ export interface SessionDetail {
 
 /** Cas d'usage des sessions : une méthode par intention. */
 export class SessionService {
-  private taskLinks = new Map<string, TaskLink>();
-  private linkStore: null | TaskLinkStore = null;
   private notifications: null | Pick<NotificationService, 'notify' | 'settle'> = null;
   private pilots: PilotsView = NO_PILOTS;
 
@@ -153,22 +134,6 @@ export class SessionService {
   /** Sessions pilotées par Bosco, branchées au démarrage (le service de pilotage dépend de celui-ci). */
   usePilots(pilots: PilotsView): void {
     this.pilots = pilots;
-  }
-
-  /** Liens vers les tâches, lus au démarrage, et relus après une remise à zéro des scénarios. */
-  async useTaskLinks(store: TaskLinkStore | null = this.linkStore): Promise<void> {
-    this.linkStore = store;
-    this.taskLinks = store ? await store.load() : new Map<string, TaskLink>();
-  }
-
-  /** Une tâche du worker change : sa session, même pas encore lue, prend son état (À relire, En échec). */
-  async linkTask(sessionId: string, link: TaskLink): Promise<void> {
-    const known = this.taskLinks.get(sessionId);
-    if (known?.state === link.state && known.failure === link.failure && known.title === link.title) return;
-    this.taskLinks.set(sessionId, link);
-    await this.linkStore?.save(sessionId, link);
-    const session = await this.sessionRepository.find(sessionId);
-    if (session) this.sessionEvents.sessionChanged(this.view(session));
   }
 
   /** Sessions entrées dans le registre des sessions ouvertes, ou sorties : leur état change sans nouvel événement. */
@@ -237,10 +202,7 @@ export class SessionService {
     const openInTerminal = this.pilots.openInTerminal(snapshot.sourceId, snapshot.id);
     // Entre deux tours, une session pilotée est close sans être terminée : elle attend ton prochain message
     const open = pilot && !openInTerminal ? null : this.registry.isOpen(snapshot.sourceId, snapshot.id);
-    const link = this.taskLinks.get(snapshot.id) ?? null;
-    // L'agent d'une tâche qui ne tourne plus a fini : sa session est terminée, sans attendre l'inactivité
-    const state =
-      link && link.state !== 'running' ? 'ended' : session.stateAt(this.clock.now(), open, this.inactivityDelayMs());
+    const state = session.stateAt(this.clock.now(), open, this.inactivityDelayMs());
     const {
       branch,
       costMicros,
@@ -272,11 +234,10 @@ export class SessionService {
       sourceId,
       startedAt,
       state,
-      task: link,
       waiting: state === 'waiting' ? snapshot.waiting : null,
       turns: snapshot.turns,
       changedFiles: snapshot.changedFiles,
-      title: link?.title ?? title,
+      title,
       usage: {
         input: usage.input,
         output: usage.output,

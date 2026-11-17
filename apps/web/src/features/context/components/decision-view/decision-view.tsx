@@ -221,10 +221,7 @@ export function DecisionView({
               ))}
               {decision.fromTask !== null && (
                 <li className="text-sm">
-                  <Link href={`/tasks/${decision.fromTask}`} className="link font-mono text-xs">
-                    T-{decision.fromTask}
-                  </Link>{' '}
-                  tâche à l’origine de la proposition
+                  <span className="font-mono text-xs">T-{decision.fromTask}</span> tâche à l’origine de la proposition
                 </li>
               )}
               {specifiedBy.length === 0 && decision.fromTask === null && (
@@ -234,8 +231,7 @@ export function DecisionView({
           </section>
           {proposed && (
             <p className="text-xs text-muted">
-              Si tu l’acceptes, elle est transmise aux prochains agents de {targetLabel}, les tâches pas encore lancées
-              comprises.
+              Si tu l’acceptes, elle est transmise aux prochaines sessions de {targetLabel}.
             </p>
           )}
         </aside>

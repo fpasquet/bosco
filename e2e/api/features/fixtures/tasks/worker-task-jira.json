@@ -1,8 +1,0 @@
-{
-  "repository": "labo-ia",
-  "folder": "packages/rag",
-  "instruction": "Implémente le ticket https://equipe.atlassian.net/browse/TTS-142 en suivant le format des tests existants.",
-  "mode": "worker",
-  "prerequisites": [],
-  "guardrails": { "budgetUsd": 1.5, "maxTurns": 30 }
-}

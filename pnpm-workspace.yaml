@@ -1,3 +1,5 @@
+# Refuse d’installer avec une autre version de Node que celle de `.nvmrc` (engines de package.json)
+engineStrict: true
 packages:
   - apps/*
   - packages/*

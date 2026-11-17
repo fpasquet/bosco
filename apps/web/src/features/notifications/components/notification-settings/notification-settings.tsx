@@ -133,12 +133,6 @@ export function NotificationSettings({ busy, desktop, onChange, settings }: Noti
           </Row>
         </Card>
         <Card title="Un travail est fini" icon={<Flag aria-hidden className="size-4 text-primary" />}>
-          <Row label="Tâche du worker à relire" hint="L’agent du worker a fini : sa branche attend ta relecture.">
-            {toggle('review', 'Tâche du worker à relire')}
-          </Row>
-          <Row label="Tâche du worker en échec" hint="Budget atteint, erreur de l’agent ou préalable perdue.">
-            {toggle('failed', 'Tâche du worker en échec')}
-          </Row>
           <Row
             label="Fin de tour d’une session"
             hint="L’agent rend la main sans question. Un aller-retour rapide ne mérite pas d’être interrompu."

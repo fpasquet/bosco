@@ -17,11 +17,8 @@ describe('notifications', () => {
     expect(timeOf(STORY_NOTIFICATIONS[5]?.at ?? '', STORY_NOW)).toBe('hier 11:52');
   });
 
-  it('leads to the task or the session, and says the length of a turn', () => {
-    expect([hrefOf({ sessionId: 'c41e9a07', taskId: null }), hrefOf({ sessionId: null, taskId: 12 })]).toEqual([
-      '/sessions/c41e9a07',
-      '/tasks/12',
-    ]);
+  it('leads to the session, and says the length of a turn', () => {
+    expect([hrefOf({ sessionId: 'c41e9a07' }), hrefOf({ sessionId: null })]).toEqual(['/sessions/c41e9a07', '/']);
     expect(kindLabel({ kind: 'long-turn', turnMinutes: 12 })).toBe('Fin de tour · 12 min');
   });
 });

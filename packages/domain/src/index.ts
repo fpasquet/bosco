@@ -36,30 +36,13 @@ export type {
 } from './sessions.ts';
 export type {
   ClaudeProfileDto,
-  EgressRefusalDto,
-  GuardrailsDto,
   IsolationDto,
-  PullRequestModeDto,
   QuotaDto,
+  QuotaScopeDto,
   QuotaThresholdsDto,
   QuotaWindowDto,
-  RepositoryAccountsDto,
-  RightsDto,
-  RightsFieldDto,
-  RightsValuesDto,
-  TaskChangesDto,
-  TaskDraftDto,
-  TaskDto,
-  TaskIssueDto,
-  TaskModeDto,
-  TaskReviewDto,
-  TaskStateDto,
-  TestEnvironmentDto,
-  TestServicesModeDto,
-  ValidationDto,
-  WorkerSecretsDto,
-  WorkerStatusDto,
-} from './tasks.ts';
+  SubscriptionDto,
+} from './sandbox.ts';
 export type {
   ArchitectureDto,
   ContextDto,
@@ -70,15 +53,6 @@ export type {
   DecisionTargetDto,
   DecisionTextDto,
   DecisionVersionDto,
-  LinkDto,
-  LinkServiceDto,
   SocleDto,
 } from './context.ts';
-export type {
-  ContainersDto,
-  LeftoverContainerDto,
-  PilotedTurnDto,
-  RunningAgentDto,
-  RunningServiceDto,
-  UsageDto,
-} from './containers.ts';
+export type { ContainersDto, PilotedTurnDto, RunningSandboxDto, UsageDto } from './containers.ts';

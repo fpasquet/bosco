@@ -46,7 +46,7 @@ export function SessionHeader({ mark, now, onCopy, profile, resume, session }: S
           )}
         </nav>
         <h1 className="mt-1 flex flex-wrap items-center gap-2 font-display text-xl font-semibold tracking-tight md:text-2xl">
-          <SessionStateBadge state={session.state} task={session.task} />
+          <SessionStateBadge state={session.state} />
           <span className="line-clamp-2 min-w-0">{titleOf(session)}</span>
           {session.pilot?.sandbox ? (
             <span className="badge gap-1 badge-soft font-sans badge-sm font-medium badge-primary">

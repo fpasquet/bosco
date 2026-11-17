@@ -47,6 +47,11 @@ Then('je vois le texte {texte}', async ({ page }, text: string) => {
   await expect(page.getByText(text)).toBeVisible();
 });
 
+Then('je vois l’étiquette {texte}', async ({ page }, text: string) => {
+  // Texte exact : « Canal de Bosco » ne désigne pas la ligne « … par le canal de Bosco »
+  await expect(page.getByText(text, { exact: true })).toBeVisible();
+});
+
 Then('je finis par ne plus voir le bouton {texte}', async ({ page }, name: string) => {
   await expect(page.getByRole('button', { name })).toHaveCount(0);
 });
@@ -111,6 +116,10 @@ When('je clique sur le bouton radio {texte}', async ({ page }, label: string) =>
   const radio = page.getByRole('radio', { name: label });
   await radio.click();
   await expect(radio).toBeChecked();
+});
+
+Then('le bouton radio {texte} est coché', async ({ page }, label: string) => {
+  await expect(page.getByRole('radio', { name: label })).toBeChecked();
 });
 
 When('je clique sur le bouton {texte} du tiroir', async ({ page }, name: string) => {
