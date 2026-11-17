@@ -65,7 +65,8 @@ async function stateOf(name: string): Promise<string> {
   return stdout.trim();
 }
 
-async function readiness(name: string, deadline: number): Promise<null | string> {
+/** Attend qu'un service soit prêt : sa vérification d'état, sinon quelques secondes en marche. */
+export async function readiness(name: string, deadline: number): Promise<null | string> {
   let runningSince: null | number = null;
   while (Date.now() < deadline) {
     const state = await stateOf(name);

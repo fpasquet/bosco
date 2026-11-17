@@ -1,10 +1,11 @@
 import type { ReactNode } from 'react';
+import { cn } from '@/lib/cn';
 import { Notices } from '@/shared/components/notices';
 import { Logo } from '@/shared/ui/logo';
 import { APP_NAME } from '@bosco/domain';
 import { NAV_ITEMS } from './nav-items';
 import { NavLink } from './nav-link';
-import { ShellBell } from './shell-slots';
+import { ShellBell, ShellContainers, ShellDock } from './shell-slots';
 
 interface AppShellProps {
   children: ReactNode;
@@ -40,8 +41,11 @@ export function AppShell({ children, sidebar, title }: AppShellProps) {
           ))}
         </nav>
         {sidebar}
+        <div className={cn('pt-2', !sidebar && 'mt-auto')}>
+          <ShellContainers />
+        </div>
       </aside>
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="relative flex min-w-0 flex-1 flex-col">
         <header className="flex h-14 shrink-0 items-center gap-3 border-b border-line bg-nav px-4 text-nav-ink md:hidden">
           <Logo labelled />
           <h1 className="truncate font-display text-base font-semibold">{title}</h1>
@@ -50,6 +54,7 @@ export function AppShell({ children, sidebar, title }: AppShellProps) {
           </span>
         </header>
         <main className="min-h-0 flex-1 overflow-y-auto">{children}</main>
+        <ShellDock />
         <nav
           aria-label="Navigation principale"
           className="grid h-16 shrink-0 grid-cols-4 border-t border-line bg-nav text-xs text-nav-muted md:hidden"
