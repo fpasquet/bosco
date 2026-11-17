@@ -42,3 +42,23 @@ export interface FolderListingDto {
   parent: null | string;
   path: string;
 }
+
+/** Un groupe de projets ; « Tous les projets » (system) contient toujours tous les projets et n'a que des instructions. */
+export interface GroupDto {
+  description: null | string;
+  id: number;
+  /** Texte libre, une consigne par ligne, transmis aux agents de chacun de ses projets */
+  instructions: string;
+  name: string;
+  /** Profil Claude Code (son dossier) des sessions démarrées avec le groupe ; null : hériter */
+  profile: null | string;
+  /** Dans l'ordre : le premier est le projet principal */
+  projects: { id: number; name: string }[];
+  /** Montré dans la barre latérale */
+  sidebar: boolean;
+  system: boolean;
+}
+
+export interface GroupsDto {
+  groups: GroupDto[];
+}

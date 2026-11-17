@@ -3,6 +3,7 @@ import type {
   DiscoveryToImport,
   Folders,
   GitOrigins,
+  GroupRepository,
   IgnoredFolders,
   ProjectRepository,
   SessionFolders,
@@ -49,6 +50,7 @@ export class ProjectService {
 
   constructor(
     private readonly repository: ProjectRepository,
+    private readonly groups: GroupRepository,
     private readonly ignoredFolders: IgnoredFolders,
     private readonly folders: Folders,
     private readonly git: GitOrigins,
@@ -132,9 +134,16 @@ export class ProjectService {
     return added.map((project) => project.toSnapshot());
   }
 
-  /** Retire un projet de Bosco : rien n'est touché sur le poste, ses sessions passent hors projet. */
+  /**
+   * Retire un projet de Bosco : rien n'est touché sur le poste, ses sessions passent hors projet et il sort de ses
+   * groupes, où le suivant devient principal.
+   */
   async removeProject(id: number): Promise<void> {
     if (!this.projects.some((project) => project.id === id)) throw new UnknownProject(id);
+    const groups = await this.groups.list();
+    const touched = groups.filter((group) => group.has(id));
+    for (const group of touched) group.removeProject(id);
+    await this.groups.save(touched);
     await this.repository.remove(id);
     await this.refresh();
   }

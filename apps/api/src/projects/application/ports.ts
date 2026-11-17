@@ -1,5 +1,6 @@
 import type { DiscoverySettings } from '../domain/discovered-import.ts';
 import type { FolderEntry } from '../domain/folder.ts';
+import type { Group } from '../domain/group.ts';
 import type { SessionFolder } from '../domain/placement.ts';
 import type { Project } from '../domain/project.ts';
 
@@ -10,6 +11,13 @@ export interface ProjectRepository {
   nextId(): Promise<number>;
   remove(id: number): Promise<void>;
   save(projects: readonly Project[]): Promise<void>;
+}
+
+export interface GroupRepository {
+  list(): Promise<Group[]>;
+  nextId(): Promise<number>;
+  remove(id: number): Promise<void>;
+  save(groups: readonly Group[]): Promise<void>;
 }
 
 /** Dossiers proposés que la personne a choisi d'ignorer. */

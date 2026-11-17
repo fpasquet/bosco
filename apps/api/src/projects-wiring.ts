@@ -1,7 +1,8 @@
 import { Inject, Injectable, type OnModuleInit } from '@nestjs/common';
+import type { GroupService } from './projects/application/group.service.ts';
 import type { ProjectService } from './projects/application/project.service.ts';
 import type { SessionService } from './sessions/application/session.service.ts';
-import { PROJECT_SERVICE } from './projects/tokens.ts';
+import { GROUP_SERVICE, PROJECT_SERVICE } from './projects/tokens.ts';
 import { SESSION_SERVICE } from './sessions/tokens.ts';
 
 /**
@@ -12,6 +13,7 @@ import { SESSION_SERVICE } from './sessions/tokens.ts';
 export class ProjectsWiring implements OnModuleInit {
   constructor(
     @Inject(PROJECT_SERVICE) private readonly projects: ProjectService,
+    @Inject(GROUP_SERVICE) private readonly groups: GroupService,
     @Inject(SESSION_SERVICE) private readonly sessions: SessionService,
   ) {}
 
@@ -22,5 +24,6 @@ export class ProjectsWiring implements OnModuleInit {
       placeOf: (gitRoot, path) => this.projects.placeOf(gitRoot, path),
     });
     await this.projects.load();
+    await this.groups.load();
   }
 }

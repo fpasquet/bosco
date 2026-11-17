@@ -37,3 +37,45 @@ export const IgnoredFolderSchema = new EntitySchema<IgnoredFolderRow>({
     ignoredAt: { type: 'datetime', fieldName: 'ignored_at' },
   },
 });
+
+export interface ProjectGroupRow {
+  description: null | string;
+  id: number;
+  instructions: string;
+  name: string;
+  profile: null | string;
+  sidebar: boolean;
+  system: boolean;
+}
+
+/** Groupes de projets, « Tous les projets » compris (system) ; leurs projets sont dans group_project. */
+export const ProjectGroupSchema = new EntitySchema<ProjectGroupRow>({
+  name: 'ProjectGroup',
+  tableName: 'project_group',
+  properties: {
+    id: { type: 'integer', primary: true, autoincrement: false },
+    name: { type: 'string', unique: true },
+    description: { type: 'text', nullable: true },
+    instructions: { type: 'text', default: '' },
+    profile: { type: 'string', nullable: true },
+    sidebar: { type: 'boolean', default: true },
+    system: { type: 'boolean', default: false },
+  },
+});
+
+export interface GroupProjectRow {
+  groupId: number;
+  projectId: number;
+  rank: number;
+}
+
+/** Projets d'un groupe, dans l'ordre : le rang le plus petit est le projet principal. */
+export const GroupProjectSchema = new EntitySchema<GroupProjectRow>({
+  name: 'GroupProject',
+  tableName: 'group_project',
+  properties: {
+    groupId: { type: 'integer', primary: true, fieldName: 'group_id' },
+    projectId: { type: 'integer', primary: true, fieldName: 'project_id', index: true },
+    rank: { type: 'integer' },
+  },
+});

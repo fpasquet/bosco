@@ -54,4 +54,11 @@ export type {
   SocleDto,
 } from './context.ts';
 export type { ContainersDto, PilotedTurnDto, RunningSandboxDto, UsageDto } from './containers.ts';
-export type { FolderListingDto, FolderSuggestionDto, ProjectDto, ProjectsDto } from './projects.ts';
+export type {
+  FolderListingDto,
+  FolderSuggestionDto,
+  GroupDto,
+  GroupsDto,
+  ProjectDto,
+  ProjectsDto,
+} from './projects.ts';
