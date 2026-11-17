@@ -10,7 +10,7 @@
 
 ## <a id="e4"></a>E4 · Sources et téléphone
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `reglages/e4.html` · implémentation : **À faire évoluer (E4g à développer ; E4a : « Gérer » ouvre E4g. E4a : onglet Sources des Réglages, l'accès du téléphone part dans E4c, et la source « Bacs à sable » (tenue par Bosco, sans interrupteur ni « Gérer ») remplace la source « worker » ; E4b suit ; E4c : onglet Téléphone ; E4d retiré (remplacé par E20). Écarts connus : « Ajouter un dossier », « Gérer » et l'état « À mettre à jour » d'une source illisible ne sont pas faits ; le serveur de Bosco (décisions) ne s'ajoute pas encore au profil depuis cet écran.)**
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `reglages/e4.html` · implémentation : **En cours (En cours (feat/navigation-by-place) : onglets Sources et Téléphone. Reste : E4g (réglages d'un profil).)**
 
 ### <a id="e4a"></a>E4a · Sources : profils surveillés et réglages
 
@@ -108,7 +108,7 @@ Règles de l'écran :
 
 ## <a id="e11"></a>E11 · Bac à sable et abonnement
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `reglages/e11.html` · implémentation : **À faire évoluer (E11c : renvoi vers E4g. E11a, E11c : barre d'onglets des Réglages ; E11a : domaines propres à chaque projet.)**
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `reglages/e11.html` · implémentation : **Livré (Développé (feat/navigation-by-place, feat/multi-project-sessions) : barre à cinq onglets, domaines propres à chaque projet, réunis pour la sortie réseau d'un bac à sable. Écart, repris d'E2j : « Ajouter à la liste » ne remplit pas le domaine.)**
 
 ### <a id="e11a"></a>E11a · Isolation du bac à sable
 

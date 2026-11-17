@@ -19,9 +19,9 @@
 - **RF-CONT-13** · **13. Ce que Bosco fait tourner se voit et s'arrête** : les tours de sessions pilotées et les bacs à sable démarrés sont listés avec ce qu'ils consomment, par rapport à leur plafond ; Bosco ne lance rien à la main, il interrompt un tour après une confirmation qui dit ce que cela provoque.
 - **RF-CONT-14** · **14.** Mise de côté avec les tâches (17/11/2026, DT-43) : elle permettait la lecture de Jira et de Confluence, sans écriture, par les agents de ce travail.
 - **RF-CONT-15** · **15. Les instructions d'un groupe s'ajoutent au contexte de chacun de ses projets**, après celles de « Tous les projets » ; une décision acceptée du projet l'emporte sur une instruction, et le texte transmis le dit. Elles se règlent dans le groupe ([E22b](#e22b)).
-- **RF-CONT-16** · **16. Un projet est un dossier que tu ajoutes** : Bosco n'en crée plus seul. Le plus souvent, c'est un dépôt git ; un dossier sans git est accepté, mais ses sessions ne tournent pas en bac à sable.
+- **RF-CONT-16** · **16. Un projet est un dossier que tu ajoutes** : Bosco n'en crée plus seul. Le plus souvent, c'est un dépôt git ; un dossier sans git est accepté, mais ses sessions ne tournent pas en bac à sable. Son nom est celui du dossier ; si un autre projet porte déjà ce nom, le dossier parent le précède (« clients/api »), puis un numéro en dernier recours (« api (2) ») ; le nom se change dans les réglages du projet.
 - **RF-CONT-17** · **17. Les projets s'ajoutent en parcourant les dossiers du poste**, sans saisir de chemin : on part du dossier personnel et on coche un ou plusieurs dossiers. Seuls les noms de dossiers se voient, jamais les fichiers ; les dossiers cachés sont masqués. Cela se fait depuis le poste seulement.
-- **RF-CONT-18** · **18. Une session se range dans le projet qui contient son dossier de travail** : le plus profond l'emporte, et un worktree va avec son projet d'origine. Hors de tout projet, elle se range sous « Hors projet », toujours visible. Les dossiers où une session a tourné hors projet sont proposés en suggestions, à ajouter d'un clic ou à ignorer.
+- **RF-CONT-18** · **18. Une session se range dans le projet qui contient son dossier de travail** : le plus profond l'emporte, et un worktree va avec son projet d'origine. Hors de tout projet, elle se range sous « Hors projet », toujours visible. Les dossiers où une session a tourné hors projet sont proposés en suggestions, à ajouter d'un clic ou à ignorer ; jamais les dossiers temporaires (/tmp et ceux du système), le dossier personnel lui-même ni les dossiers de Bosco : leurs sessions restent sous « Hors projet », et ils s'ajoutent quand même à la main par le navigateur.
 - **RF-CONT-19** · **19. Un groupe réunit des projets**, et un projet peut être dans plusieurs groupes. Il sert à filtrer et à regrouper la vue d'ensemble et l'historique, à démarrer une session sur ses projets (le projet principal en tête) et à transmettre des instructions à leurs agents. Il remplace les socles : « Tous les projets » remplace le socle commun.
 - **RF-CONT-20** · **20. Les instructions d'un groupe s'ajoutent au contexte de chacun de ses projets**, après celles de « Tous les projets » ; une décision acceptée du projet l'emporte. Changer les instructions d'un groupe, ou ses projets quand il a des instructions, demande une confirmation qui compte les projets touchés ; les agents déjà lancés ne sont pas touchés.
 - **RF-CONT-21** · **21. Retirer un projet ne touche à rien sur le poste** : ses sessions passent sous « Hors projet », ses décisions sont gardées et reviennent s'il est ajouté de nouveau, et il sort de ses groupes. Supprimer un groupe ne retire aucun projet.
@@ -31,7 +31,7 @@
 
 ## <a id="e20"></a>E20 · Projets
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e20.html` · implémentation : **À développer**
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e20.html` · implémentation : **En cours (En cours (feat/chosen-projects, feat/navigation-by-place) : E20a à E20d. Reste : puce « monodépôt », choix du groupe dans le navigateur, entrée « Usage » du menu ⋯.)**
 
 ### <a id="e20a"></a>E20a · Projets : liste, suggestions et groupes
 
@@ -97,13 +97,13 @@ Règles de l'écran :
 2. Les actions d'un projet : « Nouvelle session dans api-tarifs » (le formulaire s'ouvre avec le projet choisi), « Sessions », « Contexte » (avec le compteur des décisions à valider) et « Réglages » ouvrent les onglets de sa page ; « Usage » ouvre la page Usage filtrée sur ce projet ([E23a](sessions.md#e23a)) ; « Ajouter à un groupe » ouvre un sous-menu des groupes, avec « Nouveau groupe… » ; « Désépingler de la barre latérale » ; « Retirer le projet… » en rouge, qui ouvre la confirmation d'E21b. La liste est appelée à s'allonger.
 3. Le menu d'un groupe : « Nouvelle session dans ce groupe », « Sessions », « Instructions », « Usage », « Réglages », « Masquer de la barre latérale » et « Supprimer le groupe… » en rouge. Supprimer un groupe ne retire aucun projet (règle 21).
 4. Les boutons ＋ des intitulés : celui de « Projets » ouvre le navigateur de dossiers ([E20b](#e20b)), celui de « Groupes » ouvre « Nouveau groupe » ([E22c](#e22c)).
-5. La barre latérale ne montre que les projets épinglés et ceux qui ont une session ouverte, puis « Tous les projets » ([E20a](#e20a)), qui les liste tous. « Désépingler » ne retire rien : le projet quitte seulement la barre latérale, tant qu'aucune session n'y est ouverte.
+5. La barre latérale ne montre que les projets épinglés et ceux qui ont une session ouverte, puis « Tous les projets » ([E20a](#e20a)), qui les liste tous. Un projet qu'on vient d'ajouter n'est pas épinglé : il y apparaît dès qu'il a une session ouverte, et s'épingle par ce menu. Le projet dont la page est ouverte y apparaît aussi le temps de la visite, ligne active. « Hors projet » ouvre « Tous les projets » sur sa section « Hors projet ». « Désépingler » ne retire rien : le projet quitte seulement la barre latérale, tant qu'aucune session n'y est ouverte.
 
 **Mobile** : l'onglet « Projets » ([E20a](#e20a)) ouvre une feuille du bas sur un projet : « Nouvelle session », « Sessions », « Contexte » et « Réglages » (en lecture seule). Ni retrait ni ajout à un groupe depuis le téléphone (règle 24).
 
 ## <a id="e21"></a>E21 · Page d'un projet
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e21.html` · implémentation : **À développer**
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e21.html` · implémentation : **En cours (En cours (feat/navigation-by-place, feat/multi-project-sessions) : page d'un projet (Sessions, Contexte, Réglages), « Aussi dans ce projet », domaines du projet, retrait refusé pendant une session pilotée. Reste : valeurs par défaut des sessions.)**
 
 ### <a id="e21c"></a>E21c · Page d'un projet : sessions
 
@@ -157,7 +157,7 @@ Règles de l'écran :
 
 ## <a id="e22"></a>E22 · Page d'un groupe
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e22.html` · implémentation : **À développer**
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e22.html` · implémentation : **En cours (En cours (branches feat/project-groups, feat/navigation-by-place) : instructions, réglages, nouveau groupe, aperçu pour un projet choisi ; reste : valeurs par défaut des sessions au-delà du profil, choix du groupe dans le navigateur.)**
 
 ### <a id="e22d"></a>E22d · Page d'un groupe : sessions
 
@@ -228,7 +228,7 @@ Règles de l'écran :
 
 ## <a id="e9"></a>E9 · Contexte d'un projet
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e9.html` · implémentation : **À faire évoluer (Tous les états : onglet Contexte de la page d'un projet, fil « Projets › api-tarifs › Contexte ». E9a, E9c, E9f : instructions des groupes, plus d'exception. Écart déjà connu : le compteur des décisions à valider n'est pas repris (désormais sur l'onglet Contexte).)**
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e9.html` · implémentation : **En cours (En cours (feat/project-groups) : instructions des groupes à la place des socles, plus d'exception ; onglet Contexte de la page d'un projet avec la navigation. Le contexte d'une session à plusieurs projets réunit celui de chaque projet, le principal d'abord (feat/multi-project-sessions).)**
 
 ### <a id="e9a"></a>E9a · Contexte d'un projet
 
@@ -239,7 +239,7 @@ Tout ce que reçoit un agent au lancement dans un projet : les instructions de �
 
 Règles de l'écran :
 
-1. Les décisions acceptées d'api-tarifs sont transmises à chaque agent au lancement, après les instructions des groupes, et la place du projet dans l'architecture suit (règle 1). Une décision qui l'emporte sur une instruction d'un groupe l'indique sous son titre. Ouvrir une ligne affiche la décision, ses versions et ses liens ([E9d](#e9d)).
+1. Les décisions acceptées d'api-tarifs sont transmises à chaque agent au lancement, après les instructions des groupes, et la place du projet dans l'architecture suit (règle 1). Une décision ne nomme pas l'instruction qu'elle remplace : toutes les décisions du projet l'emportent sur les instructions des groupes, et le texte transmis le dit. Ouvrir une ligne affiche la décision, ses versions et ses liens ([E9d](#e9d)).
 2. Les instructions viennent des groupes du projet : d'abord « Tous les projets », qui contient toujours tous les projets, puis chacun de ses groupes (règles 1 et 15). Elles se lisent ici et s'écrivent dans le groupe : « Modifier » ouvre ses instructions ([E22b](#e22b)). Une décision acceptée du projet l'emporte : elle reste transmise, avec la mention de l'instruction qu'elle remplace, et le texte transmis le dit.
 3. Une décision seulement proposée n'est pas transmise : un agent propose, un humain décide (règle 2). Le bandeau n'apparaît que s'il y a des décisions à valider ; son compteur est repris sur l'onglet « Contexte » de la page du projet ; une décision proposée par un agent arrive aussi en notification. « Examiner » ouvre la décision ([E9b](#e9b)).
 4. L'architecture dit ce que le projet appelle et qui l'appelle, pour que l'agent mesure l'effet de ses changements sur les autres projets.
@@ -324,7 +324,7 @@ Le texte exact que lira un agent au prochain lancement dans api-tarifs, calculé
 Règles de l'écran :
 
 1. C'est exactement ce que lit l'agent : instructions de « Tous les projets », puis de chacun des groupes du projet, décisions acceptées du projet qui l'emportent, place dans l'architecture (règles 1 et 15). Pour une session à plusieurs projets, le texte compte un bloc par projet, le projet principal d'abord, dans la limite de 10 000 caractères. « Copier » met ce texte dans le presse-papiers.
-2. Les décisions seulement proposées par un agent n'y figurent pas (règle 2) ; la ligne du dessous rappelle ce qui manque, pour ne pas croire à un oubli. Une décision du projet qui l'emporte sur une instruction ne la retire pas : le texte dit lequel l'emporte (règle 15).
+2. Les décisions seulement proposées par un agent n'y figurent pas (règle 2) ; la ligne du dessous rappelle ce qui manque, pour ne pas croire à un oubli. Une décision du projet ne retire aucune instruction : le texte annonce que les décisions du projet l'emportent sur toutes les instructions (règle 15). Pour un groupe, l'aperçu se calcule pour un projet choisi, le principal par défaut.
 3. Le texte coûte des tokens à chaque lancement : l'estimation aide à juger si le contexte devient trop long.
 4. L'aperçu est calculé à l'ouverture, à partir des décisions du moment. Il change dès qu'une décision est acceptée, modifiée ou abandonnée ; rouvrir le panneau le recalcule.
 
@@ -332,7 +332,7 @@ Règles de l'écran :
 
 ## <a id="e14"></a>E14 · Socles (retiré)
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e14.html` · implémentation : **À faire évoluer (Retiré : remplacé par les groupes (E22), à retirer du code.)**
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e14.html` · implémentation : **Livré (Retiré du code (feat/project-groups).)**
 
 ### <a id="e14a"></a>E14a · SoclesRetiré
 
@@ -364,6 +364,14 @@ Remplacé par les groupes (E22) ; E14a, E14b et E14c sont gardés pour ne pas ê
 - **CA-CONT-152** · [E20d](#e20d) · Étant donné le menu ⋯ d'un groupe, quand la personne l'ouvre, alors elle y trouve « Nouvelle session dans ce groupe », « Sessions », « Instructions », « Réglages », « Masquer de la barre latérale » et « Supprimer le groupe… » en rouge, et supprimer un groupe ne retire aucun projet (RF-CONT-21).
 - **CA-CONT-153** · [E20d](#e20d) · Étant donné la barre latérale, quand la personne la lit ou clique sur « Désépingler », alors elle ne montre que les projets épinglés et ceux qui ont une session ouverte, puis « Tous les projets » qui les liste tous ; « Désépingler » ne retire rien, le projet quitte seulement la barre latérale tant qu'aucune session n'y est ouverte, et les boutons ＋ de « Projets » et de « Groupes » ouvrent le navigateur de dossiers ([E20b](#e20b)) et « Nouveau groupe » ([E22c](#e22c)).
 - **CA-CONT-154** · [E20d](#e20d) · Étant donné un téléphone, quand la personne touche un projet de l'onglet « Projets », alors une feuille du bas propose « Nouvelle session », « Sessions », « Contexte » et « Réglages » en lecture seule, sans retrait ni ajout à un groupe (RF-CONT-24).
+
+- **CA-CONT-172** · [E20a](#e20a) · Étant donné des sessions qui ont tourné dans /tmp, dans un dossier temporaire du système, dans le dossier personnel lui-même ou dans un dossier de Bosco, quand la personne ouvre « Tous les projets », alors aucun de ces dossiers n'est proposé en suggestion, leurs sessions restent sous « Hors projet » et le navigateur permet quand même de les ajouter (RF-CONT-18).
+- **CA-CONT-173** · [E20b](#e20b) · Étant donné un projet nommé « api » déjà ajouté, quand la personne ajoute un autre dossier nommé « api », alors le nouveau projet prend le nom de son dossier parent suivi du sien (« clients/api »), puis un numéro si ce nom est encore pris (« api (2) »), et le nom se change ensuite dans les réglages du projet (RF-CONT-16).
+
+- **CA-CONT-174** · [E22b](#e22b) · Étant donné un groupe de plusieurs projets, quand la personne ouvre l'aperçu du texte transmis depuis ses instructions, alors un choix « pour le projet … » propose ses projets, le projet principal d'abord (le premier par ordre alphabétique pour « Tous les projets »), et l'aperçu suit le projet choisi (RF-CONT-15).
+
+- **CA-CONT-175** · [E20d](#e20d) · Étant donné un projet ni épinglé ni actif, quand la personne ouvre sa page (depuis « Tous les projets » ou un lien), alors il apparaît dans la barre latérale le temps de la visite, avec sa ligne active, puis disparaît quand elle quitte sa page (RF-SESS-15).
+- **CA-CONT-176** · [E20a](#e20a) · Étant donné des sessions hors de tout projet, quand la personne clique sur « Hors projet » dans la barre latérale, alors « Tous les projets » s'ouvre sur sa section « Hors projet », qui liste ces sessions et les suggestions (RF-CONT-18).
 
 ### <a id="e21-page-dun-projet"></a>E21 · Page d'un projet
 
@@ -404,7 +412,7 @@ Remplacé par les groupes (E22) ; E14a, E14b et E14c sont gardés pour ne pas ê
 - **CA-CONT-145** · [E22c](#e22c) · Étant donné un groupe qui porte déjà un nom, quand la personne crée un groupe avec ce même nom, alors la création est refusée avec le message « Un groupe porte déjà ce nom. » sous le champ.
 - **CA-CONT-146** · [E22c](#e22c) · Étant donné plusieurs projets cochés dans la fenêtre, quand la personne clique sur « Créer le groupe », alors le premier coché est le projet principal et seuls les projets déjà ajoutés sont listés (RF-CONT-19).
 - **CA-CONT-147** · [E22c](#e22c) · Étant donné un groupe qui vient d'être créé, quand la personne consulte ses réglages, alors il n'a pas d'instructions, rien ne change pour les agents de ses projets, et il est affiché dans la barre latérale par défaut (RF-CONT-20).
-- **CA-CONT-148** · [E22c](#e22c) · Étant donné un téléphone, quand la personne cherche à créer un groupe, alors un encart « Créer un groupe se fait depuis le poste » s'affiche sur l'écran « Projets » en lecture seule (RF-CONT-24).
+- **CA-CONT-148** · [E22c](#e22c) · Étant donné un téléphone, quand la personne cherche à créer un groupe, alors l'écran « Projets » en lecture seule affiche l'encart « Ajouter des projets se fait depuis le poste », avec l'icône écran, et n'offre ni ajout de projet ni création de groupe (RF-CONT-24).
 - **CA-CONT-160** · [E22d](#e22d) · Étant donné un groupe, quand la personne ouvre sa page, alors elle réunit les sessions de tous ses projets, une seule fois chacune même si plusieurs de leurs projets sont dans le groupe, et le bandeau T'attend et les indicateurs ne comptent que ces sessions, avec les mêmes boutons et règles que la vue d'ensemble, le coût du jour restant estimé.
 - **CA-CONT-161** · [E22d](#e22d) · Étant donné la page d'un groupe, quand la personne lit la colonne « Projet », alors elle indique le projet principal de la session suivi du nombre de projets ajoutés (« api-tarifs +2 »), et un clic sur le nom ouvre la page de ce projet ([E21c](#e21c)).
 - **CA-CONT-162** · [E22d](#e22d) · Étant donné la page d'un groupe, quand la personne clique sur « Nouvelle session dans ce groupe », alors le formulaire s'ouvre avec le groupe déjà choisi et son projet principal en tête, y compris depuis le téléphone ([E16c](sessions.md#e16c)) (RF-CONT-22).
@@ -436,7 +444,7 @@ Remplacé par les groupes (E22) ; E14a, E14b et E14c sont gardés pour ne pas ê
 - **CA-CONT-14** · [E9c](#e9c) · Étant donné une nouvelle décision, quand la personne choisit « Accepter la décision », alors elle est transmise aux prochains agents, et quand elle choisit « Garder en proposition », alors elle reste hors du contexte transmis (RF-CONT-01, RF-CONT-10).
 - **CA-CONT-87** · [E9c](#e9c) · Étant donné une nouvelle décision de projet, quand la personne ouvre « Porte sur », alors tous les projets y figurent, même sans décision (RF-CONT-10).
 - **CA-CONT-100** · [E9a](#e9a) · Étant donné les instructions de « Tous les projets » et des groupes du projet, quand la personne les lit dans l'onglet « Contexte », alors elles se lisent ici et s'écrivent dans le groupe : « Modifier » ouvre les instructions du groupe ([E22b](#e22b)) (RF-CONT-15).
-- **CA-CONT-101** · [E9a](#e9a) · Étant donné une décision acceptée du projet qui l'emporte sur une instruction d'un groupe, quand la personne consulte la liste, alors l'instruction reste transmise, la décision indique sous son titre l'instruction qu'elle remplace et le texte transmis le dit (RF-CONT-15).
+- **CA-CONT-101** · [E9a](#e9a) · Étant donné des décisions acceptées du projet et des instructions de ses groupes, quand la personne consulte la liste, alors chaque instruction reste transmise, aucune décision ne nomme d'instruction, et le texte transmis annonce que les décisions du projet l'emportent sur toutes les instructions (RF-CONT-15).
 - **CA-CONT-102** · [E9a](#e9a) · Étant donné un projet sans aucune décision, quand la personne ouvre l'onglet « Contexte », alors l'écran dit « Aucune décision pour api-tarifs : elles arrivent proposées par un agent, ou écrites ici. » et propose « Nouvelle décision » (RF-CONT-10).
 - **CA-CONT-103** · [E9c](#e9c) · Étant donné une décision acceptée du projet, quand le contexte est transmis, alors elle l'emporte sur les instructions des groupes du projet sans rien à relier, le champ « Fait exception à » n'existant plus, et le texte transmis l'indique aux agents (RF-CONT-15).
 - **CA-CONT-104** · [E9a](#e9a) · Étant donné les instructions des groupes, le contexte et l'isolation, quand une session ou un agent tente de les modifier, alors cela n'est pas possible : ils se règlent par la personne seule (RF-CONT-09).
