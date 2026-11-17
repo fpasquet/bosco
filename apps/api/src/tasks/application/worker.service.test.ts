@@ -25,7 +25,7 @@ class MemoryTasks implements TaskRepository {
 
 const usage = { input: 1_000_000, output: 0, cacheCreation: 0, cacheRead: 0 };
 
-function setup(events: AgentEvent[], options: { budgetUsd?: number; hang?: boolean; health?: null | string } = {}) {
+function setup(events: AgentEvent[], options: { hang?: boolean; health?: null | string; wait?: null | string } = {}) {
   const tasks = new TaskService(
     new MemoryTasks(),
     { list: () => Promise.resolve([{ name: 'api-voix', root: '/home/dev/api-voix' }]) },
@@ -52,6 +52,11 @@ function setup(events: AgentEvent[], options: { budgetUsd?: number; hang?: boole
         },
       }),
   };
+  // Usage de 5 h donné par le dernier événement de quota du flux
+  const recorded = events.reduce(
+    (last, event) => (event.kind === 'quota' ? (event.windows.fiveHour?.utilization ?? last) : last),
+    0,
+  );
   const worker = new WorkerService({
     tasks,
     runner,
@@ -66,6 +71,14 @@ function setup(events: AgentEvent[], options: { budgetUsd?: number; hang?: boole
     priceOf: () => 1,
     rightsOf: () => Promise.resolve(DEFAULT_RIGHTS),
     claudeProfileOf: () => Promise.resolve(null),
+    quota: {
+      profileOf: () => '/home/dev/.claude',
+      record: () => Promise.resolve(),
+      // Au-delà de 80 % de la fenêtre de 5 h, l'agent s'arrête
+      stopReason: () =>
+        recorded >= 0.8 ? `Quota de l’abonnement atteint : fenêtre de 5 h à ${recorded * 100} %` : null,
+      waitReason: () => options.wait ?? null,
+    },
     workspaces: {
       cleanupAll: () => Promise.resolve(),
       prepare: ({ branch }) => Promise.resolve({ branch, dir: '/var/lib/bosco/t-1' }),
@@ -82,7 +95,7 @@ function setup(events: AgentEvent[], options: { budgetUsd?: number; hang?: boole
       mode: 'worker',
       prerequisites: [],
       context: null,
-      guardrails: { budgetUsd: options.budgetUsd ?? 1.5, maxTurns: 30, model: null, tools: null },
+      guardrails: { maxTurns: 30, model: null, tools: null },
     });
   const settle = () => new Promise((resolve) => setTimeout(resolve, 20));
   return { create, settle, stopped, tasks, worker };
@@ -145,19 +158,28 @@ describe('WorkerService', () => {
     ).toEqual(['Services en échec', 'database : pas prêt après 180 s']);
   });
 
-  it('stops the agent once the budget is spent', async () => {
-    const { create, settle, stopped, tasks, worker } = setup(
-      [
-        { kind: 'usage', model: 'claude-sonnet-5-5', usage },
-        { kind: 'usage', model: 'claude-sonnet-5-5', usage },
-      ],
-      { budgetUsd: 1.5 },
-    );
+  it('CA-TACH-100 · stops the agent once a turn reports the subscription above its stop threshold', async () => {
+    const resetsAt = new Date('2026-11-16T16:00:00Z');
+    const { create, settle, stopped, tasks, worker } = setup([
+      { kind: 'usage', model: 'claude-sonnet-5-5', usage },
+      { kind: 'quota', windows: { fiveHour: { utilization: 0.81, resetsAt } } },
+    ]);
     await create('Monter la version de Fastify.');
     await worker.tick();
     await settle();
     const task = await tasks.get(1);
-    expect([task.state, task.failure, stopped]).toEqual(['failed', 'Budget atteint : 2,00 $ sur 1,50 $', [1]]);
+    expect([task.state, task.failure, stopped]).toEqual([
+      'failed',
+      'Quota de l’abonnement atteint : fenêtre de 5 h à 81 %',
+      [1],
+    ]);
+  });
+
+  it('CA-TACH-99 · keeps a ready task in the queue while its subscription is above its wait threshold', async () => {
+    const { create, worker } = setup([], { wait: 'Quota de l’abonnement : 5 h à 52 %, reprise vers 16:00' });
+    await create('Monter la version de Fastify.');
+    const status = await worker.tick();
+    expect(status.waiting[1]).toBe('Quota de l’abonnement : 5 h à 52 %, reprise vers 16:00');
   });
 
   it('fails a task whose agent ran out of turns', async () => {

@@ -2,6 +2,7 @@
 // ignoré (format interne de Claude Code, NF-08).
 import type { AgentEvent } from '../../application/ports.ts';
 import { connectorReadOf, hasAtlassianConnector } from '../../domain/atlassian-read.ts';
+import { quotaWindowsOf } from '../../../shared/domain/subscription-quota.ts';
 
 type Line = Record<string, unknown>;
 
@@ -70,5 +71,7 @@ export function agentEventsOf(raw: string): AgentEvent[] {
     return [usageOf(message), ...readsOf(message)];
   }
   if (line.type === 'result') return [resultOf(line)];
+  const windows = quotaWindowsOf(line);
+  if (windows) return [{ kind: 'quota', windows }];
   return [];
 }

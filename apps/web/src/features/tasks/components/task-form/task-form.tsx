@@ -9,11 +9,9 @@ import { cn } from '@/lib/cn';
 import { Button } from '@/shared/ui/button';
 import { departureOf } from '../../lib/departure';
 import { toolLabel } from '../../lib/rights';
-import { usd } from '../../lib/tasks';
 
 /** Plafonds d'un dépôt, d'après ses droits (E8a). */
 export interface RepositoryLimits {
-  budgetUsd: number;
   /** Agents au plus à la fois dans ce dépôt */
   concurrency: number;
   maxTurns: number;
@@ -22,9 +20,8 @@ export interface RepositoryLimits {
 
 /** Plafonds des réglages généraux d'origine, tant que les droits du dépôt ne sont pas lus. */
 export const DEFAULT_LIMITS: RepositoryLimits = {
-  budgetUsd: 2,
   concurrency: 1,
-  maxTurns: 30,
+  maxTurns: 200,
   tools: ['Read', 'Write', 'Edit', 'Grep', 'Glob', 'Bash'],
 };
 
@@ -60,8 +57,7 @@ const draftSchema = z.object({
   prerequisites: z.array(z.number()),
   context: z.string().nullable(),
   guardrails: z.object({
-    budgetUsd: z.number({ error: 'Un budget en dollars.' }).positive('Un budget au-dessus de 0 $.'),
-    maxTurns: z.number({ error: 'Un nombre de tours.' }).int('Un nombre de tours entier.').positive('Au moins 1 tour.'),
+    maxTurns: z.number().int().positive().nullable(),
     model: z.string().nullable(),
     tools: z.array(z.string()).nullable(),
   }),
@@ -72,7 +68,6 @@ const PATHS: Record<TaskIssueDto['field'], FieldPath<TaskDraftDto>> = {
   repository: 'repository',
   instruction: 'instruction',
   prerequisites: 'prerequisites',
-  budgetUsd: 'guardrails.budgetUsd',
   maxTurns: 'guardrails.maxTurns',
   tools: 'guardrails.tools',
 };
@@ -86,7 +81,6 @@ function issuesOf(errors: FieldErrors<TaskDraftDto>): TaskIssueDto[] {
 }
 
 const FIELD_IDS: Record<TaskIssueDto['field'], string> = {
-  budgetUsd: 'task-budget',
   instruction: 'task-instruction',
   maxTurns: 'task-turns',
   prerequisites: 'task-prerequisites',
@@ -125,7 +119,7 @@ export function TaskForm({
       mode: editing?.mode ?? 'worker',
       prerequisites: editing?.prerequisites ?? [],
       context: editing?.context ?? null,
-      guardrails: editing?.guardrails ?? { budgetUsd: 1, maxTurns: DEFAULT_LIMITS.maxTurns, model: null, tools: null },
+      guardrails: editing?.guardrails ?? { maxTurns: null, model: null, tools: null },
     },
   });
   // Valeurs complètes : chaque champ a sa valeur par défaut
@@ -305,39 +299,10 @@ export function TaskForm({
             <legend className="px-1 text-xs font-medium">
               Garde-fous plafonnés par les droits de {draft.repository}
             </legend>
-            <div className="grid gap-4 md:grid-cols-2">
-              <label className="flex flex-col gap-1.5">
-                <span className="text-xs font-medium">Budget ($)</span>
-                <input
-                  id="task-budget"
-                  type="number"
-                  min={0.1}
-                  step={0.1}
-                  className="input w-full"
-                  aria-invalid={invalid('budgetUsd')}
-                  aria-describedby={describedBy('budgetUsd') ?? 'task-budget-cap'}
-                  {...register('guardrails.budgetUsd', { valueAsNumber: true })}
-                />
-                <span id="task-budget-cap" className="text-xs text-muted">
-                  plafond du dépôt : {usd(limits.budgetUsd)}
-                </span>
-                <FieldError field="budgetUsd" issues={issues} />
-              </label>
-              <label className="flex flex-col gap-1.5">
-                <span className="text-xs font-medium">Tours</span>
-                <input
-                  id="task-turns"
-                  type="number"
-                  min={1}
-                  className="input w-full"
-                  aria-invalid={invalid('maxTurns')}
-                  aria-describedby={describedBy('maxTurns')}
-                  {...register('guardrails.maxTurns', { valueAsNumber: true })}
-                />
-                <span className="text-xs text-muted">plafond du dépôt : {limits.maxTurns}</span>
-                <FieldError field="maxTurns" issues={issues} />
-              </label>
-            </div>
+            <p className="text-xs text-muted">
+              Au plus {limits.maxTurns} tours, plafond de sécurité des droits du dépôt. Pas de budget : le quota de
+              l’abonnement retient le worker.
+            </p>
             <fieldset id="task-tools" className="flex flex-col gap-1.5" aria-describedby={describedBy('tools')}>
               <legend className="text-xs font-medium">Outils</legend>
               <div className="flex flex-wrap gap-3">
@@ -371,7 +336,12 @@ export function TaskForm({
       <aside className="flex flex-col gap-3 self-start rounded-card border border-line bg-surface p-4 shadow-card">
         <h2 className="text-xs font-semibold text-muted">Récapitulatif</h2>
         <p>{startsWhen(chosen)}</p>
-        {draft.mode === 'worker' && <p>Coût au plus {usd(draft.guardrails.budgetUsd || 0)}</p>}
+        {draft.mode === 'worker' && worker?.quota && (
+          <p>
+            Abonnement {worker.quota.label} : 5 h à {worker.quota.fiveHour ?? 0} %
+            {worker.quota.sevenDay === null ? '' : `, semaine à ${worker.quota.sevenDay} %`}
+          </p>
+        )}
         <p className="text-muted">
           {startFrom ? `Sur la branche de T-${startFrom.id}` : 'Sur la branche principale du dépôt'}
         </p>

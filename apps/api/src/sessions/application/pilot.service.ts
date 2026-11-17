@@ -1,3 +1,4 @@
+import type { QuotaWindows } from '../../shared/domain/subscription-quota.ts';
 import type { ChannelService } from './channel.service.ts';
 import type { LiveSignalService, PermissionAnswer } from './live-signal.service.ts';
 import type {
@@ -90,6 +91,8 @@ export interface TurnListener {
   exited(error: null | string): void;
   permission(requestId: string, tool: string, input: Record<string, unknown>): void;
   question(requestId: string, input: Record<string, unknown>): void;
+  /** Usage de l'abonnement, donné à chaque tour (DT-39) */
+  quota(windows: QuotaWindows): void;
   /** L'agent a rendu la main : son dernier message */
   result(message: null | string): void;
 }
@@ -187,6 +190,8 @@ export class PilotService {
   private readonly pending = new Map<string, PilotMessage>();
   private profiles: PilotProfiles = NO_PROFILES;
   private sandbox: null | SandboxDeps = null;
+  /** Usage de l'abonnement lu dans le flux d'un tour, rangé par profil Claude (DT-39) */
+  private quotaSink: (profile: string, windows: QuotaWindows) => void = () => undefined;
   /** État de chaque conteneur, relu par l'entretien : la vue de la session le montre sans attendre Docker */
   private readonly sandboxStates = new Map<string, SandboxState>();
   private channel: Pick<ChannelService, 'isConnected' | 'send'> = { isConnected: () => false, send: () => false };
@@ -208,6 +213,11 @@ export class PilotService {
   async load(): Promise<void> {
     this.records.clear();
     for (const record of await this.repository.list()) this.records.set(record.sessionId, record);
+  }
+
+  /** Quota de l'abonnement, branché au démarrage : chaque tour piloté le tient à jour (DT-39). */
+  useQuota(sink: (profile: string, windows: QuotaWindows) => void): void {
+    this.quotaSink = sink;
   }
 
   /** Bacs à sable des sessions (DT-37), branchés au démarrage. */
@@ -567,6 +577,8 @@ export class PilotService {
       permission: (requestId, tool, input) => this.permission(origin, turn, requestId, tool, input),
       question: (requestId, input) => this.question(origin, turn, requestId, input),
       cancelled: (requestId) => turn.abandons.get(requestId)?.(),
+      // L'abonnement d'un bac à sable est celui choisi au démarrage ; sinon celui du profil de la session
+      quota: (windows) => this.quotaSink(record.sandbox?.profile ?? source.path, windows),
       result: (last) => {
         turn.result = true;
         // Sans suivi en direct, c'est Bosco qui signale la fin du tour ; avec, le hook Stop le fait déjà

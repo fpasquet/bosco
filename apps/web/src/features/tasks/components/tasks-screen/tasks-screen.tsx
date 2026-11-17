@@ -83,7 +83,24 @@ export function TasksScreen({ title }: { title: string }) {
         <div>
           <WorkerIndicator
             running={running}
-            text={worker?.unavailable ? 'indisponible' : `${running} / ${worker?.capacity ?? 4} agents au travail`}
+            text={
+              worker?.unavailable
+                ? 'indisponible'
+                : [
+                    `${running} / ${worker?.capacity ?? 4} agents au travail`,
+                    // Quota de l'abonnement par défaut (CA-TACH-102) ; rien tant qu'aucun tour ne l'a lu
+                    worker?.quota &&
+                      [
+                        `abonnement ${worker.quota.label}`,
+                        worker.quota.fiveHour === null ? null : `5 h ${worker.quota.fiveHour} %`,
+                        worker.quota.sevenDay === null ? null : `semaine ${worker.quota.sevenDay} %`,
+                      ]
+                        .filter(Boolean)
+                        .join(' · '),
+                  ]
+                    .filter(Boolean)
+                    .join(' · ')
+            }
             unavailable={Boolean(worker?.unavailable)}
           />
           <h1 className="mt-1 hidden font-display text-2xl font-semibold tracking-tight md:block">{title}</h1>

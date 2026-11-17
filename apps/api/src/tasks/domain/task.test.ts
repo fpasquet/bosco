@@ -5,7 +5,7 @@ import { TaskBoard } from './task-board.ts';
 import { pendingResume, Task, TaskError, titleOf } from './task.ts';
 
 const at = new Date('2026-11-06T14:00:00Z');
-const guardrails = { budgetUsd: 1.5, maxTurns: 30, model: null, tools: null };
+const guardrails = { maxTurns: 30, model: null, tools: null };
 
 function task(
   id: number,
@@ -132,11 +132,10 @@ describe('TaskBoard', () => {
       expect(pendingResume(resumed.toSnapshot().log)).toBeNull();
     });
 
-    it('CA-TACH-90 · refuses once the budget or the turns are spent, unless they are raised', () => {
-      expect(() => reviewed(1.5).resume('Encore.', guardrails, at)).toThrow(TaskError);
+    it('CA-TACH-98 · refuses once the turns are spent, unless their cap is raised', () => {
       expect(() => reviewed(0.41, 30).resume('Encore.', guardrails, at)).toThrow(TaskError);
-      const raised = reviewed(1.5);
-      raised.resume('Encore.', { ...guardrails, budgetUsd: 2 }, at);
+      const raised = reviewed(0.41, 30);
+      raised.resume('Encore.', { ...guardrails, maxTurns: 60 }, at);
       expect(raised.state).toBe('queued');
     });
 

@@ -32,7 +32,6 @@ export function TaskEditor({ id, title }: { id?: number; title: string }) {
             [
               name,
               {
-                budgetUsd: effective.maxBudgetUsd,
                 concurrency: effective.concurrency,
                 maxTurns: effective.maxTurns,
                 tools: effective.tools,

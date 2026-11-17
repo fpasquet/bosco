@@ -1,3 +1,4 @@
+import type { QuotaWindows } from '../../shared/domain/subscription-quota.ts';
 import type { RepositoryRights } from '../domain/rights.ts';
 import type { Task } from '../domain/task.ts';
 import type { ServiceLaunch, TestService } from '../domain/test-services.ts';
@@ -43,6 +44,8 @@ export type AgentEvent =
   | { kind: 'connector'; available: boolean }
   /** Lecture dans Jira ou Confluence par le connecteur, notée au journal de la tâche (CA-CONT-94) */
   | { kind: 'read'; event: 'Lu dans Confluence' | 'Lu dans Jira'; detail: string }
+  /** Usage de l'abonnement, donné à chaque tour (DT-39) */
+  | { kind: 'quota'; windows: QuotaWindows }
   | { kind: 'result'; ok: boolean; report: null | string; stop: 'error' | 'max_turns' | 'success'; turns: number }
   | { kind: 'session'; sessionId: string }
   | { kind: 'usage'; model: null | string; usage: AgentUsage };

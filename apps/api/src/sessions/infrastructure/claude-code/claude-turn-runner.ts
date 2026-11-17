@@ -9,6 +9,7 @@ import { join } from 'node:path';
 import { createInterface } from 'node:readline';
 import type { RunningTurn, TurnListener, TurnRequest, TurnRunner } from '../../application/pilot.service.ts';
 import type { PermissionMode } from '../../domain/pilot.ts';
+import { quotaWindowsOf } from '../../../shared/domain/subscription-quota.ts';
 
 const QUESTION_TOOL = 'AskUserQuestion';
 
@@ -91,6 +92,10 @@ export class ClaudeTurnRunner implements TurnRunner {
         else listener.permission(requestId, tool, input);
       } else if (line.type === 'control_cancel_request') listener.cancelled(String(line.request_id));
       else if (line.type === 'result') listener.result(typeof line.result === 'string' ? line.result : null);
+      else {
+        const windows = quotaWindowsOf(line);
+        if (windows) listener.quota(windows);
+      }
     });
     child.on('error', (error) => {
       exited = true;

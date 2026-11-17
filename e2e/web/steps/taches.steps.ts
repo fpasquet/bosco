@@ -8,7 +8,7 @@ Given(
     const response = await fetch(`${bosco.url}/api/tasks`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ repository, instruction, mode: 'worker', guardrails: { budgetUsd: 1, maxTurns: 20 } }),
+      body: JSON.stringify({ repository, instruction, mode: 'worker', guardrails: { maxTurns: 20 } }),
     });
     expect(response.status).toBe(201);
   },
@@ -25,7 +25,7 @@ Given(
         instruction,
         mode: 'worker',
         prerequisites: [prerequisite],
-        guardrails: { budgetUsd: 1, maxTurns: 20 },
+        guardrails: { maxTurns: 20 },
       }),
     });
     expect(response.status).toBe(201);

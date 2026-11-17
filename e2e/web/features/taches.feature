@@ -22,14 +22,13 @@ Fonctionnalité: Tâches
     Alors je suis sur la page « /tasks »
     Et je vois le lien « T-1 Ajoute un test du découpage des tableaux »
 
-  @CA-TACH-27
   @CA-TACH-30
+  @CA-TACH-96
   @NF-18
-  Scénario: Un budget au-dessus du plafond du dépôt est refusé avec ses issues
+  Scénario: Une tâche sans consigne est refusée avec ses issues, sans budget ni tours à régler
     Quand j'ouvre la page « /tasks/new »
-    Et je saisis « Supprime les anciens index. » dans le champ « Consigne »
-    Et je saisis « 3 » dans le champ « Budget ($) »
-    Et je clique sur le bouton « Créer la tâche »
+    Alors je ne vois plus le texte « Budget ($) »
+    Quand je clique sur le bouton « Créer la tâche »
     Alors je vois le texte « 1 point à corriger »
     Et la page est accessible
 

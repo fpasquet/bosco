@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_RIGHTS, effectiveRights, isTool, overreach } from './rights.ts';
 
-const GENERAL = { ...DEFAULT_RIGHTS, maxTurns: 40, maxBudgetUsd: 5, deniedTools: ['Bash(curl:*)'] };
+const GENERAL = { ...DEFAULT_RIGHTS, maxTurns: 40, deniedTools: ['Bash(curl:*)'] };
 
 describe('rights', () => {
   it('takes each right from the repository when it has one, and adds the denied tools', () => {
@@ -13,8 +13,8 @@ describe('rights', () => {
   });
 
   it('lets a repository tighten the general rights, never exceed them', () => {
-    expect(overreach(GENERAL, { maxBudgetUsd: 2, tools: ['Read', 'Bash(npm test)'] })).toBeNull();
-    expect(overreach(GENERAL, { maxBudgetUsd: 6 })).not.toBeNull();
+    expect(overreach(GENERAL, { maxTurns: 20, tools: ['Read', 'Bash(npm test)'] })).toBeNull();
+    expect(overreach(GENERAL, { maxTurns: 1000 })).not.toBeNull();
     expect(overreach({ ...GENERAL, tools: ['Read'] }, { tools: ['Read', 'Write'] })).not.toBeNull();
   });
 

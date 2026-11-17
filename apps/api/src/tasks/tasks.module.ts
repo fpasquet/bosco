@@ -22,6 +22,7 @@ import { CONFIG, ORM } from '../shared/tokens.ts';
 import { AccountsService } from './application/accounts.service.ts';
 import { type ContainerProbe, ContainersService, MEASURE_MS } from './application/containers.service.ts';
 import { IsolationService } from './application/isolation.service.ts';
+import { QuotaService } from './application/quota.service.ts';
 import { ReviewService } from './application/review.service.ts';
 import { RightsService } from './application/rights.service.ts';
 import { TaskService, type TaskView } from './application/task.service.ts';
@@ -31,6 +32,7 @@ import { ContainerEventsBus } from './infrastructure/container-events.bus.ts';
 import { AllowListFile } from './infrastructure/isolation/allow-list-file.ts';
 import { MikroOrmAccountsStore } from './infrastructure/persistence/accounts.store.ts';
 import { MikroOrmIsolationStore } from './infrastructure/persistence/isolation.store.ts';
+import { MikroOrmQuotaStore } from './infrastructure/persistence/quota.store.ts';
 import { MikroOrmRightsStore } from './infrastructure/persistence/rights.store.ts';
 import { MikroOrmTaskRepository } from './infrastructure/persistence/task.repository.ts';
 import { MikroOrmTestEnvironmentStore } from './infrastructure/persistence/test-environment.store.ts';
@@ -45,6 +47,7 @@ import { ScriptedAgentRunner, scriptedWorkspaces } from './infrastructure/worker
 import { FileWorkerSecrets } from './infrastructure/worker/worker-secrets.ts';
 import { ContainersController } from './interface/http/containers.controller.ts';
 import { IsolationController } from './interface/http/isolation.controller.ts';
+import { QuotaController } from './interface/http/quota.controller.ts';
 import { ReviewController } from './interface/http/review.controller.ts';
 import { RightsController } from './interface/http/rights.controller.ts';
 import { TasksController } from './interface/http/tasks.controller.ts';
@@ -57,6 +60,7 @@ import {
   CONTAINER_EVENTS,
   CONTAINERS_SERVICE,
   ISOLATION_SERVICE,
+  QUOTA_SERVICE,
   REPOSITORY_CATALOG,
   REVIEW_SERVICE,
   RIGHTS_SERVICE,
@@ -97,6 +101,7 @@ const SCENARIO_FREE_MEMORY = 64 * 1024 ** 3;
     ReviewController,
     ContainersController,
     McpController,
+    QuotaController,
   ],
   providers: [
     { provide: TASK_EVENTS, useValue: new TaskEventsBus() },
@@ -150,6 +155,11 @@ const SCENARIO_FREE_MEMORY = 64 * 1024 ** 3;
         ),
     },
     {
+      provide: QUOTA_SERVICE,
+      inject: [ORM],
+      useFactory: (orm: MikroORM) => new QuotaService(new MikroOrmQuotaStore(orm), clock),
+    },
+    {
       provide: ISOLATION_SERVICE,
       inject: [CONFIG, ORM, SOURCE_SERVICE],
       useFactory: (config: Config, orm: MikroORM, sources: SourceService) => {
@@ -200,6 +210,7 @@ const SCENARIO_FREE_MEMORY = 64 * 1024 ** 3;
         CONTEXT_SERVICE,
         LINKS_SERVICE,
         ACCOUNTS_SERVICE,
+        QUOTA_SERVICE,
       ],
       useFactory: (
         config: Config,
@@ -211,6 +222,7 @@ const SCENARIO_FREE_MEMORY = 64 * 1024 ** 3;
         context: ContextService,
         links: LinksService,
         accounts: AccountsService,
+        quota: QuotaService,
       ) =>
         new WorkerService({
           contextOf: async (task) => {
@@ -237,6 +249,12 @@ const SCENARIO_FREE_MEMORY = 64 * 1024 ** 3;
           claudeProfileOf: async (repository) => {
             const own = await accounts.of(repository);
             return own.claudeProfile;
+          },
+          quota: {
+            profileOf: (profile) => isolation.profileOf(profile),
+            record: (profile, windows) => quota.record(profile, windows),
+            stopReason: (profile) => quota.stopReason(profile),
+            waitReason: (profile) => quota.waitReason(profile),
           },
           workspaces: config.testing ? scriptedWorkspaces : new GitWorkspaces(join(config.dataDir, 'workspaces')),
           priceOf: (model, usage) => {
@@ -292,7 +310,15 @@ const SCENARIO_FREE_MEMORY = 64 * 1024 ** 3;
       },
     },
   ],
-  exports: [TASK_SERVICE, WORKER_SERVICE, AGENT_RUNNER, ISOLATION_SERVICE, RIGHTS_SERVICE, ACCOUNTS_SERVICE],
+  exports: [
+    TASK_SERVICE,
+    WORKER_SERVICE,
+    AGENT_RUNNER,
+    ISOLATION_SERVICE,
+    RIGHTS_SERVICE,
+    ACCOUNTS_SERVICE,
+    QUOTA_SERVICE,
+  ],
 })
 export class TasksModule implements OnApplicationBootstrap, OnApplicationShutdown {
   private timer: ReturnType<typeof setInterval> | undefined;
@@ -310,10 +336,12 @@ export class TasksModule implements OnApplicationBootstrap, OnApplicationShutdow
     @Inject(NOTIFICATION_SERVICE) private readonly notifications: NotificationService,
     @Inject(PILOT_SERVICE) private readonly pilot: PilotService,
     @Inject(CONTAINERS_SERVICE) private readonly containers: ContainersService,
+    @Inject(QUOTA_SERVICE) private readonly quota: QuotaService,
   ) {}
 
   async onApplicationBootstrap(): Promise<void> {
     await this.isolation.load();
+    await this.quota.load();
     // Une session pilotée prend l'abonnement Claude de son dépôt, comme ses tâches (E16a, E8a)
     this.pilot.useProfiles({
       of: async (repository) => {

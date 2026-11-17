@@ -147,9 +147,7 @@ export function TaskThreadPanel({ busy = false, changes, composer, onCancel, tas
       {live && task.mode === 'worker' && (
         <div className="flex flex-wrap items-center gap-3 border-t border-line bg-surface-alt px-4 py-3 text-sm text-muted">
           <Bot aria-hidden className="size-4 shrink-0" />
-          <p className="min-w-0 flex-1">
-            L’agent travaille seul, dans son budget · tu pourras lui écrire à la relecture
-          </p>
+          <p className="min-w-0 flex-1">L’agent travaille seul · tu pourras lui écrire à la relecture</p>
           {onCancel && (
             <Button variant="outline" size="sm" disabled={busy} onClick={onCancel}>
               Annuler la tâche

@@ -19,6 +19,7 @@ const meta = {
       agentMemory: 4 * 1024 ** 3,
       availableMemory: 28 * 1024 ** 3,
       capacity: 4,
+      quota: { label: 'pro', fiveHour: 36, sevenDay: 14 },
       running: 0,
       unavailable: null,
       waiting: {},
@@ -36,11 +37,6 @@ export const NewTask: Story = {};
 export const WithErrors: Story = {
   args: {
     issues: [
-      {
-        field: 'budgetUsd',
-        message:
-          'Le budget dépasse le plafond de api-voix : 2,00 $ au plus. Baisse-le, ou relève le plafond dans les droits du dépôt.',
-      },
       {
         field: 'tools',
         message: 'WebFetch n’est pas autorisé dans api-voix, qui autorise : Read, Write, Edit, Grep, Glob, Bash.',

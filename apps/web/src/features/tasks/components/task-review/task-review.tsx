@@ -80,19 +80,19 @@ export function TaskReview({ busy, followers, onCopy, onReject, onValidate, pane
             <Card id="review-usage" title="Consommation">
               <dl className="flex flex-col gap-1.5 text-sm">
                 <div className="flex justify-between gap-3">
-                  <dt className="text-muted">Budget</dt>
-                  <dd>
-                    {usd(task.spentUsd)} / {usd(task.guardrails.budgetUsd)}
-                  </dd>
+                  <dt className="text-muted">Coût estimé</dt>
+                  <dd>{usd(task.spentUsd)}</dd>
                 </div>
                 <div className="flex justify-between gap-3">
                   <dt className="text-muted">Tours</dt>
                   <dd>
-                    {task.outcome.turns} / {task.guardrails.maxTurns}
+                    {task.outcome.turns} sur {task.guardrails.maxTurns}
                   </dd>
                 </div>
               </dl>
-              <p className="mt-2 text-xs text-muted">Coût estimé au tarif public.</p>
+              <p className="mt-2 text-xs text-muted">
+                Coût estimé au tarif public, sans plafond : le quota de l’abonnement retient le worker.
+              </p>
             </Card>
           )}
           <Card id="review-after" title="Après">

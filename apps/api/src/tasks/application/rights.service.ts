@@ -46,9 +46,7 @@ const toolList = (value: unknown) =>
 const CHECKS: Record<RightsField, (value: unknown) => null | string> = {
   concurrency: (value) => (integer(value, 1, 8) ? null : 'Entre 1 et 8 agents en même temps.'),
   deniedTools: (value) => (toolList(value) ? null : 'Un outil par ligne, avec sa règle : Bash(curl:*) ou Read(.env*).'),
-  maxBudgetUsd: (value) =>
-    typeof value === 'number' && value > 0 && value <= 100 ? null : 'Un budget entre 0,01 et 100 $.',
-  maxTurns: (value) => (integer(value, 1, 500) ? null : 'Entre 1 et 500 tours.'),
+  maxTurns: (value) => (integer(value, 1, 1000) ? null : 'Entre 1 et 1 000 tours.'),
   model: (value) => ((MODELS as readonly unknown[]).includes(value) ? null : 'Un modèle de la liste.'),
   pullRequest: (value) =>
     PULL_REQUEST_MODES.includes(String(value)) ? null : 'Jamais, Demander à chaque fois ou Toujours.',

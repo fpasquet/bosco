@@ -27,7 +27,6 @@ function parse(field: RightsFieldDto, text: string): unknown {
       .split('\n')
       .map((line) => line.trim())
       .filter(Boolean);
-  if (field === 'maxBudgetUsd') return Number(text.replace(',', '.'));
   if (field === 'maxTurns' || field === 'concurrency') return Number(text);
   return text;
 }

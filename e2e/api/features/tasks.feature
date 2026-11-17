@@ -23,7 +23,6 @@ Feature: Tasks
     Then the response property "state" should equal "blocked"
     And the response property "startFrom" should equal "1"
 
-  @CA-TACH-27
   @CA-TACH-28
   @CA-TACH-29
   Scenario: A task over the limits of its repository is refused with every reason
@@ -31,7 +30,7 @@ Feature: Tasks
     And I send POST request to "/api/tasks/1/cancel"
     And I send POST request to "/api/tasks" with the JSON "fixtures/tasks/invalid-task.json"
     Then the response code should be 400
-    And the response property "issues.0.field" should equal "budgetUsd"
+    And the response property "issues.0.field" should equal "maxTurns"
     And the response property "issues.1.field" should equal "tools"
     And the response property "issues.2.field" should equal "prerequisites"
 

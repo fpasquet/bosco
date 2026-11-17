@@ -13,7 +13,6 @@ const validateSchema = z.object({ pullRequest: pullRequestSchema.nullable().defa
 const rejectSchema = z.object({ reason: z.string().max(2000) });
 const resumeSchema = z.object({
   message: z.string().max(5000),
-  budgetUsd: z.number().positive().optional(),
   maxTurns: z.number().int().positive().optional(),
 });
 

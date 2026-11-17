@@ -75,7 +75,7 @@ export const editTask = (id: number, draft: TaskDraftDto) => send('PUT', `/api/t
 export const cancelTask = (id: number) => send('POST', `/api/tasks/${id}/cancel`);
 /** « Annuler l'annulation » dans les secondes qui suivent (CA-TACH-71). */
 export const undoCancelTask = (id: number) => send('POST', `/api/tasks/${id}/undo-cancel`);
-export const relaunchTask = (id: number, changes: { budgetUsd: number; fromBranch: boolean; instruction?: string }) =>
+export const relaunchTask = (id: number, changes: { fromBranch: boolean; instruction?: string }) =>
   send('POST', `/api/tasks/${id}/relaunch`, changes);
 
 /** Droits des agents d'un dépôt, ou les réglages généraux sans dépôt (E8a). */
@@ -152,10 +152,10 @@ export const retryPullRequest = (id: number, pullRequest: { body: string; title:
 export const rejectTask = (id: number, values: { reason: string }) => post<TaskDto>(`/api/tasks/${id}/reject`, values);
 
 /**
- * Message à l'agent d'une tâche à relire (RF-TACH-10) : il reprend sur la même branche ; un budget ou des tours relevés
+ * Message à l'agent d'une tâche à relire (RF-TACH-10) : il reprend sur la même branche ; un plafond de tours relevé
  * hors des plafonds du dépôt sont refusés champ par champ (400, TaskIssues).
  */
-export const resumeTask = (id: number, values: { budgetUsd?: number; maxTurns?: number; message: string }) =>
+export const resumeTask = (id: number, values: { maxTurns?: number; message: string }) =>
   send('POST', `/api/tasks/${id}/resume`, values);
 
 export const linksQuery = (id: number) => ({

@@ -1,5 +1,4 @@
 import type { PullRequestModeDto, RightsFieldDto, RightsValuesDto } from '@bosco/domain';
-import { usd } from './tasks';
 
 const TOOL_LABELS: Record<string, string> = {
   Bash: 'Bash',
@@ -36,7 +35,6 @@ export const RIGHTS_LABELS: Record<RightsFieldDto, string> = {
   tools: 'Outils permis',
   deniedTools: 'Outils interdits',
   maxTurns: 'Tours au plus',
-  maxBudgetUsd: 'Budget au plus',
   model: 'Modèle',
   concurrency: 'Agents en même temps',
   pullRequest: 'PR brouillon à la validation',
@@ -53,8 +51,6 @@ export function rightsValue<Field extends RightsFieldDto>(field: Field, value: R
       const list = value as string[];
       return list.length > 0 ? list.map(toolLabel).join(', ') : 'aucun';
     }
-    case 'maxBudgetUsd':
-      return usd(value as number);
     case 'model':
       return modelLabel(value as string);
     case 'pullRequest':

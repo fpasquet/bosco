@@ -9,6 +9,7 @@ import type { FileTranscriptWatcher } from './sessions/infrastructure/claude-cod
 import type { RecordingNotifier } from './sessions/infrastructure/notifications/desktop-notifier.ts';
 import type { PresenceTracker } from './sessions/infrastructure/notifications/presence.ts';
 import type { IsolationService } from './tasks/application/isolation.service.ts';
+import type { QuotaService } from './tasks/application/quota.service.ts';
 import type { ScriptedAgentRunner } from './tasks/infrastructure/worker/scripted-agent.ts';
 import { ACCESS_SERVICE } from './access/tokens.ts';
 import {
@@ -21,7 +22,7 @@ import {
   TRANSCRIPT_WATCHER,
 } from './sessions/tokens.ts';
 import { ORM } from './shared/tokens.ts';
-import { AGENT_RUNNER, ISOLATION_SERVICE } from './tasks/tokens.ts';
+import { AGENT_RUNNER, ISOLATION_SERVICE, QUOTA_SERVICE } from './tasks/tokens.ts';
 
 /** Route réservée aux scénarios (BOSCO_TEST=1) : remet le service à zéro entre deux scénarios. */
 @Controller('__test')
@@ -38,7 +39,18 @@ export class TestController {
     @Inject(ISOLATION_SERVICE) private readonly isolation: IsolationService,
     @Inject(SESSION_SERVICE) private readonly sessions: SessionService,
     @Inject(CHANNEL_SERVICE) private readonly channel: ChannelService,
+    @Inject(QUOTA_SERVICE) private readonly quota: QuotaService,
   ) {}
+
+  /** Simule l'usage de l'abonnement du worker, comme le donnerait un tour (DT-39) : la fenêtre de 5 h, en %. */
+  @Post('quota')
+  @HttpCode(204)
+  async setQuota(@Body() body: { fiveHour: number }): Promise<void> {
+    const resetsAt = new Date(Date.now() + 2 * 60 * 60 * 1000);
+    await this.quota.record(this.isolation.profileOf(null), {
+      fiveHour: { utilization: body.fiveHour / 100, resetsAt },
+    });
+  }
 
   /** Simule un domaine refusé par le proxy d'une tâche (E11b). */
   @Post('refusals')
@@ -78,6 +90,7 @@ export class TestController {
     await this.orm.em.getConnection().execute('delete from session_search');
     await this.settings.load();
     await this.isolation.load();
+    await this.quota.load();
     await this.sessions.useTaskLinks();
     (globalThis as { boscoReplayReset?: () => void }).boscoReplayReset?.();
   }
