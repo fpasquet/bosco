@@ -81,8 +81,15 @@ export function groupByProject(sessions: readonly SessionDto[]): ProjectGroup[] 
     const name = session.project?.name ?? null;
     groups.set(name, [...(groups.get(name) ?? []), session]);
   }
+  // Une session à plusieurs projets se range sous son principal, nommée d'après lui et le nombre des autres
+  const named = (grouped: SessionDto[]) =>
+    Object.fromEntries(
+      grouped.flatMap((session) =>
+        session.addedProjects.length > 0 ? [[session.id, projectLabel(session) ?? '']] : [],
+      ),
+    );
   return [...groups.entries()]
-    .map(([name, grouped]) => ({ name, sessions: grouped }))
+    .map(([name, grouped]) => ({ also: named(grouped), name, sessions: grouped }))
     .toSorted((left, right) => {
       if (left.name === null || right.name === null) return left.name === null ? 1 : -1;
       return byStateThenActivity(left.sessions[0] as SessionDto, right.sessions[0] as SessionDto);
