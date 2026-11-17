@@ -67,3 +67,8 @@ export const Default: Story = {};
 
 /** Pendant le calcul du texte. */
 export const Loading: Story = { args: { preview: undefined } };
+
+/** Aperçu ouvert depuis un groupe : le texte se lit pour chacun de ses projets, le principal d'abord. */
+export const InGroup: Story = {
+  args: { choices: ['api-tarifs', 'creneaux', 'site-clubs'], onProjectChange: fn() },
+};

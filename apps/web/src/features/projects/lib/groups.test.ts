@@ -1,7 +1,8 @@
-// Ce que les scénarios ne voient pas : les projets comptés par la confirmation et l'ordre du texte transmis.
+// Ce que les scénarios ne voient pas : les projets comptés par la confirmation, l'ordre du texte transmis et les
+// projets proposés par l'aperçu d'un groupe.
 import { describe, expect, it } from 'vitest';
 import { allProjectsGroup, clubsGroup, storyGroups } from '../fixtures';
-import { arrivalOrder, touchedProjects } from './groups';
+import { arrivalOrder, previewChoices, touchedProjects } from './groups';
 
 describe('touchedProjects', () => {
   it('counts the projects that join and those that leave, not those that only move', () => {
@@ -26,5 +27,16 @@ describe('arrivalOrder', () => {
       current: true,
       lines: 2,
     });
+  });
+});
+
+describe('previewChoices', () => {
+  it('offers the projects of a group, its principal first', () => {
+    expect(previewChoices(clubsGroup)).toEqual(clubsGroup.projects.map(({ name }) => name));
+  });
+
+  it('offers every project of « Tous les projets » in alphabetical order', () => {
+    const names = allProjectsGroup.projects.map(({ name }) => name);
+    expect(previewChoices(allProjectsGroup)).toEqual(names.toSorted((a, b) => a.localeCompare(b, 'fr')));
   });
 });

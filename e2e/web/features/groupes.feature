@@ -105,3 +105,11 @@ Fonctionnalité: Groupes de projets
     Quand j'ouvre la page « /groups/2/instructions »
     Alors je vois le texte « Modifiable depuis le poste. Les instructions se rédigent depuis le poste seulement. »
     Et je vois le texte « Les textes lus sont en français. »
+
+  @CA-CONT-142
+  Scénario: L'aperçu des instructions de « Tous les projets » se lit pour le projet choisi, le premier par ordre alphabétique d'abord
+    Quand j'ouvre la page « /groups/1/instructions »
+    Et je clique sur le bouton « Aperçu du texte transmis »
+    Alors la liste « pour le projet » vaut « api-voix »
+    Quand je choisis « labo-ia » dans la liste « pour le projet »
+    Alors je vois le titre « Texte transmis à un agent de labo-ia »

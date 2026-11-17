@@ -18,7 +18,7 @@ import {
   writeInstructions,
 } from '../../api/groups';
 import { projectsOverviewQuery } from '../../api/projects';
-import { instructionLines, touchedProjects } from '../../lib/groups';
+import { instructionLines, previewChoices, touchedProjects } from '../../lib/groups';
 import { GroupConfirmDialog, TouchedProjects } from '../group-confirm-dialog';
 import { GroupHeader, type GroupTab } from '../group-header';
 import { GroupInstructions } from '../group-instructions';
@@ -88,7 +88,10 @@ export function GroupScreen({ children, id, tab }: { children?: ReactNode; id: n
   useEffect(() => {
     if (elsewhere) router.replace(`/groups/${id}/instructions`);
   }, [elsewhere, id, router]);
-  const principal = group?.projects[0]?.name ?? '';
+  const [previewed, setPreviewed] = useState<null | string>(null);
+  const choices = group ? previewChoices(group) : [];
+  // Le projet principal par défaut ; « Tous les projets », sans principal, le premier par ordre alphabétique
+  const principal = previewed !== null && choices.includes(previewed) ? previewed : (choices[0] ?? '');
   const { data: preview } = useQuery({ ...previewQuery(principal), enabled: previewing && principal !== '' });
   const change = useMutation({
     mutationFn: (work: () => Promise<unknown>) => work(),
@@ -219,6 +222,8 @@ export function GroupScreen({ children, id, tab }: { children?: ReactNode; id: n
         <ContextPreviewDialog
           open={previewing}
           project={principal}
+          choices={choices}
+          onProjectChange={setPreviewed}
           preview={preview}
           onClose={() => setPreviewing(false)}
           onCopy={(text) => void navigator.clipboard?.writeText(text).catch(() => undefined)}
