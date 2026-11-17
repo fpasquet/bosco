@@ -16,8 +16,21 @@ export interface SessionsTableProps {
   now: Date;
   /** Lignes animées à la suite des sessions arrivées, pendant le chargement (E1e) */
   pendingRows?: number;
-  /** Vue filtrée sur un projet (E1c) : la colonne « Dossier » remplace les intertitres */
-  showFolder?: boolean;
+  /**
+   * Page d'un projet : la colonne « Dossier » remplace les intertitres ; page d'un groupe : la colonne
+   * « Projet », dont le nom ouvre la page du projet
+   */
+  column?: 'folder' | 'project';
+}
+
+/** Projet d'une session dans la page d'un groupe : son nom ouvre sa page. */
+function ProjectLink({ session }: { session: SessionDto }) {
+  if (!session.project) return <span className="text-muted">Hors projet</span>;
+  return (
+    <Link href={`/projects/${session.project.id}/sessions`} className="relative z-10 link link-hover">
+      {session.project.name}
+    </Link>
+  );
 }
 
 export function lastActionOf(session: SessionDto, now: Date): string {
@@ -35,17 +48,17 @@ function groupLabel(group: ProjectGroup, pending: boolean): string {
 }
 
 function Row({
+  column,
   frozen,
   markOf,
   now,
   session,
-  showFolder,
 }: {
+  column: SessionsTableProps['column'];
   frozen: boolean;
   markOf: SessionsTableProps['markOf'];
   now: Date;
   session: SessionDto;
-  showFolder: boolean;
 }) {
   const inactive = session.state === 'inactive';
   const mark = markOf(session);
@@ -68,9 +81,14 @@ function Row({
           )}
         </span>
       </td>
-      {showFolder && (
+      {column === 'folder' && (
         <td className="truncate font-mono text-xs text-muted">
           {session.project ? session.project.folder || 'racine' : '—'}
+        </td>
+      )}
+      {column === 'project' && (
+        <td className="truncate">
+          <ProjectLink session={session} />
         </td>
       )}
       <td className="truncate font-mono text-xs text-muted">{session.branch ?? '—'}</td>
@@ -95,14 +113,12 @@ function PendingRow({ columns }: { columns: number }) {
   );
 }
 
-function MobileList({ groups, now, pendingRows, showFolder }: Omit<SessionsTableProps, 'markOf'>) {
+function MobileList({ column, groups, now, pendingRows }: Omit<SessionsTableProps, 'markOf'>) {
   return (
     <div className="flex flex-col gap-4 md:hidden">
       {groups.map((group) => (
         <section key={group.name ?? ''} aria-label={group.name ?? 'Hors projet'}>
-          {!showFolder && (
-            <h2 className="px-1 pb-1.5 text-xs font-semibold text-muted">{group.name ?? 'Hors projet'}</h2>
-          )}
+          {!column && <h2 className="px-1 pb-1.5 text-xs font-semibold text-muted">{group.name ?? 'Hors projet'}</h2>}
           <ul className="divide-y divide-line rounded-card border border-line bg-surface">
             {group.sessions.map((session) => (
               <li key={session.id} className="relative flex items-center gap-3 px-3 py-2.5">
@@ -115,6 +131,8 @@ function MobileList({ groups, now, pendingRows, showFolder }: Omit<SessionsTable
                     {titleOf(session)}
                   </Link>
                   <span className="block truncate font-mono text-xs text-muted">
+                    {column === 'project' && `${session.project?.name ?? 'Hors projet'} · `}
+                    {column === 'folder' && session.project?.folder && `${session.project.folder} · `}
                     {session.branch ?? '—'} · {lastActionOf(session, now)}
                   </span>
                 </span>
@@ -131,16 +149,12 @@ function MobileList({ groups, now, pendingRows, showFolder }: Omit<SessionsTable
   );
 }
 
-/** Tableau des sessions ouvertes, groupées par projet (E1b) ou d'un seul projet avec ses dossiers (E1c). */
-export function SessionsTable({
-  frozen = false,
-  groups,
-  markOf,
-  now,
-  pendingRows = 0,
-  showFolder = false,
-}: SessionsTableProps) {
-  const columns = showFolder ? 7 : 6;
+/**
+ * Tableau des sessions ouvertes, groupées par projet, d'un seul projet avec ses dossiers ou d'un groupe
+ * avec leur projet.
+ */
+export function SessionsTable({ column, frozen = false, groups, markOf, now, pendingRows = 0 }: SessionsTableProps) {
+  const columns = column ? 7 : 6;
   return (
     <>
       <div className="hidden overflow-hidden rounded-card border border-line bg-surface shadow-card md:block">
@@ -150,7 +164,8 @@ export function SessionsTable({
             <tr className="h-9 border-b border-line">
               <th className="w-28 pl-4 font-medium">État</th>
               <th className="font-medium">Session</th>
-              {showFolder && <th className="w-40 font-medium">Dossier</th>}
+              {column === 'folder' && <th className="w-40 font-medium">Dossier</th>}
+              {column === 'project' && <th className="w-40 font-medium">Projet</th>}
               <th className="w-32 font-medium">Branche</th>
               <th className="w-52 font-medium">Dernière action</th>
               <th className="w-32 font-medium">Coût · tokens</th>
@@ -159,7 +174,7 @@ export function SessionsTable({
           </thead>
           {groups.map((group) => (
             <tbody key={group.name ?? ''}>
-              {!showFolder && (
+              {!column && (
                 <tr className="h-8 border-b border-line bg-surface-alt text-xs text-muted">
                   <th colSpan={columns} scope="colgroup" className="pl-4 font-normal">
                     <span className="flex items-center gap-2">
@@ -171,14 +186,7 @@ export function SessionsTable({
                 </tr>
               )}
               {group.sessions.map((session) => (
-                <Row
-                  key={session.id}
-                  frozen={frozen}
-                  markOf={markOf}
-                  now={now}
-                  session={session}
-                  showFolder={showFolder}
-                />
+                <Row key={session.id} frozen={frozen} markOf={markOf} now={now} session={session} column={column} />
               ))}
             </tbody>
           ))}
@@ -191,7 +199,7 @@ export function SessionsTable({
           )}
         </table>
       </div>
-      <MobileList groups={groups} now={now} pendingRows={pendingRows} showFolder={showFolder} />
+      <MobileList groups={groups} now={now} pendingRows={pendingRows} column={column} />
     </>
   );
 }

@@ -70,14 +70,9 @@ export const abandonDecision = (id: number, reason: null | string) =>
   send<DecisionDto>('POST', `/api/decisions/${id}/abandon`, { reason });
 export const saveArchitecture = (project: string, architecture: ArchitectureDto) =>
   send<ArchitectureDto>('PUT', `/api/context/architecture/${encodeURIComponent(project)}`, architecture);
-/** Projets ajoutés par la personne. */
+/** Projets ajoutés par la personne ; même clé que la liste des projets, qui les change. */
 export const projectsQuery = {
-  queryKey: ['projects'],
-  queryFn: async () => (await read<{ projects: { name: string }[] }>('/api/projects')).projects,
-};
-
-/** Projets qui ont une décision à eux, proposée ou acceptée : le choix de l'écran du contexte. */
-export const decidedProjectsQuery = {
-  queryKey: ['context-projects'],
-  queryFn: async () => (await read<{ projects: string[] }>('/api/context/projects')).projects,
+  queryKey: ['projects', 'overview'],
+  queryFn: () => read<{ projects: { id: number; name: string }[] }>('/api/projects'),
+  select: (data: { projects: { id: number; name: string }[] }) => data.projects,
 };

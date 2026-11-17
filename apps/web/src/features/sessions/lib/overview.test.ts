@@ -10,6 +10,7 @@ import {
   openSessions,
   profileMark,
   projectsOf,
+  sessionsIn,
   sortSessions,
   waitingSessions,
 } from './overview';
@@ -114,19 +115,20 @@ describe('filterSessions', () => {
     session('logger', { project: outilsNode, branch: 'feat/logger-otel' }),
     session('idle', { project: outilsNode, state: 'inactive' }),
   ];
-  const all = { hideInactive: false, query: '', project: null };
-
-  it('keeps the chosen project (CA-SESS-11)', () => {
-    expect(filterSessions(sessions, { ...all, project: 'outils-node' }).map(({ id }) => id)).toEqual([
-      'logger',
-      'idle',
-    ]);
-  });
+  const all = { hideInactive: false, query: '' };
 
   it('searches titles, branches and folders without case, and hides inactive sessions on demand', () => {
     expect(filterSessions(sessions, { ...all, query: 'PDF' }).map(({ id }) => id)).toEqual(['rag']);
     expect(filterSessions(sessions, { ...all, query: 'otel' }).map(({ id }) => id)).toEqual(['logger']);
     expect(filterSessions(sessions, { ...all, hideInactive: true }).map(({ id }) => id)).toEqual(['rag', 'logger']);
+  });
+});
+
+describe('sessionsIn', () => {
+  it('keeps the sessions of the projects of a place, once each, outside ones never', () => {
+    const sessions = [session('rag'), session('logger', { project: outilsNode }), session('notes', { project: null })];
+    expect(sessionsIn(sessions, [outilsNode.id]).map(({ id }) => id)).toEqual(['logger']);
+    expect(sessionsIn(sessions, [1, outilsNode.id, 1]).map(({ id }) => id)).toEqual(['rag', 'logger']);
   });
 });
 
@@ -159,13 +161,21 @@ describe('indicatorsOf', () => {
 });
 
 describe('projectsOf', () => {
-  it('lists the projects with their open sessions, in the order of the table', () => {
+  it('lists the projects with their open and waiting sessions, in the order of the table, then the outside ones', () => {
     expect(
-      projectsOf([session('idle', { project: outilsNode, state: 'inactive' }), session('rag'), session('bosco')]),
-    ).toEqual([
-      { name: 'labo-ia', count: 2 },
-      { name: 'outils-node', count: 1 },
-    ]);
+      projectsOf([
+        session('idle', { project: outilsNode, state: 'inactive' }),
+        session('rag', { state: 'waiting' }),
+        session('bosco'),
+        session('notes', { project: null }),
+      ]),
+    ).toEqual({
+      outside: { count: 1, waiting: 0 },
+      projects: [
+        { id: 1, count: 2, waiting: 1 },
+        { id: outilsNode.id, count: 1, waiting: 0 },
+      ],
+    });
   });
 });
 

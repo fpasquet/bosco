@@ -1,7 +1,7 @@
 'use client';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
-import type { SessionDto, SourcesDto } from '@bosco/domain';
+import type { SourcesDto } from '@bosco/domain';
 import { PageSkeleton } from '@/shared/components/page-skeleton';
 import { useNow } from '@/shared/hooks/use-now';
 import { importProgressQuery, sessionsQuery } from '../../api/sessions';
@@ -36,24 +36,21 @@ import { WaitingActions, WaitingBanner } from '../waiting-banner';
 import { Welcome } from '../welcome';
 
 interface OverviewProps {
-  project: null | string;
   title: string;
 }
 
 /** Lignes animées pendant un chargement : le premier affichage garde la forme de l'écran (CA-SESS-20, CA-SESS-22). */
 const PENDING_ROWS = 4;
 
-function LiveOverview({ project, sources, title }: OverviewProps & { sources: SourcesDto }) {
+function LiveOverview({ sources, title }: OverviewProps & { sources: SourcesDto }) {
   const now = useNow();
   const [query, setQuery] = useState('');
   const { grouping, hideInactive, setGrouping, toggleHideInactive } = useOverviewPreferences();
   const { data: sessions } = useQuery(sessionsQuery);
   const { data: progress } = useQuery(importProgressQuery);
-  const inProject = (list: readonly SessionDto[]) =>
-    project === null ? list : list.filter((session) => session.project?.name === project);
-  const all = inProject(sessions ?? []);
+  const all = sessions ?? [];
   const open = openSessions(all, now);
-  const visible = filterSessions(open, { hideInactive: grouping === 'project' && hideInactive, query, project });
+  const visible = filterSessions(open, { hideInactive: grouping === 'project' && hideInactive, query });
   const indicators = indicatorsOf(open, all, now);
   const loading = sessions === undefined || progress !== null;
   const liveTracking = sources.sources.some((source) => source.liveTracking);
@@ -73,7 +70,6 @@ function LiveOverview({ project, sources, title }: OverviewProps & { sources: So
         onHideInactiveChange={toggleHideInactive}
         query={query}
         onQueryChange={setQuery}
-        project={project}
         costToday={formatCost(indicators.costToday)}
         summary={grouping === 'state' ? summary : undefined}
       />
@@ -93,7 +89,6 @@ function LiveOverview({ project, sources, title }: OverviewProps & { sources: So
             markOf={(session) => profileMark(session, sources.sources)}
             now={now}
             pendingRows={loading ? PENDING_ROWS : 0}
-            showFolder={project !== null}
             frozen={offline}
           />
         </>
@@ -105,14 +100,14 @@ function LiveOverview({ project, sources, title }: OverviewProps & { sources: So
         />
       )}
       {!loading && open.length === 0 && <p className="text-center text-muted">Aucune session ouverte aujourd’hui.</p>}
-      {(project !== null || grouping === 'state') && <EndedToday project={project} sessions={endedToday(all, now)} />}
+      {grouping === 'state' && <EndedToday sessions={endedToday(all, now)} />}
       <AllowDialog session={answers.confirming} onCancel={answers.cancel} onConfirm={answers.confirm} />
     </div>
   );
 }
 
 /** Vue d'ensemble : premier lancement tant qu'aucun profil n'est choisi (E1a), puis les sessions en direct (E1b à E1e). */
-export function OverviewScreen({ project, title }: OverviewProps) {
+export function OverviewScreen({ title }: OverviewProps) {
   const { data } = useQuery(sourcesQuery);
   const watching = (data?.sources.length ?? 0) > 0;
   useLiveEvents(watching);
@@ -126,5 +121,5 @@ export function OverviewScreen({ project, title }: OverviewProps) {
       </div>
     );
   }
-  return <LiveOverview project={project} sources={data} title={title} />;
+  return <LiveOverview sources={data} title={title} />;
 }

@@ -19,11 +19,17 @@ type Story = StoryObj<typeof meta>;
 
 export const ByProject: Story = {};
 
-export const FilteredByProject: Story = {
+/** Page d'un projet : la colonne « Dossier » remplace les intertitres. */
+export const ProjectPage: Story = {
   args: {
     groups: groupByProject(STORY_SESSIONS.filter((session) => session.project?.name === 'labo-ia')),
-    showFolder: true,
+    column: 'folder',
   },
+};
+
+/** Page d'un groupe : la colonne « Projet » ouvre la page de chaque projet. */
+export const GroupPage: Story = {
+  args: { groups: [{ name: null, sessions: STORY_SESSIONS }], column: 'project' },
 };
 
 export const Loading: Story = {

@@ -11,6 +11,8 @@ import { DECISION_STATES, titleOf } from '../../lib/decisions';
 export interface ContextOverviewProps {
   busy: boolean;
   context: ContextDto;
+  /** Adresse des décisions du projet, sous l'onglet Contexte de sa page (« /projects/2/context/decisions ») */
+  decisionsHref: string;
   onPreview: () => void;
   onSaveArchitecture: (architecture: ArchitectureDto) => void;
 }
@@ -39,11 +41,11 @@ function Card({
   );
 }
 
-function DecisionRow({ decision }: { decision: DecisionDto }) {
+function DecisionRow({ decision, href }: { decision: DecisionDto; href: string }) {
   const state = DECISION_STATES[decision.state];
   return (
     <li className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5">
-      <Link href={`/context/decisions/${decision.id}`} className="min-w-0 flex-1 link-hover">
+      <Link href={`${href}/${decision.id}`} className="min-w-0 flex-1 link-hover">
         <span className="font-mono text-xs text-muted">DEC-{decision.id}</span> {titleOf(decision)}
       </Link>
       <span className={cn('badge badge-sm', state.badge)}>{state.label}</span>
@@ -155,14 +157,14 @@ function GroupInstructions({ group }: { group: GroupInstructionsDto }) {
  * groupes, décisions acceptées du projet, qui l'emportent, et place dans l'architecture. Les décisions proposées par un
  * agent attendent ta validation.
  */
-export function ContextOverview({ busy, context, onPreview, onSaveArchitecture }: ContextOverviewProps) {
+export function ContextOverview({ busy, context, decisionsHref, onPreview, onSaveArchitecture }: ContextOverviewProps) {
   const [editing, setEditing] = useState(false);
   const { architecture, project } = context;
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap gap-2">
         <Button asChild size="sm" className="hidden md:inline-flex">
-          <Link href={`/context/decisions/new?project=${encodeURIComponent(project)}`}>
+          <Link href={`${decisionsHref}/new`}>
             <Plus aria-hidden className="size-4" />
             Nouvelle décision
           </Link>
@@ -189,7 +191,7 @@ export function ContextOverview({ busy, context, onPreview, onSaveArchitecture }
                   <span className="font-mono text-xs">DEC-{decision.id}</span> · {titleOf(decision)}
                 </span>
                 <Button asChild size="xs" variant="outline">
-                  <Link href={`/context/decisions/${decision.id}`} aria-label={`Examiner DEC-${decision.id}`}>
+                  <Link href={`${decisionsHref}/${decision.id}`} aria-label={`Examiner DEC-${decision.id}`}>
                     Examiner
                   </Link>
                 </Button>
@@ -201,11 +203,15 @@ export function ContextOverview({ busy, context, onPreview, onSaveArchitecture }
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <Card id="context-decisions" title={`Décisions de ${project} · ${context.decisions.length} acceptées`}>
           {context.decisions.length === 0 ? (
-            <p className="px-4 py-3 text-muted">Aucune décision acceptée pour ce projet.</p>
+            <p className="px-4 py-3 text-muted">
+              {context.proposed.length === 0
+                ? `Aucune décision pour ${project} : elles arrivent proposées par un agent, ou écrites ici.`
+                : 'Aucune décision acceptée pour ce projet.'}
+            </p>
           ) : (
             <ul className="divide-y divide-line">
               {context.decisions.map((decision) => (
-                <DecisionRow key={decision.id} decision={decision} />
+                <DecisionRow key={decision.id} decision={decision} href={decisionsHref} />
               ))}
             </ul>
           )}

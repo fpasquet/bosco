@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 
-/** La page d'un groupe s'ouvre sur ses instructions, en attendant l'onglet de ses sessions. */
-export default async function GroupPage({ params }: { params: Promise<{ id: string }> }) {
+/** La page d'un groupe s'ouvre sur ses sessions : l'onglet est dans l'adresse. */
+export default async function GroupRoute({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  redirect(`/groups/${id}/instructions`);
+  redirect(`/groups/${id}/sessions`);
 }

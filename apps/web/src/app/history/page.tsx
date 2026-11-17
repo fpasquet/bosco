@@ -1,10 +1,9 @@
 import { HistoryScreen } from '@/features/sessions/components/history-screen';
-import { OverviewSidebar } from '@/features/sessions/components/sessions-sidebar';
 import { AppShell } from '@/shared/layouts/app-shell';
 
 const TITLE = 'Historique';
 
-/** `?tab=costs` ouvre l'onglet des coûts (E3b) ; `?project=labo-ia` filtre sur un projet (E1c, E3b). */
+/** `?tab=costs` ouvre l'onglet des coûts ; `?project=labo-ia` filtre sur un projet (« Voir l'historique » d'un projet). */
 export default async function HistoryPage({
   searchParams,
 }: {
@@ -12,7 +11,7 @@ export default async function HistoryPage({
 }) {
   const { project, tab } = await searchParams;
   return (
-    <AppShell title={TITLE} sidebar={<OverviewSidebar selected={null} />}>
+    <AppShell title={TITLE} place={{ kind: 'history' }}>
       <HistoryScreen title={TITLE} tab={tab === 'costs' ? 'costs' : 'list'} project={project ?? null} />
     </AppShell>
   );

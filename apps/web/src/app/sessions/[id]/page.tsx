@@ -1,12 +1,6 @@
-import { SessionDetailScreen } from '@/features/sessions/components/session-detail-screen';
-import { OverviewSidebar } from '@/features/sessions/components/sessions-sidebar';
-import { AppShell } from '@/shared/layouts/app-shell';
+import { SessionPage } from './session-page';
 
-export default async function SessionPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function SessionRoute({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  return (
-    <AppShell title="Session" sidebar={<OverviewSidebar selected={null} />}>
-      <SessionDetailScreen id={id} />
-    </AppShell>
-  );
+  return <SessionPage id={id} />;
 }

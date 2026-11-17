@@ -1,7 +1,22 @@
-import type { FolderListingDto, ProjectDto, ProjectsDto } from '@bosco/domain';
+import type {
+  ContextDto,
+  DecisionDto,
+  FolderListingDto,
+  ProjectDetailDto,
+  ProjectDto,
+  ProjectPlaceDto,
+  ProjectsDto,
+} from '@bosco/domain';
 
-/** Refus de Bosco (dossier déjà ajouté, introuvable), avec son message. */
+/** Refus de Bosco (dossier déjà ajouté, introuvable, session qui tourne), avec le texte à montrer. */
 export class ProjectRefused extends Error {}
+
+/** Codes des refus de l'API qui ont un texte pour la personne ; les autres gardent le message de Bosco. */
+const PROJECT_ERRORS: Record<string, string> = {
+  invalidStartBranch: 'Ce nom de branche n’est pas valable pour git.',
+  projectHasRunningSession: 'Une session pilotée par Bosco tourne encore dans ce projet.',
+  unknownProject: 'Ce projet a été retiré.',
+};
 
 async function read<T>(path: string): Promise<T> {
   const response = await fetch(path);
@@ -9,17 +24,17 @@ async function read<T>(path: string): Promise<T> {
   return (await response.json()) as T;
 }
 
-async function send(path: string, body: unknown): Promise<Response> {
+async function send(path: string, body?: unknown, method: 'DELETE' | 'PATCH' | 'POST' = 'POST'): Promise<Response> {
   const response = await fetch(path, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(body),
+    method,
+    headers: body === undefined ? {} : { 'content-type': 'application/json' },
+    body: body === undefined ? undefined : JSON.stringify(body),
   });
   if (response.status >= 400 && response.status < 500) {
-    const { message } = (await response.json().catch(() => ({}))) as { message?: string };
-    throw new ProjectRefused(message ?? 'Bosco a refusé ce changement.');
+    const { code, message } = (await response.json().catch(() => ({}))) as { code?: string; message?: string };
+    throw new ProjectRefused((code && PROJECT_ERRORS[code]) ?? message ?? 'Bosco a refusé ce changement.');
   }
-  if (!response.ok) throw new Error(`POST ${path} answered ${response.status}`);
+  if (!response.ok) throw new Error(`${method} ${path} answered ${response.status}`);
   return response;
 }
 
@@ -28,6 +43,25 @@ export const projectsOverviewQuery = {
   queryKey: ['projects', 'overview'],
   queryFn: () => read<ProjectsDto>('/api/projects'),
 };
+
+/** Page d'un projet : le projet, sa branche courante et ses sessions pilotées qui tournent. */
+export const projectQuery = (id: number) => ({
+  queryKey: ['projects', 'detail', id],
+  queryFn: () => read<ProjectDetailDto>(`/api/projects/${id}`),
+});
+
+/** Décisions proposées par un agent, en attente de validation : leur nombre suit « Contexte ». */
+export const proposalsQuery = {
+  queryKey: ['context-proposals'],
+  queryFn: async () => (await read<{ proposals: DecisionDto[] }>('/api/context/proposals')).proposals,
+  refetchInterval: 15_000,
+};
+
+/** Contexte d'un projet : ses décisions, gardées quand le projet est retiré. */
+export const projectContextQuery = (name: string) => ({
+  queryKey: ['context', name],
+  queryFn: () => read<ContextDto>(`/api/context?project=${encodeURIComponent(name)}`),
+});
 
 /** Un dossier du navigateur ; null : le dossier personnel. */
 export const folderQuery = (path: null | string) => ({
@@ -47,4 +81,18 @@ export async function ignoreSuggestion(path: string): Promise<void> {
 
 export async function restoreSuggestion(path: string): Promise<void> {
   await send('/api/projects/suggestions/restore', { path });
+}
+
+/** Épingler, désépingler, et les valeurs par défaut des sessions du projet ; vaut tout de suite. */
+export async function changeProject(
+  id: number,
+  changes: { pinned?: boolean; place?: null | ProjectPlaceDto; startBranch?: null | string },
+): Promise<ProjectDetailDto> {
+  const response = await send(`/api/projects/${id}`, changes, 'PATCH');
+  return (await response.json()) as ProjectDetailDto;
+}
+
+/** Retire un projet de Bosco : rien n'est touché sur le poste. */
+export async function removeProject(id: number): Promise<void> {
+  await send(`/api/projects/${id}`, undefined, 'DELETE');
 }

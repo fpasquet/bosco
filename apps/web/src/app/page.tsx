@@ -1,15 +1,15 @@
+import { ProjectRedirect } from '@/features/projects/components/project-redirect';
 import { OverviewScreen } from '@/features/sessions/components/overview-screen';
-import { OverviewSidebar } from '@/features/sessions/components/sessions-sidebar';
 import { AppShell } from '@/shared/layouts/app-shell';
 
 const TITLE = 'Vue d’ensemble';
 
-/** `?project=labo-ia` limite la vue d'ensemble à un projet (E1c). */
+/** Vue d'ensemble. L'ancienne vue filtrée sur un projet (`?project=labo-ia`) mène à la page du projet. */
 export default async function OverviewPage({ searchParams }: { searchParams: Promise<{ project?: string }> }) {
-  const project = (await searchParams).project ?? null;
+  const { project } = await searchParams;
   return (
-    <AppShell title={TITLE} sidebar={<OverviewSidebar selected={project} />}>
-      <OverviewScreen project={project} title={TITLE} />
+    <AppShell title={TITLE} place={{ kind: 'overview' }}>
+      {project ? <ProjectRedirect name={project} /> : <OverviewScreen title={TITLE} />}
     </AppShell>
   );
 }

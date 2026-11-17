@@ -8,7 +8,7 @@ const meta = {
   title: 'Features/Sessions/EndedToday',
   component: EndedToday,
   parameters: { layout: 'padded' },
-  args: { sessions: ended, project: 'labo-ia' },
+  args: { sessions: ended, scope: { history: '/history?project=labo-ia', label: 'dans ce projet' } },
 } satisfies Meta<typeof EndedToday>;
 
 export default meta;
@@ -17,5 +17,5 @@ type Story = StoryObj<typeof meta>;
 export const InAProject: Story = {};
 
 export const MoreInTheHistory: Story = {
-  args: { project: null, sessions: [...ended, ...ended.map((session) => ({ ...session, id: `${session.id}-2` }))] },
+  args: { scope: undefined, sessions: [...ended, ...ended.map((session) => ({ ...session, id: `${session.id}-2` }))] },
 };

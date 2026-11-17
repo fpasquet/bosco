@@ -1,5 +1,6 @@
 'use client';
 import { ChevronDown, Folder, FolderGit2, FolderOpen } from 'lucide-react';
+import Link from 'next/link';
 import { useId, useState } from 'react';
 import type { FolderSuggestionDto, GroupDto, ProjectDto, ProjectsDto } from '@bosco/domain';
 import { displayPath, sinceNow } from '@/lib/format';
@@ -87,7 +88,10 @@ export function ProjectsList({
                 <Icon aria-hidden className="size-4 shrink-0 text-muted" />
                 <div className="min-w-0 flex-1">
                   <p className="flex items-center gap-2 font-medium">
-                    {project.name}
+                    {/* Un clic ouvre la page du projet */}
+                    <Link href={`/projects/${project.id}/sessions`} className="link-hover">
+                      {project.name}
+                    </Link>
                     {!project.git && <span className="badge badge-outline badge-sm">sans git</span>}
                   </p>
                   <p className="truncate text-xs text-muted">

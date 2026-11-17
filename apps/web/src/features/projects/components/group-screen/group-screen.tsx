@@ -2,7 +2,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { type ReactNode, useEffect, useState } from 'react';
 import { ContextPreviewDialog } from '@/shared/components/context-preview-dialog';
 import { PageSkeleton } from '@/shared/components/page-skeleton';
 import { useNotices } from '@/shared/hooks/use-notices';
@@ -19,11 +19,12 @@ import {
 } from '../../api/groups';
 import { projectsOverviewQuery } from '../../api/projects';
 import { instructionLines, touchedProjects } from '../../lib/groups';
-import { FolderBrowserDialog } from '../folder-browser';
 import { GroupConfirmDialog, TouchedProjects } from '../group-confirm-dialog';
 import { GroupHeader, type GroupTab } from '../group-header';
 import { GroupInstructions } from '../group-instructions';
+import { GroupMenuButton } from '../group-menu';
 import { GroupSettings } from '../group-settings';
+import { useProjectActions } from '../project-actions';
 
 type Member = GroupDto['projects'][number];
 
@@ -66,19 +67,27 @@ function confirmationOf(pending: Pending, group: GroupDto) {
   };
 }
 
-/** Page d'un groupe : ses instructions et ses réglages, chacun dans son onglet ; le téléphone lit. */
-export function GroupScreen({ id, tab }: { id: number; tab: GroupTab }) {
+/**
+ * Page d'un groupe : ses sessions (le contenu de l'onglet, children), ses instructions et ses réglages, chacun
+ * dans son onglet ; le téléphone lit.
+ */
+export function GroupScreen({ children, id, tab }: { children?: ReactNode; id: number; tab: GroupTab }) {
   const router = useRouter();
   const client = useQueryClient();
   const push = useNotices((state) => state.push);
+  const actions = useProjectActions();
   const { data: groups } = useQuery(groupsQuery);
   const { data: overview } = useQuery(projectsOverviewQuery);
   const { data: sources } = useQuery({ ...profilesQuery, enabled: tab === 'settings' });
   const [pending, setPending] = useState<null | Pending>(null);
   const [nameError, setNameError] = useState<null | string>(null);
   const [previewing, setPreviewing] = useState(false);
-  const [browsing, setBrowsing] = useState(false);
   const group = groups?.find((candidate) => candidate.id === id);
+  // « Tous les projets » n'a que ses instructions : ses autres adresses y mènent
+  const elsewhere = group?.system === true && tab !== 'instructions';
+  useEffect(() => {
+    if (elsewhere) router.replace(`/groups/${id}/instructions`);
+  }, [elsewhere, id, router]);
   const principal = group?.projects[0]?.name ?? '';
   const { data: preview } = useQuery({ ...previewQuery(principal), enabled: previewing && principal !== '' });
   const change = useMutation({
@@ -144,10 +153,17 @@ export function GroupScreen({ id, tab }: { id: number; tab: GroupTab }) {
   };
   const confirmation = pending ? confirmationOf(pending, group) : null;
   const busy = change.isPending || remove.isPending;
+  // « Tous les projets » n'a que ses instructions
+  const shown: GroupTab = group.system ? 'instructions' : tab;
   return (
     <div className="flex flex-col gap-5 p-4 md:px-8 md:pt-6">
-      <GroupHeader group={group} tab={group.system ? 'instructions' : tab} />
-      {tab === 'settings' && !group.system ? (
+      <GroupHeader
+        group={group}
+        tab={shown}
+        menu={!group.system && <GroupMenuButton group={group} variant="header" />}
+      />
+      {shown === 'sessions' && children}
+      {shown === 'settings' && (
         <GroupSettings
           busy={busy}
           group={group}
@@ -157,7 +173,7 @@ export function GroupScreen({ id, tab }: { id: number; tab: GroupTab }) {
           projects={(overview?.projects ?? []).map(({ id: project, name }) => ({ id: project, name }))}
           serverError={nameError}
           onArrange={arrange}
-          onBrowse={() => setBrowsing(true)}
+          onBrowse={actions.browse}
           onDelete={() => setPending({ kind: 'delete' })}
           onProfile={(profile) => change.mutate(() => changeGroup(id, { profile }))}
           onSidebar={(sidebar) => change.mutate(() => changeGroup(id, { sidebar }))}
@@ -171,7 +187,8 @@ export function GroupScreen({ id, tab }: { id: number; tab: GroupTab }) {
             );
           }}
         />
-      ) : (
+      )}
+      {shown === 'instructions' && (
         <GroupInstructions
           // Les instructions enregistrées repartent d'un formulaire propre
           key={group.instructions}
@@ -207,7 +224,6 @@ export function GroupScreen({ id, tab }: { id: number; tab: GroupTab }) {
           onCopy={(text) => void navigator.clipboard?.writeText(text).catch(() => undefined)}
         />
       )}
-      <FolderBrowserDialog open={browsing} onClose={() => setBrowsing(false)} />
     </div>
   );
 }

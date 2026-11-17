@@ -7,7 +7,13 @@ const meta = {
   title: 'Features/Context/ContextOverview',
   component: ContextOverview,
   parameters: { layout: 'padded', nextjs: { appDirectory: true } },
-  args: { context: STORY_CONTEXT, busy: false, onPreview: fn(), onSaveArchitecture: fn() },
+  args: {
+    context: STORY_CONTEXT,
+    decisionsHref: '/projects/2/context/decisions',
+    busy: false,
+    onPreview: fn(),
+    onSaveArchitecture: fn(),
+  },
 } satisfies Meta<typeof ContextOverview>;
 
 export default meta;

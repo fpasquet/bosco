@@ -1,10 +1,10 @@
 'use client';
-import { ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import type { DecisionDetailDto, DecisionDto, DecisionTextDto } from '@bosco/domain';
 import { cn } from '@/lib/cn';
+import { Breadcrumbs } from '@/shared/ui/breadcrumbs';
 import { Button } from '@/shared/ui/button';
 import { dateOf, DECISION_STATES, titleOf } from '../../lib/decisions';
 import { DecisionForm } from '../decision-form';
@@ -16,8 +16,8 @@ export interface DecisionViewProps {
   onAbandon: (reason: null | string) => void;
   onAccept: (edited: DecisionTextDto | null) => void;
   onRefuse: (reason: null | string) => void;
-  /** Retour au contexte du projet */
-  parent: { href: string; label: string };
+  /** Adresse des décisions du projet, sous l'onglet Contexte de sa page (« /projects/2/context/decisions ») */
+  decisionsHref: string;
   targetLabel: string;
 }
 
@@ -61,10 +61,10 @@ function ReasonForm({
   );
 }
 
-function Relation({ decision, label }: { decision: DecisionDto; label: string }) {
+function Relation({ decision, href, label }: { decision: DecisionDto; href: string; label: string }) {
   return (
     <li>
-      <Link href={`/context/decisions/${decision.id}`} className="link font-mono text-xs">
+      <Link href={`${href}/${decision.id}`} className="link font-mono text-xs">
         DEC-{decision.id}
       </Link>{' '}
       <span className="text-sm">{label}</span>
@@ -83,7 +83,7 @@ export function DecisionView({
   onAbandon,
   onAccept,
   onRefuse,
-  parent,
+  decisionsHref,
   targetLabel,
 }: DecisionViewProps) {
   const { decision, replacedBy, specifiedBy } = detail;
@@ -92,17 +92,16 @@ export function DecisionView({
   const version = decision.versions[shown] ?? decision.versions.at(-1)!;
   const state = DECISION_STATES[decision.state];
   const proposed = decision.state === 'proposed';
-  const target = `project=${encodeURIComponent(decision.target.name)}`;
   return (
     <div className="flex flex-col gap-4 pb-20 md:pb-0">
       <header>
-        <nav aria-label="Fil d’Ariane" className="flex items-center gap-1 text-xs text-muted">
-          <Link href={parent.href} className="link link-hover">
-            {parent.label}
-          </Link>
-          <ChevronRight aria-hidden className="size-3" />
-          DEC-{decision.id}
-        </nav>
+        <Breadcrumbs
+          items={[
+            { href: '/projects', label: 'Projets' },
+            { href: decisionsHref.replace(/\/decisions$/, ''), label: decision.target.name },
+            { label: `DEC-${decision.id}` },
+          ]}
+        />
         <h1 className="mt-1 flex flex-wrap items-center gap-2 font-display text-xl font-semibold md:text-2xl">
           <span className={cn('badge', state.badge)}>{state.label}</span>
           DEC-{decision.id} · {titleOf(decision)}
@@ -121,7 +120,7 @@ export function DecisionView({
       {replacedBy && (
         <p className="rounded-card border border-line bg-surface-alt px-4 py-3">
           Remplacée par{' '}
-          <Link href={`/context/decisions/${replacedBy.id}`} className="link">
+          <Link href={`${decisionsHref}/${replacedBy.id}`} className="link">
             DEC-{replacedBy.id} · {titleOf(replacedBy)}
           </Link>
         </p>
@@ -213,7 +212,7 @@ export function DecisionView({
             </h2>
             <ul className="flex flex-col gap-1.5">
               {specifiedBy.map((other) => (
-                <Relation key={other.id} decision={other} label="la précise" />
+                <Relation href={decisionsHref} key={other.id} decision={other} label="la précise" />
               ))}
               {decision.fromTask !== null && (
                 <li className="text-sm">
@@ -248,10 +247,10 @@ export function DecisionView({
       {decision.state === 'accepted' && panel === null && (
         <div className="hidden flex-wrap gap-2 md:flex">
           <Button asChild variant="outline" size="sm">
-            <Link href={`/context/decisions/${decision.id}/edit`}>Modifier</Link>
+            <Link href={`${decisionsHref}/${decision.id}/edit`}>Modifier</Link>
           </Button>
           <Button asChild variant="outline" size="sm">
-            <Link href={`/context/decisions/new?${target}&replaces=${decision.id}`}>Remplacer</Link>
+            <Link href={`${decisionsHref}/new?replaces=${decision.id}`}>Remplacer</Link>
           </Button>
           <Button variant="ghost" size="sm" disabled={busy} onClick={() => setPanel('abandon')}>
             Abandonner
