@@ -47,6 +47,11 @@ Then('je vois le texte {texte}', async ({ page }, text: string) => {
   await expect(page.getByText(text)).toBeVisible();
 });
 
+Then('je vois l’étiquette {texte}', async ({ page }, text: string) => {
+  // Texte exact : « Canal de Bosco » ne désigne pas la ligne « … par le canal de Bosco »
+  await expect(page.getByText(text, { exact: true })).toBeVisible();
+});
+
 Then('je finis par ne plus voir le bouton {texte}', async ({ page }, name: string) => {
   await expect(page.getByRole('button', { name })).toHaveCount(0);
 });

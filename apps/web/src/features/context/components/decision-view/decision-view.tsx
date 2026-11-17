@@ -231,8 +231,7 @@ export function DecisionView({
           </section>
           {proposed && (
             <p className="text-xs text-muted">
-              Si tu l’acceptes, elle est transmise aux prochains agents de {targetLabel}, les tâches pas encore lancées
-              comprises.
+              Si tu l’acceptes, elle est transmise aux prochaines sessions de {targetLabel}.
             </p>
           )}
         </aside>

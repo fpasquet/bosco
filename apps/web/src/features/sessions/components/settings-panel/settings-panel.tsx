@@ -48,7 +48,7 @@ export function SettingsPanel({ busy, onChange, settings }: SettingsPanelProps) 
             ))}
           </select>
         </Row>
-        <Row label="Notifications" hint="Questions qui t’attendent, tâches finies, longs tours.">
+        <Row label="Notifications" hint="Questions qui t’attendent, sessions finies, longs tours.">
           <Link
             href="/settings/notifications"
             className="inline-flex items-center gap-1 font-medium text-primary hover:underline"

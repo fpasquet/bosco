@@ -22,7 +22,7 @@ Fonctionnalité: Canal de Bosco
   Scénario: Une session du terminal lancée avec le canal reçoit le texte écrit dans Bosco
     Étant donné la session « c41e9a07 » a son canal de Bosco ouvert
     Quand j'ouvre la page « /sessions/c41e9a07 »
-    Alors je vois le texte « Canal de Bosco »
+    Alors je vois l’étiquette « Canal de Bosco »
     Et je vois le texte « Ouverte dans un terminal · ton message y arrive par le canal de Bosco »
     Et je ne vois pas le bouton « Joindre une image »
     Et la page est accessible

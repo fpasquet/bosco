@@ -24,10 +24,3 @@ export const Running: Story = {};
 export const Ended: Story = { args: { live: false } };
 
 export const Partial: Story = { args: { conversation: { ...STORY_CONVERSATION, partial: true } } };
-
-export const TaskInstruction: Story = {
-  args: {
-    live: false,
-    instruction: 'Ajoute au lexique la prononciation de « SNCF » et écris un test, en suivant la décision DEC-3.',
-  },
-};
