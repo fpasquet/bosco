@@ -10,7 +10,7 @@ Ce document fixe ce qu'il faut construire, comment, et dans quel ordre. Il sert 
 
 Plusieurs sessions Claude Code tournent en même temps sur le poste, dans plusieurs dépôts : deux profils interactifs (pro et perso) et des sessions sans terminal. Rien ne dit aujourd'hui laquelle attend une réponse, où en sont les autres, ni combien elles coûtent. Il faut passer d'un terminal à l'autre pour le savoir.
 
-Bosco est un poste de pilotage local. Son nom vient du bosco, le maître d'équipage d'un navire, qui fait travailler l'équipage et rend compte au capitaine : ici, l'équipage, ce sont les sessions et le worker, et le capitaine, c'est le développeur. Il découvre les sessions sans rien leur demander, signale celles qui attendent, permet d'autoriser une commande sans changer de fenêtre, puis de confier du travail à Claude Code et de le relire avant toute fusion.
+Bosco est un poste de pilotage local. Son nom vient du bosco, le maître d'équipage d'un navire, qui fait travailler l'équipage et rend compte au capitaine : ici, l'équipage, ce sont les sessions, y compris celles que Bosco pilote, et le capitaine, c'est le développeur. Il découvre les sessions sans rien leur demander, signale celles qui attendent, permet d'autoriser une commande sans changer de fenêtre, puis de confier du travail à Claude Code et de le relire avant toute fusion.
 
 ## <a id="13-objectifs"></a>1.3 Objectifs
 
@@ -19,12 +19,12 @@ Bosco est un poste de pilotage local. Son nom vient du bosco, le maître d'équi
 | Une session ouverte sur le poste apparaît sans action de l'utilisateur | [E1b](lots/sessions.md#e1b), RF-SESS-01 |
 | Une session qui attend se voit en moins de 3 secondes | NF-01 |
 | Une autorisation se donne depuis Bosco ou depuis le terminal | [E2b](lots/sessions.md#e2b), RF-SESS-03 |
-| Une tâche confiée au worker se termine par une relecture, sans fusion automatique | [E7a](lots/taches.md#e7a), RF-TACH-06 |
-| Un agent du worker ne voit ni les autres dépôts ni les accès du poste | [E11a](lots/contexte.md#e11a), RF-CONT-06 |
+| Une session lancée dans Bosco se pilote depuis le poste ou le téléphone, sur un ou plusieurs projets | [E16a](lots/sessions.md#e16a), [E2k](lots/sessions.md#e2k), RF-SESS-04, RF-SESS-14 |
+| Un agent en bac à sable ne voit ni les autres projets ni les accès du poste | [E2j](lots/sessions.md#e2j), [E11a](lots/reglages.md#e11a), RF-SESS-12 |
 
 ## <a id="14-perimetre"></a>1.4 Périmètre
 
-- **Inclus** : les trois lots des specs, sur Linux, pour un seul utilisateur sur son poste.
+- **Inclus** : les lots des specs (sessions ; projets, groupes et contexte ; applications ; réglages), sur Linux, pour un seul utilisateur sur son poste.
 - **Exclus de cette version** : macOS, distribution aux équipes, partage entre postes, autres agents que Claude Code, tâches programmées, notifications sur le téléphone, accès au téléphone hors du réseau local.
 
 ## <a id="15-documents-de-reference"></a>1.5 Documents de référence
@@ -38,14 +38,10 @@ Bosco est un poste de pilotage local. Son nom vient du bosco, le maître d'équi
 
 | Terme | Définition |
 |---|---|
-| Session | Une conversation Claude Code, interactive ou lancée par le worker |
-| Profil | Dossier de configuration Claude Code : pro, perso, ou worker |
+| Session | Une conversation Claude Code, ouverte dans un terminal ou pilotée par Bosco, sur le poste ou dans un bac à sable |
+| Profil | Dossier de configuration Claude Code : pro ou perso ; les bacs à sable ont le leur, tenu par Bosco |
 | T'attend | État d'une session qui a demandé une autorisation ou terminé son tour |
 | Suivi en direct | Réglages ajoutés à un profil pour que Claude Code prévienne Bosco |
-| Tâche | Consigne préparée pour Claude Code, dans un dépôt, avec un mode |
-| Worker | Partie de Bosco qui exécute les tâches sans terminal, dans un conteneur jetable |
-| Ma session | Mode d'une tâche prise par une session interactive |
-| Tâche préalable | Tâche qui doit être validée avant qu'une autre parte |
-| Socle | Ensemble de décisions communes à plusieurs dépôts |
+| Projet | Dossier de travail ajouté à Bosco, le plus souvent un dépôt git ; ses sessions s'y rangent (anciennement « dépôt ») |
+| Groupe | Ensemble nommé de projets (un client, une technologie), avec des instructions transmises à leurs agents ; remplace le socle |
 | Décision | Choix de projet transmis aux agents une fois accepté |
-| Service de test | Base ou autre service lancé pour une tâche, sur un réseau privé |

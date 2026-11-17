@@ -49,7 +49,11 @@ Les tokens sont le contrat entre les maquettes et le code : ils se reprennent te
 | `color-danger-soft` | `#fce8e6` |  |
 | `color-on-danger` | `#ffffff` |  |
 | `color-info` | `#1d5ba3` |  |
-| `color-info-soft` | `#e4effb` | Formes, densité, relief |
+| `color-info-soft` | `#e4effb` | Séries des graphiques (Usage) : dans cet ordre, validées pour les daltonismes ; légende et vue en tableau obligatoires, jamais pour un texte |
+| `color-series-1` | `#2a78d6` |  |
+| `color-series-2` | `#eb6834` |  |
+| `color-series-3` | `#1baf7a` |  |
+| `color-series-4` | `#eda100` | Formes, densité, relief |
 | `radius-control` | `0.375rem` |  |
 | `radius-card` | `0.625rem` |  |
 | `spacing-control` | `2.25rem` |  |
@@ -71,11 +75,10 @@ Classes de daisyUI employées par les maquettes, reprises par les composants de 
 | Carte d'autorisation | Commande, motif, Refuser, Autoriser | [E2b](lots/sessions.md#e2b) |
 | Carte de session | Colonnes par état, mini-fil des trois dernières actions | [E1d](lots/sessions.md#e1d) |
 | Fil d'événements | Messages et actions, repliables | [E2a](lots/sessions.md#e2a) |
-| Vue de diff | Fichiers et lignes modifiés | [E2c](lots/sessions.md#e2c), [E7a](lots/taches.md#e7a) |
-| Enchaînement | Schéma des dépendances entre tâches | [E5b](lots/taches.md#e5b) |
-| Tableau d'origine | Valeur effective et origine d'un réglage | [E8a](lots/taches.md#e8a) |
-| Modale et feuille mobile | Confirmations | [E7b](lots/taches.md#e7b), [E7c](lots/taches.md#e7c), [E13c](lots/taches.md#e13c) |
-| Panneau latéral | Détails sans quitter l'écran | [E4b](lots/sessions.md#e4b), [E9f](lots/contexte.md#e9f), [E10b](lots/contexte.md#e10b), [E14b](lots/contexte.md#e14b) |
+| Vue de diff | Fichiers et lignes modifiés | E2c, E7a |
+| Tableau d'origine | Valeur effective et origine d'un réglage | E8a |
+| Modale et feuille mobile | Confirmations | E7b, E7c, E13c |
+| Panneau latéral | Détails sans quitter l'écran | [E4b](lots/reglages.md#e4b), [E9f](lots/contexte.md#e9f), E10b |
 
 ## <a id="45-responsive-et-mobile"></a>4.5 Responsive et mobile
 

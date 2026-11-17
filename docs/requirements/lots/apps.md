@@ -1,13 +1,13 @@
 <!-- Généré par export.mjs (skill requirements-doc) depuis sources/30-specs.md : ne pas modifier ici. -->
 
-# <a id="34-lot-4-applications"></a>3.4 Lot 4 · Applications
+# <a id="33-lot-4-applications"></a>3.3 Lot 4 · Applications
 
 ## <a id="regles-fonctionnelles-du-lot"></a>Règles fonctionnelles du lot
 
 - **RF-APPS-01** · **1. Une seule interface** : les applications montrent l'interface de Bosco telle qu'elle est, sur ordinateur et sur téléphone ; tout écran existe une fois. Seuls la barre système, les notifications, l'appairage et le certificat sont propres à une application.
 - **RF-APPS-02** · **2. L'application du poste est facultative** : Bosco se lance toujours comme avant, en service ouvert dans le navigateur, sur Linux comme sur macOS (où il n'y a pas d'application). Sur Linux, l'application fait tourner Bosco : l'ouvrir démarre le service, la fermer le garde dans la barre système ; « Quitter Bosco » l'arrête ; elle peut se lancer à l'ouverture de session. Si un service Bosco tourne déjà sur le poste, l'application s'y relie par défaut, ou le remplace si on le choisit. Elle s'installe par un paquet pour Debian et Ubuntu, qui contient tout Bosco : rien d'autre à installer. Un paquet plus récent installé pendant que Bosco tourne se signale, et Bosco ne passe à la nouvelle version que quand on le relance ; une version plus ancienne ne démarre jamais sur les données qu'une plus récente a mises à jour.
 - **RF-APPS-03** · **3. Rien ne quitte le réseau local** (règle 7 du lot 1) : le téléphone parle au poste sur le réseau local, sans service de notification d'Apple ou de Google. Les notifications du téléphone n'arrivent que tant que l'application est ouverte, ou connectée en arrière-plan si on l'a choisi (option désactivée par défaut, avec une notification permanente).
-- **RF-APPS-04** · **4. L'appairage se fait par le QR code du poste** ([E4c](sessions.md#e4c)) : il porte l'adresse, le code et l'empreinte du certificat de Bosco ; l'application ne fait confiance qu'à ce certificat, sans avertissement de sécurité. Le téléphone garde son accès dans le trousseau du système.
+- **RF-APPS-04** · **4. L'appairage se fait par le QR code du poste** ([E4c](reglages.md#e4c)) : il porte l'adresse, le code et l'empreinte du certificat de Bosco ; l'application ne fait confiance qu'à ce certificat, sans avertissement de sécurité. Le téléphone garde son accès dans le trousseau du système.
 
 ## <a id="e17"></a>E17 · Application desktop
 
@@ -42,7 +42,7 @@ Règles de l'écran :
 
 1. Au premier lancement, l'application cherche un service Bosco déjà présent sur le poste. S'il y en a un, elle le dit au lieu de lancer un second service ; sinon elle démarre le sien sans rien demander (règle 2).
 2. « Se relier au service » est le choix recommandé : l'application n'est qu'une fenêtre sur le service, qui continue de tourner sans elle. Bosco reste donc toujours utilisable dans le navigateur, comme avant. La barre système et les notifications marchent aussi dans ce cas.
-3. « Remplacer le service par l'application » arrête le service existant et l'empêche de redémarrer seul ; l'application fait alors tourner Bosco. Les mêmes données sont reprises : sessions, tâches et réglages, rien n' est perdu.
+3. « Remplacer le service par l'application » arrête le service existant et l'empêche de redémarrer seul ; l'application fait alors tourner Bosco. Les mêmes données sont reprises : sessions et réglages, rien n' est perdu.
 
 **Mobile** : sans objet sur le téléphone.
 
@@ -69,7 +69,7 @@ L'application et le service lancé depuis le dépôt partagent les données du p
 
 Règles de l'écran :
 
-1. Le service vérifie, avant de toucher aux données, qu'aucune mise à jour plus récente que lui n'y est passée. Sinon il ne démarre pas et ne modifie rien : sessions, tâches et réglages restent tels que le Bosco plus récent les a laissés. La même règle vaut pour le service lancé depuis le dépôt, qui l'écrit dans son terminal.
+1. Le service vérifie, avant de toucher aux données, qu'aucune mise à jour plus récente que lui n'y est passée. Sinon il ne démarre pas et ne modifie rien : sessions et réglages restent tels que le Bosco plus récent les a laissés. La même règle vaut pour le service lancé depuis le dépôt, qui l'écrit dans son terminal.
 2. « Ok » ferme l'application. Tout autre arrêt du service au démarrage (port déjà pris, par exemple) s'affiche de la même façon, avec ses derniers messages, au lieu de fermer l'application sans un mot.
 
 **Mobile** : sans objet sur le téléphone. L'application du téléphone se met à jour par un nouveau paquet Android, sans écran propre.
@@ -87,9 +87,9 @@ Au premier lancement, l'application Android s'appaire au poste en lisant son QR 
 
 Règles de l'écran :
 
-1. Le QR code affiché par le poste ([E4c](sessions.md#e4c)) porte l'adresse de Bosco, le code d'appairage et l'empreinte de son certificat. La caméra le lit ; une fois lu, l'écran montre le poste trouvé.
+1. Le QR code affiché par le poste ([E4c](reglages.md#e4c)) porte l'adresse de Bosco, le code d'appairage et l'empreinte de son certificat. La caméra le lit ; une fois lu, l'écran montre le poste trouvé.
 2. Le certificat de Bosco est vérifié par son empreinte, reçue par le QR code : l'application n'a plus d'avertissement de sécurité à afficher (règle 4). Elle ne fait confiance qu'à ce certificat.
-3. Le code est à usage unique et valable 5 minutes, comme dans [E4c](sessions.md#e4c). Il est rempli à la lecture du QR code, et peut aussi se saisir à la main.
+3. Le code est à usage unique et valable 5 minutes, comme dans [E4c](reglages.md#e4c). Il est rempli à la lecture du QR code, et peut aussi se saisir à la main.
 4. « Appairer » termine l'appairage. L'accès est gardé dans le trousseau du téléphone ; « Oublier ce poste » le retire, dans les réglages de l'application ([E18d](#e18d)).
 
 ### <a id="e18b"></a>E18b · Application Android : connectée
@@ -101,7 +101,7 @@ Une fois appairée, l'application Android ouvre la vue d'ensemble de Bosco, cell
 
 Règles de l'écran :
 
-1. L'application montre l'interface téléphone de Bosco telle quelle, la même que dans le navigateur du téléphone (règle 1) : bandeau T'attend, sessions par dépôt, barre du bas. Il n'y a pas de barre d'adresse : c'est une application.
+1. L'application montre l'interface téléphone de Bosco telle quelle, la même que dans le navigateur du téléphone (règle 1) : bandeau T'attend, sessions par projet, barre du bas. Il n'y a pas de barre d'adresse : c'est une application.
 2. Quand une session t'attend pendant que l'application est ouverte, un message bref s'affiche en haut de l'écran, comme dans [E15c](sessions.md#e15c).
 3. Une notification (application fermée ou en arrière-plan) et son bouton « Ouvrir » ouvrent directement la session concernée, sans passer par la vue d'ensemble.
 
@@ -131,7 +131,7 @@ Règles de l'écran :
 2. « Rester connecté en arrière-plan » garde une connexion au poste pour notifier application fermée, tant que le téléphone est sur le réseau du poste. C'est une option, désactivée par défaut (point ouvert du lot) : rien ne quitte le réseau local.
 3. Tant que l'option est active, Android affiche une notification permanente « Bosco suit tes sessions », avec le nombre de sessions qui t'attendent.
 4. « Autoriser » depuis la notification demande la confirmation du téléphone, comme dans Bosco (règle 7 du lot 1, [E2b](sessions.md#e2b)). « Ouvrir » ouvre la session.
-5. Ce qui notifie (autorisations, questions, tâches) se règle dans Bosco ([E15b](sessions.md#e15b)).
+5. Ce qui notifie (autorisations, questions, fins de tour) se règle dans Bosco ([E15b](sessions.md#e15b)).
 
 ## <a id="criteres-dacceptation"></a>Critères d'acceptation
 
@@ -141,7 +141,7 @@ Règles de l'écran :
 - **CA-APPS-02** · [E17a](#e17a) · Étant donné des sessions qui t'attendent, quand la personne regarde la barre système, alors l'icône porte leur nombre, et son menu les liste ; un clic ouvre la session dans la fenêtre ; « Nouvelle session » ouvre E16a ; « Suspendre les notifications 1 h » les coupe une heure.
 - **CA-APPS-03** · [E17a](#e17a) · Étant donné l'application du poste, quand une notification part (règles d'E15), alors elle s'affiche en notification native du bureau, avec « Ouvrir » qui ouvre la session dans la fenêtre ; le service ne l'envoie pas une seconde fois.
 - **CA-APPS-04** · [E17b](#e17b) · Étant donné un service Bosco qui répond déjà sur le poste, quand l'application s'ouvre la première fois, alors elle propose de s'y relier (choix par défaut) ou de le remplacer ; reliée, elle n'est qu'une fenêtre sur le service, et Bosco reste utilisable dans le navigateur, comme avant.
-- **CA-APPS-09** · [E17a](#e17a) · Étant donné le paquet de l'application du poste installé sur Debian ou Ubuntu, sans Node sur le poste, quand elle s'ouvre, alors elle démarre Bosco avec le Node qu'elle embarque et son bac à sable activé ; installer un paquet plus récent garde les sessions, les tâches et les réglages.
+- **CA-APPS-09** · [E17a](#e17a) · Étant donné le paquet de l'application du poste installé sur Debian ou Ubuntu, sans Node sur le poste, quand elle s'ouvre, alors elle démarre Bosco avec le Node qu'elle embarque et son bac à sable activé ; installer un paquet plus récent garde les sessions et les réglages.
 - **CA-APPS-10** · [E17c](#e17c), [E17d](#e17d) · Étant donné un paquet plus récent de l'application installé pendant que Bosco tourne, quand l'application le remarque, alors elle le signale une fois par une notification et en tête du menu de la barre système, et « Relancer Bosco » arrête son service puis rouvre l'application et le service sur la nouvelle version ; étant donné des données mises à jour par un Bosco plus récent, quand une version plus ancienne démarre, alors son service refuse de démarrer sans rien modifier, et l'application le dit.
 
 ### <a id="e18-application-android"></a>E18 · Application Android
