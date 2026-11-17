@@ -1,6 +1,6 @@
 'use client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { FolderPlus, Layers } from 'lucide-react';
+import { FolderPlus, Layers, Monitor } from 'lucide-react';
 import { useState } from 'react';
 import type { ProjectDto } from '@bosco/domain';
 import { displayPath } from '@/lib/format';
@@ -76,8 +76,9 @@ export function ProjectsScreen({ title }: { title: string }) {
         )}
       </div>
       {!empty && (
-        <p className="rounded-card border border-line bg-surface-alt px-4 py-3 text-xs text-muted md:hidden">
-          Modifiable depuis le poste. L’ajout de projets et les groupes sont réservés à toi.
+        <p className="flex items-center gap-2 rounded-card border border-line bg-surface-alt px-4 py-3 text-xs text-muted md:hidden">
+          <Monitor aria-hidden className="size-4 shrink-0" />
+          Ajouter des projets se fait depuis le poste.
         </p>
       )}
       {empty ? (

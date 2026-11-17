@@ -88,3 +88,11 @@ Fonctionnalité: Tous les projets
     Et la liste « Suggestions » contient « labo-ia »
     Et je ne vois pas le bouton « Ajouter des projets »
     Et la page est accessible
+
+  @mobile
+  @CA-CONT-148
+  Scénario: Sur le téléphone, la liste des projets renvoie au poste pour en ajouter
+    Étant donné le dossier « labo-ia » est un projet
+    Quand j'ouvre la page « /projects »
+    Alors je vois le texte « Ajouter des projets se fait depuis le poste. »
+    Et je ne vois pas le bouton « Nouveau groupe »
