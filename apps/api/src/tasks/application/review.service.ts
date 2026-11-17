@@ -61,10 +61,7 @@ export function pullRequestBody(task: TaskView): string {
 /** Relecture d'une tâche du worker (E7a, E7b, E7c) : diff, validation avec ou sans PR, rejet avec ou sans relance. */
 export class ReviewService {
   constructor(
-    private readonly tasks: Pick<
-      TaskService,
-      'attachPullRequest' | 'get' | 'reject' | 'rejectAndRelaunch' | 'validate'
-    >,
+    private readonly tasks: Pick<TaskService, 'attachPullRequest' | 'get' | 'reject' | 'resume' | 'validate'>,
     private readonly changes: ChangesReader,
     private readonly publisher: PullRequestPublisher,
     private readonly rights: RightsReader,
@@ -141,8 +138,15 @@ export class ReviewService {
   }
 
   /** Rejet (E7b) : avec relance, le motif rejoint la consigne ; sans, les suivantes échouent en cascade. */
-  reject(id: number, reason: string, relaunch: boolean): Promise<TaskView> {
-    if (!reason.trim()) throw new ReviewError('Écris le motif du rejet : il est transmis à l’agent.');
-    return relaunch ? this.tasks.rejectAndRelaunch(id, reason.trim()) : this.tasks.reject(id, reason.trim());
+  /** Rejet (E7b) : la tâche est abandonnée ; pour la faire reprendre, on écrit à l'agent (RF-TACH-10). */
+  reject(id: number, reason: string): Promise<TaskView> {
+    if (!reason.trim()) throw new ReviewError('Écris le motif du rejet : il reste dans le journal de la tâche.');
+    return this.tasks.reject(id, reason.trim());
+  }
+
+  /** Message à l'agent d'une tâche à relire : il reprend sur la même branche (RF-TACH-10). */
+  resume(id: number, message: string, raise: { budgetUsd?: number; maxTurns?: number }): Promise<TaskView> {
+    if (!message.trim()) throw new ReviewError('Écris ce que l’agent doit reprendre.');
+    return this.tasks.resume(id, message.trim(), raise);
   }
 }

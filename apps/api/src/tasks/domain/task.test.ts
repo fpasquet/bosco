@@ -1,7 +1,8 @@
-// Ce que les scénarios ne voient pas : chaque passage d'état, la cascade d'échecs et la relance.
+// Ce que les scénarios ne voient pas : chaque passage d'état, la cascade d'échecs, la relance et les gardes de la
+// reprise à la relecture.
 import { describe, expect, it } from 'vitest';
 import { TaskBoard } from './task-board.ts';
-import { Task, TaskError, titleOf } from './task.ts';
+import { pendingResume, Task, TaskError, titleOf } from './task.ts';
 
 const at = new Date('2026-11-06T14:00:00Z');
 const guardrails = { budgetUsd: 1.5, maxTurns: 30, model: null, tools: null };
@@ -106,5 +107,49 @@ describe('TaskBoard', () => {
     started.cancel(at);
     expect(() => started.undoCancel(at)).toThrow(/had started/);
     expect(() => task(7).undoCancel(at)).toThrow(/not just cancelled/);
+  });
+
+  describe('resume at review', () => {
+    function reviewed(spentUsd = 0.41, turns = 14) {
+      const reviewed = task(1);
+      reviewed.settle(true, at);
+      reviewed.start(at);
+      reviewed.finish(spentUsd, { branch: 'bosco/t-1-tache-1', sessionId: 'a41f07c2', turns }, at);
+      return reviewed;
+    }
+
+    it('CA-TACH-89 · goes back to the queue with the message kept in its log', () => {
+      const resumed = reviewed();
+      resumed.resume('Ajoute la variante avec points.', guardrails, at);
+      expect(resumed.state).toBe('queued');
+      expect(pendingResume(resumed.toSnapshot().log)).toBe('Ajoute la variante avec points.');
+    });
+
+    it('forgets the message once the agent has started again', () => {
+      const resumed = reviewed();
+      resumed.resume('Ajoute la variante avec points.', guardrails, at);
+      resumed.start(at);
+      expect(pendingResume(resumed.toSnapshot().log)).toBeNull();
+    });
+
+    it('CA-TACH-90 · refuses once the budget or the turns are spent, unless they are raised', () => {
+      expect(() => reviewed(1.5).resume('Encore.', guardrails, at)).toThrow(TaskError);
+      expect(() => reviewed(0.41, 30).resume('Encore.', guardrails, at)).toThrow(TaskError);
+      const raised = reviewed(1.5);
+      raised.resume('Encore.', { ...guardrails, budgetUsd: 2 }, at);
+      expect(raised.state).toBe('queued');
+    });
+
+    it('only resumes a worker task to review that has a session', () => {
+      const running = task(2);
+      running.settle(true, at);
+      running.start(at);
+      expect(() => running.resume('Encore.', guardrails, at)).toThrow(TaskError);
+      const sessionless = task(3);
+      sessionless.settle(true, at);
+      sessionless.start(at);
+      sessionless.finish(0.1, { branch: 'bosco/t-3-tache-3' }, at);
+      expect(() => sessionless.resume('Encore.', guardrails, at)).toThrow(TaskError);
+    });
   });
 });

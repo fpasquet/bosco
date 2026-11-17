@@ -110,6 +110,24 @@ async function keepSessions(from: string, to: string, repository: { folder: stri
   return saved;
 }
 
+/**
+ * Session gardée dans le profil du worker remise dans le dossier personnel de l'agent pour une reprise (RF-TACH-10) :
+ * l'inverse de keepSessions, la racine du dépôt redevient /work.
+ */
+async function restoreSession(
+  sessionId: string,
+  from: string,
+  to: string,
+  repository: { folder: string; root: string },
+): Promise<void> {
+  const hostPath = repository.folder ? join(repository.root, repository.folder) : repository.root;
+  const content = await readFile(join(from, projectDir(hostPath), `${sessionId}.jsonl`), 'utf8');
+  const escaped = JSON.stringify(repository.root).slice(1, -1);
+  const target = join(to, projectDir(join('/work', repository.folder)));
+  await mkdir(target, { recursive: true });
+  await writeFile(join(target, `${sessionId}.jsonl`), content.replaceAll(`"cwd":"${escaped}`, '"cwd":"/work'));
+}
+
 /** Suit les refus notés par le proxy dans son journal, depuis la dernière lecture. */
 function refusalReader(file: string, taskId: number, onRefusal: (refusal: EgressRefusal) => void) {
   let offset = 0;
@@ -242,6 +260,11 @@ export class DockerAgentRunner implements AgentRunner, WorkerHealth {
       await chmod(join(home, '.npmrc'), 0o400);
     }
     await writeFile(join(config, 'settings.json'), JSON.stringify({ autoUpdates: false }));
+    if (spec.resume)
+      await restoreSession(spec.resume, join(this.options.profile, 'projects'), join(config, 'projects'), {
+        folder: spec.folder,
+        root: spec.repositoryRoot,
+      });
     const isolation = await this.isolate(spec.taskId, spec.workspace.dir);
     const readRefusals = refusalReader(isolation.refusals, spec.taskId, this.options.onRefusal);
     const polling = setInterval(() => void readRefusals().catch(() => undefined), REFUSALS_POLL_MS);
@@ -300,6 +323,7 @@ export class DockerAgentRunner implements AgentRunner, WorkerHealth {
         'claude',
         '-p',
         prompt,
+        ...(spec.resume ? ['--resume', spec.resume] : []),
         '--output-format',
         'stream-json',
         '--verbose',

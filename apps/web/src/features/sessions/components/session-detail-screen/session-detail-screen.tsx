@@ -2,6 +2,7 @@
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 import type { JournalEntryDto, SessionDto } from '@bosco/domain';
 import { PageSkeleton } from '@/shared/components/page-skeleton';
 import { useNow } from '@/shared/hooks/use-now';
@@ -24,7 +25,6 @@ import { QuestionCard } from '../question-card';
 import { SessionFeed } from '../session-feed';
 import { SessionHeader } from '../session-header';
 import { SessionSide } from '../session-side';
-import { WorkerTaskNotice } from '../worker-task-notice';
 
 /** Ce que l'agent a dit juste avant de demander l'autorisation. */
 /** Relecture du fil d'une session qui tourne : seules les lignes ajoutées au transcript sont lues. */
@@ -54,6 +54,11 @@ export function SessionDetailScreen({ id }: { id: string }) {
     ...sessionConversationQuery(id),
     refetchInterval: running ? CONVERSATION_REFRESH_MS : false,
   });
+  // La session d'une tâche du worker se lit dans l'écran de sa tâche, qui en montre le fil (CA-TACH-95)
+  const taskId = data?.session.task?.id;
+  useEffect(() => {
+    if (taskId !== undefined) router.replace(`/tasks/${taskId}`);
+  }, [router, taskId]);
   const settlement = useSettlements((state) => state.settlements[id] ?? null);
   const offline = useOffline();
   const answers = usePermissionAnswers({
@@ -71,7 +76,7 @@ export function SessionDetailScreen({ id }: { id: string }) {
       </div>
     );
   }
-  if (!data || !sources) return <PageSkeleton variant="detail" rows={8} />;
+  if (!data || !sources || taskId !== undefined) return <PageSkeleton variant="detail" rows={8} />;
   const { journal, session } = data;
   const resume = resumeCommand(session, sources.sources, sources.home);
   return (
@@ -85,7 +90,6 @@ export function SessionDetailScreen({ id }: { id: string }) {
         resume={resume}
         onCopy={copy}
       />
-      <WorkerTaskNotice session={session} />
       <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 md:grid-cols-3">
         <div className="flex min-h-0 min-w-0 flex-col md:col-span-2">
           <SessionFeed

@@ -6,13 +6,14 @@
 
 - **RF-TACH-01** · **1. Une tâche a un dépôt, une consigne et un mode** : Worker (sans terminal, dans une copie jetable du dépôt, sur une branche dédiée rapatriée dans le dépôt à la fin) ou Ma session (elle attend qu'une session Claude Code interactive la prenne, dans le dépôt, sous tes yeux). Un lien de contexte (ticket, PR, décision) est facultatif.
 - **RF-TACH-02** · **2. Une tâche a un seul état** : En file, Bloquée (attend ses préalables), En attente d'une session (mode Ma session), En cours, À relire, Validée, Rejetée, En échec, Annulée.
-- **RF-TACH-03** · **3. Une tâche peut attendre d'autres tâches**, de n'importe quel dépôt : elle part quand **toutes** ses préalables sont validées. Une préalable en échec, rejetée sans relance ou annulée fait échouer celles qui l'attendent, en cascade. On ne peut pas attendre une tâche déjà en échec.
+- **RF-TACH-03** · **3. Une tâche peut attendre d'autres tâches**, de n'importe quel dépôt : elle part quand **toutes** ses préalables sont validées. Une préalable en échec, rejetée ou annulée fait échouer celles qui l'attendent, en cascade. On ne peut pas attendre une tâche déjà en échec.
 - **RF-TACH-04** · **4. Même dépôt : la suite part du travail précédent**. Si une seule préalable du même dépôt n'est pas encore fusionnée, la tâche part de sa branche ; s'il y en a plusieurs, elle attend leur fusion. Dans un autre dépôt, seul l'ordre compte.
 - **RF-TACH-05** · **5. Les garde-fous se resserrent de haut en bas** : réglages généraux, puis dépôt, puis tâche. Une tâche peut restreindre les outils, le budget et le nombre de tours de son dépôt, jamais les dépasser. Le dépôt fixe aussi combien d'agents travaillent en même temps. Le worker ne lance une tâche que s'il lui reste une place et assez de mémoire. Ces garde-fous ne valent que pour le worker : en mode Ma session, ce sont les réglages de la session qui s'appliquent. Le budget est une estimation : il peut être légèrement dépassé avant l'arrêt.
 - **RF-TACH-06** · **6. Rien n'est fusionné sans toi** : valider une tâche débloque les suivantes, mais Bosco ne fusionne jamais. Selon le réglage du dépôt, la validation peut aussi **pousser la branche et ouvrir une PR en brouillon** : Jamais (par défaut), Demander à chaque fois ou Toujours. Seule la branche de la tâche est poussée, jamais la branche principale, avec git et GitHub CLI du poste : l'ouverture de PR est réservée aux dépôts GitHub.
 - **RF-TACH-07** · **7. Une tâche peut être annulée à tout moment** : le worker arrête l'agent en quelques secondes ; une session interactive est prévenue qu'elle doit s'arrêter.
 - **RF-TACH-08** · **8. Une tâche se modifie tant qu'elle n'a pas démarré, et se relance après un échec** : la relance repart de sa branche ou de zéro, avec un budget revu si besoin. Annuler une tâche fait échouer celles qui l'attendent, après confirmation.
 - **RF-TACH-09** · **9. Un ticket GitHub peut tenir lieu de consigne** : une tâche liée à un ticket GitHub n'a pas besoin de consigne écrite. Bosco lit le ticket au lancement et le transmet à l'agent comme consigne ; la copie transmise est gardée dans le journal de la tâche, même si le ticket change ensuite. Sans ticket, la consigne reste obligatoire.
+- **RF-TACH-10** · **10. Une tâche se lit comme une session** : une tâche est une session de Claude Code avec une consigne, un contexte, des garde-fous et une revue. Son écran est celui d'une session : la consigne transmise ouvre le fil, puis tout ce que fait l'agent jusqu'à son compte rendu ; la tâche (préalables, garde-fous, consommation, ressources, suites, journal) est à droite ([E13](#e13a), [E7](#e7a)). Pendant le travail, l'agent du worker travaille seul : on peut annuler la tâche, pas lui écrire. Une fois la tâche à relire, on peut lui écrire : le message relance un tour dans la même conversation, sur la même branche, dans le budget et les tours qui restent ; « Rejeter » abandonne la tâche. Une tâche en mode Ma session montre le fil de la session qui l'a prise. La session d'une tâche, ouverte depuis la vue d'ensemble ou l'historique, mène à l'écran de la tâche.
 
 ## <a id="e5"></a>E5 · File de tâches
 
@@ -44,7 +45,7 @@ Tout le travail préparé pour Claude Code, du plus urgent au plus lointain : d'
 Règles de l'écran :
 
 1. Le worker fait travailler au plus 4 agents à la fois, tous dépôts confondus, et chaque dépôt peut fixer sa propre limite (1 pour api-voix, voir [E8a](#e8a)). Il lui faut aussi assez de mémoire libre ([E11a](contexte.md#e11a)). Une tâche prête mais sans place ou sans mémoire suffisante reste « En file », avec la raison, et part dès que c'est possible (règle 5). Quand un agent travaille, l'indicateur ouvre le panneau des conteneurs ([E19a](contexte.md#e19a)).
-2. « Attend » liste les tâches préalables avec leur état. Une tâche part quand toutes sont validées (règle 3). Si une préalable échoue, est rejetée sans relance ou est annulée, la tâche passe « En échec » avec le motif « Préalable T-… en échec », et celles qui l'attendent aussi.
+2. « Attend » liste les tâches préalables avec leur état. Une tâche part quand toutes sont validées (règle 3). Si une préalable échoue, est rejetée ou est annulée, la tâche passe « En échec » avec le motif « Préalable T-… en échec », et celles qui l'attendent aussi.
 3. L'enchaînement dessine les tâches actives liées entre elles : une flèche va d'une préalable à la tâche qui l'attend, et les tâches se rangent seules de haut en bas, sans se chevaucher. Au survol d'une ligne de la liste, sa chaîne se met en évidence : ses tâches sont entourées, ses flèches colorées, et les autres tâches et flèches s'estompent ; un clic sur une tâche du dessin ouvre son détail ([E13a](#e13a)). « même branche » sur une flèche : T-13 est dans le même dépôt que T-12 et partira de sa branche tant que celle-ci n'est pas fusionnée (règle 4). T-15 est dans un autre dépôt : seul l'ordre compte.
 4. Une tâche « Ma session » attend qu'une session Claude Code la prenne : on demande dans la session « prends la prochaine tâche Bosco », dans le bon dépôt. La session reçoit la consigne et le contexte, signale ses étapes (visibles en direct ici), puis clôt la tâche, qui passe « À relire ». Deux sessions ne prennent jamais la même tâche.
 5. Budget : dépensé sur prévu. Toute ligne ouvre le détail de la tâche ([E13a](#e13a)) ; « Relire » ouvre directement sa revue ([E7a](#e7a)). La même tâche apparaît dans la vue d'ensemble comme une session du profil worker « À relire » ([E2c](sessions.md#e2c)). Tri de la liste : à relire, en attente d'une session, en cours, en file, bloquées ; puis la plus ancienne en premier.
@@ -109,41 +110,42 @@ Règles de l'écran :
 
 ## <a id="e7"></a>E7 · Revue d'une tâche
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `taches/e7.html` · implémentation : **Livré (Relecture développée (E7a, E7b, E7c) : consigne et compte rendu côte à côte, fichiers modifiés et diff depuis le départ de la branche, consommation au regard du budget et des tours, tâches débloquées par la validation, commande de fusion à copier ; rejet avec motif obligatoire, relance cochée par défaut (le motif rejoint la consigne, la tâche repart de sa branche, les suivantes attendent), sans relance les suivantes échouent en cascade ; validation selon le réglage du dépôt : jamais, sur demande avec titre et description préremplis, ou toujours ; seule la branche de la tâche est poussée, la PR s'ouvre en brouillon vers la branche de départ, avec git et GitHub CLI du poste ; un envoi en échec laisse la tâche validée avec la cause et « Réessayer » ; le lien de la PR rejoint la tâche. Vérifié sur une vraie tâche, avec un dépôt distant local. Écarts : sur le téléphone, la revue se lit en une colonne, sans les trois onglets ; « Liens » viendra avec les intégrations (E10b) ; le lien de la PR ne rejoint pas encore la session. Une tâche « Ma session » se relit sans diff : son travail est déjà dans le dépôt.)**
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `taches/e7.html` · implémentation : **À faire évoluer (E7a, E7b : une tâche se lit comme une session (règle 10) : fil complet de l'agent avec la consigne transmise en tête et le compte rendu encadré, onglet Modifications, zone de message qui relance un tour sur la même branche ; « Rejeter » abandonne la tâche, sans case de relance. Déjà livré : Relecture développée (E7a, E7b, E7c) : consigne et compte rendu côte à côte, fichiers modifiés et diff depuis le départ de la branche, consommation au regard du budget et des tours, tâches débloquées par la validation, commande de fusion à copier ; rejet avec motif obligatoire, relance cochée par défaut (le motif rejoint la consigne, la tâche repart de sa branche, les suivantes attendent), sans relance les suivantes échouent en cascade ; validation selon le réglage du dépôt : jamais, sur demande avec titre et description préremplis, ou toujours ; seule la branche de la tâche est poussée, la PR s'ouvre en brouillon vers la branche de départ, avec git et GitHub CLI du poste ; un envoi en échec laisse la tâche validée avec la cause et « Réessayer » ; le lien de la PR rejoint la tâche. Vérifié sur une vraie tâche, avec un dépôt distant local. Écarts : sur le téléphone, la revue se lit en une colonne, sans les trois onglets ; « Liens » viendra avec les intégrations (E10b) ; le lien de la PR ne rejoint pas encore la session. Une tâche « Ma session » se relit sans diff : son travail est déjà dans le dépôt.)**
 
 ### <a id="e7a"></a>E7a · Revue d'une tâche : à relire
 
-Une tâche du worker est terminée : l'écran sert à juger son travail avant de la valider. La consigne et le compte rendu de l'agent se lisent côte à côte, suivis des fichiers modifiés, du diff et des tests. À droite : ce que la tâche a consommé, les droits qui ont été appliqués et ce que la validation débloque.
+Une tâche se lit comme une session : la consigne transmise ouvre le fil, puis tout ce que l'agent a fait, jusqu'à son compte rendu. C'est le même écran que le détail d'une tâche ([E13](#e13a)), dans l'état « À relire » : on juge le travail dans le fil ou dans l'onglet Modifications, on demande une correction à l'agent, ou on valide. À droite : ce que la tâche a consommé, ce que la validation débloque et ce qu'elle poussera.
 
-- **Depuis** [E5b](#e5b) avec « Relire » · [E2c](sessions.md#e2c)
-- **Ensuite** [E7b](#e7b) avec « Rejeter » · [E7c](#e7c) après « Valider » (dépôt réglé sur « Demander à chaque fois »), sinon [E5b](#e5b)
+- **Depuis** [E5b](#e5b) avec « Relire » · [E13d](#e13d) quand l'agent a fini · [E2c](sessions.md#e2c)
+- **Ensuite** [E7b](#e7b) avec « Rejeter » · [E7c](#e7c) après « Valider » (dépôt réglé sur « Demander à chaque fois »), sinon [E5b](#e5b) · [E13d](#e13d) en demandant une correction
 
 Règles de l'écran :
 
-1. La consigne (repliée sur deux lignes) et le compte rendu de l'agent sont côte à côte, pour juger l'écart entre ce qui était demandé et ce qui a été fait. Le point « À vérifier » de l'agent est en gras. Le résultat des tests est celui que l'agent déclare : Bosco ne relance pas les tests.
-2. Le diff est calculé depuis le point de départ de la branche : lignes ajoutées en vert, retirées en rouge. Les blocs suivants se lisent en défilant. La déclaration de l'agent sur les tests figure juste dessous.
-3. La consommation est rapportée au budget et au nombre de tours prévus (règle 5). Le coût est une estimation au tarif public.
+1. Le fil est celui de la session de l'agent, complet, comme dans le détail d'une session ([E2](sessions.md#e2a)) : la consigne transmise en tête, avec son contexte (décisions, socles, droits du dépôt, ticket), puis chaque lecture, modification, commande et sortie réseau refusée, jusqu'au compte rendu de l'agent, encadré, dont le point « À vérifier » est en gras. « Voir le texte transmis » ouvre l'aperçu exact ([E9f](contexte.md#e9f)). Le résultat des tests est celui que l'agent déclare : Bosco ne relance pas les tests.
+2. L'onglet Modifications montre les fichiers et le diff calculé depuis le point de départ de la branche : lignes ajoutées en vert, retirées en rouge. Chaque modification du fil s'y ouvre aussi d'un clic.
+3. La consommation est rapportée au budget et au nombre de tours prévus (règle 5). Le coût est une estimation au tarif public. « Droits appliqués » ouvre les droits effectifs du dépôt ([E8a](#e8a)).
 4. Valider débloque les tâches suivantes (règle 3) : T-13 part tout de suite, sur la branche de T-12 (règle 4) ; T-15 attend encore T-14. Une fois la tâche validée, sa session passe « Terminée ».
-5. Bosco ne fusionne jamais (règle 6). Selon le réglage du dépôt ([E8a](#e8a)), la validation peut pousser la branche et ouvrir une PR en brouillon : ici « Demander à chaque fois », donc « Valider » ouvre la confirmation [E7c](#e7c). La commande de fusion reste à copier pour fusionner soi-même. « Voir la session » mène au détail de la session correspondante ([E2c](sessions.md#e2c)).
-6. « Rejeter » ouvre la fenêtre de rejet avec un motif ([E7b](#e7b)). « Liens » ouvre les liens de la tâche ([E10b](contexte.md#e10b)) ; sur mobile, depuis le menu de l'en-tête.
+5. Bosco ne fusionne jamais (règle 6). Selon le réglage du dépôt ([E8a](#e8a)), la validation peut pousser la branche et ouvrir une PR en brouillon : ici « Demander à chaque fois », donc « Valider » ouvre la confirmation [E7c](#e7c). La commande de fusion reste à copier pour fusionner soi-même.
+6. « Rejeter » abandonne la tâche, avec un motif ([E7b](#e7b)). Pour faire reprendre le travail, on écrit plutôt à l'agent (7). « Liens » ouvre les liens de la tâche ([E10b](contexte.md#e10b)) ; sur mobile, depuis le menu de l'en-tête.
+7. Une tâche à relire accepte un message, comme une session (règle 10) : il relance un tour dans la même conversation, sur la même branche, dans le budget et les tours qui restent. La tâche repasse « En cours » ([E13d](#e13d)), puis revient « À relire » ; le journal garde la demande. Si le budget ou les tours sont épuisés, la zone le dit et propose de les augmenter, dans les limites du dépôt. Pendant le travail, on ne peut pas écrire à l'agent : il travaille seul.
 
-**Mobile** : écran poussé avec trois onglets (Résumé, Modifications, Après). Le résumé réunit consigne, compte rendu, tests et consommation ; la fusion se trouve dans l'onglet Après. « Rejeter » et « Valider » restent dans la barre du bas, sous le pouce.
+**Mobile** : écran poussé avec trois onglets (Fil, Modifications, Tâche). Le fil se lit comme celui d'une session, avec la zone de message en bas ; l'onglet Tâche réunit consommation, suites, PR et journal. « Rejeter » et « Valider » restent dans la barre du bas, sous le pouce.
 
 ### <a id="e7b"></a>E7b · Revue d'une tâche : rejet avec motif
 
-Une fenêtre au-dessus de la revue demande pourquoi la tâche est rejetée. Le motif est transmis à l'agent ; par défaut, la tâche repart avec ce motif en consigne complémentaire. Décocher la relance rejette la tâche pour de bon, avec ses conséquences sur les suivantes.
+Rejeter abandonne la tâche : une fenêtre au-dessus de la revue demande pourquoi, et dit ce que cela provoque sur les suivantes. Pour faire reprendre le travail, on écrit plutôt à l'agent depuis la revue ([E7a](#e7a)) : la fenêtre le rappelle.
 
 - **Depuis** [E7a](#e7a) avec « Rejeter »
-- **Ensuite** [E5b](#e5b) avec « Rejeter et relancer » · [E7a](#e7a) avec « Annuler »
+- **Ensuite** [E5b](#e5b) avec « Rejeter » · [E7a](#e7a) avec « Écrire à l'agent » · [E7a](#e7a) avec « Annuler »
 
 Règles de l'écran :
 
-1. Le motif est obligatoire : sans lui, le bouton reste inactif. Il est transmis à l'agent et gardé dans le journal de la tâche.
-2. La relance est cochée par défaut : le motif s'ajoute à la consigne et la tâche repart sur la même branche. Décochée, la tâche est rejetée pour de bon (règle 3).
-3. Sans relance, la tâche passe « Rejetée » et celles qui l'attendent échouent en cascade (règle 3). L'encadré le dit avant le clic ; il reste visible même quand la case est cochée.
-4. La relance crée une nouvelle session du profil worker, visible dans la vue d'ensemble ([E1b](sessions.md#e1b)), sur la même branche. Avec la case décochée, le bouton devient « Rejeter » et la tâche sort de la liste des tâches actives.
+1. Le motif est obligatoire : sans lui, le bouton reste inactif. Il est gardé dans le journal de la tâche et à la fin de son fil.
+2. Rejeter n'est plus le moyen de faire reprendre une tâche : on écrit à l'agent depuis la revue ([E7a](#e7a), règle 10), et il reprend sur la même branche, dans la même conversation. « Écrire à l'agent » ferme la fenêtre et place le curseur dans la zone de message.
+3. La tâche passe « Rejetée » et celles qui l'attendent échouent en cascade (règle 3) : l'encadré les nomme avant le clic.
+4. « Rejeter T-12 » est une action destructrice, en rouge. La tâche sort de la liste des tâches actives et rejoint l'onglet Terminées ; sa branche reste dans le dépôt, à supprimer soi-même.
 
-**Mobile** : la fenêtre devient une feuille qui monte du bas, au-dessus de la revue ; les boutons font 44 px de haut et sont empilés, l'action principale en premier.
+**Mobile** : la fenêtre devient une feuille qui monte du bas, au-dessus de la revue ; les boutons font 44 px de haut et sont empilés, « Rejeter T-12 » en premier.
 
 ### <a id="e7c"></a>E7c · Revue d'une tâche : valider et ouvrir une PR brouillon
 
@@ -189,41 +191,42 @@ Règles de l'écran :
 
 ## <a id="e13"></a>E13 · Détail d'une tâche
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `taches/e13.html` · implémentation : **À faire évoluer (E13d, nouvel état : ressources d'une tâche du worker en cours (agent et services de test), pic de mémoire noté dans le journal. Déjà livré : consigne, préalables et leur état, branche de départ, garde-fous, journal ; modifier avant le départ ; annuler avec la confirmation qui nomme les tâches en cascade ; relancer un échec ; « Voir la session » ; « Annuler l'annulation » tant que le message est affiché.)**
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `taches/e13.html` · implémentation : **À faire évoluer (E13a à E13d : disposition d'une session (règle 10) : fil de l'agent au centre avec la consigne en tête, tâche à droite ; en cours, « L'agent travaille seul » remplace la zone de message ; en échec, le fil finit par la ligne d'arrêt ; « Voir la session » disparaît. E13d, nouvel état : ressources d'une tâche du worker en cours (agent et services de test), pic de mémoire noté dans le journal. Déjà livré : consigne, préalables et leur état, branche de départ, garde-fous, journal ; modifier avant le départ ; annuler avec la confirmation qui nomme les tâches en cascade ; relancer un échec ; « Voir la session » ; « Annuler l'annulation » tant que le message est affiché.)**
 
 ### <a id="e13a"></a>E13a · Détail d'une tâche : bloquée
 
-Une tâche qui n'a pas encore démarré : on voit ce qu'elle doit faire, ce qu'elle attend et de quelle branche elle partira. Tant qu'elle n'a pas démarré, on peut la modifier ou l'annuler.
+Une tâche n'est qu'une session avec une consigne, un contexte, des garde-fous et une revue : son écran est celui d'une session, le fil de ce que fait l'agent au centre, la tâche à droite. Une tâche qui n'a pas encore démarré a un fil à peine commencé : la consigne qui sera transmise, puis l'attente. On voit ce qu'elle attend et de quelle branche elle partira ; tant qu'elle n'a pas démarré, on peut la modifier ou l'annuler.
 
 - **Depuis** [E5b](#e5b) en ouvrant une ligne
 - **Ensuite** [E13c](#e13c) avec « Annuler la tâche » · [E6a](#e6a) avec « Modifier » · [E7a](#e7a) avec « Voir T-12 »
 
 Règles de l'écran :
 
-1. Le même écran sert à toutes les tâches qui n'ont pas fini : En file, Bloquée, En attente d'une session et En cours. Pour une tâche en cours, l'en-tête donne le lien vers la session et le fil en direct. Une fois la tâche à relire, l'écran de référence est la revue ([E7a](#e7a)).
-2. « Elle attend » liste les tâches préalables avec leur état : une tâche part quand toutes sont validées (règle 3). T-13 est dans le même dépôt que T-12 : elle partira de sa branche, et T-15, qui l'attend à son tour, viendra ensuite (règle 4). « Voir T-12 » ouvre sa revue.
+1. Le même écran sert à toutes les tâches, de En file à En cours, et il garde la disposition du détail d'une session. À la fin, la revue ([E7a](#e7a)) en est l'état « À relire », et l'échec ([E13b](#e13b)) un autre. Le worker travaille seul : pendant le travail, il n'y a pas de zone de message ; on pourra écrire à l'agent à la relecture.
+2. « Elle attend » liste les tâches préalables avec leur état : une tâche part quand toutes sont validées (règle 3). T-13 est dans le même dépôt que T-12 : elle partira de sa branche, et T-15, qui l'attend à son tour, viendra ensuite (règle 4). « Voir T-12 » ouvre sa revue. « Départ » donne la branche de départ et les garde-fous qui s'appliqueront.
 3. « Modifier » ouvre le formulaire de la tâche prérempli ([E6a](#e6a)) tant qu'elle n'a pas démarré (règle 8). Une fois démarrée, le bouton disparaît ; il reste l'annulation.
 4. Le journal de la tâche garde chaque changement d'état avec son heure : création, attente, départ, relances, échec, validation. Il ne se vide jamais, même après une relance.
 5. « Annuler la tâche » ouvre la confirmation ([E13c](#e13c)) : T-15 attend T-13 et passerait En échec (règle 7).
+6. L'écran d'une tâche est celui d'une session : le fil s'ouvre sur la consigne transmise à l'agent, avec son contexte (décisions, socles, droits, ticket). « Voir le texte transmis » ouvre le texte exact envoyé ([E9f](contexte.md#e9f)). Tant que l'agent n'a pas démarré, le fil n'a que cette consigne et l'attente, et l'onglet Modifications est grisé.
 
-**Mobile** : écran poussé, les cartes s'empilent dans le même ordre ; les garde-fous tiennent sur une ligne. « Modifier » et « Annuler la tâche » restent dans la barre du bas, sous le pouce.
+**Mobile** : écran poussé avec trois onglets (Fil, Modifications, Tâche). Le fil est sur l'onglet actif ; « Elle attend », le départ, les garde-fous et le journal sont dans l'onglet Tâche. « Modifier » et « Annuler la tâche » restent dans la barre du bas, sous le pouce.
 
 ### <a id="e13b"></a>E13b · Détail d'une tâche : en échec et relance
 
-Une tâche du worker s'est arrêtée avant la fin. L'écran dit pourquoi, montre ce qui reste (la branche) et propose de la relancer avec un budget revu et, si besoin, une consigne en plus.
+Une tâche du worker s'est arrêtée avant la fin. Comme pour une session, le fil montre tout ce que l'agent a fait jusqu'à l'arrêt ; à droite, la tâche propose de la relancer avec un budget revu et, si besoin, une consigne en plus.
 
 - **Depuis** [E5b](#e5b) (onglet Échecs) · [E2d](sessions.md#e2d) avec « Voir la tâche »
-- **Ensuite** [E5b](#e5b) avec « Relancer la tâche » · [E2d](sessions.md#e2d) avec « Voir la session »
+- **Ensuite** [E5b](#e5b) avec « Relancer la tâche »
 
 Règles de l'écran :
 
-1. La cause est dite en toutes lettres : budget atteint, nombre de tours dépassé, erreur de l'agent, interruption ou session coupée. « Voir la session » ouvre le fil complet ([E2d](sessions.md#e2d)).
+1. La cause est dite en toutes lettres dans la dernière ligne du fil : budget atteint, nombre de tours dépassé, erreur de l'agent, interruption ou session coupée. Le fil est celui de la session de la tâche, du départ à l'arrêt, avec les sorties réseau refusées à l'heure où l'agent les a tentées ; il n'y a pas de zone de message, puisque l'agent est arrêté.
 2. Repartir de la branche garde le travail déjà fait (proposé par défaut tant que la branche existe) ; repartir de zéro reprend une copie propre du dépôt, au point de départ de la tâche.
 3. Le budget proposé est revu à la hausse, dans les limites du dépôt (règle 5) : au-delà de 2,00 $, le champ est refusé avec un message sous le champ. Le nombre de tours se règle de la même façon dans le formulaire de la tâche ([E6a](#e6a)). Le budget est une estimation : il peut être légèrement dépassé.
 4. Relancer ne crée pas de nouvelle tâche : T-9 repasse « En file », avec le même numéro, et le journal garde l'échec (règle 8). Elle part dès qu'une place et assez de mémoire sont libres.
-5. Si des tâches attendaient celle-ci et ont échoué en cascade (règle 3), elles se relancent avec elle et redeviennent « Bloquées ».
+5. Si des tâches attendaient celle-ci et ont échoué en cascade (règle 3), elles se relancent avec elle et redeviennent « Bloquées » ; la ligne sous le journal les nomme.
 
-**Mobile** : écran poussé ; le formulaire de relance remplace la colonne de droite, et « Relancer la tâche » reste dans la barre du bas. La consommation et le journal se consultent depuis la session (pas de pastille 5 ici : la cascade est signalée par un message après la relance).
+**Mobile** : écran poussé avec trois onglets (Fil, Modifications, Tâche). Le fil est sur l'onglet actif ; le formulaire de relance, la consommation et le journal sont dans l'onglet Tâche, et « Relancer la tâche » reste dans la barre du bas. Pas de pastille 3 ni 5 ici : le budget et la cascade se lisent dans l'onglet Tâche, la cascade étant signalée par un message après la relance.
 
 ### <a id="e13c"></a>E13c · Détail d'une tâche : annulation
 
@@ -244,19 +247,21 @@ Règles de l'écran :
 
 ### <a id="e13d"></a>E13d · Détail d'une tâche : en cours, avec ses ressources
 
-Une tâche du worker au travail : en plus de sa consigne et de son journal, on voit ce que consomment son agent et ses services de test, sans ouvrir le panneau des conteneurs.
+Une tâche du worker au travail : le fil montre en direct ce que fait l'agent, et la colonne de droite ce que consomment son agent et ses services de test, sans ouvrir le panneau des conteneurs. L'agent travaille seul, dans son budget : on ne peut pas lui écrire avant la relecture.
 
 - **Depuis** [E5b](#e5b) en ouvrant une tâche en cours · [E19a](contexte.md#e19a) avec « Voir la tâche »
-- **Ensuite** [E19a](contexte.md#e19a) avec « Tous les conteneurs » · [E13c](#e13c) avec « Annuler la tâche » · [E2a](sessions.md#e2a) avec « Voir la session »
+- **Ensuite** [E19a](contexte.md#e19a) avec « Tous les conteneurs » · [E13c](#e13c) avec « Annuler la tâche »
 
 Règles de l'écran :
 
-1. Le même écran qu'[E13a](#e13a), pour une tâche en cours : « Modifier » a disparu, « Voir la session » ouvre son fil en direct, « Annuler la tâche » arrête l'agent ([E13c](#e13c)).
+1. Le même écran qu'[E13a](#e13a), pour une tâche en cours : le fil est celui de la session de la tâche, en direct, et la tâche est dans la colonne de droite. « Modifier » a disparu ; « Annuler la tâche » arrête l'agent ([E13c](#e13c)). La consommation (budget et tours) et les ressources sont mises à jour en continu.
 2. « Ressources » ne concerne qu'une tâche du worker en cours : processeur et mémoire de son agent, mémoire de chacun de ses services, rapportés à leur plafond et mis à jour toutes les 5 s, avec les mêmes jauges et le même orange à 80 % que le panneau des conteneurs. « Tous les conteneurs » ouvre ce panneau ([E19a](contexte.md#e19a)), où se redémarre un service.
 3. Le journal note le départ avec la place prise (au plus 1 agent pour api-voix, 4 pour le worker), le temps de démarrage de chaque service, et, s'il y en a, chaque redémarrage de service fait depuis [E19b](contexte.md#e19b), avec l'heure.
 4. À la fin, les conteneurs sont supprimés et le bloc disparaît. Le journal garde le pic de mémoire de l'agent et de chaque service : c'est ce qui permet d'ajuster les plafonds ([E11a](contexte.md#e11a), [E12a](contexte.md#e12a)).
+5. À la place de la zone de message, une barre grise rappelle que l'agent travaille seul, dans son budget : une tâche du worker ne reçoit pas de message pendant le travail. On pourra lui écrire à la relecture ([E7a](#e7a)). « Annuler la tâche » reste à portée.
+6. En-tête du fil comme celui d'une session en cours : la pastille animée dit que le fil se met à jour en direct, et la dernière étape, « Modifie README.md », tourne tant qu'elle n'est pas finie.
 
-**Mobile** : les ressources tiennent dans une carte, la mémoire des services sur une ligne ; « Tous les conteneurs » ouvre l'écran poussé d'[E19a](contexte.md#e19a). Pas de pastille 4 : la mention du pic se lit dans le journal une fois la tâche finie.
+**Mobile** : écran poussé avec trois onglets (Fil, Modifications, Tâche) ; la pastille animée de l'onglet Fil dit qu'il est en direct. La consommation, les ressources (la mémoire des services sur une ligne, « Tous les conteneurs » vers l'écran poussé d'[E19a](contexte.md#e19a)) et le journal sont dans l'onglet Tâche. « Annuler la tâche » reste dans la barre du bas. Pas de pastilles 3 ni 4 : la mention du pic se lit dans le journal une fois la tâche finie.
 
 ## <a id="criteres-dacceptation"></a>Critères d'acceptation
 
@@ -270,7 +275,7 @@ Règles de l'écran :
 - **CA-TACH-06** · [E5b](#e5b) · Étant donné 4 agents déjà au travail, tous dépôts confondus, ou une mémoire libre insuffisante, quand une tâche est prête, alors elle reste « En file » avec la raison et part dès qu'une place et assez de mémoire se libèrent (RF-TACH-05).
 - **CA-TACH-07** · [E5b](#e5b) · Étant donné un dépôt qui fixe sa propre limite d'agents simultanés (1 pour api-voix), quand une tâche de ce dépôt est prête alors qu'un agent y travaille déjà, alors elle attend une place (RF-TACH-05).
 - **CA-TACH-08** · [E5b](#e5b) · Étant donné une tâche qui attend d'autres tâches, quand la personne lit « Attend », alors chaque préalable est listée avec son état et la tâche ne part que lorsque toutes sont validées (RF-TACH-03).
-- **CA-TACH-09** · [E5b](#e5b) · Étant donné une préalable en échec, rejetée sans relance ou annulée, quand la file est affichée, alors la tâche qui l'attend est « En échec » avec le motif « Préalable T-… en échec », et celles qui l'attendent aussi (RF-TACH-03).
+- **CA-TACH-09** · [E5b](#e5b) · Étant donné une préalable en échec, rejetée ou annulée, quand la file est affichée, alors la tâche qui l'attend est « En échec » avec le motif « Préalable T-… en échec », et celles qui l'attendent aussi (RF-TACH-03).
 - **CA-TACH-10** · [E5b](#e5b) · Étant donné une tâche du même dépôt que sa préalable non fusionnée, quand la personne survole la tâche, alors sa chaîne est mise en évidence dans l'enchaînement et la tâche partira de la branche de la préalable, alors que pour une préalable d'un autre dépôt seul l'ordre compte (RF-TACH-04).
 - **CA-TACH-11** · [E5b](#e5b) · Étant donné une tâche « Ma session » en attente, quand la personne demande dans une session Claude Code, dans le bon dépôt, « prends la prochaine tâche Bosco », alors la session reçoit la consigne et le contexte, ses étapes sont visibles en direct, la tâche passe « À relire » à sa clôture, et deux sessions ne prennent jamais la même tâche (RF-TACH-01).
 - **CA-TACH-12** · [E5b](#e5b) · Étant donné une tâche « Ma session » sur mobile, quand la personne l'affiche, alors la mention « À prendre depuis Claude Code sur le poste » est visible et la tâche ne peut pas être prise depuis le téléphone.
@@ -308,17 +313,17 @@ Règles de l'écran :
 
 ### <a id="e7-revue-dune-tache"></a>E7 · Revue d'une tâche
 
-- **CA-TACH-32** · [E7a](#e7a) · Étant donné une tâche du worker à relire, quand la personne ouvre la revue, alors la consigne (repliée sur deux lignes) et le compte rendu de l'agent sont côte à côte, le point « À vérifier » est en gras, suivis des fichiers modifiés, du diff et des tests.
+- ~~**CA-TACH-32** · [E7a](#e7a) · Étant donné une tâche du worker à relire, quand la personne ouvre la revue, alors la consigne (repliée sur deux lignes) et le compte rendu de l'agent sont côte à côte, le point « À vérifier » est en gras, suivis des fichiers modifiés, du diff et des tests.~~ Retiré (16/11/2026, la revue montre le fil de l'agent : remplacé par CA-TACH-86 et CA-TACH-87).
 - **CA-TACH-33** · [E7a](#e7a) · Étant donné le diff, quand la personne le lit, alors il est calculé depuis le point de départ de la branche, avec les lignes ajoutées en vert et retirées en rouge, et le résultat des tests est celui que l'agent déclare : Bosco ne relance pas les tests.
 - **CA-TACH-34** · [E7a](#e7a) · Étant donné la colonne de droite, quand la personne la lit, alors la consommation est rapportée au budget et au nombre de tours prévus, et le coût est une estimation au tarif public (RF-TACH-05).
 - **CA-TACH-35** · [E7a](#e7a) · Étant donné une tâche à relire dont d'autres tâches dépendent, quand la personne la valide, alors les tâches suivantes sont débloquées (T-13 part tout de suite sur la branche de T-12, T-15 attend encore T-14) et la session de la tâche passe « Terminée » (RF-TACH-03, RF-TACH-04, RF-TACH-06).
 - **CA-TACH-36** · [E7a](#e7a) · Étant donné un dépôt réglé sur « Jamais », quand la personne clique sur « Valider », alors la tâche est validée sans question et rien n'est poussé ; Bosco ne fusionne jamais et la commande de fusion reste à copier (RF-TACH-06).
 - **CA-TACH-37** · [E7a](#e7a) · Étant donné un dépôt réglé sur « Demander à chaque fois », quand la personne clique sur « Valider », alors la confirmation de validation s'ouvre (RF-TACH-06).
-- **CA-TACH-38** · [E7a](#e7a) · Étant donné la revue, quand la personne clique sur « Rejeter », alors la fenêtre de rejet avec un motif s'ouvre ; « Voir la session » mène au détail de la session correspondante et « Liens » ouvre les liens de la tâche.
+- ~~**CA-TACH-38** · [E7a](#e7a) · Étant donné la revue, quand la personne clique sur « Rejeter », alors la fenêtre de rejet avec un motif s'ouvre ; « Voir la session » mène au détail de la session correspondante et « Liens » ouvre les liens de la tâche.~~ Retiré (16/11/2026, « Voir la session » disparaît, le fil est dans la revue : remplacé par CA-TACH-88).
 - **CA-TACH-39** · [E7b](#e7b) · Étant donné la fenêtre de rejet, quand le motif est vide, alors le bouton reste inactif ; une fois le motif saisi, il est transmis à l'agent et gardé dans le journal de la tâche.
-- **CA-TACH-40** · [E7b](#e7b) · Étant donné la case de relance cochée par défaut, quand la personne clique sur « Rejeter et relancer », alors le motif s'ajoute à la consigne, la tâche repart sur la même branche et une nouvelle session du profil worker apparaît dans la vue d'ensemble (RF-TACH-08).
-- **CA-TACH-41** · [E7b](#e7b) · Étant donné la case de relance décochée, quand la personne clique sur « Rejeter », alors la tâche passe « Rejetée », sort de la liste des tâches actives et celles qui l'attendent échouent en cascade (RF-TACH-03).
-- **CA-TACH-42** · [E7b](#e7b) · Étant donné la fenêtre de rejet, quand la personne la lit, alors l'encadré annonce la conséquence en cascade avant le clic, même quand la case est cochée.
+- ~~**CA-TACH-40** · [E7b](#e7b) · Étant donné la case de relance cochée par défaut, quand la personne clique sur « Rejeter et relancer », alors le motif s'ajoute à la consigne, la tâche repart sur la même branche et une nouvelle session du profil worker apparaît dans la vue d'ensemble (RF-TACH-08).~~ Retiré (16/11/2026, une tâche reprend par un message à l'agent, plus par le rejet : remplacé par CA-TACH-89 et CA-TACH-90).
+- ~~**CA-TACH-41** · [E7b](#e7b) · Étant donné la case de relance décochée, quand la personne clique sur « Rejeter », alors la tâche passe « Rejetée », sort de la liste des tâches actives et celles qui l'attendent échouent en cascade (RF-TACH-03).~~ Retiré (16/11/2026, plus de case de relance : remplacé par CA-TACH-91).
+- **CA-TACH-42** · [E7b](#e7b) · Étant donné la fenêtre de rejet, quand la personne la lit, alors l'encadré annonce la conséquence en cascade avant le clic.
 - **CA-TACH-43** · [E7c](#e7c) · Étant donné le dépôt api-voix réglé sur « Demander à chaque fois », quand la personne clique sur « Valider », alors Bosco montre ce qu'il va pousser et la PR qu'il va ouvrir en brouillon, vers la branche de départ de la tâche (ici develop), et seule la branche de la tâche est poussée, jamais la branche principale (RF-TACH-06).
 - **CA-TACH-44** · [E7c](#e7c) · Étant donné la confirmation de PR, quand la personne la lit, alors titre et description sont préremplis avec le titre de la tâche et le compte rendu de l'agent et peuvent être modifiés avant l'envoi ; sur mobile, seul le titre se modifie.
 - **CA-TACH-45** · [E7c](#e7c) · Étant donné un dépôt réglé sur « Toujours », quand la personne clique sur « Valider », alors la branche est poussée et la PR en brouillon ouverte directement, puis un message bref donne le lien (RF-TACH-06).
@@ -338,12 +343,12 @@ Règles de l'écran :
 
 ### <a id="e13-detail-dune-tache"></a>E13 · Détail d'une tâche
 
-- **CA-TACH-56** · [E13a](#e13a) · Étant donné une tâche En file, Bloquée, En attente d'une session ou En cours, quand la personne ouvre sa ligne, alors le même écran s'affiche ; pour une tâche en cours, l'en-tête donne le lien vers la session et le fil en direct (RF-TACH-02).
+- ~~**CA-TACH-56** · [E13a](#e13a) · Étant donné une tâche En file, Bloquée, En attente d'une session ou En cours, quand la personne ouvre sa ligne, alors le même écran s'affiche ; pour une tâche en cours, l'en-tête donne le lien vers la session et le fil en direct (RF-TACH-02).~~ Retiré (16/11/2026, l'écran d'une tâche est celui d'une session : remplacé par CA-TACH-92).
 - **CA-TACH-57** · [E13a](#e13a) · Étant donné une tâche bloquée, quand la personne lit « Elle attend », alors les préalables sont listées avec leur état et « Voir T-12 » ouvre sa revue ; T-13, du même dépôt que T-12, partira de sa branche, et T-15 viendra ensuite (RF-TACH-03, RF-TACH-04).
 - **CA-TACH-58** · [E13a](#e13a) · Étant donné une tâche qui n'a pas démarré, quand la personne clique sur « Modifier », alors le formulaire de la tâche s'ouvre prérempli ; une fois la tâche démarrée, le bouton disparaît et seule l'annulation reste (RF-TACH-08).
 - **CA-TACH-59** · [E13a](#e13a) · Étant donné une tâche, quand la personne lit son journal, alors chaque changement d'état figure avec son heure (création, attente, départ, relances, échec, validation) et il ne se vide jamais, même après une relance.
 - **CA-TACH-60** · [E13a](#e13a) · Étant donné une tâche que d'autres attendent (T-15 attend T-13), quand la personne clique sur « Annuler la tâche », alors la confirmation d'annulation s'ouvre (RF-TACH-07).
-- **CA-TACH-61** · [E13b](#e13b) · Étant donné une tâche du worker en échec, quand la personne ouvre son détail, alors la cause est dite en toutes lettres (budget atteint, nombre de tours dépassé, erreur de l'agent, interruption ou session coupée) et « Voir la session » ouvre le fil complet.
+- ~~**CA-TACH-61** · [E13b](#e13b) · Étant donné une tâche du worker en échec, quand la personne ouvre son détail, alors la cause est dite en toutes lettres (budget atteint, nombre de tours dépassé, erreur de l'agent, interruption ou session coupée) et « Voir la session » ouvre le fil complet.~~ Retiré (16/11/2026, « Voir la session » disparaît : remplacé par CA-TACH-93).
 - **CA-TACH-62** · [E13b](#e13b) · Étant donné une branche qui existe encore, quand la personne prépare la relance, alors « repartir de la branche » est proposé par défaut et garde le travail déjà fait ; « repartir de zéro » reprend une copie propre du dépôt au point de départ de la tâche (RF-TACH-08).
 - **CA-TACH-63** · [E13b](#e13b) · Étant donné un budget de relance supérieur à 2,00 $, quand la personne le saisit, alors le champ est refusé avec un message sous le champ (RF-TACH-05).
 - **CA-TACH-64** · [E13b](#e13b) · Étant donné une tâche en échec, quand la personne clique sur « Relancer la tâche », alors la même tâche (T-9) repasse « En file » sous le même numéro, le journal garde l'échec, et elle part dès qu'une place et assez de mémoire sont libres (RF-TACH-08).
@@ -354,8 +359,21 @@ Règles de l'écran :
 - **CA-TACH-69** · [E13c](#e13c) · Étant donné une tâche prise par une session interactive, quand elle est annulée, alors la session est prévenue à sa prochaine étape qu'elle doit s'arrêter, sans être coupée de force (RF-TACH-07).
 - **CA-TACH-70** · [E13c](#e13c) · Étant donné une tâche annulée, quand la personne ouvre la file, alors elle est « Annulée », barrée, dans l'onglet Terminées, et son journal garde l'annulation et son motif ; « Garder la tâche » ramène au détail sans rien changer.
 - **CA-TACH-71** · [E13c](#e13c) · Étant donné une tâche qui n'avait pas démarré, annulée directement, quand la personne clique sur « Annuler l'annulation » tant que le message est affiché (8 secondes), alors la tâche revient dans la file avec son état d'avant et son journal le note ; une tâche déjà démarrée, ou dont l'annulation a fait échouer d'autres tâches, ne se rétablit pas ainsi et se relance (RF-TACH-07, RF-TACH-08).
-- **CA-TACH-79** · [E13d](#e13d) · Étant donné une tâche du worker en cours, quand la personne ouvre son détail, alors « Modifier » a disparu, « Voir la session » ouvre son fil en direct, et le bloc « Ressources » donne le processeur et la mémoire de l'agent et la mémoire de chaque service, rapportés à leur plafond, mis à jour toutes les 5 s, en orange avec « Proche du plafond » à partir de 80 %.
+- ~~**CA-TACH-79** · [E13d](#e13d) · Étant donné une tâche du worker en cours, quand la personne ouvre son détail, alors « Modifier » a disparu, « Voir la session » ouvre son fil en direct, et le bloc « Ressources » donne le processeur et la mémoire de l'agent et la mémoire de chaque service, rapportés à leur plafond, mis à jour toutes les 5 s, en orange avec « Proche du plafond » à partir de 80 %.~~ Retiré (16/11/2026, « Voir la session » disparaît : remplacé par CA-TACH-94).
 - **CA-TACH-80** · [E13d](#e13d) · Étant donné le bloc « Ressources », quand la personne clique sur « Tous les conteneurs », alors le panneau des conteneurs s'ouvre ([E19a](contexte.md#e19a)) ; sur mobile, son écran poussé.
 - **CA-TACH-81** · [E13d](#e13d) · Étant donné une tâche du worker lancée, quand la personne lit son journal, alors il note le départ avec la place prise (« 1 agent sur 1 pour api-voix, 2 / 4 »), le temps de démarrage de chaque service et chaque redémarrage de service fait depuis [E19b](contexte.md#e19b), avec l'heure.
 - **CA-TACH-82** · [E13d](#e13d) · Étant donné une tâche du worker qui se termine, quand la personne rouvre son détail, alors ses conteneurs ont été supprimés, le bloc « Ressources » a disparu et le journal garde le pic de mémoire de l'agent et de chaque service.
 - **CA-TACH-72** · [E8a](#e8a) · Étant donné les lignes « Abonnement Claude » et « Compte GitHub » d'un dépôt, quand la personne en choisit un, alors les tâches du worker de ce dépôt prennent cet abonnement, et Bosco pousse leur branche, ouvre leur PR en brouillon et lit leurs liens GitHub avec ce compte ; seuls les profils qui ont un accès et les comptes connectés à GitHub CLI sont proposés, et « Revenir au général » reprend ceux par défaut de [E11b](contexte.md#e11b) (RF-TACH-05, RF-TACH-06).
+
+### <a id="e7-e13-une-tache-se-lit-comme-une-session"></a>E7, E13 · Une tâche se lit comme une session
+
+- **CA-TACH-86** · [E7a](#e7a) · Étant donné une tâche du worker à relire, quand la personne ouvre son écran, alors le fil de la session de l'agent s'affiche comme dans le détail d'une session : la consigne transmise en tête avec son contexte et « Voir le texte transmis », puis chaque étape de l'agent, jusqu'à son compte rendu encadré dont le point « À vérifier » est en gras (RF-TACH-10).
+- **CA-TACH-87** · [E7a](#e7a) · Étant donné une tâche à relire, quand la personne ouvre l'onglet Modifications ou clique sur une modification du fil, alors les fichiers et le diff depuis le point de départ de la branche s'affichent (RF-TACH-10).
+- **CA-TACH-88** · [E7a](#e7a) · Étant donné la revue, quand la personne clique sur « Rejeter », alors la fenêtre de rejet s'ouvre ; « Liens » ouvre les liens de la tâche, et aucun renvoi vers un autre écran n'est nécessaire pour lire le fil.
+- **CA-TACH-89** · [E7a](#e7a) · Étant donné une tâche à relire avec du budget et des tours restants, quand la personne écrit à l'agent, alors un tour reprend dans la même conversation, sur la même branche, la tâche repasse « En cours », le journal garde la demande, puis la tâche revient « À relire » (RF-TACH-10).
+- **CA-TACH-90** · [E7a](#e7a) · Étant donné une tâche à relire dont le budget ou les tours sont épuisés, quand la personne veut écrire à l'agent, alors la zone le dit et propose de les augmenter, dans les limites du dépôt, avant d'envoyer (RF-TACH-05, RF-TACH-10).
+- **CA-TACH-91** · [E7b](#e7b) · Étant donné la fenêtre de rejet avec un motif, quand la personne clique sur « Rejeter T-12 », alors la tâche passe « Rejetée », sort des tâches actives, le motif est gardé dans son journal et à la fin de son fil, sa branche reste dans le dépôt, et celles qui l'attendent échouent en cascade ; « Écrire à l'agent » ferme la fenêtre et place le curseur dans la zone de message (RF-TACH-03, RF-TACH-10).
+- **CA-TACH-92** · [E13a](#e13a) · Étant donné une tâche En file, Bloquée, En attente d'une session, En cours ou À relire, quand la personne l'ouvre, alors le même écran s'affiche, à la disposition d'une session : le fil au centre, avec la consigne qui sera ou a été transmise en tête, et la tâche à droite ; avant le départ, le fil dit ce qu'elle attend et l'onglet Modifications est inactif (RF-TACH-02, RF-TACH-10).
+- **CA-TACH-93** · [E13b](#e13b) · Étant donné une tâche du worker en échec, quand la personne ouvre son écran, alors la cause est dite en toutes lettres (budget atteint, nombre de tours dépassé, erreur de l'agent, interruption ou session coupée), et le fil de sa session se termine par la ligne d'arrêt, à son heure (RF-TACH-08, RF-TACH-10).
+- **CA-TACH-94** · [E13d](#e13d) · Étant donné une tâche du worker en cours, quand la personne ouvre son écran, alors le fil est en direct, « Modifier » a disparu, la zone de message est remplacée par « L'agent travaille seul » avec « Annuler la tâche », et le bloc « Ressources » donne le processeur et la mémoire de l'agent et la mémoire de chaque service, rapportés à leur plafond (RF-TACH-10, RF-CONT-13).
+- **CA-TACH-95** · [E13a](#e13a) · Étant donné la session d'une tâche du worker, quand la personne l'ouvre depuis la vue d'ensemble ou l'historique, alors l'écran de la tâche s'ouvre ; une tâche en mode Ma session montre le fil de la session qui l'a prise (RF-TACH-10).

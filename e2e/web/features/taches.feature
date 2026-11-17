@@ -74,7 +74,7 @@ Fonctionnalité: Tâches
     Et je vois le texte « Worker indisponible »
     Et la page est accessible
 
-  @CA-TACH-32
+  @CA-TACH-86
   Scénario: Une tâche du worker attend la relecture avec le compte rendu de l'agent
     Étant donné une tâche du worker « Ajoute un test du découpage. » existe dans le dépôt « labo-ia »
     Quand j'ouvre la page « /tasks/1 »

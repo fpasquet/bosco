@@ -296,17 +296,37 @@ export class TaskService {
     return this.commit(tasks, [task], id);
   }
 
-  /** Rejet avec relance (E7b) : le motif rejoint la consigne, la tâche repart de sa branche, les suivantes attendent. */
-  async rejectAndRelaunch(id: number, reason: string): Promise<TaskView> {
+  /**
+   * Reprise à la relecture (RF-TACH-10) : le message repart à l'agent, dans le budget et les tours qui restent ; un
+   * budget ou des tours relevés restent sous les plafonds du dépôt (CA-TACH-90).
+   */
+  async resume(id: number, message: string, raise: { budgetUsd?: number; maxTurns?: number } = {}): Promise<TaskView> {
     const tasks = await this.tasks.list();
     const task = this.find(tasks, id);
-    const at = this.clock.now();
-    task.reject(reason, at);
     const snapshot = task.toSnapshot();
-    task.relaunch(snapshot.guardrails, at, 'depuis sa branche');
-    task.edit({ instruction: `${snapshot.instruction}\n\nRelecture : ${reason}` }, at);
-    const revived = new TaskBoard(tasks).revive(id, at);
-    return this.commit(tasks, [task, ...revived], id);
+    const rights = await this.rights.rightsOf(snapshot.repository.name);
+    const issues: TaskIssue[] = [];
+    if (raise.budgetUsd !== undefined && raise.budgetUsd > rights.maxBudgetUsd)
+      issues.push({
+        field: 'budgetUsd',
+        message: `Le budget dépasse le plafond du dépôt : ${usd(rights.maxBudgetUsd)} au plus.`,
+      });
+    if (raise.maxTurns !== undefined && raise.maxTurns > rights.maxTurns)
+      issues.push({
+        field: 'maxTurns',
+        message: `Le nombre de tours dépasse le plafond du dépôt : ${rights.maxTurns} au plus.`,
+      });
+    if (issues.length > 0) throw new InvalidTask(issues);
+    task.resume(
+      message,
+      {
+        ...snapshot.guardrails,
+        budgetUsd: raise.budgetUsd ?? snapshot.guardrails.budgetUsd,
+        maxTurns: raise.maxTurns ?? snapshot.guardrails.maxTurns,
+      },
+      this.clock.now(),
+    );
+    return this.commit(tasks, [task], id);
   }
 
   /** La PR brouillon ouverte à la validation rejoint la tâche (E7c). */

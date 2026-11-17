@@ -28,6 +28,7 @@ export class GitWorkspaces implements Workspaces {
   async prepare(task: {
     branch: string;
     id: number;
+    keep?: null | { base: string; from: string };
     repositoryRoot: string;
     startBranch: null | string;
   }): Promise<Workspace> {
@@ -38,11 +39,12 @@ export class GitWorkspaces implements Workspaces {
     const repo = join(dir, 'repo');
     const start = task.startBranch ? `origin/${task.startBranch}` : 'HEAD';
     // Branche de départ, vers laquelle s'ouvrira une PR : celle de la préalable, ou la branche courante du dépôt
-    const from = task.startBranch ?? (await git(repo, 'rev-parse', '--abbrev-ref', 'HEAD'));
+    const from = task.keep?.from ?? task.startBranch ?? (await git(repo, 'rev-parse', '--abbrev-ref', 'HEAD'));
     await writeFile(join(dir, 'from'), from);
     await git(repo, 'checkout', '--quiet', '-B', task.branch, start);
     // Point de départ de la branche, pour le résumé des modifications : noté dans la copie, jamais dans le dépôt
-    const head = await git(repo, 'rev-parse', 'HEAD');
+    // Une reprise garde le point de départ d'origine : le diff couvre tout le travail de la tâche
+    const head = task.keep?.base ?? (await git(repo, 'rev-parse', 'HEAD'));
     await writeFile(join(dir, 'start'), head);
     return { branch: task.branch, dir };
   }

@@ -1,20 +1,22 @@
 'use client';
+import type { ReactNode } from 'react';
 import { ChevronRight, Copy } from 'lucide-react';
 import Link from 'next/link';
-import type { TaskChangesDto, TaskDto } from '@bosco/domain';
+import type { TaskDto } from '@bosco/domain';
 import { Button } from '@/shared/ui/button';
 import { usd } from '../../lib/tasks';
-import { DiffView } from '../diff-view';
+import { TaskLog } from '../task-log';
 import { TaskStateBadge } from '../task-state-badge';
 
 export interface TaskReviewProps {
   busy: boolean;
-  changes: TaskChangesDto | undefined;
   /** Tâches qui attendent celle-ci : la validation les débloque (règle 3) */
   followers: TaskDto[];
   onCopy: (text: string) => void;
   onReject: () => void;
   onValidate: () => void;
+  /** Fil de la tâche, ses modifications et la zone de message, comme pour une session (RF-TACH-10) */
+  panel: ReactNode;
   task: TaskDto;
 }
 
@@ -30,16 +32,17 @@ function Card({ children, id, title }: { children: React.ReactNode; id: string; 
 }
 
 /**
- * Revue d'une tâche à relire (E7a) : la consigne et le compte rendu de l'agent côte à côte, les fichiers modifiés et
- * le diff, puis ce que la tâche a consommé et ce que la validation débloque. Bosco ne fusionne jamais.
+ * Revue d'une tâche à relire (E7a), à la disposition d'une session (RF-TACH-10) : le fil de l'agent, son compte rendu
+ * et ses modifications au centre, puis ce que la tâche a consommé, ce que la validation débloque et son journal.
+ * Bosco ne fusionne jamais.
  */
-export function TaskReview({ busy, changes, followers, onCopy, onReject, onValidate, task }: TaskReviewProps) {
+export function TaskReview({ busy, followers, onCopy, onReject, onValidate, panel, task }: TaskReviewProps) {
   const merge =
     task.outcome.branch && task.outcome.from
       ? `git switch ${task.outcome.from} && git merge ${task.outcome.branch}`
       : null;
   return (
-    <div className="flex flex-col gap-4 pb-20 md:pb-0">
+    <div className="flex min-h-full flex-col gap-4 pb-20 md:pb-0">
       <header className="flex flex-wrap items-start gap-3">
         <div className="min-w-0 flex-1">
           <nav aria-label="Fil d’Ariane" className="flex items-center gap-1 text-xs text-muted">
@@ -57,12 +60,8 @@ export function TaskReview({ busy, changes, followers, onCopy, onReject, onValid
             <span>
               {task.repository.name}
               {task.folder ? ` · ${task.folder}` : ''} · {task.mode === 'worker' ? 'Worker' : 'Ma session'}
+              {task.outcome.branch ? ` · ${task.outcome.branch}` : ''}
             </span>
-            {task.outcome.sessionId && (
-              <Link href={`/sessions/${task.outcome.sessionId}`} className="link font-sans">
-                Voir la session
-              </Link>
-            )}
           </p>
         </div>
         <div className="fixed inset-x-0 bottom-16 z-10 flex gap-2 border-t border-line bg-surface p-3 md:static md:border-0 md:bg-transparent md:p-0">
@@ -74,26 +73,8 @@ export function TaskReview({ busy, changes, followers, onCopy, onReject, onValid
           </Button>
         </div>
       </header>
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <div className="flex min-w-0 flex-col gap-4 md:col-span-2">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <Card id="review-instruction" title="Consigne">
-              <p className="line-clamp-6 whitespace-pre-line">{task.instruction}</p>
-            </Card>
-            <Card id="review-report" title="Compte rendu de l’agent">
-              <p className="whitespace-pre-line">{task.outcome.report ?? 'L’agent n’a pas laissé de compte rendu.'}</p>
-            </Card>
-          </div>
-          <Card id="review-changes" title="Modifications">
-            {task.mode === 'session' && (
-              <p className="text-muted">
-                Travail fait par ta session, directement dans le dépôt : relis-le avec git ou ton éditeur.
-              </p>
-            )}
-            {task.mode === 'worker' &&
-              (changes ? <DiffView changes={changes} /> : <p className="text-muted">Lecture du diff…</p>)}
-          </Card>
-        </div>
+      <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 md:grid-cols-3">
+        <div className="flex min-h-0 min-w-0 flex-col md:col-span-2">{panel}</div>
         <aside className="flex flex-col gap-4">
           {task.mode === 'worker' && (
             <Card id="review-usage" title="Consommation">
@@ -153,6 +134,7 @@ export function TaskReview({ busy, changes, followers, onCopy, onReject, onValid
               </div>
             )}
           </Card>
+          <TaskLog log={task.log} />
         </aside>
       </div>
     </div>

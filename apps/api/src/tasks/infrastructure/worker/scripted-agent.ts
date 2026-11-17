@@ -1,6 +1,6 @@
 // Agent et copies factices des scénarios (BOSCO_TEST=1) : ni Docker ni git, un compte rendu écrit d'avance. Les
 // scénarios vérifient le parcours d'une tâche ; l'agent réel se vérifie sur le poste (make claude-compat).
-import { mkdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type {
   AgentEvent,
@@ -16,13 +16,15 @@ import { projectDir } from './docker-agent-runner.ts';
 function transcriptOf(spec: AgentSpec, cwd: string, report: string): string {
   const at = new Date().toISOString();
   const base = { sessionId: `scripted-${spec.taskId}`, cwd, gitBranch: spec.workspace.branch, timestamp: at };
+  // Les lignes d'une reprise ont leurs propres identifiants : le fil les lit à la suite des premières
+  const turn = spec.resume ? 2 : 1;
   return [
-    { ...base, type: 'user', uuid: 'u1', message: { role: 'user', content: spec.prompt } },
+    { ...base, type: 'user', uuid: `u${turn}`, message: { role: 'user', content: spec.prompt } },
     {
       ...base,
       type: 'assistant',
-      uuid: 'a1',
-      message: { id: 'm1', model: spec.model, role: 'assistant', content: [{ type: 'text', text: report }] },
+      uuid: `a${turn}`,
+      message: { id: `m${turn}`, model: spec.model, role: 'assistant', content: [{ type: 'text', text: report }] },
     },
   ]
     .map((line) => JSON.stringify(line))
@@ -105,10 +107,11 @@ export class ScriptedAgentRunner implements AgentRunner, WorkerHealth {
       const cwd = spec.folder ? join(spec.repositoryRoot, spec.folder) : spec.repositoryRoot;
       const dir = join(profile.path, 'projects', projectDir(cwd));
       await mkdir(dir, { recursive: true });
-      await writeFile(
-        join(dir, `scripted-${spec.taskId}.jsonl`),
-        transcriptOf(spec, cwd, `Fait : ${spec.prompt.split('\n')[0]}`),
-      );
+      const file = join(dir, `scripted-${spec.taskId}.jsonl`);
+      // Une reprise continue la même session : ses lignes s'ajoutent au fil déjà gardé (RF-TACH-10)
+      const before = spec.resume ? await readFile(file, 'utf8').catch(() => '') : '';
+      const lines = transcriptOf(spec, cwd, `Fait : ${spec.prompt.split('\n')[0]}`);
+      await writeFile(file, before ? `${before}\n${lines}` : lines);
       profile.onSessionSaved();
     };
     return Promise.resolve({

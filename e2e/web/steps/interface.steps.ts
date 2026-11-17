@@ -127,3 +127,11 @@ When('j’ouvre Bosco au premier plan', async ({ page }) => {
 Then('le tiroir des notifications montre {texte}', async ({ page }, text: string) => {
   await expect(page.getByRole('dialog').getByText(text)).toBeVisible();
 });
+
+When("je clique sur l'onglet {texte}", async ({ page }, name: string) => {
+  await page.getByRole('tab', { name }).click();
+});
+
+Then('le champ {texte} a le focus', async ({ page }, label: string) => {
+  await expect(page.getByLabel(label)).toBeFocused();
+});
