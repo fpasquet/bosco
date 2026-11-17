@@ -171,7 +171,12 @@ export function SessionDetailScreen({ id }: { id: string }) {
                     }}
                   />
                 )}
-                {refusals && <SandboxRefusals refusals={refusals.refusals} />}
+                {refusals && (
+                  <SandboxRefusals
+                    refusals={refusals.refusals}
+                    project={session.project ? { id: session.project.id, name: session.project.name } : null}
+                  />
+                )}
                 {session.pilot?.pending && (
                   <PendingMessage
                     {...session.pilot.pending}

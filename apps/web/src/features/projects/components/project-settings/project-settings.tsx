@@ -19,7 +19,7 @@ import { useProjectActions } from '../project-actions';
 import { ProjectSettingsView } from './project-settings-view';
 
 /** Onglet Réglages d'un projet, relié à Bosco : un changement vaut tout de suite. */
-export function ProjectSettings({ id }: { id: number }) {
+export function ProjectSettings({ domain = null, id }: { domain?: null | string; id: number }) {
   const client = useQueryClient();
   const push = useNotices((state) => state.push);
   const actions = useProjectActions();
@@ -65,6 +65,7 @@ export function ProjectSettings({ id }: { id: number }) {
     <ProjectSettingsView
       busy={change.isPending || domains.isPending}
       domainError={domainError}
+      draftDomain={domain}
       groups={groups}
       now={now}
       project={{ ...project, path: displayPath(project.path, overview.home) }}

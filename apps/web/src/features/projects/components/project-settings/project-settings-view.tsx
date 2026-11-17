@@ -15,6 +15,8 @@ export interface ProjectSettingsViewProps {
   busy: boolean;
   /** Refus de l'API pour le domaine ajouté, posé sous son champ */
   domainError: null | string;
+  /** Domaine à ajouter, déjà rempli (une sortie refusée d'une session en bac à sable) */
+  draftDomain?: null | string;
   /** Tous les groupes : ceux du projet s'affichent, les autres se proposent */
   groups: GroupDto[];
   now: Date;
@@ -100,17 +102,26 @@ function StartBranch({
 function AddDomain({
   busy,
   domains,
+  draft,
   error,
   onAdd,
 }: {
   busy: boolean;
   domains: string[];
+  draft: null | string;
   error: null | string;
   onAdd: (domain: string) => void;
 }) {
   const errorId = useId();
-  const { formState, handleSubmit, register, reset, setError } = useForm({ defaultValues: { domain: '' } });
-  useEffect(() => reset({ domain: '' }), [domains, reset]);
+  // Un domaine déjà dans la liste ne se propose plus : le champ se vide une fois qu'il y est
+  const initial = draft && !domains.includes(draft) ? draft : '';
+  const { formState, handleSubmit, register, reset, setError, setFocus } = useForm({
+    defaultValues: { domain: initial },
+  });
+  useEffect(() => {
+    if (draft) setFocus('domain');
+  }, [draft, setFocus]);
+  useEffect(() => reset({ domain: initial }), [domains, initial, reset]);
   useEffect(() => {
     if (error) setError('domain', { type: 'server', message: error });
   }, [error, setError]);
@@ -150,6 +161,7 @@ function AddDomain({
 export function ProjectSettingsView({
   busy,
   domainError,
+  draftDomain = null,
   groups,
   now,
   onAddDomain,
@@ -266,7 +278,13 @@ export function ProjectSettingsView({
           </ul>
         )}
         <div className="hidden md:block">
-          <AddDomain busy={busy} domains={project.domains} error={domainError} onAdd={onAddDomain} />
+          <AddDomain
+            busy={busy}
+            domains={project.domains}
+            draft={draftDomain}
+            error={domainError}
+            onAdd={onAddDomain}
+          />
         </div>
       </SectionCard>
       <SectionCard title="Activité">

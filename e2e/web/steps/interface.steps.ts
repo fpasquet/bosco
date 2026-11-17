@@ -88,6 +88,10 @@ Then('la liste {texte} vaut {texte}', async ({ page }, label: string, option: st
   await expect(page.getByLabel(label).locator('option:checked')).toHaveText(option);
 });
 
+Then('le champ {texte} vaut {texte}', async ({ page }, label: string, value: string) => {
+  await expect(page.getByRole('textbox', { name: label })).toHaveValue(value);
+});
+
 Then('l’interrupteur {texte} est {texte}', async ({ page }, label: string, state: string) => {
   const toggle = page.getByRole('switch', { name: label });
   await (state === 'activé' ? expect(toggle).toBeChecked() : expect(toggle).not.toBeChecked());

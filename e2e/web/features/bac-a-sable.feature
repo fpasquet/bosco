@@ -35,3 +35,28 @@ Fonctionnalité: Sessions en bac à sable
     Alors je vois le texte « raw.githubusercontent.com »
     Quand je clique sur le bouton « Récupérer la branche »
     Alors je vois le texte « Branche récupérée : bosco/s-monte-typescript-en-version-6 »
+
+  @CA-SESS-108
+  Scénario: « Ajouter à la liste » remplit le domaine refusé dans les domaines du projet de la session
+    Quand j'ouvre la page « /sessions/new »
+    Et je clique sur le bouton radio « Bac à sable »
+    Et je saisis « Monte TypeScript en version 6 » dans le champ « Premier message »
+    Et je clique sur le bouton « Démarrer »
+    Et je clique sur le bouton « Ajouter à la liste : raw.githubusercontent.com »
+    Alors je vois l’élément de menu « À la liste générale »
+    Quand je clique sur l’élément de menu « Aux domaines de labo-ia »
+    Alors je suis sur la page « /projects/1/settings »
+    Et le champ « Ajouter un domaine » vaut « raw.githubusercontent.com »
+    Quand je clique sur le bouton « Ajouter le domaine »
+    Alors je vois le bouton « Retirer raw.githubusercontent.com »
+
+  @CA-SESS-108
+  Scénario: « Ajouter à la liste » peut aussi remplir le domaine refusé dans la liste générale
+    Quand j'ouvre la page « /sessions/new »
+    Et je clique sur le bouton radio « Bac à sable »
+    Et je saisis « Monte TypeScript en version 6 » dans le champ « Premier message »
+    Et je clique sur le bouton « Démarrer »
+    Et je clique sur le bouton « Ajouter à la liste : raw.githubusercontent.com »
+    Et je clique sur l’élément de menu « À la liste générale »
+    Alors je suis sur la page « /settings/sandbox »
+    Et le champ « Ajouter un domaine » vaut « raw.githubusercontent.com »
