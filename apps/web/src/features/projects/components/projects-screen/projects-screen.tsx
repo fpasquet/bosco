@@ -1,6 +1,9 @@
 'use client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { FolderPlus, Layers } from 'lucide-react';
+import { useState } from 'react';
+import type { ProjectDto } from '@bosco/domain';
+import { displayPath } from '@/lib/format';
 import { PageSkeleton } from '@/shared/components/page-skeleton';
 import { useNotices } from '@/shared/hooks/use-notices';
 import { useNow } from '@/shared/hooks/use-now';
@@ -12,11 +15,13 @@ import {
   ignoreSuggestion,
   ProjectRefused,
   projectsOverviewQuery,
+  proposalsQuery,
   restoreSuggestion,
 } from '../../api/projects';
 import { GroupsList } from '../groups-list';
 import { NoProjects } from '../no-projects';
 import { useProjectActions } from '../project-actions';
+import { ProjectSheet } from '../project-sheet';
 import { ProjectsList } from '../projects-list';
 
 const REFRESH_MS = 60_000;
@@ -33,6 +38,9 @@ export function ProjectsScreen({ title }: { title: string }) {
   const now = useNow(REFRESH_MS);
   const { data } = useQuery(projectsOverviewQuery);
   const { data: groups } = useQuery(groupsQuery);
+  const { data: proposals } = useQuery(proposalsQuery);
+  // Sur le téléphone, le projet touché ouvre la feuille de ses actions
+  const [opened, setOpened] = useState<null | ProjectDto>(null);
   const change = useMutation({
     mutationFn: (work: () => Promise<unknown>) => work(),
     // Ranger une session change la vue d'ensemble, l'historique et le contexte : tout se relit
@@ -92,10 +100,16 @@ export function ProjectsScreen({ title }: { title: string }) {
             onIgnore={(path) => change.mutate(() => ignoreSuggestion(path))}
             onNewGroup={(project) => actions.newGroup([project.id])}
             onRestore={(path) => change.mutate(() => restoreSuggestion(path))}
+            onOpen={setOpened}
           />
           <GroupsList groups={groups} />
         </>
       )}
+      <ProjectSheet
+        project={opened && { id: opened.id, name: opened.name, path: displayPath(opened.path, data.home) }}
+        proposals={(proposals ?? []).filter((decision) => decision.target.name === opened?.name).length}
+        onClose={() => setOpened(null)}
+      />
     </div>
   );
 }
