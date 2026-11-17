@@ -1,4 +1,4 @@
-import { BookOpen, History, LayoutDashboard, ListTodo, type LucideIcon, Radar, Settings } from 'lucide-react';
+import { BookOpen, History, LayoutDashboard, type LucideIcon, Radar, Settings } from 'lucide-react';
 
 export interface NavItem {
   href: string;
@@ -11,7 +11,6 @@ export interface NavItem {
 export const NAV_ITEMS: readonly NavItem[] = [
   { href: '/', label: 'Vue d’ensemble', mobileLabel: 'Ensemble', icon: LayoutDashboard },
   { href: '/history', label: 'Historique', mobileLabel: 'Historique', icon: History },
-  { href: '/tasks', label: 'Tâches', mobileLabel: 'Tâches', icon: ListTodo },
   { href: '/context', label: 'Contexte', icon: BookOpen },
   { href: '/sources', label: 'Sources', mobileLabel: 'Sources', icon: Radar },
   { href: '/settings', label: 'Réglages', icon: Settings },

@@ -32,9 +32,8 @@ import {
   SourceSchema,
   TranscriptCursorSchema,
 } from './sessions/infrastructure/persistence/sessions.schema.ts';
+import { EgressRefusalSchema, TaskSchema } from './shared/infrastructure/persistence/set-aside.schema.ts';
 import { SettingSchema } from './shared/infrastructure/persistence/setting.schema.ts';
-import { EgressRefusalSchema } from './tasks/infrastructure/persistence/egress-refusal.schema.ts';
-import { TaskSchema } from './tasks/infrastructure/persistence/task.schema.ts';
 
 export const MIGRATIONS = [
   { name: 'Migration20261107000000', class: Migration20261107000000 },

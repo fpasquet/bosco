@@ -113,6 +113,10 @@ When('je clique sur le bouton radio {texte}', async ({ page }, label: string) =>
   await expect(radio).toBeChecked();
 });
 
+Then('le bouton radio {texte} est coché', async ({ page }, label: string) => {
+  await expect(page.getByRole('radio', { name: label })).toBeChecked();
+});
+
 When('je clique sur le bouton {texte} du tiroir', async ({ page }, name: string) => {
   await page.getByRole('dialog').getByRole('button', { name, exact: true }).click();
 });

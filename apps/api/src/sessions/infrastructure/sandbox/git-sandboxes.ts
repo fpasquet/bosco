@@ -8,7 +8,7 @@ import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
 import type { Sandboxes, SandboxState, TurnLaunch } from '../../application/pilot.service.ts';
-import { SandboxError } from '../../domain/sandbox.ts';
+import { SandboxError, sandboxKeyOf } from '../../domain/sandbox.ts';
 
 const GIT = '/usr/bin/git';
 const run = promisify(execFile);
@@ -51,12 +51,8 @@ export class GitSandboxes implements Sandboxes {
     return join(this.root, sessionId);
   }
 
-  /** Nom court du conteneur : les premiers caractères de la session */
   private keyOf(sessionId: string): string {
-    return sessionId
-      .replaceAll(/[^a-z0-9]/gi, '')
-      .slice(0, 12)
-      .toLowerCase();
+    return sandboxKeyOf(sessionId);
   }
 
   unavailable(): Promise<null | string> {

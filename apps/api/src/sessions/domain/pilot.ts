@@ -87,6 +87,13 @@ export class NoPilotedTurn extends DomainError {
 }
 
 /** Un dépôt, un profil ou une session que Bosco ne connaît pas, ou une session effacée par Claude Code. */
+/** Le quota de l'abonnement dépasse son seuil d'attente : aucun tour ne part (DT-39). */
+export class QuotaHeld extends DomainError {
+  constructor(reason: string) {
+    super('quotaHeld', reason);
+  }
+}
+
 export class PilotTargetNotFound extends DomainError {
   constructor(message: string) {
     super('pilotTargetNotFound', message);

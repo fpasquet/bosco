@@ -1,12 +1,5 @@
 import { DomainError } from '../../shared/domain/domain-error.ts';
-import {
-  type Architecture,
-  type ContextLink,
-  contextOf,
-  contextText,
-  type RepositoryContext,
-  tokensOf,
-} from '../domain/context-text.ts';
+import { type Architecture, contextOf, contextText, type RepositoryContext, tokensOf } from '../domain/context-text.ts';
 import { Decision, type DecisionSnapshot, type DecisionTarget, type DecisionText } from '../domain/decision.ts';
 import { checkInheritance, type SocleScope, type SocleSnapshot, soclesOf } from '../domain/socle.ts';
 
@@ -71,30 +64,33 @@ export class ContextService {
     private readonly clock: { now(): Date },
   ) {}
 
+  listRepositories(): Promise<{ name: string; root: string }[]> {
+    return this.repositories.list();
+  }
+
+  /** Dépôt d'un dossier de travail (le plus profond qui le contient) et son dossier relatif ; null hors des dépôts. */
+  async repositoryOf(path: string): Promise<null | { folder: string; name: string }> {
+    const known = await this.repositories.list();
+    const found = known
+      .filter(({ root }) => path === root || path.startsWith(`${root}/`))
+      .toSorted((a, b) => b.root.length - a.root.length)[0];
+    return found ? { name: found.name, folder: path.slice(found.root.length + 1) } : null;
+  }
+
   async overview(repository: string): Promise<ContextOverview> {
     const context = await this.contextOf(repository);
     return { repository, ...context };
   }
 
-  /** Texte exact qu'un agent lira au prochain lancement, avec les liens d'une tâche s'il y en a (E9f). */
-  async preview(repository: string, links: readonly ContextLink[] = []): Promise<ContextPreview> {
+  /** Texte exact qu'une session lira par le serveur MCP de Bosco (E9f). */
+  async preview(repository: string): Promise<ContextPreview> {
     const context = await this.contextOf(repository);
-    const text = contextText(repository, context, links);
+    const text = contextText(repository, context);
     return {
       text,
       tokens: tokensOf(text),
       at: this.clock.now(),
       absent: { proposed: context.proposed, excluded: context.excluded },
-    };
-  }
-
-  /** Décisions transmises à un lancement, avec leur version : gardées dans le journal de la tâche (CA-CONT-23). */
-  async sentTo(repository: string, links: readonly ContextLink[] = []): Promise<{ text: string; versions: string }> {
-    const context = await this.contextOf(repository);
-    const sent = [...context.decisions, ...context.socles.flatMap(({ decisions }) => decisions)];
-    return {
-      text: contextText(repository, context, links),
-      versions: sent.map((decision) => `DEC-${decision.id} v${decision.versions.length}`).join(', '),
     };
   }
 

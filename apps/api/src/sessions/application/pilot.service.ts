@@ -22,6 +22,7 @@ import {
   type PilotSettings,
   PilotTargetNotFound,
   questionsOf,
+  QuotaHeld,
   SessionOpenInTerminal,
 } from '../domain/pilot.ts';
 import {
@@ -128,11 +129,21 @@ export interface PilotRepository {
   save(record: PilotRecord): Promise<void>;
 }
 
-/** Abonnements Claude d'un dépôt (E8a) : les profils qui ont un accès, et celui du dépôt (ou le général). */
+/** Abonnements Claude (E11) : les profils qui ont un accès, et celui par défaut. */
 export interface PilotProfiles {
-  of(
-    repository: string,
-  ): Promise<{ choices: { account: null | string; label: string; path: string }[]; effective: null | string }>;
+  subscriptions(): Promise<{
+    choices: { account: null | string; label: string; path: string }[];
+    effective: null | string;
+  }>;
+}
+
+/** Quota de l'abonnement (DT-39) : l'usage lu à chaque tour, et les seuils qui retiennent puis arrêtent un tour. */
+export interface PilotQuota {
+  /** Pourquoi un tour de cet abonnement ne part pas ; null s'il peut partir */
+  holdReason(profile: string, sandboxed: boolean): null | string;
+  record(profile: string, windows: QuotaWindows): void;
+  /** Pourquoi le tour en cours s'arrête ; null s'il peut continuer */
+  stopReason(profile: string, sandboxed: boolean): null | string;
 }
 
 /** Ce que l'interface voit d'une session pilotée (E2e). */
@@ -157,11 +168,15 @@ interface Turn {
   process: RunningTurn;
   result: boolean;
   startedAt: Date;
+  /** Arrêté par le quota de l'abonnement : la raison, dite à la fin du tour */
+  stopped: null | string;
 }
 
 type Signals = Pick<LiveSignalService, 'receive' | 'requestAnswers' | 'requestPermission'>;
 
-const NO_PROFILES: PilotProfiles = { of: () => Promise.resolve({ choices: [], effective: null }) };
+const NO_PROFILES: PilotProfiles = { subscriptions: () => Promise.resolve({ choices: [], effective: null }) };
+
+const NO_QUOTA: PilotQuota = { holdReason: () => null, record: () => undefined, stopReason: () => null };
 
 /** Ce que le bac à sable demande en plus au démarrage : la source de ses conversations, et la notification de la veille. */
 interface SandboxDeps {
@@ -190,8 +205,8 @@ export class PilotService {
   private readonly pending = new Map<string, PilotMessage>();
   private profiles: PilotProfiles = NO_PROFILES;
   private sandbox: null | SandboxDeps = null;
-  /** Usage de l'abonnement lu dans le flux d'un tour, rangé par profil Claude (DT-39) */
-  private quotaSink: (profile: string, windows: QuotaWindows) => void = () => undefined;
+  /** Usage de l'abonnement lu dans le flux d'un tour, rangé par profil Claude, et ses seuils (DT-39) */
+  private quota: PilotQuota = NO_QUOTA;
   /** État de chaque conteneur, relu par l'entretien : la vue de la session le montre sans attendre Docker */
   private readonly sandboxStates = new Map<string, SandboxState>();
   private channel: Pick<ChannelService, 'isConnected' | 'send'> = { isConnected: () => false, send: () => false };
@@ -215,9 +230,9 @@ export class PilotService {
     for (const record of await this.repository.list()) this.records.set(record.sessionId, record);
   }
 
-  /** Quota de l'abonnement, branché au démarrage : chaque tour piloté le tient à jour (DT-39). */
-  useQuota(sink: (profile: string, windows: QuotaWindows) => void): void {
-    this.quotaSink = sink;
+  /** Quota de l'abonnement, branché au démarrage : chaque tour piloté le tient à jour, ses seuils le retiennent (DT-39). */
+  useQuota(quota: PilotQuota): void {
+    this.quota = quota;
   }
 
   /** Bacs à sable des sessions (DT-37), branchés au démarrage. */
@@ -225,13 +240,20 @@ export class PilotService {
     this.sandbox = deps;
   }
 
-  /** Abonnements par dépôt, tenus par les droits des agents (E8a), branchés au démarrage. */
+  /** Abonnements Claude et celui par défaut (E11), branchés au démarrage. */
   useProfiles(profiles: PilotProfiles): void {
     this.profiles = profiles;
   }
 
   isRunning(sessionId: string): boolean {
     return this.turns.has(sessionId);
+  }
+
+  /** Sessions dont le bac à sable existe encore : le panneau des conteneurs les nomme (E19a). */
+  sandboxedSessions(): string[] {
+    return [...this.records.values()]
+      .filter(({ sandbox }) => sandbox !== null && sandbox.removedAt === null)
+      .map(({ sessionId }) => sessionId);
   }
 
   /** Tours en cours, avec le processus de leur agent : le panneau des conteneurs les mesure (E19a). */
@@ -266,7 +288,7 @@ export class PilotService {
     return !this.turns.has(sessionId) && this.registry.isOpen(sourceId, sessionId) === true;
   }
 
-  /** Formulaire d'une nouvelle session (E16a) : dépôts connus, abonnements et celui de chaque dépôt. */
+  /** Formulaire d'une nouvelle session (E16a) : dépôts connus, abonnements et celui par défaut. */
   async options(): Promise<{
     profiles: { account: null | string; label: string; path: string }[];
     repositories: { branch: null | string; defaultProfile: null | string; name: string; root: string }[];
@@ -275,17 +297,13 @@ export class PilotService {
     const sources = await this.sources.list();
     const watched = new Set(sources.filter((source) => source.watched).map(({ path }) => path));
     const known = await this.sessions.knownRepositories();
-    let profiles: { account: null | string; label: string; path: string }[] = [];
+    const { choices, effective } = await this.profiles.subscriptions();
+    const profiles = choices.filter(({ path }) => watched.has(path));
+    const defaultProfile = effective && watched.has(effective) ? effective : null;
     const repositories = [];
     for (const { name, root } of known) {
-      const { choices, effective } = await this.profiles.of(name);
-      profiles = choices.filter(({ path }) => watched.has(path));
       const branch = this.sandbox ? await this.sandbox.sandboxes.currentBranch(root).catch(() => null) : null;
-      repositories.push({ branch, defaultProfile: effective && watched.has(effective) ? effective : null, name, root });
-    }
-    if (known.length === 0) {
-      const general = await this.profiles.of('');
-      profiles = general.choices.filter(({ path }) => watched.has(path));
+      repositories.push({ branch, defaultProfile, name, root });
     }
     const sandboxUnavailable = this.sandbox
       ? await this.sandbox.sandboxes.unavailable()
@@ -306,12 +324,13 @@ export class PilotService {
     const known = await this.sessions.knownRepositories();
     const repository = known.find(({ root }) => root === input.repository);
     if (!repository) throw new PilotTargetNotFound(`Bosco ne connaît pas le dépôt ${input.repository}.`);
-    const accounts = await this.profiles.of(repository.name);
+    const accounts = await this.profiles.subscriptions();
     const profile = input.profile ?? accounts.effective;
     const sources = await this.sources.list();
     const source = sources.find(({ path, watched }) => watched && path === profile);
     if (!source)
       throw new PilotTargetNotFound('Choisis un abonnement Claude parmi les profils surveillés par Bosco (Sources).');
+    this.checkQuota(source.path, Boolean(input.sandbox));
     const sessionId = this.ids.next();
     const record: PilotRecord = input.sandbox
       ? await this.sandboxed(sessionId, repository.root, source.path, message, input.sandbox)
@@ -465,6 +484,7 @@ export class PilotService {
       this.openInTerminal(record.sourceId, sessionId) ||
       (!this.records.has(sessionId) && (await this.isLive(sessionId)));
     if (inTerminal) return this.throughChannel(sessionId, message);
+    await this.checkQuotaOf(record);
     // Un message repousse l'arrêt et la suppression du bac à sable (règle 12)
     const sandbox = record.sandbox && { ...record.sandbox, lastMessageAt: this.clock.now(), warnedAt: null };
     await this.keep({ ...record, sandbox, settings: input.settings });
@@ -516,6 +536,24 @@ export class PilotService {
     this.pending.clear();
   }
 
+  /** Au-delà du seuil d'attente, aucun tour ne part : le message est refusé avec la raison (DT-39). */
+  private checkQuota(profile: string, sandboxed: boolean): void {
+    const held = this.quota.holdReason(profile, sandboxed);
+    if (held) throw new QuotaHeld(held);
+  }
+
+  private async checkQuotaOf(record: PilotRecord): Promise<void> {
+    const profile = await this.profileOf(record);
+    if (profile) this.checkQuota(profile, record.sandbox !== null);
+  }
+
+  /** Abonnement d'une session : celui choisi pour son bac à sable, sinon celui du profil de la session. */
+  private async profileOf(record: PilotRecord): Promise<null | string> {
+    if (record.sandbox) return record.sandbox.profile;
+    const sources = await this.sources.list();
+    return sources.find(({ id }) => id === record.sourceId)?.path ?? null;
+  }
+
   private async recordOf(sessionId: string): Promise<PilotRecord> {
     const known = this.records.get(sessionId);
     if (known) return known;
@@ -563,7 +601,10 @@ export class PilotService {
       process: undefined as unknown as RunningTurn,
       result: false,
       startedAt: this.clock.now(),
+      stopped: null,
     };
+    const profile = record.sandbox?.profile ?? source.path;
+    const sandboxed = record.sandbox !== null;
     const request: TurnRequest = {
       configDir: source.path,
       cwd: record.cwd,
@@ -577,12 +618,20 @@ export class PilotService {
       permission: (requestId, tool, input) => this.permission(origin, turn, requestId, tool, input),
       question: (requestId, input) => this.question(origin, turn, requestId, input),
       cancelled: (requestId) => turn.abandons.get(requestId)?.(),
-      // L'abonnement d'un bac à sable est celui choisi au démarrage ; sinon celui du profil de la session
-      quota: (windows) => this.quotaSink(record.sandbox?.profile ?? source.path, windows),
+      // L'abonnement d'un bac à sable est celui choisi au démarrage ; sinon celui du profil de la session. Au-delà du
+      // seuil d'arrêt, le tour s'interrompt, comme avec « Arrêter »
+      quota: (windows) => {
+        this.quota.record(profile, windows);
+        const stop = this.quota.stopReason(profile, sandboxed);
+        if (!stop || turn.stopped) return;
+        turn.stopped = stop;
+        turn.process.interrupt();
+      },
       result: (last) => {
         turn.result = true;
         // Sans suivi en direct, c'est Bosco qui signale la fin du tour ; avec, le hook Stop le fait déjà
-        if (!liveTracking) void this.signals.receive(origin, { kind: 'stop', message: last }, 'pilot');
+        const message = turn.stopped ? `Tour arrêté : ${turn.stopped}` : last;
+        if (!liveTracking || turn.stopped) void this.signals.receive(origin, { kind: 'stop', message }, 'pilot');
         turn.process.finish();
       },
       exited: (error) => void this.exited(origin, turn, error, liveTracking),
@@ -649,8 +698,14 @@ export class PilotService {
     const record = this.records.get(origin.sessionId);
     if (next && record) {
       this.pending.delete(origin.sessionId);
-      await this.run(record, next, true);
-      return;
+      // Le message en attente ne part pas au-delà du seuil d'attente du quota : il est rendu avec la raison
+      const profile = await this.profileOf(record);
+      const held = profile ? this.quota.holdReason(profile, record.sandbox !== null) : null;
+      if (!held) {
+        await this.run(record, next, true);
+        return;
+      }
+      await this.signals.receive(origin, { kind: 'stop', message: `Message non envoyé : ${held}` }, 'pilot');
     }
     await this.publish(origin.sessionId);
   }

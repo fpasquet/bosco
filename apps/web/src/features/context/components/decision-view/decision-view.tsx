@@ -221,10 +221,7 @@ export function DecisionView({
               ))}
               {decision.fromTask !== null && (
                 <li className="text-sm">
-                  <Link href={`/tasks/${decision.fromTask}`} className="link font-mono text-xs">
-                    T-{decision.fromTask}
-                  </Link>{' '}
-                  tâche à l’origine de la proposition
+                  <span className="font-mono text-xs">T-{decision.fromTask}</span> tâche à l’origine de la proposition
                 </li>
               )}
               {specifiedBy.length === 0 && decision.fromTask === null && (

@@ -3,8 +3,8 @@ import Link from 'next/link';
 const TABS = [
   { href: '/settings/repositories', label: 'Dépôts' },
   { href: '/settings/notifications', label: 'Notifications' },
-  { href: '/settings/isolation', label: 'Isolation du worker' },
-  { href: '/settings/test-environments', label: 'Environnements de test' },
+  { href: '/settings/subscription', label: 'Abonnement Claude' },
+  { href: '/settings/isolation', label: 'Isolation du bac à sable' },
 ] as const;
 
 /** Onglets des Réglages, réservés à la personne (RF-CONT-09). */

@@ -153,14 +153,15 @@ export function SourcesScreen({ title }: { title: string }) {
         />
       )}
       <nav
-        aria-label="Réglages du worker"
+        aria-label="Réglages du poste"
         className="flex flex-col divide-y divide-line rounded-card border border-line bg-surface shadow-card md:hidden"
       >
         {[
           { href: '/settings/repositories', label: 'Dépôts' },
           { href: '/settings/notifications', label: 'Notifications' },
-          { href: '/settings/isolation', label: 'Isolation du worker' },
-          { href: '/settings/test-environments', label: 'Environnements de test' },
+          { href: '/settings/subscription', label: 'Abonnement Claude' },
+          { href: '/settings/isolation', label: 'Isolation du bac à sable' },
+          { href: '/containers', label: 'Conteneurs en cours' },
         ].map(({ href, label }) => (
           <Link key={href} href={href} className="flex items-center justify-between px-4 py-3">
             <span className="font-medium">{label}</span>

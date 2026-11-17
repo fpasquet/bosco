@@ -67,19 +67,3 @@ export interface DecisionDetailDto {
   replacedBy: DecisionDto | null;
   specifiedBy: DecisionDto[];
 }
-
-export type LinkServiceDto = 'confluence' | 'decision' | 'github' | 'jira' | 'page';
-
-/** Lien d'une tâche (E10b) : ce que Bosco en a lu, et la cause d'une lecture en échec (« Non rafraîchi »). */
-export interface LinkDto {
-  error: null | string;
-  id: number;
-  kind: string;
-  person: null | string;
-  readAt: null | string;
-  service: LinkServiceDto;
-  state: null | string;
-  taskId: number;
-  title: string;
-  url: string;
-}
