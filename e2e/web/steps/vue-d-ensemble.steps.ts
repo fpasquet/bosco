@@ -132,3 +132,7 @@ When("je déplie l'étape {texte}", async ({ page }, title: string) => {
   const name = new RegExp(`^${escaped}`);
   await page.getByRole('log').getByRole('button', { name }).click();
 });
+
+Then('le tableau des sessions montre {texte}', async ({ page }, text: string) => {
+  await expect(page.getByRole('table', { name: 'Sessions ouvertes' }).getByText(text)).toBeVisible();
+});
