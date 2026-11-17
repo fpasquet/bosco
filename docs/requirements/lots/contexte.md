@@ -125,7 +125,7 @@ Règles de l'écran :
 
 ## <a id="e10"></a>E10 · Liens d'une tâche
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e10.html` · implémentation : **Livré (Liens d'une tâche développés (E10b) ; E10a retiré, son identifiant réservé : les réglages n'ont plus d'onglet Intégrations, GitHub étant le seul service que Bosco lit, et s'ouvrent sur Dépôts. Une adresse collée sur une tâche est reconnue avant l'ajout ; GitHub se lit avec GitHub CLI du poste, sans jeton gardé ; un ticket ou une page d'un site *.atlassian.net est reconnu à son adresse (clé du ticket, titre tiré de l'adresse), marqué « Lu par l'agent », sans que Bosco le lise ; toute autre adresse avec le titre de sa page ; titre, état et auteur relus toutes les heures ; un lien illisible reste, « Non rafraîchi », avec ses dernières informations, et un lien GitHub renvoie au compte GitHub par défaut (E11b) ; retirer un lien ne le supprime que de la tâche. Écarts : les liens s'ajoutent aux tâches seulement, pas encore aux sessions ni aux décisions ; CA-CONT-97 n'a pas de scénario, le lecteur scripté de GitHub ne sachant pas échouer.)**
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e10.html` · implémentation : **Écart (Mis de côté le 17/11/2026 avec les tâches (DT-40) : retiré du code dans fpasquet/bosco#47, retour préparé dans fpasquet/bosco#48. Avant le retrait : Liens d'une tâche développés (E10b) ; E10a retiré, son identifiant réservé : les réglages n'ont plus d'onglet Intégrations, GitHub étant le seul service que Bosco lit, et s'ouvrent sur Dépôts. Une adresse collée sur une tâche est reconnue avant l'ajout ; GitHub se lit avec GitHub CLI du poste, sans jeton gardé ; un ticket ou une page d'un site *.atlassian.net est reconnu à son adresse (clé du ticket, titre tiré de l'adresse), marqué « Lu par l'agent », sans que Bosco le lise ; toute autre adresse avec le titre de sa page ; titre, état et auteur relus toutes les heures ; un lien illisible reste, « Non rafraîchi », avec ses dernières informations, et un lien GitHub renvoie au compte GitHub par défaut (E11b) ; retirer un lien ne le supprime que de la tâche. Écarts : les liens s'ajoutent aux tâches seulement, pas encore aux sessions ni aux décisions ; CA-CONT-97 n'a pas de scénario, le lecteur scripté de GitHub ne sachant pas échouer.)**
 
 ### <a id="e10b"></a>E10b · Liens d'une tâche
 
@@ -144,115 +144,95 @@ Règles de l'écran :
 
 **Mobile** : feuille modale en bas de l'écran, au-dessus de la revue de la tâche. Le bouton « Ajouter » est pleine largeur (44 px) ; le retrait d'un lien se fait sur le poste, ainsi que la pastille 5.
 
-## <a id="e11"></a>E11 · Isolation du worker
+## <a id="e11"></a>E11 · Isolation du bac à sable et abonnement
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e11.html` · implémentation : **À faire évoluer (E11a : bloc « Quota de l'abonnement » (usage de 5 h et de la semaine par abonnement, seuils d'attente et d'arrêt), à développer. Isolation du worker développée (E11a, E11b) : un conteneur jetable par tâche, seul sur un réseau privé sans Internet ; sa seule sortie est un proxy propre à la tâche, qui ne laisse passer que les domaines de la liste, relue à chaque connexion. Liste par défaut verrouillée, domaines ajoutés et retirés d'un clic, refus récents avec l'heure, la tâche et le domaine, « Autoriser ce domaine » sans relancer la tâche ; plafond d'agents réglable de 1 à 8 ; lecture seule sur le téléphone, ouvert depuis Sources. Vérifié sur deux vraies tâches : github.com refusé puis autorisé. Secrets (E11b) : l'abonnement Claude se choisit parmi les profils qui ont un accès, avec leur compte ; le .npmrc du poste (~/.npmrc par défaut, chemin réglable) est copié en lecture seule pour chaque tâche, et les domaines de ses registres sont autorisés d'office ; ses jetons ne s'affichent jamais. Une session du poste peut lire ces réglages, comme tout ce que Bosco sert sur le poste. Compte GitHub par défaut (E11b) : le compte actif de GitHub CLI, ou un autre compte connecté ; il n'est jamais transmis à l'agent. Lecture Jira et Confluence par les agents (règle 14, E11b), désactivée par défaut : le connecteur Atlassian du compte claude.ai, sept outils de lecture permis par --allowedTools en mode dontAsk, mcp-proxy.anthropic.com verrouillé dans la liste tant qu'elle est activée, une ligne de journal par lecture, « Connecteur Atlassian indisponible » sans arrêter la tâche ; E11a la mentionne. Vérifié hors conteneur avec claude -p (ticket lu, écriture refusée). Écart : pas encore vérifié sur une vraie tâche du worker dans Docker.)**
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e11.html` · implémentation : **En cours (En cours dans fpasquet/bosco#47 (DT-40) : E11a devient « Isolation du bac à sable », en une page : ce que voit l'agent, ressources de chaque bac à sable, domaines autorisés ; plus de capacité du worker, de refus par tâche ni de secrets du worker. E11b est fusionné dans E11a. E11c, nouvel onglet « Abonnement Claude » : abonnement par défaut des nouvelles sessions, quota de chaque abonnement, seuils d'attente et d'arrêt, et leur portée (bacs à sable seulement, ou aussi les sessions pilotées du poste). Avant : E11a : bloc « Quota de l'abonnement » (usage de 5 h et de la semaine par abonnement, seuils d'attente et d'arrêt), en cours dans fpasquet/bosco#45. Isolation du worker développée (E11a, E11b) : un conteneur jetable par tâche, seul sur un réseau privé sans Internet ; sa seule sortie est un proxy propre à la tâche, qui ne laisse passer que les domaines de la liste, relue à chaque connexion. Liste par défaut verrouillée, domaines ajoutés et retirés d'un clic, refus récents avec l'heure, la tâche et le domaine, « Autoriser ce domaine » sans relancer la tâche ; plafond d'agents réglable de 1 à 8 ; lecture seule sur le téléphone, ouvert depuis Sources. Vérifié sur deux vraies tâches : github.com refusé puis autorisé. Secrets (E11b) : l'abonnement Claude se choisit parmi les profils qui ont un accès, avec leur compte ; le .npmrc du poste (~/.npmrc par défaut, chemin réglable) est copié en lecture seule pour chaque tâche, et les domaines de ses registres sont autorisés d'office ; ses jetons ne s'affichent jamais. Une session du poste peut lire ces réglages, comme tout ce que Bosco sert sur le poste. Compte GitHub par défaut (E11b) : le compte actif de GitHub CLI, ou un autre compte connecté ; il n'est jamais transmis à l'agent. Lecture Jira et Confluence par les agents (règle 14, E11b), désactivée par défaut : le connecteur Atlassian du compte claude.ai, sept outils de lecture permis par --allowedTools en mode dontAsk, mcp-proxy.anthropic.com verrouillé dans la liste tant qu'elle est activée, une ligne de journal par lecture, « Connecteur Atlassian indisponible » sans arrêter la tâche ; E11a la mentionne. Vérifié hors conteneur avec claude -p (ticket lu, écriture refusée). Écart : pas encore vérifié sur une vraie tâche du worker dans Docker.)**
 
-### <a id="e11a"></a>E11a · Isolation du worker : mode et ressources
+### <a id="e11a"></a>E11a · Isolation du bac à sable
 
-Où et avec quelles limites travaille un agent du worker : un conteneur jetable par tâche, des ressources plafonnées et ce que l'agent peut ou non voir. C'est le premier des deux sous-onglets de l'isolation.
+Où et avec quelles limites travaille une session en bac à sable : un conteneur par session, des ressources plafonnées, ce que l'agent peut ou non voir et les seuls domaines qu'il peut joindre. Une seule page, sans sous-onglet.
 
-- **Depuis** l'onglet « Isolation du worker » des Réglages · [E12a](#e12a) pour l'image
-- **Ensuite** [E11b](#e11b) avec « Sortie réseau et secrets » · [E8a](taches.md#e8a) pour les droits des agents
-
-Règles de l'écran :
-
-1. Dans cette version, un seul mode : chaque tâche du worker a son conteneur jetable, supprimé à la fin ; seule la branche reste (règle 6). Plusieurs tâches peuvent utiliser les mêmes ports, puisque rien n'est publié sur le poste.
-2. Une tâche ne démarre que si le plafond d'agents n'est pas atteint et s'il reste assez de mémoire au-delà de la marge gardée libre. Sinon, elle reste « En file » avec la raison, et part dès qu'une place se libère. Le plafond de 4 agents se règle ici.
-3. Les ressources sont plafonnées pour chaque agent : mémoire, processeurs et nombre de processus. L'utilisateur sans droits d'administration est verrouillé : il ne se désactive pas.
-4. Le tableau résume ce que l'agent voit fichiers, secrets, réseau. Les secrets et les domaines se règlent dans [E11b](#e11b) ; l'image se choisit par dépôt dans [E12a](#e12a). La lecture Jira et Confluence passe par ton connecteur Atlassian de claude.ai, en lecture seule, et s'active dans [E11b](#e11b) (règle 14) ; l'agent n'a aucun autre connecteur ni serveur MCP.
-5. Ces réglages sont réservés à toi : aucune session ni aucun agent ne peut les lire pour les contourner ni les modifier (règle 9).
-6. Les tâches du worker n'ont plus de budget en dollars : elles sont limitées par le quota de l'abonnement Claude. Ce bloc montre, par abonnement, la part utilisée de la fenêtre de 5 h et de la semaine, avec l'heure de remise à zéro, puis les quatre seuils, réglés une fois pour toutes les tâches. « Ne plus lancer de tâche au-delà de » (50 % et 70 %) : la tâche attend en file avec la raison « Quota de l'abonnement : 5 h à 52 %, reprise vers 16:00 ». « Arrêter l'agent au-delà de » (80 % et 90 %) : l'agent en cours s'arrête et la tâche passe « En échec » avec la cause « Quota de l'abonnement atteint », relançable (la relance attend le retour sous le seuil d'attente). Le quota est lu à chaque tour d'un agent ou d'une session de cet abonnement ; un abonnement jamais lu est considéré libre jusqu'au premier tour ; une fenêtre dont l'heure de remise à zéro est passée repart de 0 %. Tes sessions interactives ne sont jamais arrêtées par Bosco.
-
-**Mobile** : écran poussé en lecture seule. Le tableau devient une liste ; la mention « Modifiable depuis le poste » l'explique. Réglages s'ouvre depuis l'onglet Sources.
-
-### <a id="e11b"></a>E11b · Isolation du worker : sortie réseau et secrets
-
-Quels domaines un agent du worker peut joindre, ce qui a été refusé et ce qu'il reçoit comme secrets. Deuxième sous-onglet de l'isolation.
-
-- **Depuis** [E11a](#e11a) avec « Sortie réseau et secrets » · le lien « Voir les refus » d'une tâche bloquée
-- **Ensuite** retour à [E11a](#e11a) · [E4a](sessions.md#e4a) pour les sources
+- **Depuis** l'onglet « Isolation du bac à sable » des Réglages
+- **Ensuite** [E11c](#e11c) pour l'abonnement et son quota · [E19a](#e19a) pour les conteneurs en cours · [E2j](sessions.md#e2j) pour les refus de domaine d'une session
 
 Règles de l'écran :
 
-1. La liste par défaut est verrouillée : ces domaines sont nécessaires à Claude Code et aux installations, ils ne se retirent pas (règle 7).
-2. On ajoute un domaine par nom ; `*.domaine` couvre ses sous-domaines. Les domaines ajoutés se retirent d'un clic. Tout domaine absent de la liste est refusé (règle 7).
-3. Chaque refus est visible avec l'heure, la tâche et le domaine. « Autoriser ce domaine » l'ajoute à la liste sans relancer la tâche : l'agent peut réessayer.
-4. Le filtrage se fait par nom de domaine : un domaine autorisé reste une sortie possible pour un agent qui voudrait y envoyer des données. L'avertissement reste affiché.
-5. Chaque tâche reçoit une copie de l'accès à l'abonnement Claude du profil choisi, et une copie du fichier .npmrc choisi s'il existe, toutes deux supprimées à sa fin. « Modifier » choisit le profil parmi ceux qui ont un accès, avec leur compte, le compte GitHub parmi ceux connectés à GitHub CLI sur le poste, ou le chemin du .npmrc (`~/.npmrc` par défaut) ; le choix vaut pour les tâches suivantes. L'abonnement et le compte GitHub sont ceux par défaut : un dépôt peut choisir les siens dans ses droits ([E8a](taches.md#e8a)). Le compte GitHub sert à Bosco, sur le poste, pour pousser la branche et ouvrir la PR ; il n'est jamais transmis à l'agent. Les accès des intégrations et les réglages du poste ne sont jamais transmis (règle 5). Les tâches comptent dans les limites de l'abonnement choisi (règle 12).
-6. Les registres privés sont ceux du .npmrc choisi, par scope (`@interne`) : leurs domaines sont autorisés d'office pour que les installations passent. Leurs jetons ne s'affichent jamais ; l'agent les lit dans sa copie du fichier, d'où l'intérêt d'un jeton en lecture seule et de courte durée.
-7. Désactivée par défaut. Activée, chaque agent du worker peut lire Jira et Confluence par le connecteur Atlassian du compte claude.ai de l'abonnement choisi : un ticket, ses commentaires et ses liens, une recherche JQL, une page, ses sous-pages et une recherche CQL. Seuls ces outils de lecture lui sont permis : il ne peut ni créer, ni modifier, ni commenter, ni utiliser tes autres connecteurs (Slack, Gmail…). Aucun accès n'est copié dans son conteneur : la connexion reste celle de claude.ai, jointe par `mcp-proxy.anthropic.com`, ajouté à la liste par défaut tant que la lecture est activée. Chaque lecture est notée dans le journal de la tâche ; si le connecteur n'est pas branché sur ce compte, le journal le dit et la tâche continue sans lui (règle 14).
+1. Un conteneur par session en bac à sable, sur la copie du dépôt et la branche de cette session. Il s'arrête après 30 minutes sans message et repart au message suivant ; la copie reste jusqu'à ce que la branche soit récupérée. Il n'y a plus de conteneur jetable par tâche : les tâches sont mises de côté.
+2. Le tableau résume ce que l'agent voit : fichiers, secrets, réseau. Seul l'accès à l'abonnement Claude de la session lui est transmis ; ni compte GitHub, ni .npmrc, ni connecteur. L'image est la même pour tous les bacs à sable.
+3. Les ressources sont plafonnées pour chaque bac à sable : mémoire, processeurs et nombre de processus. L'utilisateur sans droits d'administration est verrouillé : il ne se désactive pas. Les conteneurs en cours se suivent dans [E19a](#e19a).
+4. La liste par défaut est verrouillée : ce sont les domaines dont Claude Code et les installations ont besoin ; elle ne se modifie pas.
+5. Un domaine ajouté vaut tout de suite, sans relancer les bacs à sable déjà démarrés (RF-CONT-07) ; la croix « Retirer » vaut de même. « *.domaine » couvre les sous-domaines. Les domaines refusés se lisent dans chaque session ([E2j](sessions.md#e2j)).
+6. Le filtrage se fait par nom de domaine : un domaine autorisé reste une sortie possible pour une donnée que l'agent y enverrait. Mieux vaut peu de domaines.
+7. Ces réglages sont réservés au poste : aucune session ni aucun agent ne peut les lire pour les contourner ni les modifier (CA-CONT-42). Sur le téléphone, ils se lisent seulement.
 
-**Mobile** : écran poussé en lecture seule, refus récents en tête. Autoriser un domaine et activer la lecture Jira et Confluence se font depuis le poste.
+**Mobile** : écran poussé en lecture seule, ouvert depuis Réglages. Le tableau devient une liste ; ni champ d'ajout ni croix, et la mention « Modifiable depuis le poste » l'explique.
+
+### <a id="e11b"></a>E11b · Sortie réseau et secretsMis de côté
+
+Ancien second sous-onglet de l'isolation du worker. L'identifiant est gardé pour ne pas le réutiliser.
+
+### <a id="e11c"></a>E11c · Abonnement Claude
+
+L'abonnement proposé à chaque nouvelle session et le quota qui retient ou arrête les tours. Onglet des Réglages, après Notifications. Il reprend le bloc de quota qui vivait dans l'isolation, et le choix de l'abonnement qui vivait avec les secrets du worker.
+
+- **Depuis** l'onglet « Abonnement Claude » des Réglages · le message d'une session retenue par le quota ([E2g](sessions.md#e2g))
+- **Ensuite** [E11a](#e11a) pour l'isolation du bac à sable · [E16b](sessions.md#e16b) pour choisir l'abonnement au démarrage
+
+Règles de l'écran :
+
+1. L'abonnement par défaut est proposé à chaque nouvelle session ; on peut en choisir un autre au démarrage ([E16b](sessions.md#e16b)). « Modifier » ouvre un choix parmi les profils surveillés qui ont un accès, avec leur compte, puis « Enregistrer ». Sans aucun accès, la carte le dit et renvoie à une connexion dans un profil surveillé.
+2. Deux seuils par fenêtre (5 h et semaine). Au-delà du seuil d'attente, un message à une session retenue est refusé avec la raison (« Quota de l'abonnement : 5 h à 52 %, reprise vers 16:00 ») et un message en attente n'est pas envoyé. Au-delà du seuil d'arrêt, le tour en cours s'interrompt et le fil dit « Tour arrêté : Quota de l'abonnement atteint : fenêtre de 5 h à 81 % ». L'attente reste sous l'arrêt, de 1 à 100 % (CA-CONT-99).
+3. Le quota se lit par abonnement : part utilisée de la fenêtre de 5 h et de la semaine, avec l'heure de remise à zéro. Il est lu à chaque tour d'une session pilotée de l'abonnement ; un abonnement jamais lu est considéré libre jusqu'au premier tour, et une fenêtre dont l'heure de remise à zéro est passée repart de 0 %. Les sessions lancées dans un terminal ne sont jamais arrêtées par Bosco.
+4. Par défaut, les seuils ne retiennent que les sessions en bac à sable : le poste est laissé tranquille (CA-SESS-116). La seconde option étend la retenue aux sessions pilotées sur le poste (CA-SESS-117). Le choix vaut pour les messages suivants.
+
+**Mobile** : écran poussé en lecture seule, ouvert depuis Réglages : jauges, seuils et portée s'affichent, sans champ ni bouton. Le choix de l'abonnement et les seuils se modifient depuis le poste.
 
 ## <a id="e19"></a>E19 · Conteneurs en cours
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e19.html` · implémentation : **En cours**
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e19.html` · implémentation : **En cours (En cours dans fpasquet/bosco#47 (DT-40) : le panneau liste les bacs à sable démarrés (« Voir la session ») et les tours pilotés sur le poste (« Arrêter le tour ») ; plus d'agents du worker, de services de test ni de conteneurs restés (E19b, E19d mis de côté) ; sur le téléphone, l'écran s'ouvre depuis Sources › « Conteneurs en cours ». Livré avant (fpasquet/bosco#38) : mesure toutes les 5 s, plafonds en orange à 80 %, résumé dans la barre latérale, Docker injoignable (E19c).)**
 
 ### <a id="e19a"></a>E19a · Conteneurs en cours : panneau déplié
 
-Ce que Bosco fait tourner en ce moment, et ce que chaque élément consomme : les agents du worker, les services de test de leurs tâches et les sessions pilotées dont un tour est en cours. Le panneau s'ouvre par-dessus n'importe quelle page, ici la file de tâches, qui reste utilisable.
+Ce que Bosco fait tourner en ce moment, et ce que chaque élément consomme : les bacs à sable démarrés et les tours en cours sur le poste. Le panneau s'ouvre par-dessus n'importe quelle page, ici la vue d'ensemble, qui reste utilisable.
 
-- **Depuis** « Conteneurs » en bas de la barre latérale, sur toutes les pages · sur le téléphone, la ligne du worker de l'onglet Tâches
-- **Ensuite** [E19b](#e19b) avec « Redémarrer » · [E13c](taches.md#e13c) avec « Arrêter » sur un agent · [E13d](taches.md#e13d) avec « Voir la tâche » · [E19c](#e19c) si Docker ne répond pas · [E19d](#e19d) pour des conteneurs restés après leur tâche
-
-Règles de l'écran :
-
-1. « Conteneurs » n'apparaît en bas de la barre latérale que si quelque chose tourne : le nombre d'agents et la mémoire au total, mis à jour toutes les 5 s ; le panneau y ajoute le processeur. Un clic déplie ou replie le panneau, sur n'importe quelle page ; il reste déplié d'une page à l'autre, et l'appareil s'en souvient (règle 13).
-2. Trois groupes : les agents du worker, une ligne par tâche ; les services de test, sous la tâche qui les a lancés ; les sessions pilotées dont un tour est en cours. Seul ce que Bosco a lancé est listé : ni les autres conteneurs du poste ni les sessions ouvertes dans un terminal.
-3. Le processeur et la mémoire se lisent par rapport au plafond de chaque conteneur ([E11a](#e11a) : 2 cœurs et 4 Go par agent ; [E12a](#e12a) : 1 cœur et 1 Go par service). À partir de 80 %, la jauge passe en orange avec « Proche du plafond » : au-delà de sa mémoire, un conteneur voit ses commandes échouer. Une session pilotée tourne sur le poste, sans plafond : sa valeur s'affiche seule.
-4. Une action par nature, jamais de démarrage à la main : c'est le worker qui lance. « Voir la tâche » ouvre son détail avec ses ressources ([E13d](taches.md#e13d)). « Arrêter » un agent annule sa tâche, avec la même confirmation ([E13c](taches.md#e13c)). « Redémarrer » un service passe par une confirmation qui dit ce qu'il provoque ([E19b](#e19b)), et « Journal » affiche ses 300 dernières lignes. « Arrêter le tour » interrompt la session pilotée, qui se reprend ensuite ([E2g](sessions.md#e2g)).
-5. Le pied rappelle la capacité du worker : agents au travail sur le plafond, et mémoire disponible au-delà de la marge gardée libre. C'est ce qui décide si la prochaine tâche part ou reste « En file » ([E11a](#e11a)).
-
-**Mobile** : écran poussé, ouvert depuis la ligne du worker de l'onglet Tâches. Un élément par carte, les jauges sous le titre ; « Journal » et « Voir la tâche » restent sur le poste. Arrêter un agent ou un tour, et redémarrer un service, se font aussi depuis le téléphone, avec la même confirmation.
-
-### <a id="e19b"></a>E19b · Conteneurs en cours : redémarrer un service de test
-
-Un service de test bloqué se redémarre sans relancer la tâche. La confirmation dit ce que la tâche va perdre, et pendant combien de temps.
-
-- **Depuis** [E19a](#e19a) avec « Redémarrer » sur un service
-- **Ensuite** [E19a](#e19a), la ligne en « Redémarrage… » puis revenue
+- **Depuis** « Conteneurs » en bas de la barre latérale, sur toutes les pages · sur le téléphone, Sources › « Conteneurs en cours »
+- **Ensuite** [E2j](sessions.md#e2j) avec « Voir la session » d'un bac à sable · [E2g](sessions.md#e2g) avec « Arrêter le tour » · [E19c](#e19c) si Docker ne répond pas
 
 Règles de l'écran :
 
-1. L'encadré nomme la tâche qui utilise le service et ce qu'elle perd. L'agent n'est pas prévenu : s'il lançait ses tests à ce moment, ils échouent, et il le voit dans leur sortie comme pour toute panne.
-2. Le service redémarre sans être recréé : ses données de test restent. Il est prêt quand sa vérification d'état répond, avec la même attente maximale qu'au lancement ([E12a](#e12a), 180 s). Faute de réponse, la ligne passe « En échec » et le journal de la tâche le note.
-3. Après confirmation, la ligne du service affiche « Redémarrage… » dans [E19a](#e19a), puis ses valeurs reviennent. Le redémarrage est noté dans le journal de la tâche, avec l'heure. Il ne se propose que pour un service de test : un agent s'arrête, il ne redémarre pas.
+1. « Conteneurs » n'apparaît en bas de la barre latérale que si quelque chose tourne : le nombre de bacs à sable, de tours sur le poste et la mémoire au total, mis à jour toutes les 5 s ; le panneau y ajoute le processeur. Un clic déplie ou replie le panneau, sur n'importe quelle page ; il reste déplié d'une page à l'autre, et l'appareil s'en souvient (règle 13).
+2. Deux groupes : « Bacs à sable », une ligne par bac à sable démarré, et « Tours sur le poste », les sessions pilotées dont un tour est en cours. Seul ce que Bosco a lancé est listé : ni les autres conteneurs du poste ni les sessions ouvertes dans un terminal.
+3. Le processeur et la mémoire d'un bac à sable se lisent par rapport à son plafond ([E11a](#e11a) : 2 cœurs et 4 Go). À partir de 80 %, la jauge passe en orange avec « Proche du plafond » : au-delà de sa mémoire, un conteneur voit ses commandes échouer. Un tour sur le poste n'a pas de plafond : sa valeur s'affiche seule.
+4. Une action par nature, jamais de démarrage à la main. « Voir la session » ouvre la session ([E2j](sessions.md#e2j)). Un bac à sable s'arrête depuis sa session, pas d'ici. « Arrêter le tour » interrompt le tour en cours de la session pilotée, qui se reprend ensuite ([E2g](sessions.md#e2g)).
 
-**Mobile** : feuille en bas de l'écran, boutons empilés en 44 px, même texte en plus court.
+**Mobile** : écran poussé, ouvert depuis Sources › « Conteneurs en cours ». Une carte par bac à sable (« Voir la session ») et par tour (« Arrêter le tour »), les jauges sous le titre.
+
+### <a id="e19b"></a>E19b · Conteneurs en cours : redémarrer un service de testMis de côté
+
+Ancien écran de redémarrage d'un service de test. L'identifiant est gardé pour ne pas le réutiliser.
 
 ### <a id="e19c"></a>E19c · Conteneurs en cours : Docker ne répond pas
 
-Quand Docker ne répond plus, Bosco ne peut ni mesurer ni arrêter les conteneurs. Le résumé le dit au lieu de disparaître, et le panneau montre les dernières mesures, datées.
+Quand Docker ne répond plus, Bosco ne peut ni mesurer les bacs à sable ni en démarrer. Le résumé le dit au lieu de disparaître, et le panneau montre les dernières mesures, datées.
 
 - **Depuis** « Conteneurs · Docker ne répond pas » en bas de la barre latérale
-- **Ensuite** [E19a](#e19a) dès que Docker répond · [E5c](taches.md#e5c) pour les tâches en attente
+- **Ensuite** [E19a](#e19a) dès que Docker répond
 
 Règles de l'écran :
 
-1. Le résumé reste affiché quand Docker ne répond pas, en orange avec « Docker ne répond pas » : Bosco ne sait plus si quelque chose tourne, il ne le cache donc pas.
-2. L'encadré dit depuis quand et ce qui ne marche plus. C'est la même panne que « Worker indisponible » dans la file ([E5c](taches.md#e5c)) : les tâches attendent. « Réessayer » relance la connexion tout de suite ; sinon Bosco réessaie toutes les 30 s.
+1. Le résumé reste affiché quand Docker ne répond pas, en orange avec « Docker ne répond pas » : Bosco ne sait plus si un bac à sable tourne, il ne le cache donc pas.
+2. L'encadré dit depuis quand et ce qui ne marche plus. Un message à une session en bac à sable ne peut pas la démarrer tant que Docker ne répond pas ; les sessions pilotées sur le poste ne sont pas touchées. « Réessayer » relance la connexion tout de suite ; sinon Bosco réessaie toutes les 30 s.
 3. Les dernières mesures restent visibles, grisées et datées, actions désactivées. Dès que Docker répond, le panneau revient à [E19a](#e19a) avec des valeurs à jour.
 
 **Mobile** : même écran poussé qu'[E19a](#e19a), l'encadré en tête avec « Réessayer » en 44 px.
 
-### <a id="e19d"></a>E19d · Conteneurs en cours : restés après une tâche
+### <a id="e19d"></a>E19d · Conteneurs en cours : restés après une tâcheMis de côté
 
-Un conteneur dont la tâche est finie n'a plus rien à faire là, par exemple après un arrêt brutal de Bosco. Il apparaît à part, en tête du panneau, jusqu'à ce que Bosco le supprime.
-
-- **Depuis** [E19a](#e19a) après un redémarrage de Bosco
-- **Ensuite** [E19a](#e19a) une fois supprimés
-
-Règles de l'écran :
-
-1. Un conteneur dont la tâche est finie (validée, rejetée, en échec, annulée) est normalement supprimé avec elle. S'il reste, après un arrêt brutal de Bosco ou une suppression qui a échoué, il passe dans ce groupe. Bosco les supprime au démarrage puis toutes les heures ; « Supprimer » et « Tout supprimer maintenant » n'attendent pas, sans confirmation puisque la branche de la tâche est déjà rapatriée.
-2. Un conteneur resté est arrêté : il ne compte ni dans les totaux ni dans la capacité du worker, seulement dans la place prise sur le disque, indiquée ici. Le résumé de la barre latérale ne change pas.
-
-**Mobile** : le groupe en tête de l'écran poussé, « Tout supprimer maintenant » en 44 px ; la suppression une à une reste sur le poste.
+Ancien écran des conteneurs restés après leur tâche. L'identifiant est gardé pour ne pas le réutiliser.
 
 ## <a id="e12"></a>E12 · Environnement de test
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e12.html` · implémentation : **Livré (Environnement de test développé, écran compris (E12a) : services lus dans le fichier des services de test du dépôt, à sa branche courante, jamais dans une branche d'agent ; modes Automatique, Choisir et Aucun ; l'application elle-même et les images node écartées ; seules l'image, les variables, la commande et la vérification d'état sont gardées, le reste est retiré et nommé (ports publiés, volumes nommés, dossiers du poste, droits étendus) ; services sur le réseau privé de la tâche, joints par leur nom, 1 Go et 1 processeur chacun, attente de 180 s au plus, échec non bloquant et agent prévenu ; image de l'agent par dépôt ; dernier lancement avec le temps de chaque service et l'heure de suppression. Vérifié sur de vraies tâches : Redis joint par son nom, puis un service introuvable sans bloquer la tâche. Écart : les options gardées se limitent à celles-ci ; un service qui dépend d'un fichier du dépôt monté ne démarre pas.)**
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e12.html` · implémentation : **Écart (Mis de côté le 17/11/2026 avec les tâches (DT-40) : retiré du code dans fpasquet/bosco#47, retour préparé dans fpasquet/bosco#48. Avant le retrait : Environnement de test développé, écran compris (E12a) : services lus dans le fichier des services de test du dépôt, à sa branche courante, jamais dans une branche d'agent ; modes Automatique, Choisir et Aucun ; l'application elle-même et les images node écartées ; seules l'image, les variables, la commande et la vérification d'état sont gardées, le reste est retiré et nommé (ports publiés, volumes nommés, dossiers du poste, droits étendus) ; services sur le réseau privé de la tâche, joints par leur nom, 1 Go et 1 processeur chacun, attente de 180 s au plus, échec non bloquant et agent prévenu ; image de l'agent par dépôt ; dernier lancement avec le temps de chaque service et l'heure de suppression. Vérifié sur de vraies tâches : Redis joint par son nom, puis un service introuvable sans bloquer la tâche. Écart : les options gardées se limitent à celles-ci ; un service qui dépend d'un fichier du dépôt monté ne démarre pas.)**
 
 ### <a id="e12a"></a>E12a · Environnement de test d'un dépôt
 
