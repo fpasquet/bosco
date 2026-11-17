@@ -1,4 +1,4 @@
-import type { FolderListingDto, ProjectsDto } from '@bosco/domain';
+import type { FolderListingDto, GroupDto, ProjectsDto } from '@bosco/domain';
 
 // Données du fil rouge des maquettes, communes aux histoires des projets.
 export const NOW = new Date('2026-11-17T15:13:00Z');
@@ -135,3 +135,59 @@ export const wwwListing: FolderListingDto = {
   parent: HOME,
   path: `${HOME}/www`,
 };
+
+const member = (id: number, name: string) => ({ id, name });
+
+export const clubsGroup: GroupDto = {
+  description: 'Client : le Club des Trois Lacs',
+  id: 2,
+  instructions:
+    'Les textes lus par les joueurs sont en français.\nLes tickets du club se citent par leur clé (LAC-123).',
+  name: 'Club des Trois Lacs',
+  profile: '/home/camille/.claude',
+  projects: [member(4, 'api-tarifs'), member(1, 'creneaux'), member(5, 'site-clubs')],
+  sidebar: true,
+  system: false,
+};
+
+export const allProjectsGroup: GroupDto = {
+  description: null,
+  id: 1,
+  instructions: 'Messages de commit en anglais, au format Conventional Commits.\nNode 22 au minimum.',
+  name: 'Tous les projets',
+  profile: null,
+  projects: projectsOverview.projects.map(({ id, name }) => member(id, name)),
+  sidebar: false,
+  system: true,
+};
+
+/** Groupes du fil rouge : un groupe client, un groupe sans instructions, un groupe masqué, puis « Tous les projets ». */
+export const storyGroups: GroupDto[] = [
+  clubsGroup,
+  {
+    description: 'Client',
+    id: 3,
+    instructions: '',
+    name: 'Gîtes du Haut-Vallon',
+    profile: null,
+    projects: [member(2, 'sejours')],
+    sidebar: true,
+    system: false,
+  },
+  {
+    description: null,
+    id: 4,
+    instructions: 'Tests avec Vitest.\nJournaux au format JSON.',
+    name: 'Node.js',
+    profile: null,
+    projects: [member(4, 'api-tarifs'), member(2, 'sejours')],
+    sidebar: false,
+    system: false,
+  },
+  allProjectsGroup,
+];
+
+export const storyProfiles = [
+  { label: 'pro', path: '/home/camille/.claude' },
+  { label: 'perso', path: '/home/camille/.claude-perso' },
+];

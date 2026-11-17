@@ -140,7 +140,7 @@ function GroupInstructions({ group }: { group: GroupInstructionsDto }) {
       {lines.length === 0 ? (
         <p className="mt-1 text-sm text-muted">Aucune instruction.</p>
       ) : (
-        <ul className="mt-1 flex flex-col gap-1 text-sm">
+        <ul aria-label={group.name} className="mt-1 flex flex-col gap-1 text-sm">
           {lines.map(({ key, line }) => (
             <li key={key}>{line}</li>
           ))}

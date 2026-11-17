@@ -5,11 +5,11 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import type { ArchitectureDto } from '@bosco/domain';
+import { ContextPreviewDialog } from '@/shared/components/context-preview-dialog';
 import { SectionSkeleton } from '@/shared/components/section-skeleton';
 import { Button } from '@/shared/ui/button';
 import { contextQuery, decidedProjectsQuery, previewQuery, projectsQuery, saveArchitecture } from '../../api/context';
 import { ContextOverview } from '../context-overview';
-import { PreviewDialog } from '../preview-dialog';
 
 /**
  * Contexte d'un projet (E9a), choisi parmi les projets qui ont une décision à eux ; un projet demandé par l'adresse s'y
@@ -84,7 +84,7 @@ export function ContextScreen({ project: asked }: { project: null | string }) {
         />
       )}
       {project && (
-        <PreviewDialog
+        <ContextPreviewDialog
           open={previewing}
           project={project}
           preview={preview}

@@ -1,5 +1,5 @@
 // Contexte du fil rouge des specs (lot 3), pour les histoires.
-import type { ContextDto, ContextPreviewDto, DecisionDto } from '@bosco/domain';
+import type { ContextDto, DecisionDto } from '@bosco/domain';
 
 const at = (day: string) => new Date(`2026-${day}T14:00:00`).toISOString();
 
@@ -80,24 +80,4 @@ export const STORY_CONTEXT: ContextDto = {
     { id: 3, name: 'Node.js', system: false, instructions: 'Tests avec Vitest.\nJournaux au format JSON.' },
   ],
   architecture: { calls: ['Service de synthèse', 'Stockage audio'], calledBy: ['veille-presse', 'site-articles'] },
-};
-
-export const STORY_PREVIEW: ContextPreviewDto = {
-  text: [
-    '# Contexte du projet api-voix',
-    '',
-    '## Instructions communes (Tous les projets)',
-    '- Messages de commit en anglais, au format Conventional Commits.',
-    '- Node 22 au minimum.',
-    '',
-    '## Instructions du groupe Node.js',
-    '- Tests avec Vitest.',
-    '',
-    '## Décisions du projet (elles l’emportent sur les instructions ci-dessus)',
-    '- DEC-1 Synthèse vocale par un service externe',
-    '  Synthèse vocale par un service externe.',
-  ].join('\n'),
-  tokens: 1240,
-  at: new Date('2026-11-06T15:14:00').toISOString(),
-  absent: { proposed: [STORY_PROPOSED] },
 };

@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react';
 import type { ContextPreviewDto } from '@bosco/domain';
 import { Button } from '@/shared/ui/button';
 
-export interface PreviewDialogProps {
+export interface ContextPreviewDialogProps {
   onClose: () => void;
   onCopy: (text: string) => void;
   open: boolean;
@@ -15,10 +15,10 @@ export interface PreviewDialogProps {
 const TIME = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' });
 
 /**
- * Aperçu du texte transmis (E9f) : exactement ce que lira un agent au prochain lancement, calculé à l'ouverture, avec ce
+ * Aperçu du texte transmis : exactement ce que lira un agent au prochain lancement, calculé à l'ouverture, avec ce
  * qui n'y figure pas et une estimation des tokens.
  */
-export function PreviewDialog({ onClose, onCopy, open, preview, project }: PreviewDialogProps) {
+export function ContextPreviewDialog({ onClose, onCopy, open, preview, project }: ContextPreviewDialogProps) {
   const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     const element = dialog.current;

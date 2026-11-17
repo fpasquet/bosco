@@ -31,3 +31,14 @@ type Story = StoryObj<typeof meta>;
 export const AllProjects: Story = {};
 
 export const ProjectSelected: Story = { args: { selected: 'labo-ia' } };
+
+/** Les groupes affichés dans la barre latérale, celui dont la page est ouverte en surbrillance. */
+export const WithGroups: Story = {
+  args: {
+    groups: [
+      { id: 2, name: 'Club des Trois Lacs' },
+      { id: 3, name: 'Gîtes du Haut-Vallon' },
+    ],
+    selectedGroup: 2,
+  },
+};
