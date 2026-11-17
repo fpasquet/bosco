@@ -120,6 +120,27 @@ export function contextText(project: string, context: ProjectContext, links: rea
   ].join('\n');
 }
 
+/** Texte transmis à une session interactive, au plus (RF-CONT-01). */
+export const CONTEXT_LIMIT = 10_000;
+
+const CUT = '\n\n[Contexte coupé : 10 000 caractères au plus.]';
+
+/**
+ * Texte transmis à une session : un bloc par projet, le projet principal d'abord, annoncés en tête quand il y en a
+ * plusieurs, coupé à 10 000 caractères (RF-CONT-01, RF-SESS-14).
+ */
+export function sessionContextText(blocks: readonly { project: string; text: string }[]): string {
+  const [principal, ...others] = blocks;
+  const heading =
+    principal && others.length > 0
+      ? [
+          `Session sur ${blocks.length} projets : ${principal.project} (projet principal, dossier de travail), puis ${others.map(({ project }) => project).join(', ')}.`,
+        ]
+      : [];
+  const text = [...heading, ...blocks.map((block) => block.text)].join('\n\n');
+  return text.length <= CONTEXT_LIMIT ? text : `${text.slice(0, CONTEXT_LIMIT - CUT.length)}${CUT}`;
+}
+
 /** Estimation grossière : un token pour quatre caractères. */
 export function tokensOf(text: string): number {
   return Math.ceil(text.length / 4);

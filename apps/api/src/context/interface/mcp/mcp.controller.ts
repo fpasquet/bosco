@@ -64,7 +64,7 @@ export class McpController {
           capabilities: { tools: {} },
           serverInfo: { name: APP_NAME.toLowerCase(), version: '1' },
           instructions:
-            'Contexte Bosco : avant de travailler dans un projet, lis ses décisions avec bosco_context ; propose une convention durable avec bosco_propose_decision.',
+            'Contexte Bosco : avant de travailler dans un projet, lis ses décisions avec bosco_context, en donnant ton dossier de travail et les dossiers ajoutés à la session ; propose une convention durable avec bosco_propose_decision.',
         });
       case 'ping':
         return ok({});
