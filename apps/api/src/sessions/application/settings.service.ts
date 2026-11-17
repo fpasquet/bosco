@@ -1,5 +1,4 @@
 import type { NotificationSettings } from '../domain/notification.ts';
-import type { DiscoverySnapshot } from '../domain/project-discovery.ts';
 import type { SettingsRepository } from './ports.ts';
 import { Settings, type SettingsChanges, type SettingsSnapshot } from '../domain/settings.ts';
 
@@ -28,10 +27,6 @@ export class SettingsService {
 
   notifications(): NotificationSettings {
     return this.settings.notifications;
-  }
-
-  projects(): DiscoverySnapshot {
-    return this.settings.projects;
   }
 
   async update(changes: SettingsChanges): Promise<SettingsSnapshot> {

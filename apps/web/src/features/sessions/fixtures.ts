@@ -8,7 +8,7 @@ import type {
 } from '@bosco/domain';
 
 const ago = (seconds: number) => new Date(Date.now() - seconds * 1000).toISOString();
-const laboIa = (folder: string) => ({ folder, hidden: false, name: 'labo-ia', root: '/home/dev/www/labo-ia' });
+const laboIa = (folder: string) => ({ folder, id: 1, name: 'labo-ia', root: '/home/dev/www/labo-ia' });
 
 function session(overrides: Partial<SessionDto> & Pick<SessionDto, 'id' | 'title'>): SessionDto {
   return {
@@ -68,7 +68,7 @@ export const STORY_SESSIONS: SessionDto[] = [
     id: '9b72d4e1',
     title: 'Migrer le logger vers OpenTelemetry',
     branch: 'feat/logger-otel',
-    project: { folder: '', hidden: false, name: 'outils-node', root: '/home/dev/www/outils-node' },
+    project: { folder: '', id: 2, name: 'outils-node', root: '/home/dev/www/outils-node' },
     lastAction: 'Modifie src/logger/index.ts',
     recentActions: ['Modifie src/logger/index.ts', 'Lit src/logger/transports.ts', 'Bash · npm run typecheck'],
     lastEventAt: ago(3),
@@ -80,7 +80,7 @@ export const STORY_SESSIONS: SessionDto[] = [
     id: '3d18f0aa',
     title: 'Mettre à jour les dépendances',
     branch: 'main',
-    project: { folder: '', hidden: false, name: 'outils-node', root: '/home/dev/www/outils-node' },
+    project: { folder: '', id: 2, name: 'outils-node', root: '/home/dev/www/outils-node' },
     state: 'inactive',
     lastAction: 'Bash · npm outdated',
     lastEventAt: ago(47 * 60),

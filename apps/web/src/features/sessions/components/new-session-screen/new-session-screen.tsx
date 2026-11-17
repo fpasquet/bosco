@@ -115,7 +115,10 @@ export function NewSessionScreen() {
   if (!options) return <PageSkeleton variant="detail" rows={6} />;
   const project = options.projects.find(({ root }) => root === chosenProject) ?? options.projects[0] ?? null;
   const profile = chosenProfile ?? project?.defaultProfile ?? options.profiles[0]?.path ?? null;
-  const sandboxed = where === 'sandbox' && !options.sandboxUnavailable;
+  // Un projet sans git ne se copie pas dans un bac à sable : ses sessions tournent seulement sur le poste
+  const sandboxUnavailable =
+    options.sandboxUnavailable ?? (project && !project.git ? `${project.name} n’est pas un dépôt git` : null);
+  const sandboxed = where === 'sandbox' && !sandboxUnavailable;
   // Le bac à sable travaille sur sa propre copie : une session du terminal dans le même dossier ne le gêne pas
   const busy = project && !sandboxed ? openIn(sessions ?? [], project.root) : null;
   const from = startBranch ?? project?.branch ?? '';
@@ -209,15 +212,15 @@ export function NewSessionScreen() {
                       name="where"
                       className="radio radio-sm"
                       checked={where === 'sandbox'}
-                      disabled={Boolean(options.sandboxUnavailable)}
+                      disabled={Boolean(sandboxUnavailable)}
                       onChange={() => choose('sandbox')}
                     />
                     <Box aria-hidden className="size-4 text-muted" />
                     Bac à sable
                   </label>
                 </div>
-                {options.sandboxUnavailable && (
-                  <span className="text-xs text-muted">Bac à sable indisponible : {options.sandboxUnavailable}.</span>
+                {sandboxUnavailable && (
+                  <span className="text-xs text-muted">Bac à sable indisponible : {sandboxUnavailable}.</span>
                 )}
               </fieldset>
               {sandboxed && (

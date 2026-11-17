@@ -18,7 +18,7 @@ const clock = { now: () => new Date() };
 
 /**
  * Contexte des agents (RF-CONT-01 à 03, 10, 11) : décisions, socles et architecture, lus par les sessions par le
- * serveur MCP de Bosco ; les projets viennent des sessions.
+ * serveur MCP de Bosco ; les projets sont ceux que la personne a ajoutés.
  */
 @Module({
   imports: [SessionsModule],

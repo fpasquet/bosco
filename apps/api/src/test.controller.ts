@@ -3,8 +3,10 @@ import { Body, Controller, Get, HttpCode, Inject, Post } from '@nestjs/common';
 import type { AccessService } from './access/application/access.service.ts';
 import type { IsolationService } from './isolation/application/isolation.service.ts';
 import type { QuotaService } from './isolation/application/quota.service.ts';
+import type { ProjectService } from './projects/application/project.service.ts';
 import type { ChannelService } from './sessions/application/channel.service.ts';
 import type { LiveSignalService } from './sessions/application/live-signal.service.ts';
+import type { PilotService } from './sessions/application/pilot.service.ts';
 import type { SessionService } from './sessions/application/session.service.ts';
 import type { SettingsService } from './sessions/application/settings.service.ts';
 import type { FileTranscriptWatcher } from './sessions/infrastructure/claude-code/transcript-watcher.ts';
@@ -12,16 +14,21 @@ import type { RecordingNotifier } from './sessions/infrastructure/notifications/
 import type { PresenceTracker } from './sessions/infrastructure/notifications/presence.ts';
 import { ACCESS_SERVICE } from './access/tokens.ts';
 import { ISOLATION_SERVICE, QUOTA_SERVICE } from './isolation/tokens.ts';
+import { PROJECT_SERVICE } from './projects/tokens.ts';
 import {
   CHANNEL_SERVICE,
   LIVE_SIGNAL_SERVICE,
   NOTIFIER,
+  PILOT_SERVICE,
   PRESENCE,
   SESSION_SERVICE,
   SETTINGS_SERVICE,
   TRANSCRIPT_WATCHER,
 } from './sessions/tokens.ts';
 import { ORM } from './shared/tokens.ts';
+
+/** Attente au plus d'un tour piloté encore en cours avant la remise à zéro. */
+const TURN_SETTLE_MS = 2000;
 
 /** Route réservée aux scénarios (BOSCO_TEST=1) : remet le service à zéro entre deux scénarios. */
 @Controller('__test')
@@ -38,6 +45,8 @@ export class TestController {
     @Inject(SESSION_SERVICE) private readonly sessions: SessionService,
     @Inject(CHANNEL_SERVICE) private readonly channel: ChannelService,
     @Inject(QUOTA_SERVICE) private readonly quota: QuotaService,
+    @Inject(PROJECT_SERVICE) private readonly projects: ProjectService,
+    @Inject(PILOT_SERVICE) private readonly pilot: PilotService,
   ) {}
 
   /** Simule l'usage de l'abonnement par défaut, comme le donnerait un tour (DT-39) : la fenêtre de 5 h, en %. */
@@ -59,6 +68,10 @@ export class TestController {
   @Post('reset')
   @HttpCode(204)
   async reset(): Promise<void> {
+    // Un tour piloté du scénario précédent finit avant la remise à zéro : sa fin ne déborde pas sur le suivant
+    for (let waited = 0; this.pilot.runningTurns().length > 0 && waited < TURN_SETTLE_MS; waited += 50)
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    this.pilot.stopAll();
     await this.watcher.close();
     await this.access.disable();
     this.liveSignals.forget();
@@ -71,6 +84,7 @@ export class TestController {
     await this.settings.load();
     await this.isolation.load();
     await this.quota.load();
+    await this.projects.load();
     (globalThis as { boscoReplayReset?: () => void }).boscoReplayReset?.();
   }
 }

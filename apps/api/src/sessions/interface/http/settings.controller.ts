@@ -1,15 +1,9 @@
 import { BadRequestException, Body, Controller, Get, Inject, Put } from '@nestjs/common';
 import { z } from 'zod';
-import type { SessionService } from '../../application/session.service.ts';
 import type { SettingsService } from '../../application/settings.service.ts';
-import type { DiscoverySnapshot } from '../../domain/project-discovery.ts';
 import { parseBody } from '../../../shared/interface/http/parse-body.ts';
-import { CONFIG } from '../../../shared/tokens.ts';
 import { InvalidSetting, type SettingsSnapshot } from '../../domain/settings.ts';
-import { SESSION_SERVICE, SETTINGS_SERVICE } from '../../tokens.ts';
-
-const FOLDERS_LIMIT = 50;
-const folders = z.array(z.string().max(1024)).max(FOLDERS_LIMIT);
+import { SETTINGS_SERVICE } from '../../tokens.ts';
 
 const settingsSchema = z
   .object({
@@ -29,48 +23,18 @@ const settingsSchema = z
       })
       .partial()
       .strict(),
-    projects: z
-      .object({
-        attachWorktrees: z.boolean(),
-        excluded: folders,
-        gitOnly: z.boolean(),
-        hidden: z.array(z.string().max(4096)).max(1000),
-        roots: folders,
-      })
-      .partial()
-      .strict(),
   })
   .partial()
   .strict();
 
-/** Projets découverts (E4d) : réglages, projets trouvés et sessions hors projet. */
-export interface ProjectSettingsView {
-  /** Dossier personnel, pour écrire les chemins comme dans le terminal (« ~/www ») */
-  home: string;
-  outside: number;
-  projects: { git: boolean; hidden: boolean; lastActivityAt: Date; name: string; root: string }[];
-  settings: DiscoverySnapshot;
-}
-
-/** Réglages des sources (E4a) et des projets découverts (E4d) ; ils ne s'écrivent que depuis le poste. */
+/** Réglages des sources (E4a) ; ils ne s'écrivent que depuis le poste. */
 @Controller('api/settings')
 export class SettingsController {
-  constructor(
-    @Inject(SETTINGS_SERVICE) private readonly settings: SettingsService,
-    @Inject(SESSION_SERVICE) private readonly sessions: SessionService,
-    /** Dossier personnel des profils (celui du scénario dans les tests) */
-    @Inject(CONFIG) private readonly config: { profilesRoot: string },
-  ) {}
+  constructor(@Inject(SETTINGS_SERVICE) private readonly settings: SettingsService) {}
 
   @Get()
   current(): SettingsSnapshot {
     return this.settings.current();
-  }
-
-  @Get('projects')
-  async projects(): Promise<ProjectSettingsView> {
-    const { outside, projects } = await this.sessions.discoveredProjects();
-    return { home: this.config.profilesRoot, outside, projects, settings: this.settings.projects() };
   }
 
   @Put()

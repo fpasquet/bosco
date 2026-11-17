@@ -1,0 +1,76 @@
+import { Body, Controller, Delete, Get, HttpCode, Inject, Param, ParseIntPipe, Post } from '@nestjs/common';
+import { z } from 'zod';
+import type { FolderSuggestionDto, ProjectDto, ProjectsDto } from '@bosco/domain';
+import type { ProjectService, ProjectView } from '../../application/project.service.ts';
+import type { ProjectSnapshot } from '../../domain/project.ts';
+import type { Suggestion } from '../../domain/suggestions.ts';
+import { parseBody } from '../../../shared/interface/http/parse-body.ts';
+import { PROJECT_SERVICE } from '../../tokens.ts';
+import { settle } from './settle.ts';
+
+const PATH = z.string().min(1).max(4096);
+const addSchema = z.object({ paths: z.array(PATH).min(1).max(200) });
+const folderSchema = z.object({ path: PATH });
+
+function presentProject(project: ProjectSnapshot | ProjectView): ProjectDto {
+  const view = 'sessions' in project ? project : { ...project, lastSessionAt: null, sessions: 0 };
+  return {
+    git: view.git,
+    id: view.id,
+    lastSessionAt: view.lastSessionAt?.toISOString() ?? null,
+    name: view.name,
+    path: view.path,
+    pinned: view.pinned,
+    sessions: view.sessions,
+  };
+}
+
+function presentSuggestion(suggestion: Suggestion): FolderSuggestionDto {
+  const { git, lastSessionAt, name, path, preselected, sessions } = suggestion;
+  return { git, lastSessionAt: lastSessionAt.toISOString(), name, path, preselected, sessions };
+}
+
+/** Projets choisis : la liste se lit partout, elle ne se change que depuis le poste. */
+@Controller('api/projects')
+export class ProjectsController {
+  constructor(@Inject(PROJECT_SERVICE) private readonly projects: ProjectService) {}
+
+  @Get()
+  async overview(): Promise<ProjectsDto> {
+    const overview = await this.projects.overview();
+    return {
+      home: overview.home,
+      ignored: overview.ignored.map(presentSuggestion),
+      outside: overview.outside,
+      projects: overview.projects.map(presentProject),
+      suggestions: overview.suggestions.map(presentSuggestion),
+    };
+  }
+
+  @Post()
+  async addProjects(@Body() body: unknown): Promise<{ projects: ProjectDto[] }> {
+    const { paths } = parseBody(addSchema, body);
+    const added = await settle(() => this.projects.addProjects(paths));
+    return { projects: added.map(presentProject) };
+  }
+
+  @Delete(':id')
+  @HttpCode(204)
+  async removeProject(@Param('id', ParseIntPipe) id: number): Promise<void> {
+    await settle(() => this.projects.removeProject(id));
+  }
+
+  @Post('suggestions/ignore')
+  @HttpCode(204)
+  async ignoreSuggestion(@Body() body: unknown): Promise<void> {
+    const { path } = parseBody(folderSchema, body);
+    await settle(() => this.projects.ignoreSuggestion(path));
+  }
+
+  @Post('suggestions/restore')
+  @HttpCode(204)
+  async restoreSuggestion(@Body() body: unknown): Promise<void> {
+    const { path } = parseBody(folderSchema, body);
+    await settle(() => this.projects.restoreSuggestion(path));
+  }
+}

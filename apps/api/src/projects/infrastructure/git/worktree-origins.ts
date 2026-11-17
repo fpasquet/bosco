@@ -2,9 +2,9 @@ import { readFileSync, statSync } from 'node:fs';
 import { dirname, isAbsolute, join, resolve } from 'node:path';
 
 /**
- * Dépôt d'origine d'un worktree git (CA-SESS-78). Le `.git` d'un worktree est un fichier qui pointe vers
+ * Dépôt d'origine d'un worktree git. Le `.git` d'un worktree est un fichier qui pointe vers
  * `<origine>/.git/worktrees/<nom>` ; celui d'un dépôt ordinaire est un dossier. Lu une fois par racine : l'affichage
- * d'une session reste synchrone (DT-27).
+ * d'une session reste synchrone.
  */
 export class GitWorktreeOrigins {
   private readonly known = new Map<string, null | string>();

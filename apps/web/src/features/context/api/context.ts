@@ -82,10 +82,10 @@ export const saveSocle = (
   socle: { inherits: null | number; name: string; projects: string[]; scope: 'global' | 'shared' },
 ) => send<SocleDto>(id === null ? 'POST' : 'PUT', id === null ? '/api/socles' : `/api/socles/${id}`, socle);
 
-/** Projets connus du poste, d'après les sessions surveillées. */
+/** Projets ajoutés par la personne. */
 export const projectsQuery = {
   queryKey: ['projects'],
-  queryFn: async () => (await read<{ projects: { name: string; root: string }[] }>('/api/projects')).projects,
+  queryFn: async () => (await read<{ projects: { name: string }[] }>('/api/projects')).projects,
 };
 
 /** Projets qui ont une décision à eux, proposée ou acceptée : le choix de l'écran du contexte. */

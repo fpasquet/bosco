@@ -6,7 +6,6 @@ export type {
   ConversationStepDto,
   ConversationTurnDto,
   CostReportDto,
-  DiscoverySettingsDto,
   EffortDto,
   HistoryDayDto,
   ImportProgressDto,
@@ -21,7 +20,6 @@ export type {
   PilotSandboxDto,
   PilotSettingsDto,
   ProfileCandidateDto,
-  ProjectSettingsDto,
   SandboxRefusalsDto,
   SessionConversationDto,
   SessionDetailDto,
@@ -56,3 +54,4 @@ export type {
   SocleDto,
 } from './context.ts';
 export type { ContainersDto, PilotedTurnDto, RunningSandboxDto, UsageDto } from './containers.ts';
+export type { FolderSuggestionDto, ProjectDto, ProjectsDto } from './projects.ts';

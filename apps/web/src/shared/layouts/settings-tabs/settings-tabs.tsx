@@ -1,7 +1,6 @@
 import Link from 'next/link';
 
 const TABS = [
-  { href: '/settings/projects', label: 'Projets' },
   { href: '/settings/notifications', label: 'Notifications' },
   { href: '/settings/subscription', label: 'Abonnement Claude' },
   { href: '/settings/isolation', label: 'Isolation du bac à sable' },

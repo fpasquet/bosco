@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 
-/** Réglages : les projets, premier onglet. */
+/** Réglages : les notifications, premier onglet. */
 export default function SettingsPage() {
-  redirect('/settings/projects');
+  redirect('/settings/notifications');
 }

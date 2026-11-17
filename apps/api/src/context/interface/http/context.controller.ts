@@ -106,12 +106,6 @@ export class ContextController {
   }
 
   /** Projets connus de Bosco : ceux auxquels une décision ou un socle s'applique. */
-  @Get('projects')
-  async listProjects(): Promise<{ projects: { name: string; root: string }[] }> {
-    const projects = await this.context.listProjects();
-    return { projects };
-  }
-
   @Get('context/projects')
   async listDecidedProjects(): Promise<{ projects: string[] }> {
     const projects = await this.context.listDecidedProjects();

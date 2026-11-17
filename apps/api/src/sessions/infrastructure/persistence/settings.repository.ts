@@ -1,7 +1,6 @@
 import type { MikroORM } from '@mikro-orm/sqlite';
 import type { SettingsRepository } from '../../application/ports.ts';
 import type { NotificationSettings } from '../../domain/notification.ts';
-import type { DiscoverySnapshot } from '../../domain/project-discovery.ts';
 import type { SettingsChanges, SettingsSnapshot } from '../../domain/settings.ts';
 import { SettingSchema } from '../../../shared/infrastructure/persistence/setting.schema.ts';
 
@@ -10,8 +9,6 @@ const KEYS = {
   desktopNotifications: 'sessions.desktopNotifications',
   inactivityMinutes: 'sessions.inactivityMinutes',
   notifications: 'sessions.notifications',
-  // Clé écrite avant que les dépôts deviennent des projets : gardée telle quelle pour relire les réglages du poste
-  projects: 'sessions.repositories',
 };
 
 export class MikroOrmSettingsRepository implements SettingsRepository {
@@ -23,12 +20,10 @@ export class MikroOrmSettingsRepository implements SettingsRepository {
     const value = (key: string) => rows.find((row) => row.key === key)?.value;
     const minutes = Number(value(KEYS.inactivityMinutes));
     const desktop = value(KEYS.desktopNotifications);
-    const projects = discovery(value(KEYS.projects));
     const notifications = notificationSettings(value(KEYS.notifications));
     return {
       inactivityMinutes: Number.isInteger(minutes) && minutes > 0 ? minutes : 15,
       desktopNotifications: desktop === undefined ? true : desktop === 'true',
-      ...(projects && { projects }),
       ...(notifications && { notifications }),
     };
   }
@@ -37,30 +32,7 @@ export class MikroOrmSettingsRepository implements SettingsRepository {
     const em = this.orm.em.fork();
     await em.upsert(SettingSchema, { key: KEYS.inactivityMinutes, value: String(settings.inactivityMinutes) });
     await em.upsert(SettingSchema, { key: KEYS.desktopNotifications, value: String(settings.desktopNotifications) });
-    await em.upsert(SettingSchema, { key: KEYS.projects, value: JSON.stringify(settings.projects) });
     await em.upsert(SettingSchema, { key: KEYS.notifications, value: JSON.stringify(settings.notifications) });
-  }
-}
-
-/** Réglages des projets gardés en JSON ; une valeur illisible laisse les réglages par défaut. */
-function discovery(value: string | undefined): null | Partial<DiscoverySnapshot> {
-  if (!value) return null;
-  try {
-    const parsed: unknown = JSON.parse(value);
-    if (typeof parsed !== 'object' || parsed === null) return null;
-    const record = parsed as Record<string, unknown>;
-    const strings = (key: string) =>
-      Array.isArray(record[key]) && record[key].every((item) => typeof item === 'string') ? { [key]: record[key] } : {};
-    const flag = (key: string) => (typeof record[key] === 'boolean' ? { [key]: record[key] } : {});
-    return {
-      ...flag('gitOnly'),
-      ...flag('attachWorktrees'),
-      ...strings('roots'),
-      ...strings('excluded'),
-      ...strings('hidden'),
-    };
-  } catch {
-    return null;
   }
 }
 
