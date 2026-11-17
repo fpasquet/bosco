@@ -18,12 +18,11 @@ Feature: Chosen projects
   @CA-CONT-120
   @CA-CONT-121
   @CA-CONT-122
-  Scenario: Without a project, nothing is discovered: every session is outside and its folder proposed
+  Scenario: Without a project, nothing is discovered: every session is outside, its folder proposed but the home folder
     When I send GET request to "/api/projects"
     Then the response property "projects.length" should equal "0"
     And the response property "outside" should equal "4"
-    And the response property "suggestions.length" should equal "3"
-    And the response property "suggestions.0.name" should equal "labo-ia"
+    And the response property "suggestions" should match the names "labo-ia,api-voix"
     And the response property "suggestions.0.sessions" should equal "2"
     And the response property "suggestions.0.git" should equal "true"
 
@@ -64,8 +63,7 @@ Feature: Chosen projects
   Scenario: An ignored suggestion is no longer proposed and is found again among the ignored ones
     When I send POST request to "/api/projects/suggestions/ignore" with the JSON "fixtures/projects/api-voix.json"
     And I send GET request to "/api/projects"
-    Then the response property "suggestions.length" should equal "2"
-    And the response property "suggestions.1.name" should not contain "api-voix"
+    Then the response property "suggestions" should match the names "labo-ia"
     And the response property "ignored" should match the names "api-voix"
     When I send POST request to "/api/projects/suggestions/restore" with the JSON "fixtures/projects/api-voix.json"
     And I send GET request to "/api/projects"

@@ -1,7 +1,7 @@
 // Ce que les scénarios ne voient pas : chaque règle de rangement d'une session dans son projet, et les dossiers proposés.
 import { describe, expect, it } from 'vitest';
 import { type GitOrigins, ProjectPlacement } from './placement.ts';
-import { activityOf } from './suggestions.ts';
+import { activityOf, isProposable } from './suggestions.ts';
 
 const ORIGINS: Record<string, string> = {
   '/home/dev/www/creneaux/.claude/worktrees/fix-ui': '/home/dev/www/creneaux',
@@ -125,5 +125,32 @@ describe('Suggestions', () => {
         sessions: 1,
       },
     ]);
+  });
+
+  it('never proposes the home folder itself, nor what is under the temporary or Bosco data folders', () => {
+    const unproposed = { below: ['/tmp', '/run/user/1000/tmp', '/home/dev/.local/share/bosco'], home: '/home/dev' };
+    expect(isProposable('/home/dev', unproposed)).toBe(false);
+    expect(isProposable('/home/dev/notes', unproposed)).toBe(true);
+    expect(isProposable('/tmp', unproposed)).toBe(false);
+    expect(isProposable('/run/user/1000/tmp/claude/scratchpad', unproposed)).toBe(false);
+    expect(isProposable('/home/dev/.local/share/bosco/sandboxes/c41e9a07', unproposed)).toBe(false);
+    expect(isProposable('/home/dev/.local/share/boscoo', unproposed)).toBe(true);
+  });
+
+  it('keeps the sessions of the folders not proposed outside of the projects', () => {
+    const NOW2 = new Date('2026-11-17T12:00:00Z');
+    const activity = activityOf(
+      [
+        { gitRoot: null, lastEventAt: NOW2, path: '/home/dev' },
+        { gitRoot: null, lastEventAt: NOW2, path: '/run/user/1000/tmp/essai' },
+        { gitRoot: null, lastEventAt: NOW2, path: '/home/dev/scripts' },
+      ],
+      new ProjectPlacement([], git),
+      new Set(),
+      NOW2,
+      { below: ['/run/user/1000/tmp'], home: '/home/dev' },
+    );
+    expect(activity.outside).toBe(3);
+    expect(activity.suggestions.map(({ path }) => path)).toEqual(['/home/dev/scripts']);
   });
 });

@@ -1,4 +1,5 @@
 import type { ProjectPlacement, SessionFolder } from './placement.ts';
+import { isInside } from './folder.ts';
 
 /** Une session de moins de 7 jours dans un dépôt git : le dossier est coché d'office quand aucun projet n'existe. */
 const RECENT_MS = 7 * 24 * 60 * 60 * 1000;
@@ -27,11 +28,26 @@ export interface Activity {
   suggestions: Suggestion[];
 }
 
+/**
+ * Dossiers jamais proposés : le dossier personnel lui-même (ses sous-dossiers le sont), et tout ce qui est sous les
+ * dossiers temporaires ou de données de Bosco. Leurs sessions restent hors projet ; ils s'ajoutent à la main.
+ */
+export interface UnproposedFolders {
+  /** Dossiers exclus avec tout ce qu'ils contiennent */
+  below: readonly string[];
+  home: string;
+}
+
+export function isProposable(path: string, unproposed: UnproposedFolders): boolean {
+  return path !== unproposed.home && !unproposed.below.some((folder) => isInside(path, folder));
+}
+
 export function activityOf(
   sessions: readonly SessionFolder[],
   placement: ProjectPlacement,
   ignored: ReadonlySet<string>,
   now: Date,
+  unproposed: UnproposedFolders = { below: [], home: '' },
 ): Activity {
   const projects = new Map<number, ProjectActivity>();
   const folders = new Map<string, Omit<Suggestion, 'ignored' | 'name' | 'preselected'>>();
@@ -48,7 +64,7 @@ export function activityOf(
     }
     outside += 1;
     const folder = placement.suggestionOf(gitRoot, path);
-    if (!folder) continue;
+    if (!folder || !isProposable(folder.path, unproposed)) continue;
     const known = folders.get(folder.path);
     folders.set(folder.path, {
       git: folder.git,

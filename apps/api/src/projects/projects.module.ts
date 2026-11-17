@@ -1,5 +1,7 @@
 import type { MikroORM } from '@mikro-orm/sqlite';
 import { Module } from '@nestjs/common';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import type { Config } from '../config.ts';
 import { CONFIG, ORM } from '../shared/tokens.ts';
 import { ProjectService } from './application/project.service.ts';
@@ -33,6 +35,8 @@ import { PROJECT_SERVICE } from './tokens.ts';
           new MikroOrmDiscoveryToImport(orm),
           { now: () => new Date() },
           config.profilesRoot,
+          // Dossiers temporaires et données de Bosco : des copies et des essais, jamais des projets à proposer
+          ['/tmp', tmpdir(), config.dataDir, join(config.profilesRoot, '.local', 'share', 'bosco')],
         ),
     },
   ],

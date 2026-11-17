@@ -56,6 +56,8 @@ export class ProjectService {
     private readonly clock: Clock,
     /** Dossier personnel, d'où part le navigateur de dossiers */
     private readonly home: string,
+    /** Dossiers temporaires et de données de Bosco : jamais proposés, avec tout ce qu'ils contiennent */
+    private readonly unproposed: readonly string[] = [],
   ) {
     this.placement = new ProjectPlacement([], git);
   }
@@ -82,7 +84,10 @@ export class ProjectService {
 
   async overview(): Promise<ProjectsOverview> {
     const [sessions, ignored] = await Promise.all([this.sessions.list(), this.ignoredFolders.list()]);
-    const activity = activityOf(sessions, this.placement, new Set(ignored), this.clock.now());
+    const activity = activityOf(sessions, this.placement, new Set(ignored), this.clock.now(), {
+      below: this.unproposed,
+      home: this.home,
+    });
     const projects = this.projects
       .map((project) => {
         const found = activity.projects.get(project.id);
