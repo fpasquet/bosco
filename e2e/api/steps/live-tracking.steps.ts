@@ -138,11 +138,71 @@ Then('the desktop notifications should be:', async ({ request }, table: DataTabl
   expect(notifications.map(({ body, title }) => ({ title, body }))).toEqual(table.hashes());
 });
 
-Given(
-  'the Claude subscription of {string} is at {int} % of its 5 h window',
-  async ({ bosco, request }, profile: string, usage: number) => {
-    const data = { fiveHour: usage, profile: join(bosco.profilesRoot, profile) };
-    const response = await request.post('/__test/quota', { data });
-    expect(response.status()).toBe(204);
+Given('Docker does not answer', async ({ request }) => {
+  const response = await request.post('/__test/worker', { data: { unavailable: 'Docker ne répond pas' } });
+  expect(response.status()).toBe(204);
+});
+
+Given('the Atlassian connector is not plugged into the claude.ai account', async ({ request }) => {
+  const response = await request.post('/__test/worker', { data: { atlassianConnector: false } });
+  expect(response.status()).toBe(204);
+});
+
+Then(
+  'the journal of the task {int} should have {string} with {string}',
+  async ({ request }, id: number, event: string, detail: string) => {
+    const response = await request.get(`/api/tasks/${id}`);
+    const { log } = (await response.json()) as { log: { detail: null | string; event: string }[] };
+    const lines = log.filter((entry) => entry.event === event).map((entry) => entry.detail ?? '');
+    expect(
+      lines.some((line) => line.includes(detail)),
+      `${event} : ${lines.join(' | ')}`,
+    ).toBe(true);
   },
 );
+
+Then('the journal of the task {int} should not have {string}', async ({ request }, id: number, event: string) => {
+  const response = await request.get(`/api/tasks/${id}`);
+  const { log } = (await response.json()) as { log: { event: string }[] };
+  expect(log.map((entry) => entry.event)).not.toContain(event);
+});
+
+Then('the task {int} should become {string}', async ({ request }, id: number, state: string) => {
+  await expect
+    .poll(
+      async () => {
+        const response = await request.get(`/api/tasks/${id}`);
+        return ((await response.json()) as { state: string }).state;
+      },
+      { timeout: 10_000 },
+    )
+    .toBe(state);
+});
+
+Given('the proxy of the task {int} refused {string}', async ({ request }, taskId: number, host: string) => {
+  const response = await request.post('/__test/refusals', { data: { taskId, host } });
+  expect(response.status()).toBe(204);
+});
+
+When('I ask the worker to check again', async ({ last, request }) => {
+  const response = await request.post('/api/worker/check');
+  last.response = { status: response.status(), body: (await response.json()) as unknown };
+});
+
+Then('the session {string} should have the task state {string}', async ({ request }, id: string, state: string) => {
+  await expect
+    .poll(
+      async () => {
+        const response = await request.get(`/api/sessions/${id}`);
+        if (!response.ok()) return null;
+        return ((await response.json()) as { session: { task: null | { state: string } } }).session.task?.state;
+      },
+      { timeout: 10_000 },
+    )
+    .toBe(state);
+});
+
+Given('the subscription of the worker is at {int} % of its 5 h window', async ({ request }, usage: number) => {
+  const response = await request.post('/__test/quota', { data: { fiveHour: usage } });
+  expect(response.status()).toBe(204);
+});

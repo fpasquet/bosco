@@ -1,6 +1,7 @@
 'use client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  ArrowRight,
   Box,
   Download,
   EyeOff,
@@ -31,6 +32,7 @@ function openIn(sessions: readonly SessionDto[], root: string): null | SessionDt
       (session) =>
         session.repository?.root === root &&
         !session.pilot &&
+        !session.task &&
         (session.openInTerminal || session.state === 'running' || session.state === 'waiting'),
     ) ?? null
   );
@@ -283,6 +285,13 @@ export function NewSessionScreen() {
           ) : (
             <WorkstationSummary />
           )}
+          <div className="rounded-control border border-dashed border-line-strong p-3 text-xs text-muted">
+            Pour un travail isolé, avec budget et revue, crée plutôt une tâche.
+            <Link href="/tasks/new" className="mt-1 flex items-center gap-1 font-medium text-ink hover:underline">
+              Nouvelle tâche
+              <ArrowRight aria-hidden className="size-3.5" />
+            </Link>
+          </div>
         </aside>
       </div>
     </div>

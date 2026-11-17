@@ -14,18 +14,18 @@ Fonctionnalité: Dépôts découverts
   @CA-SESS-81
   @CA-SESS-82
   @NF-18
-  Scénario: Seuls les dépôts git sont trouvés, et un dépôt masqué n'est plus proposé pour une session
+  Scénario: Seuls les dépôts git sont trouvés, et un dépôt masqué n'est plus proposé pour une tâche
     Quand j'ouvre la page « /settings/repositories »
     Alors la liste « Dépôts trouvés » contient « labo-ia »
     Et la liste « Dépôts trouvés » contient « 1 session »
     Et l’interrupteur « Dépôts git seulement » est « activé »
     Et la page est accessible
-    Quand j'ouvre la page « /sessions/new »
+    Quand j'ouvre la page « /tasks/new »
     Alors le choix « Dépôt » propose « labo-ia, api-voix »
     Quand j'ouvre la page « /settings/repositories »
     Et je clique sur le bouton « Affiché : labo-ia »
     Alors je ne vois pas le bouton « Affiché : labo-ia »
-    Quand j'ouvre la page « /sessions/new »
+    Quand j'ouvre la page « /tasks/new »
     Alors le choix « Dépôt » propose « api-voix »
 
   @CA-SESS-79

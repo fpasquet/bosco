@@ -1,20 +1,15 @@
 @RF-CONT-07
-Feature: Sandbox isolation
-  As the developer, I want the agents of my sandboxes to reach only the domains I allow, and to choose the Claude
-  subscription they use, so that a session cannot send my code anywhere else.
+Feature: Worker isolation
+  As the developer, I want the agents of the worker to reach only the domains I allow, and to see what they were
+  refused, so that a task cannot send my code anywhere else.
 
   Background:
-    Given the Claude Code profile ".claude" has the transcript "session-api-voix-fastify.jsonl" for the session "a41f07c2"
-    And the Claude Code profile ".claude-perso" has the transcript "session-labo-ia-bosco.jsonl" for the session "c41e9a07"
-    And the Claude Code profile ".claude" has an access to the Claude subscription of "camille@exemple.dev"
-    And the Claude Code profile ".claude-perso" has an access to the Claude subscription of "camille.perso@exemple.dev"
-    And Bosco watches the profiles ".claude" and ".claude-perso"
+    Given Bosco watches the profiles ".claude" and ".claude-perso"
 
   @CA-CONT-43
-  Scenario: The default domains are locked, and the limits of each sandbox are shown
+  Scenario: The default domains are locked
     When I send GET request to "/api/isolation"
     Then the response property "domains.locked" should equal "api.anthropic.com,claude.ai,platform.claude.com,registry.npmjs.org,registry.yarnpkg.com"
-    And the response property "limits.processes" should equal "512"
     When I send DELETE request to "/api/isolation/domains/claude.ai"
     Then the response code should be 400
 
@@ -31,13 +26,23 @@ Feature: Sandbox isolation
     Then the response code should be 400
     And the response property "message" should equal "Un nom de domaine seul, sans protocole ni chemin : pypi.org ou *.github.com."
 
-  Scenario: The default subscription is chosen among the watched profiles, and a new session takes it
+  @CA-CONT-45
+  Scenario: A refused domain is listed with its task, and leaves the list once allowed
+    Given the proxy of the task 12 refused "pypi.org"
     When I send GET request to "/api/isolation"
-    Then the response property "subscription.account" should equal "camille@exemple.dev"
-    When I send PUT request to "/api/isolation/subscription" with the JSON "fixtures/isolation/perso-profile.json"
-    Then the response property "subscription.account" should equal "camille.perso@exemple.dev"
-    When I send GET request to "/api/pilot/options"
-    Then the response property "repositories.0.defaultProfile" should contain ".claude-perso"
+    Then the response property "refusals.0.host" should equal "pypi.org"
+    And the response property "refusals.0.taskId" should equal "12"
+    When I send POST request to "/api/isolation/domains" with the JSON "fixtures/isolation/pypi.json"
+    Then the response property "refusals.length" should equal "0"
+
+  @CA-CONT-40
+  @CA-CONT-41
+  Scenario: The agent ceiling is set here, and the limits of each agent are shown
+    When I send PUT request to "/api/isolation/capacity" with the JSON "fixtures/isolation/one-agent.json"
+    Then the response property "capacity.maxAgents" should equal "1"
+    And the response property "limits.processes" should equal "512"
+    When I ask the worker to check again
+    Then the response property "capacity" should equal "1"
 
   @CA-CONT-42
   Scenario: A paired phone reads the isolation settings but cannot change them

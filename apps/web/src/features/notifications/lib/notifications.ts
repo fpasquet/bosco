@@ -24,8 +24,9 @@ export function kindLabel(notification: Pick<NotificationDto, 'kind' | 'turnMinu
     : label;
 }
 
-/** Où mène une notification : sa session. */
-export function hrefOf(notification: Pick<NotificationDto, 'sessionId'>): string {
+/** Où mène une notification : la tâche, ou la session. */
+export function hrefOf(notification: Pick<NotificationDto, 'sessionId' | 'taskId'>): string {
+  if (notification.taskId !== null) return `/tasks/${notification.taskId}`;
   return notification.sessionId ? `/sessions/${encodeURIComponent(notification.sessionId)}` : '/';
 }
 

@@ -52,7 +52,7 @@ function Row({
   return (
     <tr className={cn('relative h-row border-b border-line hover:bg-surface-alt', inactive && 'text-muted')}>
       <td className="pl-4">
-        <SessionStateBadge state={session.state} still={frozen} />
+        <SessionStateBadge state={session.state} still={frozen} task={session.task} />
       </td>
       <td>
         <span className="flex items-center gap-2">
@@ -106,7 +106,7 @@ function MobileList({ groups, now, pendingRows, showFolder }: Omit<SessionsTable
           <ul className="divide-y divide-line rounded-card border border-line bg-surface">
             {group.sessions.map((session) => (
               <li key={session.id} className="relative flex items-center gap-3 px-3 py-2.5">
-                <SessionStateBadge state={session.state} />
+                <SessionStateBadge state={session.state} task={session.task} />
                 <span className="min-w-0 flex-1">
                   <Link
                     href={`/sessions/${encodeURIComponent(session.id)}`}

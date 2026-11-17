@@ -13,7 +13,7 @@ export const DEFAULT_SETTINGS: PilotSettingsDto = { effort: null, model: null, p
 
 /** Peut-on écrire à la session depuis Bosco ? Pilotée, ou close ; jamais ouverte dans un terminal (règles 4 et 9). */
 export function writable(session: SessionDto): boolean {
-  if (session.openInTerminal) return false;
+  if (session.task || session.openInTerminal) return false;
   return session.pilot !== null || session.state === 'ended' || session.state === 'inactive';
 }
 
@@ -25,6 +25,7 @@ export function PilotPanel({ session }: { session: SessionDto }) {
   const client = useQueryClient();
   const push = useNotices((state) => state.push);
   const [settings, setSettings] = useState<PilotSettingsDto>(session.pilot?.settings ?? DEFAULT_SETTINGS);
+  if (session.task) return null;
   const inTerminal = !writable(session);
   if (inTerminal && !session.channel) {
     return (

@@ -2,6 +2,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 import type { JournalEntryDto, SessionDto } from '@bosco/domain';
 import { PageSkeleton } from '@/shared/components/page-skeleton';
 import { useNotices } from '@/shared/hooks/use-notices';
@@ -63,6 +64,11 @@ export function SessionDetailScreen({ id }: { id: string }) {
     ...sessionConversationQuery(id),
     refetchInterval: running ? CONVERSATION_REFRESH_MS : false,
   });
+  // La session d'une tâche du worker se lit dans l'écran de sa tâche, qui en montre le fil (CA-TACH-95)
+  const taskId = data?.session.task?.id;
+  useEffect(() => {
+    if (taskId !== undefined) router.replace(`/tasks/${taskId}`);
+  }, [router, taskId]);
   const notify = useNotices((state) => state.push);
   const sandboxed = Boolean(data?.session.pilot?.sandbox);
   const { data: refusals } = useQuery({
@@ -102,7 +108,7 @@ export function SessionDetailScreen({ id }: { id: string }) {
       </div>
     );
   }
-  if (!data || !sources) return <PageSkeleton variant="detail" rows={8} />;
+  if (!data || !sources || taskId !== undefined) return <PageSkeleton variant="detail" rows={8} />;
   const { journal, session } = data;
   // Une session en bac à sable ne se reprend que dans Bosco (règle 12)
   const resume = session.pilot?.sandbox ? null : resumeCommand(session, sources.sources, sources.home);

@@ -37,6 +37,7 @@ import { MikroOrmPilotRepository } from './infrastructure/persistence/pilot.repo
 import { MikroOrmSessionRepository } from './infrastructure/persistence/session.repository.ts';
 import { MikroOrmSettingsRepository } from './infrastructure/persistence/settings.repository.ts';
 import { MikroOrmSourceRepository } from './infrastructure/persistence/source.repository.ts';
+import { MikroOrmTaskLinkStore } from './infrastructure/persistence/task-link.store.ts';
 import { TranscriptCursorStore } from './infrastructure/persistence/transcript-cursor.store.ts';
 import { ChannelController } from './interface/http/channel.controller.ts';
 import { EventsController } from './interface/http/events.controller.ts';
@@ -297,6 +298,7 @@ export class SessionsModule implements OnApplicationBootstrap, OnApplicationShut
     this.pilot.useChannel(this.channel);
     this.liveSignals.usePilots(this.pilot);
     await this.pilot.load();
+    await this.sessions.useTaskLinks(new MikroOrmTaskLinkStore(this.orm));
     await this.liveSignals.dropStalePermissions();
     await this.sourceService.resumeWatching();
   }

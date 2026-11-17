@@ -1,0 +1,437 @@
+import type { MikroORM } from '@mikro-orm/sqlite';
+import { Inject, Module, type OnApplicationBootstrap, type OnApplicationShutdown } from '@nestjs/common';
+import { availableParallelism, freemem, userInfo } from 'node:os';
+import { join } from 'node:path';
+import type { Config } from '../config.ts';
+import type { ContextService } from '../context/application/context.service.ts';
+import type { LinksService } from '../context/application/links.service.ts';
+import type { NotificationService } from '../sessions/application/notification.service.ts';
+import type { PilotService } from '../sessions/application/pilot.service.ts';
+import type { SessionService } from '../sessions/application/session.service.ts';
+import type { SourceService } from '../sessions/application/source.service.ts';
+import type { RepositoryCatalog } from './application/ports.ts';
+import { ContextModule } from '../context/context.module.ts';
+import { parseProposal, PROPOSAL_HELP } from '../context/domain/proposal.ts';
+import { CONTEXT_SERVICE, LINKS_SERVICE } from '../context/tokens.ts';
+import { estimateCostMicros } from '../sessions/domain/model-pricing.ts';
+import { TokenUsage } from '../sessions/domain/token-usage.ts';
+import { SessionsModule } from '../sessions/sessions.module.ts';
+import { NOTIFICATION_SERVICE, PILOT_SERVICE, SESSION_SERVICE, SOURCE_SERVICE } from '../sessions/tokens.ts';
+import { GhAccounts, scriptedGithubAccounts } from '../shared/infrastructure/github/gh-accounts.ts';
+import { CONFIG, ORM } from '../shared/tokens.ts';
+import { AccountsService } from './application/accounts.service.ts';
+import { type ContainerProbe, ContainersService, MEASURE_MS } from './application/containers.service.ts';
+import { IsolationService } from './application/isolation.service.ts';
+import { QuotaService } from './application/quota.service.ts';
+import { ReviewService } from './application/review.service.ts';
+import { RightsService } from './application/rights.service.ts';
+import { TaskService, type TaskView } from './application/task.service.ts';
+import { TestEnvironmentService } from './application/test-environment.service.ts';
+import { WorkerService } from './application/worker.service.ts';
+import { ContainerEventsBus } from './infrastructure/container-events.bus.ts';
+import { AllowListFile } from './infrastructure/isolation/allow-list-file.ts';
+import { MikroOrmAccountsStore } from './infrastructure/persistence/accounts.store.ts';
+import { MikroOrmIsolationStore } from './infrastructure/persistence/isolation.store.ts';
+import { MikroOrmQuotaStore } from './infrastructure/persistence/quota.store.ts';
+import { MikroOrmRightsStore } from './infrastructure/persistence/rights.store.ts';
+import { MikroOrmTaskRepository } from './infrastructure/persistence/task.repository.ts';
+import { MikroOrmTestEnvironmentStore } from './infrastructure/persistence/test-environment.store.ts';
+import { GhPublisher, GitChanges, scriptedReview } from './infrastructure/review/git-review.ts';
+import { TaskEventsBus } from './infrastructure/task-events.bus.ts';
+import { FileComposeSource, GitComposeSource, servicesFile } from './infrastructure/test-services/compose-file.ts';
+import { DockerAgentRunner } from './infrastructure/worker/docker-agent-runner.ts';
+import { DockerContainers } from './infrastructure/worker/docker-containers.ts';
+import { GitWorkspaces } from './infrastructure/worker/git-workspaces.ts';
+import { ProcessTreeProbe } from './infrastructure/worker/process-tree.ts';
+import { ScriptedAgentRunner, scriptedWorkspaces } from './infrastructure/worker/scripted-agent.ts';
+import { FileWorkerSecrets } from './infrastructure/worker/worker-secrets.ts';
+import { ContainersController } from './interface/http/containers.controller.ts';
+import { IsolationController } from './interface/http/isolation.controller.ts';
+import { QuotaController } from './interface/http/quota.controller.ts';
+import { ReviewController } from './interface/http/review.controller.ts';
+import { RightsController } from './interface/http/rights.controller.ts';
+import { TasksController } from './interface/http/tasks.controller.ts';
+import { TestEnvironmentController } from './interface/http/test-environment.controller.ts';
+import { WorkerController } from './interface/http/worker.controller.ts';
+import { McpController } from './interface/mcp/mcp.controller.ts';
+import {
+  ACCOUNTS_SERVICE,
+  AGENT_RUNNER,
+  CONTAINER_EVENTS,
+  CONTAINERS_SERVICE,
+  ISOLATION_SERVICE,
+  QUOTA_SERVICE,
+  REPOSITORY_CATALOG,
+  REVIEW_SERVICE,
+  RIGHTS_SERVICE,
+  TASK_EVENTS,
+  TASK_SERVICE,
+  TEST_ENVIRONMENT_SERVICE,
+  WORKER_SERVICE,
+} from './tokens.ts';
+
+const clock = { now: () => new Date() };
+
+/** Le worker repasse à cet intervalle, et à chaque changement de tâche (E5c : il revérifie seul). */
+const TICK_MS = 5000;
+/** Les conteneurs restés sont supprimés à cet intervalle, après le démarrage (CA-CONT-84) */
+const CLEANUP_MS = 60 * 60_000;
+
+/** Dans les scénarios, pas de Docker : aucun conteneur */
+const NO_CONTAINERS: ContainerProbe = {
+  diskOf: () => Promise.resolve(0),
+  list: () => Promise.resolve([]),
+  logs: () => Promise.resolve(''),
+  remove: () => Promise.resolve(),
+  restart: () => Promise.resolve(null),
+};
+
+/** Mémoire libre annoncée au worker dans les scénarios (BOSCO_TEST=1) : de quoi lancer ses agents */
+const SCENARIO_FREE_MEMORY = 64 * 1024 ** 3;
+
+/** Contexte des tâches (RF-TACH) ; les dépôts viennent des sessions, par le point de composition. */
+@Module({
+  imports: [SessionsModule, ContextModule],
+  controllers: [
+    TasksController,
+    WorkerController,
+    IsolationController,
+    TestEnvironmentController,
+    RightsController,
+    ReviewController,
+    ContainersController,
+    McpController,
+    QuotaController,
+  ],
+  providers: [
+    { provide: TASK_EVENTS, useValue: new TaskEventsBus() },
+    {
+      provide: REPOSITORY_CATALOG,
+      inject: [SESSION_SERVICE],
+      useFactory: (sessions: SessionService): RepositoryCatalog => ({ list: () => sessions.knownRepositories() }),
+    },
+    {
+      provide: RIGHTS_SERVICE,
+      inject: [ORM],
+      useFactory: (orm: MikroORM) => new RightsService(new MikroOrmRightsStore(orm)),
+    },
+    {
+      provide: TASK_SERVICE,
+      inject: [ORM, REPOSITORY_CATALOG, TASK_EVENTS, RIGHTS_SERVICE],
+      useFactory: (orm: MikroORM, catalog: RepositoryCatalog, bus: TaskEventsBus, rights: RightsService) =>
+        new TaskService(new MikroOrmTaskRepository(orm), catalog, rights, bus, clock),
+    },
+    {
+      provide: ACCOUNTS_SERVICE,
+      inject: [ORM, ISOLATION_SERVICE],
+      useFactory: (orm: MikroORM, isolation: IsolationService) =>
+        new AccountsService(new MikroOrmAccountsStore(orm), isolation),
+    },
+    {
+      provide: REVIEW_SERVICE,
+      inject: [CONFIG, TASK_SERVICE, RIGHTS_SERVICE, ACCOUNTS_SERVICE],
+      useFactory: (config: Config, tasks: TaskService, rights: RightsService, accounts: AccountsService) => {
+        const githubAccountOf = (repository: string) => accounts.githubAccountOf(repository);
+        return config.testing
+          ? new ReviewService(tasks, scriptedReview, scriptedReview, rights, githubAccountOf)
+          : new ReviewService(
+              tasks,
+              new GitChanges(),
+              new GhPublisher(config.worker.gh, new GhAccounts(config.worker.gh)),
+              rights,
+              githubAccountOf,
+            );
+      },
+    },
+    {
+      provide: TEST_ENVIRONMENT_SERVICE,
+      inject: [CONFIG, ORM, REPOSITORY_CATALOG],
+      useFactory: (config: Config, orm: MikroORM, catalog: RepositoryCatalog) =>
+        new TestEnvironmentService(
+          new MikroOrmTestEnvironmentStore(orm),
+          servicesFile(config.testing ? new FileComposeSource() : new GitComposeSource()),
+          catalog,
+          clock,
+        ),
+    },
+    {
+      provide: QUOTA_SERVICE,
+      inject: [ORM],
+      useFactory: (orm: MikroORM) => new QuotaService(new MikroOrmQuotaStore(orm), clock),
+    },
+    {
+      provide: ISOLATION_SERVICE,
+      inject: [CONFIG, ORM, SOURCE_SERVICE],
+      useFactory: (config: Config, orm: MikroORM, sources: SourceService) => {
+        const worker = join(config.dataDir, 'worker');
+        // Les profils surveillés, sans celui du worker, qui ne garde que les sessions de ses agents
+        const profiles = async () => {
+          const view = await sources.listSources();
+          return view.sources.filter(({ path }) => path !== worker).map(({ label, path }) => ({ label, path }));
+        };
+        return new IsolationService(new MikroOrmIsolationStore(orm), new AllowListFile(join(worker, 'egress')), {
+          defaults: { credentials: config.worker.credentials, home: config.profilesRoot, npmrc: '~/.npmrc' },
+          reader: new FileWorkerSecrets(
+            profiles,
+            config.testing ? scriptedGithubAccounts : new GhAccounts(config.worker.gh),
+          ),
+        });
+      },
+    },
+    {
+      provide: AGENT_RUNNER,
+      inject: [CONFIG, ISOLATION_SERVICE, SOURCE_SERVICE],
+      useFactory: (config: Config, isolation: IsolationService, sources: SourceService) => {
+        const profile = join(config.dataDir, 'worker');
+        // Le profil du worker devient une source dès qu'il garde une session (E2c, E2d)
+        const onSessionSaved = () => void sources.ensureSource(profile).catch(() => undefined);
+        if (config.testing) return new ScriptedAgentRunner({ path: profile, onSessionSaved });
+        const { gid, uid } = userInfo();
+        return new DockerAgentRunner({
+          claudeBinary: config.worker.claudeBinary,
+          secrets: (profile) => isolation.workerSecrets(profile),
+          allowDir: join(config.dataDir, 'worker', 'egress'),
+          onRefusal: (refusal) => void isolation.refused(refusal).catch(() => undefined),
+          onSessionSaved,
+          profile,
+          user: `${uid}:${gid}`,
+        });
+      },
+    },
+    {
+      provide: WORKER_SERVICE,
+      inject: [
+        CONFIG,
+        TASK_SERVICE,
+        AGENT_RUNNER,
+        ISOLATION_SERVICE,
+        TEST_ENVIRONMENT_SERVICE,
+        RIGHTS_SERVICE,
+        CONTEXT_SERVICE,
+        LINKS_SERVICE,
+        ACCOUNTS_SERVICE,
+        QUOTA_SERVICE,
+      ],
+      useFactory: (
+        config: Config,
+        tasks: TaskService,
+        runner: DockerAgentRunner | ScriptedAgentRunner,
+        isolation: IsolationService,
+        environments: TestEnvironmentService,
+        rights: RightsService,
+        context: ContextService,
+        links: LinksService,
+        accounts: AccountsService,
+        quota: QuotaService,
+      ) =>
+        new WorkerService({
+          contextOf: async (task) => {
+            const taskLinks = await links.contextLinks(task.id);
+            const sent = await context.sentTo(task.repository.name, taskLinks);
+            return { text: `${sent.text}\n\n${PROPOSAL_HELP}`, versions: sent.versions };
+          },
+          propose: async (task, markdown) => {
+            const text = parseProposal(markdown);
+            if (!text) return null;
+            const decision = await context.propose(task.repository.name, text, task.id);
+            return decision.id;
+          },
+          environmentOf: (task) => environments.forTask(task.repository),
+          servicesLaunched: (task, launches) => environments.launched(task.repository.name, task.id, launches),
+          tasks,
+          runner,
+          health: runner,
+          // Dans les scénarios, la mémoire libre ne dépend pas de la machine : la CI en a parfois moins de 8 Go
+          freeMemory: config.testing ? () => SCENARIO_FREE_MEMORY : freemem,
+          maxAgents: () => isolation.maxAgents(),
+          atlassianRead: () => isolation.atlassianRead(),
+          rightsOf: (repository) => rights.rightsOf(repository),
+          claudeProfileOf: async (repository) => {
+            const own = await accounts.of(repository);
+            return own.claudeProfile;
+          },
+          quota: {
+            profileOf: (profile) => isolation.profileOf(profile),
+            record: (profile, windows) => quota.record(profile, windows),
+            stopReason: (profile) => quota.stopReason(profile),
+            waitReason: (profile) => quota.waitReason(profile),
+          },
+          workspaces: config.testing ? scriptedWorkspaces : new GitWorkspaces(join(config.dataDir, 'workspaces')),
+          priceOf: (model, usage) => {
+            const micros = estimateCostMicros(
+              model,
+              new TokenUsage(usage.input, usage.output, usage.cacheCreation, usage.cacheRead),
+            );
+            return micros === null ? null : micros / 1_000_000;
+          },
+        }),
+    },
+    { provide: CONTAINER_EVENTS, useValue: new ContainerEventsBus() },
+    {
+      provide: CONTAINERS_SERVICE,
+      inject: [CONFIG, TASK_SERVICE, WORKER_SERVICE, CONTAINER_EVENTS, PILOT_SERVICE, SESSION_SERVICE],
+      useFactory: (
+        config: Config,
+        tasks: TaskService,
+        worker: WorkerService,
+        events: ContainerEventsBus,
+        pilot: PilotService,
+        sessions: SessionService,
+      ) => {
+        const processes = new ProcessTreeProbe();
+        return new ContainersService({
+          clock,
+          events,
+          hostCpus: availableParallelism(),
+          // Un tour piloté se mesure sur l'arbre des processus de son agent, sur le poste (DT-35)
+          pilots: {
+            list: async () => {
+              const turns = pilot.runningTurns();
+              if (turns.length === 0) return [];
+              const pids = turns.flatMap(({ pid }) => (pid === null ? [] : [pid]));
+              const [usage, views] = await Promise.all([processes.sample(pids), sessions.listSessions()]);
+              return turns.map((turn) => {
+                const measured = turn.pid === null ? undefined : usage.get(turn.pid);
+                const view = views.find(({ id }) => id === turn.sessionId);
+                return {
+                  cpu: measured?.cpu ?? 0,
+                  memory: measured?.memory ?? 0,
+                  sessionId: turn.sessionId,
+                  since: turn.since,
+                  title: view?.title ?? `Session ${turn.sessionId.slice(0, 8)}`,
+                };
+              });
+            },
+          },
+          probe: config.testing ? NO_CONTAINERS : new DockerContainers(),
+          tasks,
+          worker,
+        });
+      },
+    },
+  ],
+  exports: [
+    TASK_SERVICE,
+    WORKER_SERVICE,
+    AGENT_RUNNER,
+    ISOLATION_SERVICE,
+    RIGHTS_SERVICE,
+    ACCOUNTS_SERVICE,
+    QUOTA_SERVICE,
+  ],
+})
+export class TasksModule implements OnApplicationBootstrap, OnApplicationShutdown {
+  private timer: ReturnType<typeof setInterval> | undefined;
+  private readonly containerTimers: ReturnType<typeof setInterval>[] = [];
+
+  constructor(
+    @Inject(WORKER_SERVICE) private readonly worker: WorkerService,
+    @Inject(TASK_EVENTS) private readonly bus: TaskEventsBus,
+    @Inject(AGENT_RUNNER) private readonly runner: DockerAgentRunner | ScriptedAgentRunner,
+    @Inject(ISOLATION_SERVICE) private readonly isolation: IsolationService,
+    @Inject(TASK_SERVICE) private readonly tasks: TaskService,
+    @Inject(SESSION_SERVICE) private readonly sessions: SessionService,
+    @Inject(LINKS_SERVICE) private readonly links: LinksService,
+    @Inject(ACCOUNTS_SERVICE) private readonly accounts: AccountsService,
+    @Inject(NOTIFICATION_SERVICE) private readonly notifications: NotificationService,
+    @Inject(PILOT_SERVICE) private readonly pilot: PilotService,
+    @Inject(CONTAINERS_SERVICE) private readonly containers: ContainersService,
+    @Inject(QUOTA_SERVICE) private readonly quota: QuotaService,
+  ) {}
+
+  async onApplicationBootstrap(): Promise<void> {
+    await this.isolation.load();
+    await this.quota.load();
+    // Une session pilotée prend l'abonnement Claude de son dépôt, comme ses tâches (E16a, E8a)
+    this.pilot.useProfiles({
+      of: async (repository) => {
+        const { claude } = await this.accounts.view(repository || null);
+        return { choices: claude.choices, effective: claude.effective?.path ?? null };
+      },
+    });
+    // Les liens GitHub d'une tâche se lisent avec le compte de son dépôt (E8a)
+    this.links.useGithubAccounts(async (taskId) => {
+      const task = await this.tasks.get(taskId);
+      return this.accounts.githubAccountOf(task.repository.name);
+    });
+    // La session d'un agent suit l'état de sa tâche : À relire, En échec (E2c, E2d)
+    const link = (task: TaskView) =>
+      task.mode === 'worker' && task.outcome.sessionId
+        ? this.sessions.linkTask(task.outcome.sessionId, {
+            id: task.id,
+            state: task.state,
+            failure: task.failure,
+            title: task.title,
+          })
+        : Promise.resolve();
+    const tasks = await this.tasks.list();
+    for (const task of tasks) await link(task);
+    this.bus.changes.subscribe((task) => void link(task).catch(() => undefined));
+    // Une tâche du worker à relire ou en échec notifie ; elle en sort une fois relue ou relancée (E15)
+    const states = new Map(tasks.map((task) => [task.id, task.state]));
+    this.bus.changes.subscribe((task) => {
+      const before = states.get(task.id);
+      states.set(task.id, task.state);
+      if (before !== task.state) void notifyTask(this.notifications, task, before).catch(() => undefined);
+    });
+    if (this.runner instanceof DockerAgentRunner) await this.runner.cleanup();
+    await this.worker.recover();
+    this.timer = setInterval(() => void this.worker.tick(), TICK_MS);
+    this.timer.unref();
+    // Conteneurs en cours : mesurés toutes les 5 s, ceux restés après leur tâche supprimés au démarrage puis toutes les
+    // heures (E19, DT-35)
+    await this.containers.cleanup().catch(() => undefined);
+    this.containerTimers.push(
+      setInterval(() => void this.containers.tick().catch(() => undefined), MEASURE_MS),
+      setInterval(() => void this.containers.cleanup().catch(() => undefined), CLEANUP_MS),
+    );
+    for (const timer of this.containerTimers) timer.unref();
+    // Une tâche devenue prête part sans attendre le prochain passage
+    this.bus.changes.subscribe((task) => {
+      if (task.state === 'queued') void this.worker.tick();
+    });
+  }
+
+  onApplicationShutdown(): void {
+    clearInterval(this.timer);
+    for (const timer of this.containerTimers) clearInterval(timer);
+  }
+}
+
+const SETTLED: Partial<Record<string, string>> = {
+  blocked: 'Relancée',
+  cancelled: 'Annulée',
+  queued: 'Relancée',
+  rejected: 'Rejetée',
+  running: 'Relancée',
+  validated: 'Validée',
+};
+
+/** Notification d'une tâche du worker qui change d'état : à relire, en échec, ou traitée. */
+async function notifyTask(
+  notifications: NotificationService,
+  task: TaskView,
+  before: string | undefined,
+): Promise<void> {
+  const subject = {
+    place: task.repository.name,
+    sessionId: task.outcome.sessionId,
+    taskId: task.id,
+    title: `T-${task.id} · ${task.title}`,
+  };
+  if (before === 'to_review' || before === 'failed')
+    await notifications.settle({ taskId: task.id, kinds: ['failed', 'review'] }, SETTLED[task.state] ?? 'Traitée');
+  if (task.mode !== 'worker') return;
+  if (task.state === 'to_review') {
+    const changes = task.outcome.changes;
+    const files = changes && changes.files > 1 ? 'fichiers' : 'fichier';
+    const excerpt = [
+      changes ? `${changes.files} ${files} +${changes.added} −${changes.removed}` : null,
+      `${task.spentUsd.toFixed(2).replace('.', ',')} $`,
+    ]
+      .filter(Boolean)
+      .join(' · ');
+    await notifications.notify({ kind: 'review' }, { ...subject, excerpt });
+  } else if (task.state === 'failed')
+    await notifications.notify({ kind: 'failed' }, { ...subject, excerpt: task.failure });
+}

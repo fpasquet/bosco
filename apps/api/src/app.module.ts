@@ -2,12 +2,12 @@ import { type DynamicModule, Module } from '@nestjs/common';
 import type { Config } from './config.ts';
 import { AccessModule } from './access/access.module.ts';
 import { ContextModule } from './context/context.module.ts';
-import { IsolationModule } from './isolation/isolation.module.ts';
 import { PersistenceModule } from './persistence.module.ts';
 import { SandboxWiring } from './sandbox-wiring.ts';
 import { SessionsModule } from './sessions/sessions.module.ts';
 import { HealthController } from './shared/interface/http/health.controller.ts';
 import { CONFIG } from './shared/tokens.ts';
+import { TasksModule } from './tasks/tasks.module.ts';
 import { TestController } from './test.controller.ts';
 
 /** Point de composition : relie chaque port à son adaptateur. Les contextes y arrivent lot par lot. */
@@ -17,7 +17,7 @@ export class AppModule {
     return {
       module: AppModule,
       global: true,
-      imports: [PersistenceModule, SessionsModule, AccessModule, ContextModule, IsolationModule],
+      imports: [PersistenceModule, SessionsModule, AccessModule, ContextModule, TasksModule],
       controllers: [HealthController, ...(config.testing ? [TestController] : [])],
       providers: [{ provide: CONFIG, useValue: config }, SandboxWiring],
       exports: [CONFIG],

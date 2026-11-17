@@ -59,16 +59,14 @@ Feature: Context of the agents
     And I send GET request to "/api/context/repositories"
     Then the response property "repositories" should equal "labo-ia"
 
-  Scenario: A session reads the context of the repository it works in, and nothing outside of the known ones
+  @CA-CONT-07
+  Scenario: A worker agent receives the context at its launch, noted in the log of its task
     When I send POST request to "/api/decisions" with the JSON "fixtures/context/repository-decision.json"
-    And a Claude Code session in "labo-ia/packages/rag" calls the Bosco tool "bosco_context"
-    Then the Bosco tool answers "DEC-1"
-    When a Claude Code session in "ailleurs" calls the Bosco tool "bosco_context"
-    Then the Bosco tool answers "Ce dossier n’est dans aucun dépôt connu de Bosco."
-
-  Scenario: The MCP server of Bosco requires the secret of the installation
-    When a program without the secret calls the Bosco tool "bosco_context"
-    Then the Bosco tool is refused with the code 401
+    And I send POST request to "/api/tasks" with the JSON "fixtures/tasks/worker-task.json"
+    Then the task 1 should become "to_review"
+    When I send GET request to "/api/tasks/1"
+    Then the response property "log.3.event" should equal "Contexte transmis"
+    And the response property "log.3.detail" should equal "DEC-1 v1"
 
   Scenario: A socle never inherits from itself, even indirectly
     When I send POST request to "/api/socles" with the JSON "fixtures/context/global-socle.json"

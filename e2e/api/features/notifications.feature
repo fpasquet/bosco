@@ -50,3 +50,14 @@ Feature: Notifications
       | title | body |
     And the event stream receives "notification.created" with:
       | inApp | true |
+
+  @CA-SESS-83
+  Scenario: A worker task to review notifies, and leaves the work to do once validated
+    When I send POST request to "/api/tasks" with the JSON "fixtures/tasks/worker-task.json"
+    Then the task 1 should become "to_review"
+    When I send GET request to "/api/notifications"
+    Then the response property "notifications.0.kind" should equal "review"
+    And the response property "notifications.0.taskId" should equal "1"
+    When I send POST request to "/api/tasks/1/validate" with the JSON "fixtures/review/without-pull-request.json"
+    And I send GET request to "/api/notifications"
+    Then the response property "notifications.0.settled" should equal "Validée"

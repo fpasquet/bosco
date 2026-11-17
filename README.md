@@ -1,6 +1,6 @@
 # Bosco
 
-Poste de pilotage local des sessions Claude Code : Bosco découvre les sessions du poste, dit laquelle attend une réponse, permet d'autoriser une commande sans changer de fenêtre, et fait tourner une session dans un bac à sable, isolée du poste, sur sa propre branche. Le bosco est le maître d'équipage d'un navire : ici, l'équipage, ce sont les sessions.
+Poste de pilotage local des sessions Claude Code : Bosco découvre les sessions du poste, dit laquelle attend une réponse, permet d'autoriser une commande sans changer de fenêtre, puis de confier du travail à Claude Code et de le relire avant toute fusion. Le bosco est le maître d'équipage d'un navire : ici, l'équipage, ce sont les sessions et le worker.
 
 - Specs UI et cahier des charges : dépôt de specs `fpasquet/specs`, dossier `bosco/` (artifacts : [specs UI](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1), [cahier des charges](https://claude.ai/artifact/8ze73zWxiHUVDx99xfQqC4)).
 - Exigences de développement exportées : [`docs/requirements/`](docs/requirements/README.md).

@@ -1,0 +1,82 @@
+import Link from 'next/link';
+import type { TaskDto } from '@bosco/domain';
+import { usd, whyWaiting } from '../../lib/tasks';
+import { TaskStateBadge } from '../task-state-badge';
+
+/** Coût estimé, sans plafond : le quota de l'abonnement retient le worker (DT-39) ; rien pour « Ma session » (E5b). */
+function costOf(task: TaskDto): string {
+  if (task.mode === 'session' || task.spentUsd === 0) return '—';
+  return `${usd(task.spentUsd)} estimés`;
+}
+
+/** File des tâches (E5b) : toute ligne ouvre le détail de la tâche (CA-TACH-13). */
+export function TaskList({
+  onHover,
+  tasks,
+  waiting = {},
+}: {
+  /** Tâche survolée ou atteinte au clavier, dont l'enchaînement met la chaîne en évidence (CA-TACH-10) ; null en sortant */
+  onHover?: (id: null | number) => void;
+  tasks: TaskDto[];
+  waiting?: Record<number, string>;
+}) {
+  if (tasks.length === 0) return <p className="text-muted">Aucune tâche ici.</p>;
+  return (
+    <div className="overflow-x-auto rounded-card border border-line bg-surface shadow-card">
+      <table className="table w-full min-w-xl text-left">
+        <caption className="sr-only">Tâches</caption>
+        <thead className="text-xs text-muted">
+          <tr className="h-9 border-b border-line">
+            <th className="pl-4 font-medium">Tâche</th>
+            <th className="w-28 font-medium">Attend</th>
+            <th className="w-32 pr-4 text-right font-medium">Coût estimé</th>
+          </tr>
+        </thead>
+        <tbody>
+          {tasks.map((task) => (
+            <tr
+              key={task.id}
+              className="relative border-b border-line hover:bg-surface-alt"
+              onMouseEnter={() => onHover?.(task.id)}
+              onMouseLeave={() => onHover?.(null)}
+            >
+              <td className="pl-4">
+                <Link
+                  href={`/tasks/${task.id}`}
+                  className="font-medium after:absolute after:inset-0"
+                  onBlur={() => onHover?.(null)}
+                  onFocus={() => onHover?.(task.id)}
+                >
+                  <span className="font-mono text-xs text-muted">T-{task.id}</span> {task.title}
+                </Link>
+                <span className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted">
+                  <TaskStateBadge state={task.state} />
+                  {task.mode === 'worker' ? 'Worker' : 'Ma session'}
+                  <span className="font-mono">
+                    {task.repository.name}
+                    {task.folder ? ` · ${task.folder}` : ''}
+                  </span>
+                  {whyWaiting(task) && <span>· {whyWaiting(task)}</span>}
+                  {waiting[task.id] && <span>· {waiting[task.id]}</span>}
+                  {task.outcome.changes && (
+                    <span>
+                      · {task.outcome.changes.files} fichiers{' '}
+                      <span className="text-success">+{task.outcome.changes.added}</span>{' '}
+                      <span className="text-danger">−{task.outcome.changes.removed}</span>
+                    </span>
+                  )}
+                  {task.createdBy === 'session' && <span>· créée par une session</span>}
+                  {task.failure && task.state !== 'cancelled' && <span>· {task.failure}</span>}
+                </span>
+              </td>
+              <td className="font-mono text-xs text-muted">
+                {task.waitingFor.length > 0 ? task.waitingFor.map(({ id }) => `T-${id}`).join(' ') : '—'}
+              </td>
+              <td className="pr-4 text-right font-mono text-xs tabular-nums">{costOf(task)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}

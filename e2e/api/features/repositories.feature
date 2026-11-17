@@ -47,7 +47,7 @@ Feature: Discovered repositories
   @CA-SESS-80
   @CA-SESS-81
   @CA-SESS-82
-  Scenario: A hidden repository leaves the lists of repositories, its sessions stay
+  Scenario: A hidden repository leaves the lists of the tasks, its sessions stay
     When I send GET request to "/api/repositories"
     Then the response property "repositories" should match the names "labo-ia,api-voix"
     When I send PUT request to "/api/settings" with the JSON "fixtures/repositories/hide-labo-ia.json"

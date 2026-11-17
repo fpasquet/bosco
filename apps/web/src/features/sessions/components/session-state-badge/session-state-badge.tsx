@@ -1,4 +1,4 @@
-import type { SessionStateDto } from '@bosco/domain';
+import type { SessionDto, SessionStateDto } from '@bosco/domain';
 import { cn } from '@/lib/cn';
 import { STATE_LABELS } from '../../lib/overview';
 
@@ -9,14 +9,29 @@ const STYLES: Record<SessionStateDto, { badge: string; dot: string }> = {
   inactive: { badge: 'badge-ghost', dot: 'bg-muted' },
 };
 
+/** Session du worker dont la tâche attend ta relecture ou a échoué : cet état prime (E2c, E2d). */
+const TASK_STATES: Record<string, { badge: string; dot: string; label: string }> = {
+  to_review: { badge: 'badge-soft badge-primary', dot: 'bg-primary', label: 'À relire' },
+  failed: { badge: 'badge-soft badge-error', dot: 'bg-danger', label: 'En échec' },
+};
+
 /** État d'une session : le libellé porte l'état, la couleur ne fait que le souligner (NF-18). */
 /** `still` : les données sont figées (Bosco injoignable), la pastille ne s'anime plus (E1f). */
-export function SessionStateBadge({ state, still = false }: { state: SessionStateDto; still?: boolean }) {
-  const { badge, dot } = STYLES[state];
+export function SessionStateBadge({
+  state,
+  still = false,
+  task = null,
+}: {
+  state: SessionStateDto;
+  still?: boolean;
+  task?: SessionDto['task'];
+}) {
+  const fromTask = task && state !== 'running' && state !== 'waiting' ? TASK_STATES[task.state] : undefined;
+  const { badge, dot } = fromTask ?? STYLES[state];
   return (
     <span className={cn('badge gap-1.5 badge-sm whitespace-nowrap', badge)}>
       <span aria-hidden className={cn('size-1.5 rounded-full', dot, still && 'animate-none')} />
-      {STATE_LABELS[state]}
+      {fromTask?.label ?? STATE_LABELS[state]}
     </span>
   );
 }

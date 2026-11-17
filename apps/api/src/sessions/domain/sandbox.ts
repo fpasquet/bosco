@@ -33,14 +33,6 @@ export const SANDBOX_WARN_MS = SANDBOX_KEEP_MS - 24 * 60 * 60 * 1000;
 
 export class SandboxError extends DomainError {}
 
-/** Nom court des conteneurs d'un bac à sable : les 12 premiers caractères de sa session (« bosco-s-<clé>-agent »). */
-export function sandboxKeyOf(sessionId: string): string {
-  return sessionId
-    .replaceAll(/[^a-z0-9]/gi, '')
-    .slice(0, 12)
-    .toLowerCase();
-}
-
 /** Préfixe des branches de session : on les reconnaît dans le dépôt. */
 const PREFIX = 'bosco/s-';
 
