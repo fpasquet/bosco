@@ -1,6 +1,19 @@
 'use client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowRight, MessageSquare, Monitor, SquareTerminal, TriangleAlert } from 'lucide-react';
+import {
+  ArrowRight,
+  Box,
+  Download,
+  EyeOff,
+  GitBranch,
+  Globe,
+  KeyRound,
+  MessageSquare,
+  Monitor,
+  Moon,
+  SquareTerminal,
+  TriangleAlert,
+} from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -25,9 +38,69 @@ function openIn(sessions: readonly SessionDto[], root: string): null | SessionDt
   );
 }
 
+/** Récapitulatif d'une session sur le poste (E16a). */
+function WorkstationSummary() {
+  return (
+    <>
+      <p className="flex gap-2">
+        <Monitor aria-hidden className="mt-0.5 size-4 shrink-0 text-muted" />
+        Sur ce poste, dans le dossier du dépôt, comme dans un terminal.
+      </p>
+      <p className="text-xs font-semibold text-muted">Ensuite</p>
+      <p className="flex gap-2">
+        <MessageSquare aria-hidden className="mt-0.5 size-4 shrink-0 text-muted" />
+        Elle s’ouvre dans Bosco : tu lui écris depuis le poste ou le téléphone.
+      </p>
+      <p className="flex gap-2">
+        <SquareTerminal aria-hidden className="mt-0.5 size-4 shrink-0 text-muted" />
+        Elle se reprend aussi dans un terminal entre deux tours.
+      </p>
+    </>
+  );
+}
+
+/** Récapitulatif d'une session en bac à sable (E16b, règle 12) : ce que voit l'agent, et comment le travail revient. */
+function SandboxSummary({ branch, name }: { branch: string; name: string }) {
+  return (
+    <>
+      <p className="flex gap-2">
+        <Box aria-hidden className="mt-0.5 size-4 shrink-0 text-muted" />
+        Dans un bac à sable sur ce poste, isolé comme un agent du worker.
+      </p>
+      <p className="text-xs font-semibold text-muted">Ce que voit l’agent</p>
+      <p className="flex gap-2">
+        <GitBranch aria-hidden className="mt-0.5 size-4 shrink-0 text-muted" />
+        Une copie de {name}, sur {branch}
+      </p>
+      <p className="flex gap-2">
+        <KeyRound aria-hidden className="mt-0.5 size-4 shrink-0 text-muted" />
+        L’accès à l’abonnement choisi
+      </p>
+      <p className="flex gap-2">
+        <Globe aria-hidden className="mt-0.5 size-4 shrink-0 text-muted" />
+        Les domaines de la sortie réseau du worker
+      </p>
+      <p className="flex gap-2 text-muted">
+        <EyeOff aria-hidden className="mt-0.5 size-4 shrink-0" />
+        Rien d’autre du poste : ni fichiers, ni accès, ni autres dépôts
+      </p>
+      <p className="text-xs font-semibold text-muted">Ensuite</p>
+      <p className="flex gap-2">
+        <Download aria-hidden className="mt-0.5 size-4 shrink-0 text-muted" />« Récupérer la branche » ramène le travail
+        dans le dépôt, quand tu veux.
+      </p>
+      <p className="flex gap-2">
+        <Moon aria-hidden className="mt-0.5 size-4 shrink-0 text-muted" />
+        Le bac à sable s’arrête après 30 min sans message, sans rien perdre.
+      </p>
+    </>
+  );
+}
+
 /**
- * Nouvelle session (E16a, CA-SESS-91) : le dépôt et l'abonnement Claude, puis le premier message, avec les réglages
- * du tour dans la barre d'outils. Elle démarre sur le poste, dans le dossier du dépôt, et s'ouvre dans Bosco.
+ * Nouvelle session (E16a, E16b, CA-SESS-91, CA-SESS-106) : le dépôt et l'abonnement Claude, où elle tourne (sur le
+ * poste ou dans un bac à sable, sur sa propre branche), puis le premier message, avec les réglages du tour dans la
+ * barre d'outils. Elle s'ouvre dans Bosco.
  */
 export function NewSessionScreen() {
   const router = useRouter();
@@ -38,15 +111,28 @@ export function NewSessionScreen() {
   const [chosenRepository, setRepository] = useState<null | string>(null);
   const [chosenProfile, setProfile] = useState<null | string>(null);
   const [settings, setSettings] = useState<PilotSettingsDto>(DEFAULT_SETTINGS);
+  const [where, setWhere] = useState<'sandbox' | 'workstation'>('workstation');
+  const [startBranch, setStartBranch] = useState<null | string>(null);
+  const [branch, setBranch] = useState('');
   if (!options) return <PageSkeleton variant="detail" rows={6} />;
   const repository =
     options.repositories.find(({ root }) => root === chosenRepository) ?? options.repositories[0] ?? null;
   const profile = chosenProfile ?? repository?.defaultProfile ?? options.profiles[0]?.path ?? null;
-  const busy = repository ? openIn(sessions ?? [], repository.root) : null;
+  const sandboxed = where === 'sandbox' && !options.sandboxUnavailable;
+  // Le bac à sable travaille sur sa propre copie : une session du terminal dans le même dossier ne le gêne pas
+  const busy = repository && !sandboxed ? openIn(sessions ?? [], repository.root) : null;
+  const from = startBranch ?? repository?.branch ?? '';
+  const choose = (next: 'sandbox' | 'workstation') => {
+    setWhere(next);
+    // L'agent ne peut abîmer que sa copie : les modifications passent sans demander (E16b)
+    if (next === 'sandbox' && settings.permissionMode === 'ask')
+      setSettings({ ...settings, permissionMode: 'acceptEdits' });
+  };
   const submit = async (value: ComposerValue) => {
     if (!repository) return;
     try {
-      const sessionId = await startSession({ ...value, profile, repository: repository.root, settings });
+      const sandbox = sandboxed ? { branch: branch.trim() || null, startBranch: from.trim() || null } : null;
+      const sessionId = await startSession({ ...value, profile, repository: repository.root, settings, sandbox });
       await client.invalidateQueries({ queryKey: ['sessions'] });
       router.push(`/sessions/${sessionId}`);
     } catch (error) {
@@ -106,6 +192,62 @@ export function NewSessionScreen() {
                   </select>
                 </label>
               </div>
+              <fieldset className="flex flex-col gap-1.5">
+                <legend className="text-sm font-medium">Où elle tourne</legend>
+                <div className="grid grid-cols-2 gap-2">
+                  <label className="flex cursor-pointer items-center gap-2 rounded-control border border-line bg-surface px-3 py-2">
+                    <input
+                      type="radio"
+                      name="where"
+                      className="radio radio-sm"
+                      checked={where === 'workstation'}
+                      onChange={() => choose('workstation')}
+                    />
+                    <Monitor aria-hidden className="size-4 text-muted" />
+                    Sur le poste
+                  </label>
+                  <label className="flex cursor-pointer items-center gap-2 rounded-control border border-line bg-surface px-3 py-2">
+                    <input
+                      type="radio"
+                      name="where"
+                      className="radio radio-sm"
+                      checked={where === 'sandbox'}
+                      disabled={Boolean(options.sandboxUnavailable)}
+                      onChange={() => choose('sandbox')}
+                    />
+                    <Box aria-hidden className="size-4 text-muted" />
+                    Bac à sable
+                  </label>
+                </div>
+                {options.sandboxUnavailable && (
+                  <span className="text-xs text-muted">Bac à sable indisponible : {options.sandboxUnavailable}.</span>
+                )}
+              </fieldset>
+              {sandboxed && (
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <label className="flex min-w-0 flex-col gap-1.5">
+                    <span className="text-sm font-medium">Partir de</span>
+                    <input
+                      className="input w-full font-mono"
+                      value={from}
+                      onChange={(event) => setStartBranch(event.target.value)}
+                    />
+                  </label>
+                  <label className="flex min-w-0 flex-col gap-1.5">
+                    <span className="text-sm font-medium">Branche de la session</span>
+                    <input
+                      className="input w-full font-mono"
+                      placeholder="bosco/s-… d’après le premier message"
+                      value={branch}
+                      onChange={(event) => setBranch(event.target.value)}
+                    />
+                  </label>
+                  <p className="text-xs text-muted sm:col-span-2">
+                    Copie de {from || 'la branche courante'} telle qu’enregistrée : les fichiers modifiés du poste ne
+                    sont pas copiés.
+                  </p>
+                </div>
+              )}
               {busy && (
                 <div role="alert" className="alert alert-soft alert-warning">
                   <TriangleAlert aria-hidden className="size-4" />
@@ -138,19 +280,11 @@ export function NewSessionScreen() {
         <aside className="flex flex-col gap-3 rounded-card border border-line bg-surface p-4 text-sm shadow-card">
           <h2 className="font-semibold">Récapitulatif</h2>
           <p className="text-xs font-semibold text-muted">Où elle tourne</p>
-          <p className="flex gap-2">
-            <Monitor aria-hidden className="mt-0.5 size-4 shrink-0 text-muted" />
-            Sur ce poste, dans le dossier du dépôt, comme dans un terminal.
-          </p>
-          <p className="text-xs font-semibold text-muted">Ensuite</p>
-          <p className="flex gap-2">
-            <MessageSquare aria-hidden className="mt-0.5 size-4 shrink-0 text-muted" />
-            Elle s’ouvre dans Bosco : tu lui écris depuis le poste ou le téléphone.
-          </p>
-          <p className="flex gap-2">
-            <SquareTerminal aria-hidden className="mt-0.5 size-4 shrink-0 text-muted" />
-            Elle se reprend aussi dans un terminal entre deux tours.
-          </p>
+          {sandboxed && repository ? (
+            <SandboxSummary name={repository.name} branch={branch.trim() || 'sa propre branche'} />
+          ) : (
+            <WorkstationSummary />
+          )}
           <div className="rounded-control border border-dashed border-line-strong p-3 text-xs text-muted">
             Pour un travail isolé, avec budget et revue, crée plutôt une tâche.
             <Link href="/tasks/new" className="mt-1 flex items-center gap-1 font-medium text-ink hover:underline">

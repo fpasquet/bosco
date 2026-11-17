@@ -12,6 +12,7 @@ const LABELS: Record<NotificationKind, string> = {
   permission: 'Autorisation',
   question: 'Question de l’agent',
   review: 'À relire',
+  sandbox: 'Bac à sable',
   'turn-question': 'Question de fin de tour',
 };
 

@@ -54,8 +54,27 @@ export interface PilotDto {
   /** Message qui partira à la fin du tour (CA-SESS-93) */
   pending: null | { images: number; text: string };
   running: boolean;
+  /** Bac à sable de la session (règle 12) ; null : elle tourne sur le poste */
+  sandbox: null | PilotSandboxDto;
   settings: PilotSettingsDto;
   since: string;
+}
+
+/** Bac à sable d'une session pilotée (E2j) : sa branche, l'état de son conteneur et sa récupération. */
+export interface PilotSandboxDto {
+  branch: string;
+  from: string;
+  /** Supprimé : la session reste lisible, mais ne se reprend plus */
+  removed: boolean;
+  retrievedAt: null | string;
+  state: 'missing' | 'running' | 'stopped';
+  /** Arrêt du conteneur sans nouveau message */
+  stopsAt: string;
+}
+
+/** Ce que le détail d'un bac à sable lit à la demande (E2j) : les sorties réseau refusées. */
+export interface SandboxRefusalsDto {
+  refusals: { at: string; host: string }[];
 }
 
 /** Une image jointe à un message, en base64 (5 au plus, 5 Mo chacune). */
@@ -76,13 +95,18 @@ export interface PilotMessageDto {
 export interface StartSessionDto extends PilotMessageDto {
   profile: null | string;
   repository: string;
+  /** Dans un bac à sable (E16b) : branche de départ (null : la courante) et branche de la session (null : proposée) */
+  sandbox?: null | { branch: null | string; startBranch: null | string };
 }
 
 /** Ce que propose le formulaire d'une nouvelle session (E16a) : les dépôts et les abonnements Claude. */
 export interface PilotOptionsDto {
   /** Profils Claude Code surveillés qui ont un accès, et celui du dépôt choisi */
   profiles: { account: null | string; label: string; path: string }[];
-  repositories: { defaultProfile: null | string; name: string; root: string }[];
+  /** Branche courante de chaque dépôt : le départ proposé d'un bac à sable (E16b) */
+  repositories: { branch: null | string; defaultProfile: null | string; name: string; root: string }[];
+  /** null : le bac à sable est disponible ; sinon la raison (« Docker ne répond pas ») */
+  sandboxUnavailable: null | string;
 }
 
 /** Suggestion de l'éditeur (E2h) : un fichier du dépôt après « @ », une commande ou un skill après « / ». */
@@ -214,7 +238,7 @@ export interface NotificationDto {
   at: string;
   excerpt: null | string;
   id: number;
-  kind: 'ended' | 'failed' | 'long-turn' | 'permission' | 'question' | 'review' | 'turn-question';
+  kind: 'ended' | 'failed' | 'long-turn' | 'permission' | 'question' | 'review' | 'sandbox' | 'turn-question';
   /** Dépôt de la session ou de la tâche (« api-voix ») */
   place: null | string;
   readAt: null | string;

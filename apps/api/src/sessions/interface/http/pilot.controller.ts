@@ -13,7 +13,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { z } from 'zod';
-import type { PilotOptionsDto, SuggestionDto } from '@bosco/domain';
+import type { PilotOptionsDto, SandboxRefusalsDto, SuggestionDto } from '@bosco/domain';
 import type { LiveSignalService } from '../../application/live-signal.service.ts';
 import type { PilotService } from '../../application/pilot.service.ts';
 import type { SuggestionService } from '../../application/suggestion.service.ts';
@@ -28,6 +28,7 @@ import {
   PERMISSION_MODES,
   PilotTargetNotFound,
 } from '../../domain/pilot.ts';
+import { SandboxError } from '../../domain/sandbox.ts';
 import { LIVE_SIGNAL_SERVICE, PILOT_SERVICE, SUGGESTION_SERVICE } from '../../tokens.ts';
 
 const settingsSchema = z.object({
@@ -48,6 +49,10 @@ const messageSchema = z.object({
 const startSchema = messageSchema.extend({
   profile: z.string().min(1).nullable(),
   repository: z.string().min(1),
+  /** Dans un bac à sable (E16b) : branche de départ et branche de la session, null : proposées */
+  sandbox: z
+    .object({ branch: z.string().trim().max(200).nullable(), startBranch: z.string().trim().max(200).nullable() })
+    .nullish(),
 });
 
 /** Réponses à une question de l'agent : une liste de choix par question, ou null pour « Passer » (CA-SESS-96). */
@@ -70,6 +75,9 @@ function translate(error: unknown): never {
   if (error instanceof InvalidPilotMessage || error instanceof InvalidAnswers)
     throw new BadRequestException({ code: error.code, message: error.message });
   if (error instanceof PilotTargetNotFound) throw new NotFoundException({ code: error.code, message: error.message });
+  // Une branche refusée est une erreur de saisie ; un bac à sable indisponible, supprimé ou occupé, un conflit
+  if (error instanceof SandboxError && error.code === 'invalidSandboxBranch')
+    throw new BadRequestException({ code: error.code, message: error.message });
   if (error instanceof PermissionAlreadySettled) throw new ConflictException({ code: 'questionAlreadyAnswered' });
   if (error instanceof DomainError) throw new ConflictException({ code: error.code, message: error.message });
   throw error;
@@ -102,11 +110,52 @@ export class PilotController {
         ...pilotMessage(input),
         profile: input.profile,
         repository: input.repository,
+        sandbox: input.sandbox ?? null,
       });
       return { sessionId };
     } catch (error) {
       translate(error);
     }
+  }
+
+  /** « Récupérer la branche » (CA-SESS-112) : la branche reçue dans le dépôt du poste. */
+  @Post('sessions/:id/sandbox/retrieve')
+  async retrieve(@Param('id') id: string): Promise<{ branch: string }> {
+    try {
+      const branch = await this.pilot.retrieve(id);
+      return { branch };
+    } catch (error) {
+      translate(error);
+    }
+  }
+
+  /** « Arrêter le bac à sable » : le conteneur s'arrête, la copie reste. */
+  @Post('sessions/:id/sandbox/stop')
+  @HttpCode(204)
+  async stopSandbox(@Param('id') id: string): Promise<void> {
+    try {
+      await this.pilot.stopSandbox(id);
+    } catch (error) {
+      translate(error);
+    }
+  }
+
+  /** « Supprimer le bac à sable » (CA-SESS-114). */
+  @Delete('sessions/:id/sandbox')
+  @HttpCode(204)
+  async removeSandbox(@Param('id') id: string): Promise<void> {
+    try {
+      await this.pilot.removeSandbox(id);
+    } catch (error) {
+      translate(error);
+    }
+  }
+
+  /** Sorties réseau refusées du bac à sable (CA-SESS-108). */
+  @Get('sessions/:id/sandbox/refusals')
+  async refusals(@Param('id') id: string): Promise<SandboxRefusalsDto> {
+    const refusals = await this.pilot.refusals(id);
+    return { refusals: refusals.map(({ at, host }) => ({ at: at.toISOString(), host })) };
   }
 
   /** Un message à une session : il lance un tour, ou attend la fin du tour en cours (CA-SESS-92, CA-SESS-93). */

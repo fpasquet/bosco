@@ -1,4 +1,10 @@
-import type { PilotMessageDto, PilotOptionsDto, StartSessionDto, SuggestionDto } from '@bosco/domain';
+import type {
+  PilotMessageDto,
+  PilotOptionsDto,
+  SandboxRefusalsDto,
+  StartSessionDto,
+  SuggestionDto,
+} from '@bosco/domain';
 
 /** Erreur de l'API de pilotage, avec le message à montrer (« La session … est ouverte dans un terminal »). */
 export class PilotError extends Error {
@@ -14,6 +20,8 @@ const MESSAGES: Record<string, string> = {
   noPilotedTurn: 'Aucun tour ne tourne pour cette session.',
   questionAlreadyAnswered: 'Cette question a déjà sa réponse.',
   sessionOpenInTerminal: 'Cette session est ouverte dans un terminal : réponds-y là-bas.',
+  sandboxBusy: 'Un tour est en cours : attends qu’il finisse.',
+  sandboxRemoved: 'Ce bac à sable a été supprimé : la session ne se reprend plus.',
 };
 
 async function call(path: string, init: RequestInit = {}): Promise<Response> {
@@ -92,3 +100,29 @@ export async function suggestions(
     return [];
   }
 }
+
+/** « Récupérer la branche » (CA-SESS-112) : la branche reçue dans le dépôt du poste. */
+export async function retrieveBranch(sessionId: string): Promise<string> {
+  const response = await call(`/api/sessions/${encodeURIComponent(sessionId)}/sandbox/retrieve`, { method: 'POST' });
+  const body = (await response.json()) as { branch: string };
+  return body.branch;
+}
+
+/** « Arrêter le bac à sable » : le conteneur s'arrête, la copie reste. */
+export async function stopSandbox(sessionId: string): Promise<void> {
+  await call(`/api/sessions/${encodeURIComponent(sessionId)}/sandbox/stop`, { method: 'POST' });
+}
+
+/** « Supprimer le bac à sable » (CA-SESS-114). */
+export async function removeSandbox(sessionId: string): Promise<void> {
+  await call(`/api/sessions/${encodeURIComponent(sessionId)}/sandbox`, { method: 'DELETE' });
+}
+
+/** Sorties réseau refusées d'un bac à sable (CA-SESS-108). */
+export const sandboxRefusalsQuery = (sessionId: string) => ({
+  queryKey: ['session', sessionId, 'refusals'],
+  queryFn: async (): Promise<SandboxRefusalsDto> => {
+    const response = await call(`/api/sessions/${encodeURIComponent(sessionId)}/sandbox/refusals`);
+    return (await response.json()) as SandboxRefusalsDto;
+  },
+});

@@ -4,6 +4,7 @@ import type { TurnRequest } from '../../application/pilot.service.ts';
 import { turnArguments, userMessage } from './claude-turn-runner.ts';
 
 const request: TurnRequest = {
+  launch: null,
   configDir: '/home/dev/.claude-perso',
   cwd: '/home/dev/api-voix',
   message: { images: [{ data: 'AAAA', mediaType: 'image/png', name: 'capture.png' }], text: 'Regarde @src/lexique.ts' },

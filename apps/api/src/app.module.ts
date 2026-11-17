@@ -3,6 +3,7 @@ import type { Config } from './config.ts';
 import { AccessModule } from './access/access.module.ts';
 import { ContextModule } from './context/context.module.ts';
 import { PersistenceModule } from './persistence.module.ts';
+import { SandboxWiring } from './sandbox-wiring.ts';
 import { SessionsModule } from './sessions/sessions.module.ts';
 import { HealthController } from './shared/interface/http/health.controller.ts';
 import { CONFIG } from './shared/tokens.ts';
@@ -18,7 +19,7 @@ export class AppModule {
       global: true,
       imports: [PersistenceModule, SessionsModule, AccessModule, ContextModule, TasksModule],
       controllers: [HealthController, ...(config.testing ? [TestController] : [])],
-      providers: [{ provide: CONFIG, useValue: config }],
+      providers: [{ provide: CONFIG, useValue: config }, SandboxWiring],
       exports: [CONFIG],
     };
   }

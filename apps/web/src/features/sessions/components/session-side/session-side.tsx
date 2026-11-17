@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { Copy, MessageSquare } from 'lucide-react';
 import type { SessionDto } from '@bosco/domain';
 import { Button } from '@/shared/ui/button';
@@ -10,6 +11,8 @@ export interface SessionSideProps {
   onCopy: (text: string, label: string) => void;
   /** Commande de reprise d'une session close ; null tant qu'elle est ouverte (RF-SESS-09) */
   resume: null | string;
+  /** Carte du bac à sable d'une session qui y tourne (E2j), en tête de la colonne */
+  sandbox?: ReactNode;
   session: SessionDto;
 }
 
@@ -23,11 +26,12 @@ function Row({ label, value }: { label: string; value: string }) {
 }
 
 /** Colonne du détail : usage estimé (RF-SESS-05), fichiers modifiés par l'agent, identifiant et reprise. */
-export function SessionSide({ now, onCopy, resume, session }: SessionSideProps) {
+export function SessionSide({ now, onCopy, resume, sandbox, session }: SessionSideProps) {
   const closed = session.state === 'ended' || session.state === 'inactive';
   const { usage } = session;
   return (
     <aside className="flex flex-col gap-4">
+      {sandbox}
       <section aria-labelledby="usage-title" className="rounded-card border border-line bg-surface p-4 shadow-card">
         <h2 id="usage-title" className="mb-3 text-xs font-semibold text-muted">
           Usage
@@ -101,7 +105,11 @@ export function SessionSide({ now, onCopy, resume, session }: SessionSideProps) 
             </Button>
           </div>
         ) : (
-          <p className="mt-2 text-xs text-muted">La commande de reprise apparaît quand la session est close.</p>
+          <p className="mt-2 text-xs text-muted">
+            {session.pilot?.sandbox
+              ? 'Elle ne se reprend que dans Bosco : un terminal du poste la sortirait du bac à sable.'
+              : 'La commande de reprise apparaît quand la session est close.'}
+          </p>
         )}
       </section>
     </aside>

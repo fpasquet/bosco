@@ -5,7 +5,7 @@ import { DomainError } from '../../shared/domain/domain-error.ts';
  * question) et ce qui est fini (tâche du worker à relire ou en échec, fin d'un long tour, session terminée).
  */
 export type NotificationKind =
-  'ended' | 'failed' | 'long-turn' | 'permission' | 'question' | 'review' | 'turn-question';
+  'ended' | 'failed' | 'long-turn' | 'permission' | 'question' | 'review' | 'sandbox' | 'turn-question';
 
 /** Ce qui attend une réponse : ces notifications passent en priorité haute et restent affichées. */
 export const ASKING: readonly NotificationKind[] = ['permission', 'question', 'turn-question'];
@@ -73,6 +73,8 @@ export function endsWithQuestion(message: null | string): boolean {
 /** Ce qui vient d'arriver, avant de savoir s'il mérite une notification. */
 export type NotificationEvent =
   | { kind: 'ended' | 'failed' | 'permission' | 'question' | 'review' }
+  /** Bac à sable supprimé demain avec du travail non récupéré (CA-SESS-115) : toujours notifié */
+  | { kind: 'sandbox' }
   | { kind: 'turn'; message: null | string; minutes: null | number };
 
 /**
@@ -81,6 +83,7 @@ export type NotificationEvent =
  * tour a été long, ou toujours selon le réglage. Un tour de durée inconnue (Bosco redémarré) compte comme long.
  */
 export function notificationOf(event: NotificationEvent, settings: NotificationSettings): NotificationKind | null {
+  if (event.kind === 'sandbox') return 'sandbox';
   if (event.kind !== 'turn') return settings[event.kind] ? event.kind : null;
   if (endsWithQuestion(event.message)) return settings.turnQuestion ? 'turn-question' : null;
   if (settings.turn === 'never') return null;
@@ -168,5 +171,6 @@ export const KIND_LABELS: Record<NotificationKind, string> = {
   permission: 'Autorisation',
   question: 'Question de l’agent',
   review: 'À relire',
+  sandbox: 'Bac à sable',
   'turn-question': 'Question',
 };

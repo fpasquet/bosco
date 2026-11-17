@@ -1,4 +1,4 @@
-import { ChevronRight, Copy, FolderOpen, MessageSquare, RadioTower } from 'lucide-react';
+import { Box, ChevronRight, Copy, FolderOpen, MessageSquare, RadioTower } from 'lucide-react';
 import Link from 'next/link';
 import type { SessionDto } from '@bosco/domain';
 import { Button } from '@/shared/ui/button';
@@ -48,11 +48,18 @@ export function SessionHeader({ mark, now, onCopy, profile, resume, session }: S
         <h1 className="mt-1 flex flex-wrap items-center gap-2 font-display text-xl font-semibold tracking-tight md:text-2xl">
           <SessionStateBadge state={session.state} task={session.task} />
           <span className="line-clamp-2 min-w-0">{titleOf(session)}</span>
-          {session.pilot && (
-            <span className="badge gap-1 badge-outline font-sans badge-sm font-normal text-muted">
-              <MessageSquare aria-hidden className="size-3" />
-              Pilotée dans Bosco
+          {session.pilot?.sandbox ? (
+            <span className="badge gap-1 badge-soft font-sans badge-sm font-medium badge-primary">
+              <Box aria-hidden className="size-3" />
+              Bac à sable
             </span>
+          ) : (
+            session.pilot && (
+              <span className="badge gap-1 badge-outline font-sans badge-sm font-normal text-muted">
+                <MessageSquare aria-hidden className="size-3" />
+                Pilotée dans Bosco
+              </span>
+            )
           )}
           {session.channel && (
             <span className="badge gap-1 badge-outline font-sans badge-sm font-normal text-muted">
