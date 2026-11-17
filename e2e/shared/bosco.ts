@@ -42,7 +42,7 @@ async function freePort(): Promise<number> {
   return address.port;
 }
 
-/** Dossiers personnels des scénarios : hors de /tmp, exclu des projets par défaut, et hors de tout dépôt git. */
+/** Dossiers personnels des scénarios : hors de /tmp et de tout dépôt git. */
 const HOMES = join(homedir(), '.cache', 'bosco-e2e');
 
 /** Dossier personnel écrit dans les transcripts d'exemple, remplacé par le dossier du scénario. */
@@ -54,7 +54,7 @@ export async function startBosco(recordings: string): Promise<Bosco> {
   const phonePort = await freePort();
   const configDir = mkdtempSync(join(tmpdir(), 'bosco-claude-'));
   const dataDir = mkdtempSync(join(tmpdir(), 'bosco-data-'));
-  // Dossier personnel du scénario hors de /tmp, que Bosco exclut des projets par défaut (CA-SESS-79)
+  // Dossier personnel du scénario hors de /tmp et de tout dépôt git : le navigateur de dossiers le parcourt
   mkdirSync(HOMES, { recursive: true });
   const profilesRoot = mkdtempSync(join(HOMES, 'bosco-home-'));
   const url = `http://127.0.0.1:${port}`;

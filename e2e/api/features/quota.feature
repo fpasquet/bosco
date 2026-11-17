@@ -7,6 +7,7 @@ Feature: Quota of the Claude subscription
     Given the Claude Code profile ".claude-perso" has the transcript "session-labo-ia-bosco.jsonl" for the session "c41e9a07"
     And the Claude Code profile ".claude-perso" has an access to the Claude subscription of "camille@exemple.dev"
     And Bosco watches the profiles ".claude-perso"
+    And the folder "labo-ia" is a project
 
   @CA-CONT-99
   Scenario: The thresholds keep each wait under its stop

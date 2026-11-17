@@ -7,6 +7,7 @@ Feature: Piloted sessions
     Given the Claude Code profile ".claude-perso" has the transcript "session-labo-ia-bosco.jsonl" for the session "c41e9a07"
     And the Claude Code profile ".claude-perso" has an access to the Claude subscription of "camille@exemple.dev"
     And Bosco watches the profiles ".claude-perso"
+    And the folder "labo-ia" is a project
 
   @CA-SESS-91
   @CA-SESS-92

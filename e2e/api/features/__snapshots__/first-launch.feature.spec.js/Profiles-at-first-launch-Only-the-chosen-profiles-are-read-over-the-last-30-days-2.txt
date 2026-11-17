@@ -20,7 +20,7 @@
       "projectPath": "<profiles>/labo-ia/packages/bosco",
       "project": {
         "folder": "packages/bosco",
-        "hidden": false,
+        "id": 1,
         "name": "labo-ia",
         "root": "<profiles>/labo-ia"
       },

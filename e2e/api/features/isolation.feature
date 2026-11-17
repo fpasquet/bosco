@@ -9,6 +9,7 @@ Feature: Sandbox isolation
     And the Claude Code profile ".claude" has an access to the Claude subscription of "camille@exemple.dev"
     And the Claude Code profile ".claude-perso" has an access to the Claude subscription of "camille.perso@exemple.dev"
     And Bosco watches the profiles ".claude" and ".claude-perso"
+    And the folders "labo-ia,api-voix" are projects
 
   @CA-CONT-43
   Scenario: The default domains are locked, and the limits of each sandbox are shown

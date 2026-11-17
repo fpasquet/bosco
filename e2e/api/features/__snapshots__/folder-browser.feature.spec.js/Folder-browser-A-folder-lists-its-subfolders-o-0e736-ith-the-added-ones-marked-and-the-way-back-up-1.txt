@@ -1,0 +1,38 @@
+{
+  "crumbs": [
+    {
+      "name": "~",
+      "path": "<profiles>"
+    },
+    {
+      "name": "www",
+      "path": "<profiles>/www"
+    }
+  ],
+  "folders": [
+    {
+      "added": false,
+      "git": false,
+      "name": "archives",
+      "path": "<profiles>/www/archives",
+      "suggestion": false
+    },
+    {
+      "added": true,
+      "git": true,
+      "name": "site-clubs",
+      "path": "<profiles>/www/site-clubs",
+      "suggestion": false
+    },
+    {
+      "added": false,
+      "git": true,
+      "name": "site-tournois",
+      "path": "<profiles>/www/site-tournois",
+      "suggestion": false
+    }
+  ],
+  "home": "<profiles>",
+  "parent": "<profiles>",
+  "path": "<profiles>/www"
+}

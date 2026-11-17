@@ -1,0 +1,27 @@
+{
+  "crumbs": [
+    {
+      "name": "~",
+      "path": "<profiles>"
+    }
+  ],
+  "folders": [
+    {
+      "added": false,
+      "git": true,
+      "name": "api-voix",
+      "path": "<profiles>/api-voix",
+      "suggestion": true
+    },
+    {
+      "added": false,
+      "git": false,
+      "name": "www",
+      "path": "<profiles>/www",
+      "suggestion": false
+    }
+  ],
+  "home": "<profiles>",
+  "parent": null,
+  "path": "<profiles>"
+}

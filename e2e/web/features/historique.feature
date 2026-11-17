@@ -10,6 +10,7 @@ Fonctionnalité: Historique et coûts
     Et le profil Claude Code « .claude » contient le transcript « session-labo-ia-rag.jsonl » de la session « 5e0a91c3 »
     Et le profil Claude Code « .claude-perso » contient le transcript « session-labo-ia-bosco.jsonl » de la session « c41e9a07 »
     Et Bosco surveille les profils « .claude » et « .claude-perso »
+    Et le dossier « labo-ia » est un projet
 
   @CA-SESS-47
   @CA-SESS-49
