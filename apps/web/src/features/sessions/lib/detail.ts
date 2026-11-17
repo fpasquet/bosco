@@ -11,16 +11,33 @@ export function clockOf(iso: string): string {
 /**
  * Commande qui reprend une session close (RF-SESS-09) : claude --resume avec l'identifiant complet, précédée du
  * dossier de configuration pour un autre profil que celui par défaut (CA-SESS-42). Une session ouverte n'en a pas.
+ * Une session à plusieurs projets ajoute les autres projets, avec le réglage qui lit leurs instructions (CA-SESS-140).
  */
 export function resumeCommand(session: SessionDto, sources: readonly SourceDto[], home: string): null | string {
   // Une session pilotée par Bosco se reprend aussi dans un terminal entre deux tours (règle 9)
   const betweenTurns = !!session.pilot && !session.pilot.running;
   if (session.state !== 'ended' && !betweenTurns) return null;
   const source = sources.find((candidate) => candidate.id === session.sourceId);
-  const resume = `claude --resume ${session.id}`;
+  const others = session.pilot?.projects ?? [];
+  const resume = [
+    ...(others.length > 0 ? ['CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1'] : []),
+    `claude --resume ${session.id}`,
+    ...others.map((root) => `--add-dir ${displayPath(root, home)}`),
+  ].join(' ');
   return !source || source.path.endsWith('/.claude')
     ? resume
     : `CLAUDE_CONFIG_DIR=${displayPath(source.path, home)} ${resume}`;
+}
+
+/** Fichiers modifiés par l'agent dans un projet de la session : sous sa racine, ou relatifs pour le principal. */
+export function filesIn(session: SessionDto, root: string): SessionDto['changedFiles'] {
+  const others = session.addedProjects.map((project) => project.root);
+  const principal = root === session.project?.root || (!session.project && others.length === 0);
+  return session.changedFiles.filter(({ path }) => {
+    if (path.startsWith(`${root}/`)) return true;
+    // Un chemin relatif se lit depuis le dossier de travail, celui du projet principal
+    return principal && !path.startsWith('/');
+  });
 }
 
 /** Part des tokens lus depuis le cache plutôt que recalculés : « 64 % ». */

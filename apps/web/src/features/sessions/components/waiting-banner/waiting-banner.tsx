@@ -66,7 +66,10 @@ export function placeOf(session: SessionDto): string {
   const place = session.project
     ? [session.project.name, session.project.folder].filter(Boolean).join('/')
     : (session.projectPath ?? 'Hors projet');
-  return session.branch ? `${place} · ${session.branch}` : place;
+  // Une session à plusieurs projets se nomme d'après son principal et le nombre des autres (« api-tarifs +2 »)
+  const others = session.addedProjects.length;
+  const named = others > 0 ? `${place} +${others}` : place;
+  return session.branch ? `${named} · ${session.branch}` : named;
 }
 
 /**

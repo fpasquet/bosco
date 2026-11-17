@@ -34,6 +34,7 @@ import { SandboxRefusals } from '../sandbox-refusals';
 import { SessionFeed } from '../session-feed';
 import { SessionHeader } from '../session-header';
 import { SessionSide } from '../session-side';
+import { SessionProjects } from './session-projects';
 
 /** Ce que l'agent a dit juste avant de demander l'autorisation. */
 /** Relecture du fil d'une session qui tourne : seules les lignes ajoutées au transcript sont lues. */
@@ -109,6 +110,8 @@ export function SessionDetailScreen({ id }: { id: string }) {
   const { journal, session } = data;
   // Une session en bac à sable ne se reprend que dans Bosco (règle 12)
   const resume = session.pilot?.sandbox ? null : resumeCommand(session, sources.sources, sources.home);
+  // Une session à plusieurs projets a la carte « Projets », « Branches » en bac à sable (E2k)
+  const several = session.addedProjects.length > 0;
   return (
     <div className="flex min-h-full flex-col gap-4 p-4 md:h-full md:px-8 md:pt-6">
       <ConnectionStatus />
@@ -170,12 +173,13 @@ export function SessionDetailScreen({ id }: { id: string }) {
           now={now}
           resume={resume}
           onCopy={copy}
+          projects={several ? <SessionProjects session={session} busy={Boolean(session.pilot?.running)} /> : undefined}
           sandbox={
             session.pilot?.sandbox && (
               <SandboxCard
                 sandbox={session.pilot.sandbox}
                 busy={session.pilot.running || retrieve.isPending || stop.isPending || remove.isPending}
-                onRetrieve={() => retrieve.mutate()}
+                onRetrieve={several ? undefined : () => retrieve.mutate()}
                 onStop={() => stop.mutate()}
                 onRemove={() => remove.mutate()}
               />

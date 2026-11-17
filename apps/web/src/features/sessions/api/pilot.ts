@@ -2,6 +2,7 @@ import type {
   IsolationDto,
   PilotMessageDto,
   PilotOptionsDto,
+  ProjectDetailDto,
   RetrievedBranchesDto,
   SandboxBranchesDto,
   SandboxRefusalsDto,
@@ -153,5 +154,14 @@ export const sandboxRefusalsQuery = (sessionId: string) => ({
   queryFn: async (): Promise<SandboxRefusalsDto> => {
     const response = await call(`/api/sessions/${encodeURIComponent(sessionId)}/sandbox/refusals`);
     return (await response.json()) as SandboxRefusalsDto;
+  },
+});
+
+/** Un projet, pour la branche courante de son dossier (carte « Projets » d'une session à plusieurs projets). */
+export const projectDetailQuery = (id: number) => ({
+  queryKey: ['projects', 'detail', id],
+  queryFn: async (): Promise<ProjectDetailDto> => {
+    const response = await call(`/api/projects/${id}`);
+    return (await response.json()) as ProjectDetailDto;
   },
 });
