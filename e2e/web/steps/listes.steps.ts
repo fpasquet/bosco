@@ -18,7 +18,3 @@ Then('la liste {texte} ne contient plus {texte}', async ({ page }, label: string
 Then('la liste {texte} ne contient pas {texte}', async ({ page }, label: string, item: string) => {
   await expect(page.getByRole('list', { name: label }).getByRole('listitem').filter({ hasText: item })).toHaveCount(0);
 });
-
-Then('le choix {texte} propose {texte}', async ({ page }, label: string, options: string) => {
-  await expect(page.getByRole('combobox', { name: label }).getByRole('option')).toHaveText(options.split(', '));
-});

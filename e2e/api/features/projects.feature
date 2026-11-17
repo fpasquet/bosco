@@ -96,3 +96,36 @@ Feature: Chosen projects
     Then the response code should be 400
     When I send POST request to "/api/projects" with the JSON "fixtures/projects/add-missing.json"
     Then the response code should be 404
+
+  @CA-CONT-153
+  @CA-CONT-125
+  Scenario: A project gives its page, and is pinned to the sidebar then unpinned without being removed
+    Given the folder "labo-ia" is a project
+    When I send GET request to "/api/projects/1"
+    Then the response property "name" should equal "labo-ia"
+    And the response property "pinned" should equal "false"
+    And the response property "running" should equal "0"
+    When I send PATCH request to "/api/projects/1" with the JSON "fixtures/projects/pin.json"
+    Then the response property "pinned" should equal "true"
+    When I send PATCH request to "/api/projects/1" with the JSON "fixtures/projects/unpin.json"
+    And I send GET request to "/api/projects"
+    Then the response property "projects" should match the names "labo-ia"
+    And the response property "projects.0.pinned" should equal "false"
+
+  @CA-CONT-127
+  Scenario: A project keeps where its sessions run and their start branch, never a sandbox without git
+    Given the home folder has the folders:
+      | folder     | git |
+      | api-tarifs | yes |
+    And the folders "api-tarifs,notes" are projects
+    When I send PATCH request to "/api/projects/1" with the JSON "fixtures/projects/sandbox-from-release.json"
+    Then the response property "place" should equal "sandbox"
+    And the response property "startBranch" should equal "release/2026.11"
+    When I send PATCH request to "/api/projects/2" with the JSON "fixtures/projects/sandbox-from-release.json"
+    Then the response property "place" should equal "workstation"
+    When I send GET request to "/api/pilot/options"
+    Then the response property "projects.0.place" should equal "sandbox"
+    And the response property "projects.0.startBranch" should equal "release/2026.11"
+    When I send PATCH request to "/api/projects/1" with the JSON "fixtures/projects/bad-branch.json"
+    Then the response code should be 400
+    And the response property "code" should equal "invalidStartBranch"

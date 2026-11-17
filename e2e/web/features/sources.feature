@@ -13,7 +13,7 @@ Fonctionnalité: Sources et réglages
   @CA-SESS-59
   @NF-18
   Scénario: Les réglages sont gardés d'une visite à l'autre
-    Quand j'ouvre la page « /sources »
+    Quand j'ouvre la page « /settings/sources »
     Alors la liste « Seuil d’inactivité » vaut « 15 min »
     Et la page est accessible
     Quand je choisis « 30 min » dans la liste « Seuil d’inactivité »
@@ -22,6 +22,6 @@ Fonctionnalité: Sources et réglages
 
   @CA-SESS-56
   Scénario: Une source mise en pause n'est plus lue
-    Quand j'ouvre la page « /sources »
+    Quand j'ouvre la page « /settings/sources »
     Et je bascule l’interrupteur « Lire le profil perso »
     Alors je vois le texte « En pause »

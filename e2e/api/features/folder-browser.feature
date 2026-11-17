@@ -48,3 +48,5 @@ Feature: Folder browser
     Then the phone gets the code 403
     When the phone sends POST request to "/api/projects"
     Then the phone gets the code 403
+    When the phone sends PATCH request to "/api/projects/1"
+    Then the phone gets the code 403

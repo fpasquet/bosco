@@ -76,7 +76,7 @@ Fonctionnalité: Groupes de projets
     Alors la barre latérale ne montre pas le groupe « Médias »
     Quand j'ouvre la page « /projects »
     Et je clique sur le lien « Médias »
-    Alors je suis sur la page « /groups/2/instructions »
+    Alors je suis sur la page « /groups/2/sessions »
 
   @CA-CONT-138
   Scénario: Supprimer un groupe ne retire aucun de ses projets
