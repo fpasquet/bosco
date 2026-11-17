@@ -1,0 +1,65 @@
+{
+  "groups": [
+    {
+      "description": "Client : le Club des Trois Lacs",
+      "id": 2,
+      "instructions": "",
+      "name": "Club des Trois Lacs",
+      "profile": null,
+      "projects": [
+        {
+          "id": 1,
+          "name": "api-tarifs"
+        },
+        {
+          "id": 2,
+          "name": "creneaux"
+        },
+        {
+          "id": 3,
+          "name": "site-clubs"
+        }
+      ],
+      "sidebar": true,
+      "system": false
+    },
+    {
+      "description": null,
+      "id": 3,
+      "instructions": "",
+      "name": "Node.js",
+      "profile": null,
+      "projects": [
+        {
+          "id": 1,
+          "name": "api-tarifs"
+        }
+      ],
+      "sidebar": true,
+      "system": false
+    },
+    {
+      "description": null,
+      "id": 1,
+      "instructions": "",
+      "name": "Tous les projets",
+      "profile": null,
+      "projects": [
+        {
+          "id": 1,
+          "name": "api-tarifs"
+        },
+        {
+          "id": 2,
+          "name": "creneaux"
+        },
+        {
+          "id": 3,
+          "name": "site-clubs"
+        }
+      ],
+      "sidebar": false,
+      "system": true
+    }
+  ]
+}

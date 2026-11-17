@@ -20,3 +20,34 @@ export function createFolders(bosco: Bosco, folders: readonly { folder: string; 
   for (const { folder, git } of folders)
     mkdirSync(join(bosco.profilesRoot, folder, ...(git ? ['.git'] : [])), { recursive: true });
 }
+
+async function call(bosco: Bosco, method: string, path: string, body?: unknown): Promise<unknown> {
+  const response = await fetch(`${bosco.url}${path}`, {
+    method,
+    headers: body === undefined ? {} : { 'content-type': 'application/json' },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+  if (!response.ok) throw new Error(`${method} ${path} answered ${response.status}`);
+  return response.status === 204 ? null : await response.json();
+}
+
+/** Crée un groupe des projets nommés, dans l'ordre : le premier est le principal. */
+export async function addGroup(bosco: Bosco, name: string, projects: readonly string[]): Promise<void> {
+  const { projects: known } = (await call(bosco, 'GET', '/api/projects')) as {
+    projects: { id: number; name: string }[];
+  };
+  const ids = projects.map((project) => {
+    const found = known.find((candidate) => candidate.name === project);
+    if (!found) throw new Error(`No project ${project}`);
+    return found.id;
+  });
+  await call(bosco, 'POST', '/api/groups', { name, projects: ids });
+}
+
+/** Écrit les instructions d'un groupe, « Tous les projets » compris. */
+export async function writeGroupInstructions(bosco: Bosco, name: string, instructions: string): Promise<void> {
+  const { groups } = (await call(bosco, 'GET', '/api/groups')) as { groups: { id: number; name: string }[] };
+  const group = groups.find((candidate) => candidate.name === name);
+  if (!group) throw new Error(`No group ${name}`);
+  await call(bosco, 'PUT', `/api/groups/${group.id}/instructions`, { instructions });
+}

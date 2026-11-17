@@ -54,6 +54,23 @@ Fonctionnalité: Contexte des agents
     Et je vois le texte « Les nouveaux tests aussi »
     Et je vois le texte « Version 1 »
 
+  @CA-CONT-01
+  @CA-CONT-05
+  @CA-CONT-100
+  @NF-18
+  Scénario: Les instructions des groupes du projet se lisent dans son contexte et s'écrivent dans le groupe
+    Étant donné le groupe « Tous les projets » a l’instruction « Node 22 au minimum. »
+    Et le groupe « Labo » réunit le projet « labo-ia »
+    Et le groupe « Labo » a l’instruction « Citer les sources de chaque réponse. »
+    Et le projet « labo-ia » a la décision acceptée « Garder Jest pour les tests »
+    Quand j'ouvre la page « /context?project=labo-ia »
+    Alors la liste « Tous les projets » contient « Node 22 au minimum. »
+    Et la liste « Labo » contient « Citer les sources de chaque réponse. »
+    Et je vois le texte « elles l’emportent sur les instructions des groupes »
+    Et la page est accessible
+    Quand je clique sur le lien « Modifier les instructions de Labo »
+    Alors je suis sur la page « /groups/2/instructions »
+
   @CA-CONT-86
   Scénario: Le choix du projet ne propose que les projets qui ont une décision
     Étant donné le profil Claude Code « .claude » contient le transcript « session-api-voix-fastify.jsonl » de la session « a41f07c2 »
