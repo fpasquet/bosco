@@ -8,7 +8,7 @@ import type {
   SessionFolders,
 } from './ports.ts';
 import { importDiscovered } from '../domain/discovered-import.ts';
-import { FolderNotFound, FolderPath } from '../domain/folder.ts';
+import { browsedFolder, crumbsOf, FolderNotFound, FolderPath, parentOf, visibleFolders } from '../domain/folder.ts';
 import { type ProjectPlace, ProjectPlacement } from '../domain/placement.ts';
 import { Project, type ProjectSnapshot, UnknownProject } from '../domain/project.ts';
 import { activityOf, type Suggestion } from '../domain/suggestions.ts';
@@ -25,6 +25,15 @@ export interface ProjectsOverview {
   outside: number;
   projects: ProjectView[];
   suggestions: Suggestion[];
+}
+
+/** Un dossier ouvert dans le navigateur, avec ses sous-dossiers. */
+export interface FolderListing {
+  crumbs: { name: string; path: string }[];
+  folders: { added: boolean; git: boolean; name: string; path: string; suggestion: boolean }[];
+  home: string;
+  parent: null | string;
+  path: string;
 }
 
 const NO_SESSIONS: SessionFolders = { list: () => Promise.resolve([]) };
@@ -45,7 +54,7 @@ export class ProjectService {
     private readonly git: GitOrigins,
     private readonly discovery: DiscoveryToImport,
     private readonly clock: Clock,
-    /** Dossier personnel, pour écrire les chemins comme dans le terminal */
+    /** Dossier personnel, d'où part le navigateur de dossiers */
     private readonly home: string,
   ) {
     this.placement = new ProjectPlacement([], git);
@@ -133,6 +142,31 @@ export class ProjectService {
   async restoreSuggestion(path: string): Promise<void> {
     const folder = FolderPath.of(path);
     await this.ignoredFolders.restore([folder.value]);
+  }
+
+  /**
+   * Sous-dossiers d'un dossier du dossier personnel : leurs noms seulement, dossiers cachés masqués, avec ce que la
+   * personne doit savoir pour choisir (dépôt git, déjà ajouté, une session y a tourné).
+   */
+  async browse(path: null | string): Promise<FolderListing> {
+    const asked = browsedFolder(path, this.home);
+    const [real, realHome] = await Promise.all([this.folders.realPath(asked.value), this.folders.realPath(this.home)]);
+    if (!real || !realHome) throw new FolderNotFound(asked.value);
+    // Un lien symbolique ne fait pas sortir du dossier personnel
+    browsedFolder(real, realHome);
+    const [entries, overview] = await Promise.all([this.folders.list(asked.value), this.overview()]);
+    const added = new Set(this.projects.map((project) => project.path));
+    const suggested = new Set(overview.suggestions.map((suggestion) => suggestion.path));
+    return {
+      crumbs: crumbsOf(asked, this.home),
+      folders: visibleFolders(entries).map(({ git, name }) => {
+        const child = asked.value === '/' ? `/${name}` : `${asked.value}/${name}`;
+        return { added: added.has(child), git, name, path: child, suggestion: suggested.has(child) };
+      }),
+      home: this.home,
+      parent: parentOf(asked, this.home),
+      path: asked.value,
+    };
   }
 
   /** Une fois, au passage aux projets choisis : les dépôts découverts et affichés deviennent des projets. */

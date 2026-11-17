@@ -31,3 +31,14 @@ export interface ProjectsDto {
   projects: ProjectDto[];
   suggestions: FolderSuggestionDto[];
 }
+
+/** Un dossier ouvert dans le navigateur de dossiers : ses sous-dossiers, par leur nom. */
+export interface FolderListingDto {
+  /** Du dossier personnel (« ~ ») au dossier ouvert */
+  crumbs: { name: string; path: string }[];
+  folders: { added: boolean; git: boolean; name: string; path: string; suggestion: boolean }[];
+  home: string;
+  /** null au dossier personnel, d'où l'on ne remonte pas */
+  parent: null | string;
+  path: string;
+}

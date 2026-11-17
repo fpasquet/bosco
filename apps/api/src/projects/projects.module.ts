@@ -10,15 +10,16 @@ import {
   MikroOrmIgnoredFolders,
   MikroOrmProjectRepository,
 } from './infrastructure/persistence/projects.repositories.ts';
+import { FoldersController } from './interface/http/folders.controller.ts';
 import { ProjectsController } from './interface/http/projects.controller.ts';
 import { PROJECT_SERVICE } from './tokens.ts';
 
 /**
  * Contexte des projets : les dossiers que la personne ajoute, où se rangent les sessions, les dossiers proposés
- * d'après les sessions. Les sessions déjà lues sont branchées par le point de composition.
+ * d'après les sessions et le navigateur de dossiers. Les sessions déjà lues sont branchées par le point de composition.
  */
 @Module({
-  controllers: [ProjectsController],
+  controllers: [ProjectsController, FoldersController],
   providers: [
     {
       provide: PROJECT_SERVICE,

@@ -1,6 +1,7 @@
-import { stat } from 'node:fs/promises';
+import { readdir, realpath, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { Folders } from '../../application/ports.ts';
+import type { FolderEntry } from '../../domain/folder.ts';
 
 async function hasGit(path: string): Promise<boolean> {
   try {
@@ -23,5 +24,21 @@ export class DiskFolders implements Folders {
     }
     const git = await hasGit(path);
     return { git };
+  }
+
+  async list(path: string): Promise<FolderEntry[]> {
+    const entries = await readdir(path, { withFileTypes: true }).catch(() => []);
+    // Les dossiers cachés ne sont jamais ouverts : seuls les dossiers visibles sont inspectés
+    const folders = entries.filter((entry) => entry.isDirectory() && !entry.name.startsWith('.'));
+    return Promise.all(
+      folders.map(async (entry) => {
+        const git = await hasGit(join(path, entry.name));
+        return { directory: true, git, name: entry.name };
+      }),
+    );
+  }
+
+  async realPath(path: string): Promise<null | string> {
+    return realpath(path).catch(() => null);
   }
 }

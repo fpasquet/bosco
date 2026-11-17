@@ -22,6 +22,8 @@ const WORKSTATION_ONLY = [
   /^\/api\/presence/,
   // Le flux du canal de Bosco ne sert qu'aux sessions du terminal du poste (E2i)
   /^\/api\/channel\/stream/,
+  // Le navigateur de dossiers parcourt le poste : il ne s'ouvre pas depuis le téléphone, même pour lire
+  /^\/api\/folders/,
   /^\/__test\//,
 ];
 const SETTINGS = [
