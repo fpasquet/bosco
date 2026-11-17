@@ -2,13 +2,19 @@ import type { MikroORM } from '@mikro-orm/sqlite';
 import { EntitySchema } from '@mikro-orm/core';
 import type { PilotRecord, PilotRepository } from '../../application/pilot.service.ts';
 import type { PilotSettings } from '../../domain/pilot.ts';
-import type { SandboxInfo } from '../../domain/sandbox.ts';
+import type { SandboxCopy, SandboxInfo } from '../../domain/sandbox.ts';
 
-/** Bac à sable tel qu'il est gardé en JSON : ses dates en texte */
-type StoredSandbox = Record<keyof SandboxInfo, null | string>;
+/** Copie d'un autre projet telle qu'elle est gardée en JSON */
+type StoredCopy = Record<keyof SandboxCopy, null | string>;
+
+/** Bac à sable tel qu'il est gardé en JSON : ses dates en texte ; sans copies avant les sessions à plusieurs projets */
+type StoredSandbox = Partial<Record<'copies', StoredCopy[]>> &
+  Record<Exclude<keyof SandboxInfo, 'copies'>, null | string>;
 
 export interface PilotRow {
   cwd: string;
+  /** Autres projets de la session, en JSON ; [] : un seul projet */
+  projects: string[];
   /** Bac à sable de la session (DT-37), en JSON ; null : elle tourne sur le poste */
   sandbox: null | StoredSandbox;
   sessionId: string;
@@ -26,6 +32,7 @@ export const PilotSchema = new EntitySchema<PilotRow>({
     sessionId: { type: 'string', fieldName: 'session_id', primary: true },
     sourceId: { type: 'string', fieldName: 'source_id' },
     cwd: { type: 'text' },
+    projects: { type: 'json', default: '[]' },
     sandbox: { type: 'json', nullable: true },
     settings: { type: 'json' },
     since: { type: 'datetime' },
@@ -54,6 +61,12 @@ function sandboxOf(stored: StoredSandbox): SandboxInfo {
   return {
     base: stored.base ?? '',
     branch: stored.branch ?? '',
+    copies: (stored.copies ?? []).map((copy) => ({
+      base: copy.base ?? '',
+      from: copy.from ?? '',
+      retrievedAt: date(copy.retrievedAt),
+      root: copy.root ?? '',
+    })),
     from: stored.from ?? '',
     lastMessageAt: date(stored.lastMessageAt) ?? new Date(0),
     profile: stored.profile ?? '',

@@ -20,6 +20,7 @@ const now = new Date('2026-11-06T15:00:00');
 function session(id: string, overrides: Partial<SessionDto> = {}): SessionDto {
   return {
     id,
+    addedProjects: [],
     branch: 'develop',
     cost: { unpriced: false, usd: 0.5 },
     lastAction: null,

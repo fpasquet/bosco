@@ -23,17 +23,26 @@ export class ProjectsWiring implements OnModuleInit {
     this.projects.useRunning({
       countIn: async (projectId) => {
         const sessions = await this.sessions.listSessions();
+        // Une session à plusieurs projets travaille aussi dans les autres projets qu'elle voit
         return sessions.filter(
-          ({ pilot, project }) =>
-            project?.id === projectId && pilot && (pilot.running || pilot.sandbox?.state === 'running'),
+          ({ addedProjects, pilot, project }) =>
+            (project?.id === projectId || addedProjects.some(({ id }) => id === projectId)) &&
+            pilot &&
+            (pilot.running || pilot.sandbox?.state === 'running'),
         ).length;
       },
     });
     this.sessions.useProjects({
       list: () =>
-        this.projects
-          .listProjects()
-          .map(({ git, id, name, path, place, startBranch }) => ({ git, id, name, place, root: path, startBranch })),
+        this.projects.listProjects().map(({ domains, git, id, name, path, place, startBranch }) => ({
+          domains,
+          git,
+          id,
+          name,
+          place,
+          root: path,
+          startBranch,
+        })),
       placeOf: (gitRoot, path) => this.projects.placeOf(gitRoot, path),
       rememberPlace: (root, place) => this.projects.rememberPlace(root, place),
     });

@@ -21,6 +21,8 @@ const RECENT_QUESTION_MS = 2 * 60 * 1000;
 const NO_PROJECTS: ProjectCatalog = { list: () => [], placeOf: () => null, rememberPlace: () => Promise.resolve() };
 
 export interface SessionView {
+  /** Autres projets d'une session pilotée à plusieurs projets, qu'elle voit en plus de son projet principal */
+  addedProjects: { id: null | number; name: string; root: string }[];
   branch: null | string;
   /** Fichiers modifiés par l'agent, d'après ses appels d'outils */
   changedFiles: FileChange[];
@@ -195,6 +197,10 @@ export class SessionService {
     } = snapshot;
     const { usage } = snapshot;
     return {
+      addedProjects: (pilot?.projects ?? []).map((root) => {
+        const place = this.projects.placeOf(root, root);
+        return { id: place?.id ?? null, name: place?.name ?? root.split('/').at(-1) ?? root, root };
+      }),
       branch,
       channel: this.pilots.channelOpen(snapshot.id),
       cost: { usd: costMicros / 1_000_000, unpriced: snapshot.unpricedTokens > 0 },

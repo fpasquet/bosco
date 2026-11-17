@@ -1,4 +1,4 @@
-// Bacs à sable factices des scénarios (BOSCO_TEST=1) : ni Docker ni git. Le tour tourne sur le poste avec le Claude
+// Bacs à sable factices des scénarios (BOSCO_TEST=1) : ni Docker ni git, une copie par projet sans rien copier. Le tour tourne sur le poste avec le Claude
 // factice, ses conversations dans le profil des bacs à sable ; le vrai bac à sable se vérifie sur le poste.
 import { mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -23,10 +23,23 @@ export class ScriptedSandboxes implements Sandboxes {
     return Promise.resolve('main');
   }
 
-  async prepare(input: { sessionId: string; startBranch: null | string }): Promise<{ base: string; from: string }> {
+  async prepare(input: {
+    projects: readonly { startBranch: null | string }[];
+    sessionId: string;
+  }): Promise<{ base: string; from: string }[]> {
     await mkdir(join(this.profile, 'projects'), { recursive: true });
     this.states.set(input.sessionId, 'stopped');
-    return { base: 'scripted-base', from: input.startBranch ?? 'main' };
+    return input.projects.map(({ startBranch }) => ({ base: 'scripted-base', from: startBranch ?? 'main' }));
+  }
+
+  /** Trois fichiers modifiés du poste, non copiés, dans chaque projet */
+  uncommitted(): Promise<null | number> {
+    return Promise.resolve(3);
+  }
+
+  /** Seule la copie du projet principal a du travail : les autres projets restent sans changement */
+  work(input: { copy: number }): Promise<number> {
+    return Promise.resolve(input.copy === 0 ? 2 : 0);
   }
 
   ensure(sessionId: string): Promise<null> {

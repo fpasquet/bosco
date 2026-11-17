@@ -10,6 +10,8 @@ export interface SandboxInfo {
   base: string;
   /** Branche de la session, dans la copie puis dans le dépôt du poste (« bosco/s-typescript-6 ») */
   branch: string;
+  /** Copies des autres projets d'une session à plusieurs projets, sur la même branche, dans l'ordre */
+  copies: SandboxCopy[];
   /** Branche de départ (« develop ») */
   from: string;
   /** Dernier message envoyé : il décide de l'arrêt et de la suppression */
@@ -22,6 +24,15 @@ export interface SandboxInfo {
   retrievedAt: Date | null;
   /** Notification de la veille envoyée, pour la suppression automatique */
   warnedAt: Date | null;
+}
+
+/** Copie d'un autre projet de la session dans le bac à sable : d'où part sa branche, et sa dernière récupération. */
+export interface SandboxCopy {
+  base: string;
+  from: string;
+  retrievedAt: Date | null;
+  /** Chemin du projet sur le poste, où la copie est montée dans le conteneur */
+  root: string;
 }
 
 /** Arrêt du conteneur après ce délai sans message (règle 12). */
@@ -84,4 +95,38 @@ export function housekeepingOf(
 /** Heure à laquelle le conteneur s'arrêtera sans nouveau message. */
 export function stopsAt(sandbox: SandboxInfo): Date {
   return new Date(sandbox.lastMessageAt.getTime() + SANDBOX_IDLE_MS);
+}
+
+/** Une copie du bac à sable, le projet principal d'abord (0), puis les autres projets de la session dans l'ordre. */
+export interface SandboxBranch {
+  base: string;
+  copy: number;
+  from: string;
+  retrievedAt: Date | null;
+  root: string;
+}
+
+/** Copies d'un bac à sable, le projet principal d'abord : une ligne de la carte « Branches » chacune (E2k). */
+export function sandboxBranches(sandbox: SandboxInfo, principal: string): SandboxBranch[] {
+  return [
+    { base: sandbox.base, copy: 0, from: sandbox.from, retrievedAt: sandbox.retrievedAt, root: principal },
+    ...sandbox.copies.map((copy, index) => ({ ...copy, copy: index + 1 })),
+  ];
+}
+
+/** Note la récupération d'une copie : le principal garde la sienne à part, les autres dans leur copie. */
+export function retrievedCopy(sandbox: SandboxInfo, copy: number, at: Date): SandboxInfo {
+  if (copy === 0) return { ...sandbox, retrievedAt: at };
+  return {
+    ...sandbox,
+    copies: sandbox.copies.map((candidate, index) =>
+      index + 1 === copy ? { ...candidate, retrievedAt: at } : candidate,
+    ),
+  };
+}
+
+/** Une branche n'a jamais été récupérée depuis son dernier message : la veille de la suppression, on prévient. */
+export function unretrieved(sandbox: SandboxInfo): boolean {
+  const dates = [sandbox.retrievedAt, ...sandbox.copies.map(({ retrievedAt }) => retrievedAt)];
+  return dates.some((date) => !date || date < sandbox.lastMessageAt);
 }

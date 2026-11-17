@@ -78,9 +78,10 @@ export interface ProfileSettings {
   uninstall(profilePath: string, endpoint: HookEndpoint): Promise<void>;
 }
 
-/** Projets choisis par la personne, branchés par le point de composition. */
 /** Projet où démarrer une session, avec ce que propose le formulaire par défaut. */
 export interface CatalogProject {
+  /** Domaines propres au projet, ajoutés à la liste générale pour ses bacs à sable */
+  domains: string[];
   git: boolean;
   id: number;
   name: string;

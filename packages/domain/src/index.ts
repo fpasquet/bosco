@@ -20,6 +20,8 @@ export type {
   PilotSandboxDto,
   PilotSettingsDto,
   ProfileCandidateDto,
+  RetrievedBranchesDto,
+  SandboxBranchesDto,
   SandboxRefusalsDto,
   SessionConversationDto,
   SessionDetailDto,

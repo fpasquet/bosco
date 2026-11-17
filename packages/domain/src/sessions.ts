@@ -53,6 +53,8 @@ export interface PilotSettingsDto {
 export interface PilotDto {
   /** Message qui partira à la fin du tour (CA-SESS-93) */
   pending: null | { images: number; text: string };
+  /** Autres projets de la session (leur racine), que l'agent voit en plus de son projet principal (règle 14) */
+  projects: string[];
   running: boolean;
   /** Bac à sable de la session (règle 12) ; null : elle tourne sur le poste */
   sandbox: null | PilotSandboxDto;
@@ -63,6 +65,8 @@ export interface PilotDto {
 /** Bac à sable d'une session pilotée (E2j) : sa branche, l'état de son conteneur et sa récupération. */
 export interface PilotSandboxDto {
   branch: string;
+  /** Copies des autres projets d'une session à plusieurs projets, sur la même branche */
+  copies: { from: string; retrievedAt: null | string; root: string }[];
   from: string;
   /** Supprimé : la session reste lisible, mais ne se reprend plus */
   removed: boolean;
@@ -70,6 +74,17 @@ export interface PilotSandboxDto {
   state: 'missing' | 'running' | 'stopped';
   /** Arrêt du conteneur sans nouveau message */
   stopsAt: string;
+}
+
+/** Branches d'un bac à sable, une par projet, le principal d'abord, avec les fichiers qu'elles ont changés (E2k). */
+export interface SandboxBranchesDto {
+  branches: { files: number; from: string; project: string; retrievedAt: null | string }[];
+}
+
+/** Branches récupérées dans les dépôts du poste, projet par projet ; branch : la première, null s'il n'y en a pas. */
+export interface RetrievedBranchesDto {
+  branch: null | string;
+  branches: { branch: string; project: string }[];
 }
 
 /** Ce que le détail d'un bac à sable lit à la demande (E2j) : les sorties réseau refusées. */
@@ -94,9 +109,19 @@ export interface PilotMessageDto {
 /** Nouvelle session (E16a) : projet (sa racine), profil Claude Code (son dossier ; null : celui du projet), premier message. */
 export interface StartSessionDto extends PilotMessageDto {
   profile: null | string;
+  /** Projet principal (sa racine) : le dossier de travail de la session */
   project: string;
-  /** Dans un bac à sable (E16b) : branche de départ (null : la courante) et branche de la session (null : proposée) */
-  sandbox?: null | { branch: null | string; startBranch: null | string };
+  /** Autres projets de la session, qu'elle voit en plus du principal (E16c) */
+  projects?: string[];
+  /**
+   * Dans un bac à sable (E16b, E16d) : branche de la session (null : proposée), branche de départ du principal et des
+   * autres projets, par racine (null : celle réglée pour le projet, sinon la courante)
+   */
+  sandbox?: null | {
+    branch: null | string;
+    startBranch: null | string;
+    startBranches?: Record<string, null | string>;
+  };
 }
 
 /** Ce que propose le formulaire d'une nouvelle session (E16a) : les projets et les abonnements Claude. */
@@ -109,7 +134,11 @@ export interface PilotOptionsDto {
    */
   projects: {
     branch: null | string;
+    /** Fichiers modifiés du poste, non commités, qu'un bac à sable ne copie pas ; null sans git */
+    changes: null | number;
     defaultProfile: null | string;
+    /** Domaines propres au projet, ajoutés à la liste générale pour ses bacs à sable */
+    domains: string[];
     git: boolean;
     id: number;
     name: string;
@@ -130,6 +159,8 @@ export interface SuggestionDto {
 }
 
 export interface SessionDto {
+  /** Autres projets d'une session pilotée à plusieurs projets, qu'elle voit en plus de son projet principal */
+  addedProjects: { id: null | number; name: string; root: string }[];
   branch: null | string;
   /** Fichiers modifiés par l'agent, d'après ses appels d'outils ; une commande shell n'y figure pas */
   changedFiles: { added: number; path: string; removed: number }[];

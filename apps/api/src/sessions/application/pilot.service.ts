@@ -2,6 +2,7 @@ import type { QuotaWindows } from '../../shared/domain/subscription-quota.ts';
 import type { ChannelService } from './channel.service.ts';
 import type { LiveSignalService, PermissionAnswer } from './live-signal.service.ts';
 import type {
+  CatalogProject,
   Clock,
   IdGenerator,
   SessionEvents,
@@ -18,6 +19,7 @@ import {
   InvalidPilotMessage,
   joinMessages,
   NoPilotedTurn,
+  otherProjects,
   type PilotMessage,
   type PilotSettings,
   PilotTargetNotFound,
@@ -28,14 +30,20 @@ import {
 import {
   checkSandboxBranch,
   housekeepingOf,
+  retrievedCopy,
+  type SandboxBranch,
+  sandboxBranches,
   sandboxBranchOf,
   SandboxError,
   type SandboxInfo,
   stopsAt,
+  unretrieved,
 } from '../domain/sandbox.ts';
 
 /** Un tour à lancer : `claude -p` dans le dossier du projet, avec le profil, une session nouvelle ou reprise (DT-31). */
 export interface TurnRequest {
+  /** Autres projets de la session, passés par --add-dir à chaque tour (règle 14) */
+  addDirs: string[];
   /** Dossier de configuration du profil Claude Code */
   configDir: string;
   cwd: string;
@@ -65,19 +73,26 @@ export interface Sandboxes {
   /** Profil où les conversations des bacs à sable sont gardées, rangées avec leur projet : une source surveillée */
   readonly profile: string;
   currentBranch(projectRoot: string): Promise<null | string>;
-  /** Démarre le conteneur, le crée s'il manque ; la commande d'un tour, null : sur le poste (scénarios) */
-  ensure(sessionId: string, projectRoot: string): Promise<null | TurnLaunch>;
+  /**
+   * Démarre le conteneur, le crée s'il manque, avec la copie de chaque projet montée à son chemin du poste (le
+   * principal d'abord) ; la commande d'un tour, null : sur le poste (scénarios)
+   */
+  ensure(sessionId: string, projectRoots: readonly string[]): Promise<null | TurnLaunch>;
+  /** Une copie par projet, le principal d'abord, toutes sur la même branche ; refusée si un projet a déjà la branche */
   prepare(input: {
     branch: string;
     profile: string;
-    projectRoot: string;
+    projects: readonly { root: string; startBranch: null | string }[];
     sessionId: string;
-    startBranch: null | string;
-  }): Promise<{ base: string; from: string }>;
+  }): Promise<{ base: string; from: string }[]>;
   refusals(sessionId: string): Promise<{ at: Date; host: string }[]>;
   remove(sessionId: string): Promise<void>;
-  /** Enregistre le travail en cours dans la branche, puis la rapatrie dans le projet ; la branche reçue */
-  retrieve(input: { branch: string; projectRoot: string; sessionId: string }): Promise<string>;
+  /** Enregistre le travail en cours d'une copie dans la branche, puis la rapatrie dans son projet ; la branche reçue */
+  retrieve(input: { branch: string; copy: number; projectRoot: string; sessionId: string }): Promise<string>;
+  /** Fichiers modifiés du poste, non commités, qu'une copie ne prend pas ; null hors de git */
+  uncommitted(projectRoot: string): Promise<null | number>;
+  /** Fichiers que la branche d'une copie a changés depuis son départ, travail en cours compris */
+  work(input: { base: string; copy: number; sessionId: string }): Promise<number>;
   state(sessionId: string): Promise<SandboxState>;
   stop(sessionId: string): Promise<void>;
   /** null quand un bac à sable peut démarrer ; sinon la raison (« Docker ne répond pas ») */
@@ -115,7 +130,10 @@ export interface TurnRunner {
 
 /** Une session pilotée par Bosco : où elle tourne et ses réglages, gardés d'un tour à l'autre. */
 export interface PilotRecord {
+  /** Projet principal : le dossier de travail de la session */
   cwd: string;
+  /** Autres projets de la session (règle 14), passés par --add-dir à chaque tour ; [] : un seul projet */
+  projects: string[];
   /** Bac à sable de la session (règle 12) ; null : elle tourne sur le poste */
   sandbox: null | SandboxInfo;
   sessionId: string;
@@ -149,9 +167,13 @@ export interface PilotQuota {
 /** Ce que l'interface voit d'une session pilotée (E2e). */
 export interface PilotView {
   pending: null | { images: number; text: string };
+  /** Autres projets de la session, que l'agent voit en plus de son projet principal */
+  projects: string[];
   running: boolean;
   sandbox: null | {
     branch: string;
+    /** Copies des autres projets : d'où part leur branche, et leur dernière récupération */
+    copies: { from: string; retrievedAt: Date | null; root: string }[];
     from: string;
     removed: boolean;
     retrievedAt: Date | null;
@@ -268,9 +290,11 @@ export class PilotService {
     const { sandbox } = record;
     return {
       pending: pending ? { images: pending.images.length, text: pending.text } : null,
+      projects: [...record.projects],
       running: this.turns.has(sessionId),
       sandbox: sandbox && {
         branch: sandbox.branch,
+        copies: sandbox.copies.map(({ from, retrievedAt, root }) => ({ from, retrievedAt, root })),
         from: sandbox.from,
         removed: sandbox.removedAt !== null,
         retrievedAt: sandbox.retrievedAt,
@@ -293,7 +317,10 @@ export class PilotService {
     profiles: { account: null | string; label: string; path: string }[];
     projects: {
       branch: null | string;
+      /** Fichiers modifiés du poste, non commités, qu'un bac à sable ne copie pas ; null sans git */
+      changes: null | number;
       defaultProfile: null | string;
+      domains: string[];
       git: boolean;
       id: number;
       name: string;
@@ -310,9 +337,15 @@ export class PilotService {
     const profiles = choices.filter(({ path }) => watched.has(path));
     const defaultProfile = effective && watched.has(effective) ? effective : null;
     const projects = [];
-    for (const { git, id, name, place, root, startBranch } of known) {
-      const branch = this.sandbox && git ? await this.sandbox.sandboxes.currentBranch(root).catch(() => null) : null;
-      projects.push({ branch, defaultProfile, git, id, name, place, root, startBranch });
+    for (const { domains, git, id, name, place, root, startBranch } of known) {
+      const sandboxes = this.sandbox && git ? this.sandbox.sandboxes : null;
+      const [branch, changes] = sandboxes
+        ? await Promise.all([
+            sandboxes.currentBranch(root).catch(() => null),
+            sandboxes.uncommitted(root).catch(() => null),
+          ])
+        : [null, null];
+      projects.push({ branch, changes, defaultProfile, domains, git, id, name, place, root, startBranch });
     }
     const sandboxUnavailable = this.sandbox
       ? await this.sandbox.sandboxes.unavailable()
@@ -320,24 +353,43 @@ export class PilotService {
     return { profiles, projects, sandboxUnavailable };
   }
 
-  /** « Démarrer la session » (CA-SESS-91) : une nouvelle session dans le dossier du projet, avec le profil choisi. */
+  /**
+   * « Démarrer la session » (CA-SESS-155, CA-SESS-163) : une nouvelle session dans le dossier du projet principal, qui
+   * voit aussi les autres projets choisis (règle 14), avec le profil choisi.
+   */
   async start(input: {
     message: PilotMessage;
     profile: null | string;
+    /** Projet principal (sa racine) : le dossier de travail de la session */
     project: string;
-    /** Dans un bac à sable (E16b) : branche de départ et branche de la session, null : proposées */
-    sandbox?: null | { branch: null | string; startBranch: null | string };
+    /** Autres projets de la session, dans l'ordre ; absent : un seul projet */
+    projects?: readonly string[];
+    /**
+     * Dans un bac à sable (E16b, E16d) : branche de la session (null : proposée) et branche de départ de chaque
+     * projet (null : celle réglée pour le projet, sinon la courante) ; startBranch vaut pour le projet principal
+     */
+    sandbox?: null | {
+      branch: null | string;
+      startBranch: null | string;
+      startBranches?: Readonly<Record<string, null | string>>;
+    };
     settings: PilotSettings;
   }): Promise<string> {
     const message = checkPilotMessage(input.message);
     const known = await this.sessions.knownProjects();
-    const project = known.find(({ root }) => root === input.project);
-    if (!project) throw new PilotTargetNotFound(`Bosco ne connaît pas le projet ${input.project}.`);
-    // Un bac à sable copie le dépôt git du projet : un dossier sans git tourne seulement sur le poste
-    if (input.sandbox && !project.git)
+    const projectOf = (root: string) => {
+      const found = known.find((candidate) => candidate.root === root);
+      if (!found) throw new PilotTargetNotFound(`Bosco ne connaît pas le projet ${root}.`);
+      return found;
+    };
+    const project = projectOf(input.project);
+    const others = otherProjects(project.root, input.projects ?? []).map(projectOf);
+    // Un bac à sable copie le dépôt git de chaque projet : un dossier sans git tourne seulement sur le poste
+    const withoutGit = [project, ...others].find(({ git }) => !git);
+    if (input.sandbox && withoutGit)
       throw new SandboxError(
         'projectWithoutGit',
-        `Le projet ${project.name} n’est pas un dépôt git : pas de bac à sable.`,
+        `Le projet ${withoutGit.name} n’est pas un dépôt git : pas de bac à sable.`,
       );
     const accounts = await this.profiles.subscriptions();
     const profile = input.profile ?? accounts.effective;
@@ -348,9 +400,10 @@ export class PilotService {
     this.checkQuota(source.path, Boolean(input.sandbox));
     const sessionId = this.ids.next();
     const record: PilotRecord = input.sandbox
-      ? await this.sandboxed(sessionId, project.root, source.path, message, input.sandbox)
+      ? await this.sandboxed(sessionId, [project, ...others], source.path, message, input.sandbox)
       : {
           cwd: project.root,
+          projects: others.map(({ root }) => root),
           sandbox: null,
           sessionId,
           settings: input.settings,
@@ -370,28 +423,51 @@ export class PilotService {
    */
   private async sandboxed(
     sessionId: string,
-    root: string,
+    projects: readonly CatalogProject[],
     profile: string,
     message: PilotMessage,
-    choice: { branch: null | string; startBranch: null | string },
+    choice: {
+      branch: null | string;
+      startBranch: null | string;
+      startBranches?: Readonly<Record<string, null | string>>;
+    },
   ): Promise<PilotRecord> {
     const deps = this.sandbox;
     const unavailable = deps ? await deps.sandboxes.unavailable() : 'Bac à sable indisponible sur ce poste';
     if (!deps || unavailable) throw new SandboxError('sandboxUnavailable', unavailable ?? 'Bac à sable indisponible');
     const branch = checkSandboxBranch(choice.branch ?? sandboxBranchOf(message.text));
     const source = await deps.ensureSource(deps.sandboxes.profile);
-    const startBranch = choice.startBranch?.trim() || (await deps.sandboxes.currentBranch(root));
-    const { base, from } = await deps.sandboxes.prepare({
-      branch,
-      profile,
-      projectRoot: root,
-      sessionId,
-      startBranch,
-    });
+    // Branche de départ de chaque projet : celle choisie, sinon celle réglée pour le projet, sinon la courante
+    const starts = [];
+    for (const [index, { root, startBranch }] of projects.entries()) {
+      const chosen = index === 0 ? choice.startBranch : choice.startBranches?.[root];
+      starts.push({
+        root,
+        startBranch: chosen?.trim() || startBranch || (await deps.sandboxes.currentBranch(root)),
+      });
+    }
+    const [principal, ...copies] = await deps.sandboxes.prepare({ branch, profile, projects: starts, sessionId });
+    const root = projects[0]?.root ?? '';
     const now = this.clock.now();
     return {
       cwd: root,
-      sandbox: { base, branch, from, lastMessageAt: now, profile, removedAt: null, retrievedAt: null, warnedAt: null },
+      projects: projects.slice(1).map((project) => project.root),
+      sandbox: {
+        base: principal?.base ?? '',
+        branch,
+        copies: copies.map(({ base, from }, index) => ({
+          base,
+          from,
+          retrievedAt: null,
+          root: projects[index + 1]?.root ?? '',
+        })),
+        from: principal?.from ?? '',
+        lastMessageAt: now,
+        profile,
+        removedAt: null,
+        retrievedAt: null,
+        warnedAt: null,
+      },
       sessionId,
       settings: DEFAULT_PILOT_SETTINGS,
       since: now,
@@ -418,13 +494,49 @@ export class PilotService {
     return found;
   }
 
-  /** « Récupérer la branche » (CA-SESS-112) : le travail rejoint le dépôt du poste, sans toucher à sa branche courante. */
-  async retrieve(sessionId: string): Promise<string> {
-    const { deps, record, sandbox } = this.idleSandbox(sessionId);
-    const branch = await deps.sandboxes.retrieve({ branch: sandbox.branch, projectRoot: record.cwd, sessionId });
-    await this.keep({ ...record, sandbox: { ...sandbox, retrievedAt: this.clock.now() } });
+  /**
+   * « Récupérer la branche » (CA-SESS-112) : le travail rejoint le dépôt du poste, sans toucher à sa branche courante.
+   * « Récupérer les branches » (CA-SESS-141) : un projet à la fois, ou toutes celles qui ont du travail, les projets
+   * sans changement étant laissés. Les branches reçues, projet par projet.
+   */
+  async retrieve(sessionId: string, project: null | string = null): Promise<{ branch: string; project: string }[]> {
+    const { deps, record } = this.idleSandbox(sessionId);
+    let sandbox = record.sandbox as SandboxInfo;
+    const all = sandboxBranches(sandbox, record.cwd);
+    const asked = project === null ? all : all.filter(({ root }) => root === project);
+    if (asked.length === 0) throw new PilotTargetNotFound(`Le projet ${project} n’est pas dans ce bac à sable.`);
+    // Avec un seul projet, la branche se récupère toujours ; avec plusieurs, seules celles qui ont du travail
+    const chosen = project !== null || all.length === 1 ? asked : await this.withWork(deps.sandboxes, sessionId, asked);
+    const retrieved = [];
+    for (const { copy, root } of chosen) {
+      const branch = await deps.sandboxes.retrieve({ branch: sandbox.branch, copy, projectRoot: root, sessionId });
+      sandbox = retrievedCopy(sandbox, copy, this.clock.now());
+      retrieved.push({ branch, project: root });
+    }
+    await this.keep({ ...record, sandbox });
     await this.publish(sessionId);
-    return branch;
+    return retrieved;
+  }
+
+  private async withWork(sandboxes: Sandboxes, sessionId: string, copies: SandboxBranch[]): Promise<SandboxBranch[]> {
+    const found = [];
+    for (const copy of copies) if ((await sandboxes.work({ ...copy, sessionId })) > 0) found.push(copy);
+    return found;
+  }
+
+  /** Branches du bac à sable, une par projet, avec ce qu'elles contiennent : la carte « Branches » (E2k). */
+  async branches(
+    sessionId: string,
+  ): Promise<{ files: number; from: string; project: string; retrievedAt: Date | null }[]> {
+    const record = this.records.get(sessionId);
+    if (!record?.sandbox || !this.sandbox) return [];
+    const { sandboxes } = this.sandbox;
+    const branches = [];
+    for (const copy of sandboxBranches(record.sandbox, record.cwd)) {
+      const files = record.sandbox.removedAt ? 0 : await sandboxes.work({ ...copy, sessionId }).catch(() => 0);
+      branches.push({ files, from: copy.from, project: copy.root, retrievedAt: copy.retrievedAt });
+    }
+    return branches;
   }
 
   /** « Arrêter le bac à sable » : le conteneur s'arrête, la copie reste ; le message suivant le relance. */
@@ -471,8 +583,7 @@ export class PilotService {
         this.sandboxStates.set(sessionId, 'stopped');
       } else if (action === 'warn') {
         // Seule une branche qui a avancé depuis sa dernière récupération mérite l'avertissement
-        const unretrieved = !sandbox.retrievedAt || sandbox.retrievedAt < sandbox.lastMessageAt;
-        if (unretrieved) await deps.warn(sessionId, sandbox.branch).catch(() => undefined);
+        if (unretrieved(sandbox)) await deps.warn(sessionId, sandbox.branch).catch(() => undefined);
         await this.keep({ ...record, sandbox: { ...sandbox, warnedAt: now } });
       } else if (action === 'remove') {
         await deps.sandboxes.remove(sessionId).catch(() => undefined);
@@ -579,6 +690,7 @@ export class PilotService {
     if (!snapshot || !cwd) throw new PilotTargetNotFound(`Bosco ne connaît pas la session ${sessionId}.`);
     return {
       cwd,
+      projects: [],
       sandbox: null,
       sessionId,
       settings: DEFAULT_PILOT_SETTINGS,
@@ -607,7 +719,9 @@ export class PilotService {
     // Le conteneur du bac à sable démarre (ou se recrée) avant le tour ; ses hooks ne joignent pas Bosco : c'est le
     // flux du tour qui dit sa fin (CA-SESS-109, CA-SESS-111)
     const launch =
-      record.sandbox && this.sandbox ? await this.sandbox.sandboxes.ensure(record.sessionId, record.cwd) : null;
+      record.sandbox && this.sandbox
+        ? await this.sandbox.sandboxes.ensure(record.sessionId, [record.cwd, ...record.projects])
+        : null;
     if (record.sandbox) this.sandboxStates.set(record.sessionId, 'running');
     const liveTracking = source.liveTracking && !record.sandbox;
     // Le tour commence : la session apparaît (ou reprend) tout de suite, sans attendre les hooks ni le transcript
@@ -622,6 +736,8 @@ export class PilotService {
     const profile = record.sandbox?.profile ?? source.path;
     const sandboxed = record.sandbox !== null;
     const request: TurnRequest = {
+      // Les autres projets sont rejoués à chaque tour : une reprise ne les garde pas d'elle-même
+      addDirs: [...record.projects],
       configDir: source.path,
       cwd: record.cwd,
       launch,

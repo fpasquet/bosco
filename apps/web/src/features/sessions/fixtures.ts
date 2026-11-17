@@ -12,6 +12,7 @@ const laboIa = (folder: string) => ({ folder, id: 1, name: 'labo-ia', root: '/ho
 
 function session(overrides: Partial<SessionDto> & Pick<SessionDto, 'id' | 'title'>): SessionDto {
   return {
+    addedProjects: [],
     branch: 'develop',
     cost: { unpriced: false, usd: 0 },
     lastAction: null,

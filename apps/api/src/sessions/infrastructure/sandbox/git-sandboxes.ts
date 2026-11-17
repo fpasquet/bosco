@@ -1,11 +1,12 @@
-// Bacs à sable des sessions (DT-37) : un dossier par session, gardé hors du conteneur. repo/ est un clone autonome du
-// dépôt (sans liens physiques : aucun objet partagé avec le dépôt du poste), home/ le dossier personnel de l'agent.
-// Le clone se monte au même chemin que le dépôt du poste, et les conversations de ce projet dans le profil des bacs à
-// sable, une source surveillée : le fil se lit en direct et se range avec son projet.
+// Bacs à sable des sessions (DT-37, DT-41) : un dossier par session, gardé hors du conteneur. repo/ est un clone
+// autonome du dépôt du projet principal (sans liens physiques : aucun objet partagé avec le dépôt du poste), repo-1/,
+// repo-2/… ceux des autres projets de la session, home/ le dossier personnel de l'agent. Chaque clone se monte au même
+// chemin que son dépôt du poste, et les conversations du projet principal dans le profil des bacs à sable, une source
+// surveillée : le fil se lit en direct et se range avec son projet.
 import { execFile } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { basename, join } from 'node:path';
 import { promisify } from 'node:util';
 import type { Sandboxes, SandboxState, TurnLaunch } from '../../application/pilot.service.ts';
 import { SandboxError, sandboxKeyOf } from '../../domain/sandbox.ts';
@@ -58,6 +59,11 @@ export class GitSandboxes implements Sandboxes {
     return join(this.root, sessionId);
   }
 
+  /** Clone d'une copie : celui du projet principal (0), puis ceux des autres projets dans l'ordre. */
+  private repoOf(sessionId: string, copy: number): string {
+    return join(this.dirOf(sessionId), copy === 0 ? 'repo' : `repo-${copy}`);
+  }
+
   private keyOf(sessionId: string): string {
     return sandboxKeyOf(sessionId);
   }
@@ -71,56 +77,76 @@ export class GitSandboxes implements Sandboxes {
     return branch && branch !== 'HEAD' ? branch : null;
   }
 
+  async uncommitted(projectRoot: string): Promise<null | number> {
+    const status = await git(projectRoot, 'status', '--porcelain').catch(() => null);
+    return status === null ? null : status.split('\n').filter(Boolean).length;
+  }
+
   async prepare(input: {
     branch: string;
     profile: string;
-    projectRoot: string;
+    projects: readonly { root: string; startBranch: null | string }[];
     sessionId: string;
-    startBranch: null | string;
-  }): Promise<{ base: string; from: string }> {
-    const exists = await git(input.projectRoot, 'rev-parse', '--verify', '--quiet', `refs/heads/${input.branch}`)
-      .then(() => true)
-      .catch(() => false);
-    if (exists) throw new SandboxError('invalidSandboxBranch', `La branche ${input.branch} existe déjà dans le dépôt.`);
+  }): Promise<{ base: string; from: string }[]> {
+    // La même branche de session dans chaque projet : un nom déjà pris dans l'un d'eux est refusé
+    for (const { root } of input.projects) {
+      const exists = await git(root, 'rev-parse', '--verify', '--quiet', `refs/heads/${input.branch}`)
+        .then(() => true)
+        .catch(() => false);
+      if (exists)
+        throw new SandboxError(
+          'invalidSandboxBranch',
+          `La branche ${input.branch} existe déjà dans ${basename(root)}.`,
+        );
+    }
     const dir = this.dirOf(input.sessionId);
-    const repo = join(dir, 'repo');
     await rm(dir, { recursive: true, force: true });
     await mkdir(join(dir, 'home', '.claude'), { recursive: true });
-    await git(this.root, 'clone', '--quiet', '--no-hardlinks', input.projectRoot, repo);
-    const from = input.startBranch ?? (await git(repo, 'rev-parse', '--abbrev-ref', 'HEAD'));
-    const start = input.startBranch ? `origin/${input.startBranch}` : 'HEAD';
-    await git(repo, 'checkout', '--quiet', '-B', input.branch, start).catch(() => {
-      throw new SandboxError('invalidSandboxBranch', `La branche de départ ${from} n’existe pas dans le dépôt.`);
-    });
-    const base = await git(repo, 'rev-parse', 'HEAD');
+    const copies = [];
+    for (const [copy, { root, startBranch }] of input.projects.entries()) {
+      const repo = this.repoOf(input.sessionId, copy);
+      await git(this.root, 'clone', '--quiet', '--no-hardlinks', root, repo);
+      const from = startBranch ?? (await git(repo, 'rev-parse', '--abbrev-ref', 'HEAD'));
+      const start = startBranch ? `origin/${startBranch}` : 'HEAD';
+      await git(repo, 'checkout', '--quiet', '-B', input.branch, start).catch(() => {
+        throw new SandboxError(
+          'invalidSandboxBranch',
+          `La branche de départ ${from} n’existe pas dans ${basename(root)}.`,
+        );
+      });
+      copies.push({ base: await git(repo, 'rev-parse', 'HEAD'), from });
+    }
+    const principal = input.projects[0]?.root ?? '';
     // L'accès à l'abonnement, et rien d'autre du profil : ni serveurs, ni connecteurs, ni réglages
     const credentials = await this.credentialsOf(input.profile);
     await cp(credentials, join(dir, 'home', '.claude', '.credentials.json'));
     await writeFile(join(dir, 'home', '.claude', 'settings.json'), JSON.stringify({ autoUpdates: false }));
     // Les points de montage existent avant le conteneur : sinon Docker les crée en root, et la suppression échoue
-    const project = projectDir(input.projectRoot);
+    const project = projectDir(principal);
     await mkdir(join(this.profile, 'projects', project), { recursive: true });
     await mkdir(join(dir, 'home', '.claude', 'projects', project), { recursive: true });
-    return { base, from };
+    return copies;
   }
 
-  async ensure(sessionId: string, projectRoot: string): Promise<TurnLaunch> {
+  async ensure(sessionId: string, projectRoots: readonly string[]): Promise<TurnLaunch> {
     const dir = this.dirOf(sessionId);
-    // Sans sa copie, le conteneur monterait un dossier vide que Docker créerait en root : la session ne se reprend plus
-    if (!existsSync(join(dir, 'repo')))
+    // Sans ses copies, le conteneur monterait des dossiers vides que Docker créerait en root : la session ne se reprend
+    // plus
+    if (projectRoots.some((_, copy) => !existsSync(this.repoOf(sessionId, copy))))
       throw new SandboxError(
         'sandboxRemoved',
         'La copie du projet de ce bac à sable a disparu : la session ne se reprend plus.',
       );
+    const projectRoot = projectRoots[0] ?? '';
     const project = projectDir(projectRoot);
     const key = this.keyOf(sessionId);
     await this.containers.ensure({
       dir,
       key,
-      projects: [projectRoot],
+      projects: projectRoots,
       workdir: projectRoot,
       mounts: [
-        { from: join(dir, 'repo'), to: projectRoot },
+        ...projectRoots.map((root, copy) => ({ from: this.repoOf(sessionId, copy), to: root })),
         { from: join(dir, 'home'), to: '/home/agent' },
         { from: join(this.profile, 'projects', project), to: `/home/agent/.claude/projects/${project}` },
       ],
@@ -146,8 +172,8 @@ export class GitSandboxes implements Sandboxes {
    * n'exécute ni les hooks ni la configuration du clone. La branche courante du poste n'est jamais touchée, ni une
    * branche du poste qui a avancé de son côté : la récupération prend alors un autre nom (CA-SESS-112).
    */
-  async retrieve(input: { branch: string; projectRoot: string; sessionId: string }): Promise<string> {
-    const repo = join(this.dirOf(input.sessionId), 'repo');
+  async retrieve(input: { branch: string; copy: number; projectRoot: string; sessionId: string }): Promise<string> {
+    const repo = this.repoOf(input.sessionId, input.copy);
     await git(repo, 'add', '--all');
     if (await git(repo, 'status', '--porcelain'))
       await git(
@@ -162,7 +188,7 @@ export class GitSandboxes implements Sandboxes {
         'Travail en cours de la session',
       );
     const head = await git(repo, 'rev-parse', 'HEAD');
-    const temporary = `refs/bosco/sandboxes/${this.keyOf(input.sessionId)}`;
+    const temporary = `refs/bosco/sandboxes/${this.keyOf(input.sessionId)}-${input.copy}`;
     await git(input.projectRoot, 'fetch', '--quiet', '--no-tags', repo, `+${input.branch}:${temporary}`);
     try {
       const target = await this.targetOf(input.projectRoot, input.branch, head);
@@ -171,6 +197,23 @@ export class GitSandboxes implements Sandboxes {
     } finally {
       await git(input.projectRoot, 'update-ref', '-d', temporary).catch(() => undefined);
     }
+  }
+
+  /** Fichiers changés depuis le départ de la branche, commités ou non, nouveaux compris. */
+  async work(input: { base: string; copy: number; sessionId: string }): Promise<number> {
+    const repo = this.repoOf(input.sessionId, input.copy);
+    const [committed, status] = await Promise.all([
+      git(repo, 'diff', '--name-only', input.base, 'HEAD'),
+      git(repo, 'status', '--porcelain'),
+    ]);
+    const files = new Set([
+      ...committed.split('\n').filter(Boolean),
+      ...status
+        .split('\n')
+        .filter(Boolean)
+        .map((line) => line.slice(3)),
+    ]);
+    return files.size;
   }
 
   /** La branche du même nom si on peut l'avancer sans perte, sinon le premier nom libre (« bosco/s-…-2 »). */
