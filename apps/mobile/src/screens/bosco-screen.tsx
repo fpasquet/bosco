@@ -3,7 +3,7 @@
 import { forwardRef, useImperativeHandle, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { WebView, type WebViewMessageEvent } from 'react-native-webview';
-import { type BridgeMessage, parseBridgeMessage } from '../lib/notifications';
+import { type BridgeMessage, pageUrl, parseBridgeMessage } from '../lib/bridge';
 import { colors } from '../lib/theme';
 import { UnreachableScreen } from './unreachable-screen';
 
@@ -33,8 +33,7 @@ export const BoscoScreen = forwardRef<BoscoHandle, BoscoScreenProps>(function Bo
     // L'adresse de la vue web change : un script injecté ne passe pas quand l'application revient de l'arrière-plan
     open: (path) => {
       setUnreachable(false);
-      const separator = path.includes('?') ? '&' : '?';
-      setSource(`${url}${path}${separator}from=${Date.now()}`);
+      setSource(pageUrl(url, path, Date.now()));
     },
   }));
   if (unreachable)
