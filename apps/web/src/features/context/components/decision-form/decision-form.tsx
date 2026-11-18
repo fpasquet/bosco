@@ -1,10 +1,11 @@
 'use client';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { z } from 'zod';
 import type { DecisionTextDto } from '@bosco/domain';
 import { Button } from '@/shared/ui/button';
+import { changedPart } from '../../lib/decisions';
 
 /** Nouvelle décision (E9c), nouvelle version d'une décision acceptée (E9e), ou relecture avant d'accepter (E9b). */
 export type DecisionFormMode = 'edit' | 'new' | 'review';
@@ -31,6 +32,24 @@ export interface DecisionFormProps {
   /** Projet visé (« site-perso ») */
   targetLabel: string;
   onTargetChange?: (project: string) => void;
+}
+
+/** La partie changée d'un champ, surlignée tant qu'elle n'est pas enregistrée, pour relire ce qui bouge. */
+function ChangedPart({ after, before, id }: { after: string; before: string; id: string }) {
+  const part = changedPart(before, after);
+  if (!part) return null;
+  return (
+    <p id={id} className="text-xs text-muted">
+      <span className="font-medium">Changé : </span>
+      {part.prefix}
+      {part.changed ? (
+        <mark className="rounded-control bg-warning-soft text-ink">{part.changed}</mark>
+      ) : (
+        <span className="italic"> (texte retiré) </span>
+      )}
+      {part.suffix}
+    </p>
+  );
 }
 
 const required = (message: string) => z.string().refine((value) => value.trim().length > 0, message);
@@ -69,7 +88,7 @@ export function DecisionForm({
   targetLabel,
   onTargetChange,
 }: DecisionFormProps) {
-  const { formState, handleSubmit, register, setError, setFocus } = useForm<Values>({
+  const { control, formState, handleSubmit, register, setError, setFocus } = useForm<Values>({
     resolver: zodResolver(schemaOf(mode)),
     defaultValues: {
       title: initial?.title ?? '',
@@ -101,6 +120,10 @@ export function DecisionForm({
       }),
     );
   const errorOf = (name: keyof Values) => formState.errors[name]?.message;
+  const values = useWatch({ control });
+  // Modifier une décision acceptée : chaque champ changé montre sa partie changée par rapport à la version modifiée
+  const changeOf = (name: keyof DecisionTextDto) =>
+    mode === 'edit' && initial ? { after: values[name] ?? '', before: initial[name] ?? '' } : null;
   return (
     <form noValidate className="flex flex-col gap-4" onSubmit={(event) => void submit(true)(event)}>
       {targetChoices && targetChoices.length > 0 ? (
@@ -127,34 +150,40 @@ export function DecisionForm({
       {FIELDS.map(({ label, name, optional, rows }) => {
         const error = errorOf(name);
         const id = `decision-${name}`;
+        const change = name === 'note' ? null : changeOf(name);
+        const changed = change && change.after !== change.before ? `${id}-changed` : null;
+        const described = [error && `${id}-error`, changed].filter(Boolean).join(' ') || undefined;
         return (
-          <label key={name} className="flex flex-col gap-1.5">
-            <span className="text-xs font-medium">
-              {label}
-              {optional && <span className="text-muted"> (facultatif)</span>}
-            </span>
-            {rows === 1 ? (
-              <input
-                className="input w-full"
-                aria-invalid={error ? true : undefined}
-                aria-describedby={error ? `${id}-error` : undefined}
-                {...register(name)}
-              />
-            ) : (
-              <textarea
-                rows={rows}
-                className="textarea w-full"
-                aria-invalid={error ? true : undefined}
-                aria-describedby={error ? `${id}-error` : undefined}
-                {...register(name)}
-              />
-            )}
-            {error && (
-              <span id={`${id}-error`} className="text-xs text-danger">
-                {error}
+          <div key={name} className="flex flex-col gap-1.5">
+            <label className="flex flex-col gap-1.5">
+              <span className="text-xs font-medium">
+                {label}
+                {optional && <span className="text-muted"> (facultatif)</span>}
               </span>
-            )}
-          </label>
+              {rows === 1 ? (
+                <input
+                  className="input w-full"
+                  aria-invalid={error ? true : undefined}
+                  aria-describedby={described}
+                  {...register(name)}
+                />
+              ) : (
+                <textarea
+                  rows={rows}
+                  className="textarea w-full"
+                  aria-invalid={error ? true : undefined}
+                  aria-describedby={described}
+                  {...register(name)}
+                />
+              )}
+              {error && (
+                <span id={`${id}-error`} className="text-xs text-danger">
+                  {error}
+                </span>
+              )}
+            </label>
+            {change && changed && <ChangedPart id={changed} after={change.after} before={change.before} />}
+          </div>
         );
       })}
       {mode === 'edit' && (

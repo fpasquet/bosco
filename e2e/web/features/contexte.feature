@@ -45,13 +45,16 @@ Fonctionnalité: Contexte des agents
     Et je clique sur le bouton « Accepter la décision »
     Alors je vois le lien « DEC-1 Découper les tableaux par ligne »
 
+  @CA-CONT-20
   @CA-CONT-21
   @CA-CONT-22
   Scénario: Une décision acceptée change avec une note et garde sa version précédente
     Étant donné le projet « maison » a la décision acceptée « Garder Jest pour les tests »
     Quand j'ouvre la page « /projects/1/context/decisions/1/edit »
     Et je saisis « Garder Jest pour les tests existants » dans le champ « Titre »
-    Et je clique sur le bouton « Enregistrer la version 2 »
+    Alors je vois le texte « Changé : Garder Jest pour les tests existants »
+    Et la page est accessible
+    Quand je clique sur le bouton « Enregistrer la version 2 »
     Alors je vois le texte « Écris une note pour dire ce qui change. »
     Quand je saisis « Les nouveaux tests aussi » dans le champ « Note du changement (obligatoire) »
     Et je clique sur le bouton « Enregistrer la version 2 »
