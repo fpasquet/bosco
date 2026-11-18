@@ -1,8 +1,10 @@
 import type { MikroORM } from '@mikro-orm/sqlite';
 import { Body, Controller, Get, HttpCode, Inject, Post } from '@nestjs/common';
 import type { AccessService } from './access/application/access.service.ts';
+import type { ContainersService } from './isolation/application/containers.service.ts';
 import type { IsolationService } from './isolation/application/isolation.service.ts';
 import type { QuotaService } from './isolation/application/quota.service.ts';
+import type { ScriptedSandboxProbe } from './isolation/infrastructure/docker/scripted-sandbox-probe.ts';
 import type { GroupService } from './projects/application/group.service.ts';
 import type { ProjectService } from './projects/application/project.service.ts';
 import type { ChannelService } from './sessions/application/channel.service.ts';
@@ -14,7 +16,7 @@ import type { FileTranscriptWatcher } from './sessions/infrastructure/claude-cod
 import type { RecordingNotifier } from './sessions/infrastructure/notifications/desktop-notifier.ts';
 import type { PresenceTracker } from './sessions/infrastructure/notifications/presence.ts';
 import { ACCESS_SERVICE } from './access/tokens.ts';
-import { ISOLATION_SERVICE, QUOTA_SERVICE } from './isolation/tokens.ts';
+import { CONTAINERS_SERVICE, ISOLATION_SERVICE, QUOTA_SERVICE, SANDBOX_PROBE } from './isolation/tokens.ts';
 import { GROUP_SERVICE, PROJECT_SERVICE } from './projects/tokens.ts';
 import {
   CHANNEL_SERVICE,
@@ -49,7 +51,16 @@ export class TestController {
     @Inject(PROJECT_SERVICE) private readonly projects: ProjectService,
     @Inject(GROUP_SERVICE) private readonly groups: GroupService,
     @Inject(PILOT_SERVICE) private readonly pilot: PilotService,
+    @Inject(SANDBOX_PROBE) private readonly docker: ScriptedSandboxProbe,
+    @Inject(CONTAINERS_SERVICE) private readonly containers: ContainersService,
   ) {}
+
+  /** Simule un Docker qui ne répond plus, ou qui répond de nouveau, à la mesure suivante des conteneurs. */
+  @Post('docker')
+  @HttpCode(204)
+  setDocker(@Body() body: { reachable: boolean }): void {
+    this.docker.reachable = body.reachable;
+  }
 
   /** Simule l'usage de l'abonnement par défaut, comme le donnerait un tour : la fenêtre de 5 h, en %. */
   @Post('quota')
@@ -74,6 +85,9 @@ export class TestController {
     for (let waited = 0; this.pilot.runningTurns().length > 0 && waited < TURN_SETTLE_MS; waited += 50)
       await new Promise((resolve) => setTimeout(resolve, 50));
     this.pilot.stopAll();
+    this.docker.reachable = true;
+    // Un Docker coupé au scénario précédent répond de nouveau tout de suite, sans attendre l'essai suivant
+    await this.containers.measure();
     await this.watcher.close();
     await this.access.disable();
     this.liveSignals.forget();
