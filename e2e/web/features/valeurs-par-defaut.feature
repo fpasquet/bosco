@@ -123,6 +123,8 @@ Fonctionnalité: Valeurs par défaut des sessions et modes d'autorisation
     Et je clique sur le bouton « Démarrer »
     Alors je vois le texte « Approuver pour moi suspendu après 3 refus : les demandes reviennent dans Bosco »
     Et je vois le bouton « Autoriser »
+    Quand je recharge la page
+    Alors je vois le texte « Approuver pour moi suspendu après 3 refus : les demandes reviennent dans Bosco »
 
   @NF-18
   @CA-REGL-16

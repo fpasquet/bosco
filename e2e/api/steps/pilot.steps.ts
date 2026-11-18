@@ -16,7 +16,6 @@ interface SessionView {
     running: boolean;
     sandbox?: null | { branch: string; from: string; state: string };
     settings: { effort: null | string; model: null | string; permissionMode: string };
-    suspended?: null | { count: number; total: boolean };
   };
   project: null | { name: string };
   sourceId: string;
@@ -27,6 +26,7 @@ interface SessionView {
     | { kind: 'turn'; message: null | string };
 }
 interface SessionDetailDto {
+  journal: ({ kind: string } & Record<string, unknown>)[];
   session: SessionView;
 }
 
@@ -153,11 +153,18 @@ Then('{string} should wait for the permission {string}', async ({ request }, ses
 Then(
   '{string} should have auto mode suspended after {int} refusals in a row',
   async ({ request }, session: string, count: number) => {
-    await eventually(
-      request,
-      idOf(session),
-      (view) => view.pilot?.suspended?.count === count && !view.pilot.suspended.total,
-    );
+    // La suspension est une ligne du journal de la session, gardée d'un démarrage de Bosco à l'autre
+    for (let attempt = 0; attempt < 60; attempt++) {
+      const response = await request.get(`/api/sessions/${idOf(session)}`);
+      const { journal } = (await response.json()) as SessionDetailDto;
+      const line = journal.find(({ kind }) => kind === 'autoModeSuspended');
+      if (line) {
+        expect(line).toMatchObject({ count, total: false });
+        return;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 150));
+    }
+    throw new Error(`The session ${session} has no suspension in its journal`);
   },
 );
 

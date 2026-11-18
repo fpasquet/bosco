@@ -79,6 +79,8 @@ export class SessionService {
   private notifications: null | Pick<NotificationService, 'notify' | 'settle'> = null;
   private pilots: PilotsView = NO_PILOTS;
   private projects: ProjectCatalog = NO_PROJECTS;
+  /** Dernière écriture en cours du journal de chaque session */
+  private readonly writing = new Map<string, Promise<void>>();
 
   constructor(
     private readonly sessionRepository: SessionRepository,
@@ -139,9 +141,42 @@ export class SessionService {
     this.notifications = notifications;
   }
 
+  /**
+   * Une écriture du journal d'une session à la fois : la lecture du transcript et le pilotage y ajoutent chacun des
+   * lignes, numérotées à la suite.
+   */
+  private exclusive<T>(sessionId: string, write: () => Promise<T>): Promise<T> {
+    const previous = this.writing.get(sessionId) ?? Promise.resolve();
+    const next = previous.then(write, write);
+    const settled = next.then(
+      () => undefined,
+      () => undefined,
+    );
+    this.writing.set(sessionId, settled);
+    void settled.then(() => {
+      if (this.writing.get(sessionId) === settled) this.writing.delete(sessionId);
+    });
+    return next;
+  }
+
+  /** Claude Code a suspendu « Approuver pour moi » d'une session pilotée : son fil le dit, à son heure (règle 17). */
+  noteAutoModeSuspended(sessionId: string, count: number, total: boolean): Promise<void> {
+    return this.exclusive(sessionId, async () => {
+      const session = await this.sessionRepository.find(sessionId);
+      if (!session) return;
+      session.noteAutoModeSuspended(count, total, this.clock.now());
+      await this.sessionRepository.save(session, session.pullJournal());
+      this.sessionEvents.sessionChanged(this.view(session));
+    });
+  }
+
   /** Tient compte des lignes nouvellement lues dans le transcript d'une session, qu'elle soit connue ou non. */
-  async recordTranscript(sourceId: string, sessionId: string, events: TranscriptEvent[]): Promise<SessionView | null> {
-    if (events.length === 0) return null;
+  recordTranscript(sourceId: string, sessionId: string, events: TranscriptEvent[]): Promise<SessionView | null> {
+    if (events.length === 0) return Promise.resolve(null);
+    return this.exclusive(sessionId, () => this.readTranscript(sourceId, sessionId, events));
+  }
+
+  private async readTranscript(sourceId: string, sessionId: string, events: TranscriptEvent[]): Promise<SessionView> {
     const found = await this.sessionRepository.find(sessionId);
     const firstAt = events.find((event) => event.at)?.at ?? this.clock.now();
     const session = found ?? Session.discover(sessionId, sourceId, firstAt);

@@ -110,11 +110,6 @@ export interface PilotDto {
   sandbox: null | PilotSandboxDto;
   settings: PilotSettingsDto;
   since: string;
-  /**
-   * « Approuver pour moi » suspendu par Claude Code après des refus de suite (consecutive) ou au total : les demandes
-   * reviennent dans Bosco ; null tant qu'il ne l'a pas été
-   */
-  suspended: null | { at: string; count: number; total: boolean };
 }
 
 /** Bac à sable d'une session pilotée (E2j) : sa branche, l'état de son conteneur et sa récupération. */
@@ -253,12 +248,13 @@ export interface SessionDto {
 }
 
 /** Entrée du fil d'une session : ta demande, la réponse de l'agent, ou une de ses actions. */
-export interface JournalEntryDto {
-  at: string;
-  kind: 'prompt' | 'reply' | 'tool';
-  seq: number;
-  text: string;
-}
+/**
+ * Entrée du journal d'une session : ce que dit le transcript, ou « Approuver pour moi » suspendu par Claude Code après
+ * des refus de suite ou au total (les demandes reviennent alors dans Bosco).
+ */
+export type JournalEntryDto =
+  | { at: string; count: number; kind: 'autoModeSuspended'; seq: number; total: boolean }
+  | { at: string; kind: 'prompt' | 'reply' | 'tool'; seq: number; text: string };
 
 /**
  * Étape d'un tour de l'agent : une réflexion (texte vide quand le modèle la garde pour lui), ou un appel d'outil avec

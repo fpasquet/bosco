@@ -8,6 +8,7 @@ import { Button } from '@/shared/ui/button';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { clockOf } from '../../lib/detail';
 import { actionLabel, elapsed } from '../../lib/format';
+import { AutoModeSuspended } from '../auto-mode-suspended';
 import { ConversationView } from '../conversation-view';
 
 export interface SessionFeedProps {
@@ -28,6 +29,12 @@ export interface SessionFeedProps {
 const BOTTOM_SLACK_PX = 48;
 
 function Entry({ current, entry }: { current: boolean; entry: JournalEntryDto }) {
+  if (entry.kind === 'autoModeSuspended')
+    return (
+      <li>
+        <AutoModeSuspended suspended={entry} />
+      </li>
+    );
   if (entry.kind === 'tool') {
     return (
       <li className="flex items-center gap-3 font-mono text-xs text-muted">
@@ -77,8 +84,10 @@ function FeedContent({
         ))}
       </div>
     );
-  if (conversation && conversation.turns.length > 0)
-    return <ConversationView conversation={conversation} live={live} />;
+  if (conversation && conversation.turns.length > 0) {
+    const notices = journal.filter((entry) => entry.kind === 'autoModeSuspended');
+    return <ConversationView conversation={conversation} live={live} notices={notices} />;
+  }
   if (journal.length === 0) return <p className="text-muted">Rien à montrer pour l’instant.</p>;
   const last = journal.at(-1);
   return (
@@ -102,7 +111,7 @@ export function SessionFeed({ conversation, footer, journal, loading = false, no
   useEffect(() => {
     const element = scroller.current;
     if (element && following) element.scrollTop = element.scrollHeight;
-  }, [following, size, tail]);
+  }, [following, size, tail, journal.length]);
   const live = session.state === 'running';
   const open = session.state !== 'ended';
   const status =

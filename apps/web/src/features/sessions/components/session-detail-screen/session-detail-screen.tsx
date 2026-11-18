@@ -27,7 +27,6 @@ import { profileOf, resumeCommand } from '../../lib/detail';
 import { profileMark, waitingSessions } from '../../lib/overview';
 import { useSettlements } from '../../lib/settlements';
 import { AllowDialog } from '../allow-dialog';
-import { AutoModeSuspended } from '../auto-mode-suspended';
 import { ConnectionStatus } from '../connection-status';
 import { PendingMessage } from '../pending-message';
 import { PermissionCard } from '../permission-card';
@@ -49,7 +48,9 @@ const CONVERSATION_REFRESH_MS = 5000;
 function agentSays(journal: JournalEntryDto[], session: SessionDto): null | string {
   const since = session.waiting?.since;
   if (!since) return null;
-  return journal.filter((entry) => entry.kind === 'reply' && entry.at <= since).at(-1)?.text ?? null;
+  const replies = journal.filter((entry) => entry.kind === 'reply' && entry.at <= since);
+  const last = replies.at(-1);
+  return last && 'text' in last ? last.text : null;
 }
 
 /**
@@ -150,7 +151,6 @@ export function SessionDetailScreen({ id }: { id: string }) {
             now={now}
             tail={
               <>
-                {session.pilot?.suspended && <AutoModeSuspended suspended={session.pilot.suspended} />}
                 <PermissionCard
                   session={session}
                   now={now}

@@ -190,20 +190,13 @@ export interface PilotView {
   };
   settings: PilotSettings;
   since: Date;
-  /** « Approuver pour moi » suspendu par Claude Code : les demandes reviennent dans Bosco (CA-SESS-168) */
-  suspended: null | AutoModeSuspension;
-}
-
-/** Suspension d'« Approuver pour moi » : quand, après combien de refus, de suite ou au total. */
-export interface AutoModeSuspension {
-  at: Date;
-  count: number;
-  total: boolean;
 }
 
 interface Turn {
   /** Demandes en cours (autorisation, question) et ce qui les abandonne si le tour s'arrête */
   abandons: Map<string, () => void>;
+  /** Écriture en cours d'une suspension dans le journal : la demande qui la suit attend qu'elle soit enregistrée */
+  noting: Promise<void>;
   process: RunningTurn;
   result: boolean;
   startedAt: Date;
@@ -242,8 +235,6 @@ export class PilotService {
   private readonly records = new Map<string, PilotRecord>();
   private readonly turns = new Map<string, Turn>();
   private readonly pending = new Map<string, PilotMessage>();
-  /** Dernière suspension d'« Approuver pour moi » de chaque session, dite dans son fil */
-  private readonly suspensions = new Map<string, AutoModeSuspension>();
   private defaults: null | Pick<SessionDefaultsService, 'resolveDefaults'> = null;
   private profiles: PilotProfiles = NO_PROFILES;
   private sandbox: null | SandboxDeps = null;
@@ -257,7 +248,10 @@ export class PilotService {
     private readonly repository: PilotRepository,
     private readonly runner: TurnRunner,
     private readonly signals: Signals,
-    private readonly sessions: Pick<SessionService, 'knownProjects' | 'rememberPlace' | 'viewOf'>,
+    private readonly sessions: Pick<
+      SessionService,
+      'knownProjects' | 'noteAutoModeSuspended' | 'rememberPlace' | 'viewOf'
+    >,
     private readonly sessionRepository: Pick<SessionRepository, 'find'>,
     private readonly sources: Pick<SourceRepository, 'list'>,
     private readonly registry: Pick<SessionRegistry, 'isOpen'>,
@@ -328,7 +322,6 @@ export class PilotService {
       },
       settings: record.settings,
       since: record.since,
-      suspended: this.suspensions.get(sessionId) ?? null,
     };
   }
 
@@ -712,7 +705,6 @@ export class PilotService {
     for (const turn of this.turns.values()) turn.process.finish();
     this.turns.clear();
     this.pending.clear();
-    this.suspensions.clear();
   }
 
   /** Au-delà du seuil d'attente, aucun tour ne part : le message est refusé avec la raison (DT-39). */
@@ -780,6 +772,7 @@ export class PilotService {
     await this.signals.receive(origin, { kind: 'prompt' }, 'pilot');
     const turn: Turn = {
       abandons: new Map(),
+      noting: Promise.resolve(),
       process: undefined as unknown as RunningTurn,
       result: false,
       startedAt: this.clock.now(),
@@ -800,9 +793,11 @@ export class PilotService {
     };
     turn.process = this.runner.start(request, {
       permission: (requestId, tool, input) => this.permission(origin, turn, requestId, tool, input),
+      // Le journal de la session garde la suspension, à son heure dans le fil, d'un démarrage de Bosco à l'autre
       suspended: (count, total) => {
-        this.suspensions.set(record.sessionId, { at: this.clock.now(), count, total });
-        void this.publish(record.sessionId);
+        turn.noting = turn.noting
+          .then(() => this.sessions.noteAutoModeSuspended(record.sessionId, count, total))
+          .catch(() => undefined);
       },
       question: (requestId, input) => this.question(origin, turn, requestId, input),
       cancelled: (requestId) => turn.abandons.get(requestId)?.(),
@@ -835,12 +830,14 @@ export class PilotService {
     tool: string,
     input: Record<string, unknown>,
   ): void {
-    void this.signals
-      .requestPermission(
-        origin,
-        { tool, detail: detailOf(input) },
-        (onAbandon) => turn.abandons.set(requestId, () => onAbandon('Tour arrêté')),
-        'pilot',
+    void turn.noting
+      .then(() =>
+        this.signals.requestPermission(
+          origin,
+          { tool, detail: detailOf(input) },
+          (onAbandon) => turn.abandons.set(requestId, () => onAbandon('Tour arrêté')),
+          'pilot',
+        ),
       )
       .then((answer: null | PermissionAnswer) => {
         turn.abandons.delete(requestId);

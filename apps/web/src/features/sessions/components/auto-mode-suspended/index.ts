@@ -1,1 +1,1 @@
-export { AutoModeSuspended } from './auto-mode-suspended';
+export { AutoModeSuspended, type AutoModeSuspension } from './auto-mode-suspended';
