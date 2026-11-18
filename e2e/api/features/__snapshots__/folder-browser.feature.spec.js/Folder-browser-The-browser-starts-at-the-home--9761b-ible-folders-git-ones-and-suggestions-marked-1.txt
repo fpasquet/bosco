@@ -8,9 +8,9 @@
   "folders": [
     {
       "added": false,
-      "git": true,
-      "name": "site-perso",
-      "path": "<profiles>/site-perso",
+      "git": false,
+      "name": "notes-clubs",
+      "path": "<profiles>/notes-clubs",
       "suggestion": true
     },
     {

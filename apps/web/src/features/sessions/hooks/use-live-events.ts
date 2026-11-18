@@ -1,7 +1,7 @@
 'use client';
 import { type QueryClient, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
-import type { LiveEventDto, SessionDto } from '@bosco/domain';
+import type { LiveEventDto, ProjectsDto, SessionDto } from '@bosco/domain';
 import { useNotices } from '@/shared/hooks/use-notices';
 import { importProgressQuery, sessionsQuery } from '../api/sessions';
 import { RETRY_MS, useConnection } from '../lib/connection';
@@ -15,6 +15,13 @@ function upsert(sessions: SessionDto[] | undefined, session: SessionDto): Sessio
   return [...others, session];
 }
 
+/** Un dépôt adopté pendant qu'une session tourne : sa session arrive avec un projet que la liste ne connaît pas encore. */
+function joinsUnknownProject(client: QueryClient, session: SessionDto): boolean {
+  if (!session.project) return false;
+  const known = client.getQueryData<ProjectsDto>(['projects', 'overview']);
+  return known !== undefined && !known.projects.some((project) => project.id === session.project?.id);
+}
+
 function listen(source: EventSource, client: QueryClient): void {
   const on = <T extends LiveEventDto['type']>(type: T, apply: (data: EventOf<T>) => void) =>
     source.addEventListener(type, (event) => {
@@ -26,6 +33,10 @@ function listen(source: EventSource, client: QueryClient): void {
     client.setQueryData<SessionDto[]>(sessionsQuery.queryKey, (sessions) => upsert(sessions, session));
     // Le détail ouvert de cette session relit son fil
     void client.invalidateQueries({ queryKey: ['session', session.id] });
+    // Les projets, leurs listes de choix et les groupes relisent le nouveau projet
+    if (joinsUnknownProject(client, session))
+      for (const queryKey of [['projects'], ['pilot', 'options'], ['groups']])
+        void client.invalidateQueries({ queryKey });
   });
   on('import.progress', ({ progress }) => client.setQueryData(importProgressQuery.queryKey, progress));
   on('permission.settled', ({ outcome, sessionId, title }) => {

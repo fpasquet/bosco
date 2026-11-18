@@ -7,9 +7,9 @@ Feature: Usage of the sessions
     Given the Claude Code profile ".claude-perso" has the transcript "session-api-tarifs-usage.jsonl" for the session "d93b51f0"
     And the Claude Code profile ".claude-perso" has the transcript "session-creneaux-usage.jsonl" for the session "5b2d81e4"
     And the Claude Code profile ".claude-perso" has the transcript "session-sejours-usage.jsonl" for the session "8e14c2b7"
-    And Bosco watches the profiles ".claude-perso"
     And the folders "api-tarifs,site-clubs,creneaux,sejours" are projects
     And I send POST request to "/api/groups" with the JSON "fixtures/groups/clubs.json"
+    And Bosco watches the profiles ".claude-perso"
 
   @CA-SESS-176
   @CA-SESS-178

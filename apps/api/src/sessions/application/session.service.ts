@@ -20,6 +20,7 @@ const RECENT_QUESTION_MS = 2 * 60 * 1000;
 
 /** Avant que les projets soient branchés, toutes les sessions sont hors projet. */
 const NO_PROJECTS: ProjectCatalog = {
+  adopt: () => Promise.resolve([]),
   groups: () => Promise.resolve([]),
   folderOf: (gitRoot, path) => gitRoot ?? path,
   list: () => [],
@@ -199,10 +200,29 @@ export class SessionService {
     const session = found ?? Session.discover(sessionId, sourceId, firstAt);
     for (const event of events) session.record(event);
     await this.sessionRepository.save(session, session.pullJournal());
-    const view = this.view(session);
+    let view = this.view(session);
+    if (view.folder) {
+      // Un dépôt où une session tourne pour la première fois devient un projet ; ses autres sessions le rejoignent
+      const { projectPath, projectRoot } = session.toSnapshot();
+      const adopted = await this.projects.adopt(projectRoot, projectPath);
+      if (adopted.length > 0) {
+        view = this.view(session);
+        await this.announceProjects(adopted, view.id);
+      }
+    }
     this.sessionEvents.sessionChanged(view);
     await this.notifyQuestions(view, events);
     return view;
+  }
+
+  /** Sessions déjà lues qui viennent de rejoindre des projets adoptés : leur vue change sans nouvel événement. */
+  private async announceProjects(projects: number[], except: string): Promise<void> {
+    const adopted = new Set(projects);
+    for (const other of await this.sessionRepository.list()) {
+      if (other.toSnapshot().id === except) continue;
+      const view = this.view(other);
+      if (view.project && adopted.has(view.project.id)) this.sessionEvents.sessionChanged(view);
+    }
   }
 
   /** Une question de l'agent qui vient d'être posée notifie ; ta demande suivante règle ce qui attendait. */

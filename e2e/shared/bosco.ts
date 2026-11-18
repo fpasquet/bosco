@@ -104,11 +104,12 @@ export async function startBosco(recordings: string): Promise<Bosco> {
     },
     writeProfileTranscript(profile, source, sessionId) {
       // Les dossiers de travail (/home/dev/maison/packages/recettes) sont recréés dans le dossier du scénario, chaque projet
-      // avec son .git, pour que Bosco trouve les projets comme sur le poste.
+      // avec son .git quand le transcript note une branche, pour que Bosco trouve les dépôts comme sur le poste.
       const content = readFileSync(source, 'utf8').replaceAll(SAMPLE_HOME, profilesRoot);
       const cwd = /"cwd":\s*"([^"]+)"/.exec(content)?.[1] ?? profilesRoot;
       const project = cwd.slice(profilesRoot.length + 1).split('/')[0];
-      if (project) mkdirSync(join(profilesRoot, project, '.git'), { recursive: true });
+      if (project && content.includes('"gitBranch"'))
+        mkdirSync(join(profilesRoot, project, '.git'), { recursive: true });
       mkdirSync(cwd, { recursive: true });
       // Worktree de Claude Code (maison/.claude/worktrees/fix-ui) : son .git est un fichier vers le projet d'origine
       const worktree = /^(.+)\/\.claude\/worktrees\/([^/]+)/.exec(cwd);

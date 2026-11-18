@@ -9,7 +9,6 @@ Feature: Session defaults and permission modes
   Background:
     Given the Claude Code profile ".claude-perso" has the transcript "session-maison-budget.jsonl" for the session "c41e9a07"
     And the Claude Code profile ".claude-perso" has an access to the Claude subscription of "camille@exemple.dev"
-    And Bosco watches the profiles ".claude-perso"
     And the home folder has the folders:
       | folder     | git |
       | api-tarifs | yes |
@@ -17,6 +16,7 @@ Feature: Session defaults and permission modes
       | creneaux   | yes |
     And the folders "api-tarifs,site-clubs,creneaux" are projects
     And I send POST request to "/api/groups" with the JSON "fixtures/groups/clubs.json"
+    And Bosco watches the profiles ".claude-perso"
 
   @CA-SESS-157
   @CA-SESS-164

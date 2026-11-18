@@ -1,5 +1,5 @@
 'use client';
-import { FolderOpen, HardDrive, Layers, ScrollText, TriangleAlert } from 'lucide-react';
+import { EyeOff, FolderOpen, HardDrive, Layers, ScrollText, TriangleAlert } from 'lucide-react';
 import { APP_NAME } from '@bosco/domain';
 import { GroupConfirmDialog } from '../group-confirm-dialog';
 
@@ -31,7 +31,8 @@ function decisionsLine(count: number): string {
 }
 
 /**
- * Confirmation avant de retirer un projet : ce qui change, et le rappel que rien n'est supprimé sur le poste.
+ * Confirmation avant de retirer un projet : ce qui change, que son dossier est ignoré pour ne pas revenir de lui-même,
+ * et le rappel que rien n'est supprimé sur le poste.
  * Une session pilotée qui tourne encore dans le projet l'empêche, avec la raison.
  */
 export function RemoveProjectDialog({
@@ -78,6 +79,13 @@ export function RemoveProjectDialog({
         <li className="flex gap-2">
           <ScrollText aria-hidden className="mt-0.5 size-4 shrink-0 text-muted" />
           <span>{decisionsLine(decisions)}</span>
+        </li>
+        <li className="flex gap-2">
+          <EyeOff aria-hidden className="mt-0.5 size-4 shrink-0 text-muted" />
+          <span>
+            Son dossier est ignoré : une nouvelle session ne le fait pas revenir. « Ne plus ignorer », dans Projets, le
+            rétablit
+          </span>
         </li>
         <li className="flex gap-2">
           <HardDrive aria-hidden className="mt-0.5 size-4 shrink-0 text-muted" />

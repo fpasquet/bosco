@@ -9,8 +9,10 @@ import type {
   ProjectDomains,
   ProjectRepository,
   RunningSessions,
+  SessionFolder,
   SessionFolders,
 } from './ports.ts';
+import { DomainError } from '../../shared/domain/domain-error.ts';
 import { importDiscovered } from '../domain/discovered-import.ts';
 import {
   browsedFolder,
@@ -31,7 +33,7 @@ import {
   type ProjectSnapshot,
   UnknownProject,
 } from '../domain/project.ts';
-import { activityOf, type Suggestion } from '../domain/suggestions.ts';
+import { activityOf, foldersToAdopt, type Suggestion } from '../domain/suggestions.ts';
 
 export interface ProjectView extends ProjectSnapshot {
   lastSessionAt: Date | null;
@@ -71,8 +73,8 @@ const NO_RUNNING: RunningSessions = { countIn: () => Promise.resolve(0) };
 const NO_DOMAINS: ProjectDomains = { publish: () => Promise.resolve() };
 
 /**
- * Projets choisis par la personne : les dossiers qu'elle ajoute, où se rangent les sessions. Gardés en mémoire, car la
- * vue de chaque session en dépend ; un ajout ou un retrait vaut aussitôt.
+ * Projets : chaque dépôt git où une session a tourné, adopté de lui-même, et les dossiers que la personne ajoute, où se
+ * rangent les sessions. Gardés en mémoire, car la vue de chaque session en dépend ; un ajout ou un retrait vaut aussitôt.
  */
 export class ProjectService {
   private projects: ProjectSnapshot[] = [];
@@ -80,6 +82,8 @@ export class ProjectService {
   private running: RunningSessions = NO_RUNNING;
   private domains: ProjectDomains = NO_DOMAINS;
   private sessions: SessionFolders = NO_SESSIONS;
+  /** Adoption en cours : une à la fois, pour que deux sessions d'un même dépôt n'en fassent qu'un projet */
+  private adopting: Promise<unknown> = Promise.resolve();
 
   constructor(
     private readonly repository: ProjectRepository,
@@ -114,10 +118,25 @@ export class ProjectService {
     await this.publishDomains();
   }
 
-  /** Projets lus au démarrage (et après une remise à zéro des scénarios), après la reprise des dépôts découverts. */
+  /**
+   * Projets lus au démarrage (et après une remise à zéro), après la reprise des dépôts découverts ; les dépôts des
+   * sessions déjà lues qui ne sont dans aucun projet sont adoptés.
+   */
   async load(): Promise<void> {
     await this.importDiscovered();
     await this.refresh();
+    await this.adoptFolders();
+  }
+
+  /**
+   * Adopte comme projets les dépôts git où une session a tourné hors de tout projet (un worktree, son dépôt d'origine),
+   * sauf les dossiers exclus et ignorés et ceux qui n'existent plus. Sans sessions données, toutes celles déjà lues.
+   * Rend les projets adoptés.
+   */
+  adoptFolders(sessions?: readonly SessionFolder[]): Promise<ProjectSnapshot[]> {
+    const run = this.adopting.then(() => this.adopt(sessions));
+    this.adopting = run.catch(() => undefined);
+    return run;
   }
 
   /** Projet d'une session ; null quand elle est hors projet. */
@@ -159,12 +178,15 @@ export class ProjectService {
         (a, b) =>
           (b.lastSessionAt?.getTime() ?? 0) - (a.lastSessionAt?.getTime() ?? 0) || a.name.localeCompare(b.name, 'fr'),
       );
+    // Un dossier qui n'existe plus ne s'ajoute pas : il n'est pas proposé, ses sessions restent hors projet
+    const proposed = activity.suggestions.filter((suggestion) => !suggestion.ignored);
+    const present = await Promise.all(proposed.map((suggestion) => this.folders.inspect(suggestion.path)));
     return {
       home: this.home,
       ignored: activity.suggestions.filter((suggestion) => suggestion.ignored),
       outside: activity.outside,
       projects,
-      suggestions: activity.suggestions.filter((suggestion) => !suggestion.ignored),
+      suggestions: proposed.filter((_, index) => present[index] !== null),
     };
   }
 
@@ -244,7 +266,7 @@ export class ProjectService {
 
   /**
    * Retire un projet de Bosco : rien n'est touché sur le poste, ses sessions passent hors projet et il sort de ses
-   * groupes, où le suivant devient principal.
+   * groupes, où le suivant devient principal. Son dossier est ignoré : sinon la session suivante le ferait revenir.
    */
   async removeProject(id: number): Promise<void> {
     const project = this.projects.find((candidate) => candidate.id === id);
@@ -257,6 +279,7 @@ export class ProjectService {
     for (const group of touched) group.removeProject(id);
     await this.groups.save(touched);
     await this.repository.remove(id);
+    await this.ignoredFolders.ignore(project.path, this.clock.now());
     await this.refresh();
   }
 
@@ -265,9 +288,11 @@ export class ProjectService {
     await this.ignoredFolders.ignore(folder.value, this.clock.now());
   }
 
+  /** Un dossier qui n'est plus ignoré redevient un projet tout de suite si c'est un dépôt où une session a tourné. */
   async restoreSuggestion(path: string): Promise<void> {
     const folder = FolderPath.of(path);
     await this.ignoredFolders.restore([folder.value]);
+    await this.adoptFolders();
   }
 
   /**
@@ -297,6 +322,34 @@ export class ProjectService {
       parent: parentOf(asked, this.home),
       path: asked.value,
     };
+  }
+
+  private async adopt(given?: readonly SessionFolder[]): Promise<ProjectSnapshot[]> {
+    const [sessions, ignored] = await Promise.all([given ?? this.sessions.list(), this.ignoredFolders.list()]);
+    const paths = foldersToAdopt(sessions, this.placement, new Set(ignored), {
+      below: this.unproposed,
+      home: this.home,
+    });
+    if (paths.length === 0) return [];
+    const added: Project[] = [];
+    let id = await this.repository.nextId();
+    for (const path of paths) {
+      // Un dépôt supprimé du poste ne devient pas un projet : ses sessions restent hors projet
+      const found = await this.folders.inspect(path);
+      if (!found?.git) continue;
+      try {
+        const projects = [...this.projects, ...added.map((project) => project.toSnapshot())];
+        added.push(Project.add({ addedAt: this.clock.now(), folder: FolderPath.of(path), git: true, id, projects }));
+        id += 1;
+      } catch (error) {
+        // Un dossier refusé (chemin invalide) reste hors projet, sans bloquer les autres
+        if (!(error instanceof DomainError)) throw error;
+      }
+    }
+    if (added.length === 0) return [];
+    await this.repository.save(added);
+    await this.refresh();
+    return added.map((project) => project.toSnapshot());
   }
 
   /** Une fois, au passage aux projets choisis : les dépôts découverts et affichés deviennent des projets. */

@@ -86,20 +86,22 @@ Fonctionnalité: Navigation par lieux
 
   @CA-CONT-130
   @CA-CONT-131
-  @CA-CONT-133
+  @CA-CONT-179
   @NF-18
-  Scénario: Retirer un projet depuis son menu dit ce qui change, puis il revient en suggestion
+  Scénario: Retirer un projet depuis son menu dit ce qui change, puis son dossier est parmi les ignorés
     Étant donné le groupe « Perso » réunit les projets « maison » et « site-perso »
     Et le projet « maison » est épinglé
     Quand j'ouvre la page « / »
     Et je clique sur le bouton « Actions de maison »
     Et je clique sur l’élément de menu « Retirer le projet… »
     Alors je vois le texte « Dans Perso, site-perso devient le projet principal. »
+    Et je vois le texte « Son dossier est ignoré : une nouvelle session ne le fait pas revenir. »
     Et je vois le texte « Rien n’est supprimé sur le poste : ni le dossier, ni les sessions »
     Et la page est accessible
     Quand je clique sur le bouton « Retirer le projet » de la confirmation
     Alors je suis sur la page « /projects »
-    Et la liste « Suggestions » contient « maison »
+    Quand je clique sur le bouton « Ignorés · 1 »
+    Alors la liste « Ignorés » contient « maison »
 
   @CA-CONT-149
   Scénario: Dans « Tous les projets », un projet ouvre sa page, et « Tous les projets » est actif

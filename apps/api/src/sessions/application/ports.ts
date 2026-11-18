@@ -163,6 +163,11 @@ export interface CatalogProject {
 }
 
 export interface ProjectCatalog {
+  /**
+   * Fait un projet du dépôt git d'une session hors de tout projet, s'il n'est ni exclu ni ignoré ; rend les projets
+   * adoptés (aucun le plus souvent)
+   */
+  adopt(gitRoot: null | string, path: null | string): Promise<number[]>;
   /** Groupes de projets, sans « Tous les projets » */
   groups(): Promise<CatalogGroup[]>;
   list(): CatalogProject[];

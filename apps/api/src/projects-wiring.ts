@@ -6,8 +6,8 @@ import { GROUP_SERVICE, PROJECT_SERVICE } from './projects/tokens.ts';
 import { SESSION_SERVICE } from './sessions/tokens.ts';
 
 /**
- * Projets et sessions se croisent : une session se range dans le projet qui contient son dossier de travail, les
- * projets proposent les dossiers où des sessions ont tourné, gardent le dernier « Où elle tourne » de leurs sessions et
+ * Projets et sessions se croisent : une session se range dans le projet qui contient son dossier de travail, le dépôt
+ * git d'une session hors projet devient un projet, les projets proposent les autres dossiers où des sessions ont tourné, gardent le dernier « Où elle tourne » de leurs sessions et
  * ne se retirent pas tant qu'une session pilotée y tourne. Branchés avant que les sources ne soient relues.
  */
 @Injectable()
@@ -33,6 +33,10 @@ export class ProjectsWiring implements OnModuleInit {
       },
     });
     this.sessions.useProjects({
+      adopt: async (gitRoot, path) => {
+        const adopted = await this.projects.adoptFolders([{ gitRoot, lastEventAt: new Date(), path }]);
+        return adopted.map(({ id }) => id);
+      },
       list: () =>
         this.projects.listProjects().map(({ defaults, domains, git, id, name, path, place, startBranch }) => ({
           defaults,
