@@ -225,6 +225,8 @@ jobs:
         run: |
           mkdir files
           cp "$RUNNER_TEMP"/artifacts/desktop/* "$RUNNER_TEMP"/artifacts/android/* files/
+          # Le canal bêta d'electron-updater cherche beta-linux.yml, puis seulement latest-linux.yml : le même fichier
+          cp files/latest-linux.yml files/beta-linux.yml
           (cd files && sha256sum -- * > SHA256SUMS)
           prerelease=()
           if [ "$CHANNEL" = 'beta' ]; then prerelease=(--prerelease); fi
