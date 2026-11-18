@@ -78,7 +78,7 @@ Feature: Live tracking
     When I answer the permission of the session "c41e9a07" with the JSON "fixtures/allow.json"
     Then the response code should be 409
 
-  @CA-SESS-57
+  @CA-SESS-186
   Scenario: Live tracking installed by another version of Bosco is to update, until installed again
     Given I install live tracking for the profile ".claude-perso"
     And the live tracking of the profile ".claude-perso" was installed by another version of Bosco

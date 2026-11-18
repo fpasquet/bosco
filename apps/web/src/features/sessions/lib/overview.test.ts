@@ -217,12 +217,21 @@ describe('projectsOf', () => {
 
 describe('profileMark', () => {
   const sources: SourceDto[] = [
-    { id: 'pro', label: 'pro', liveTracking: false, managed: false, path: '/home/dev/.claude', watched: true },
+    {
+      id: 'pro',
+      label: 'pro',
+      liveTracking: false,
+      managed: false,
+      path: '/home/dev/.claude',
+      unreadable: false,
+      watched: true,
+    },
     {
       id: 'perso',
       label: 'perso',
       liveTracking: false,
       managed: false,
+      unreadable: false,
       path: '/home/dev/.claude-perso',
       watched: true,
     },

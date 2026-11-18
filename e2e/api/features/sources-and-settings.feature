@@ -21,6 +21,17 @@ Feature: Sources and settings
     When I send PUT request to "/api/settings" with the JSON "fixtures/settings-4-minutes.json"
     Then the response code should be 400
 
+  @CA-SESS-57
+  Scenario: A source whose new sessions Bosco can no longer read is to update, and its new sessions are not read
+    Given the Claude Code profile ".claude" has the transcript "session-unknown-format.jsonl" for the session "0d1e2f30"
+    And the Claude Code profile ".claude" has the transcript "session-unknown-format.jsonl" for the session "0d1e2f31"
+    And the Claude Code profile ".claude" has the transcript "session-unknown-format.jsonl" for the session "0d1e2f32"
+    Then Bosco should mark the profile ".claude" to update
+    Given the Claude Code profile ".claude" has the transcript "session-maison-rag.jsonl" for the session "5e0a91c3"
+    Then Bosco should not read the session "5e0a91c3"
+    When I send GET request to "/api/sessions/a41f07c2"
+    Then the response code should be 200
+
   @CA-SESS-56
   Scenario: A source switched off is no longer read, and nothing is erased
     When I switch off the source of the profile ".claude"

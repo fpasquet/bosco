@@ -197,6 +197,7 @@ export function SourcesScreen() {
                 path={displayPath(source.path, data.home)}
                 liveTracking={source.liveTracking}
                 liveTrackingOutdated={statusOf(source.id)?.outdated}
+                unreadable={source.unreadable}
                 watched={source.watched}
                 readOnly={phone}
                 onWatchedChange={(watched) => switchSource.mutate({ id: source.id, watched })}

@@ -22,6 +22,8 @@ export interface SourceCardProps {
   path: string;
   /** Sur le téléphone, les réglages se lisent seulement : l'interrupteur montre l'état sans le changer */
   readOnly?: boolean;
+  /** Bosco ne sait plus lire le format de ses nouvelles sessions : « À mettre à jour », elles ne se lisent plus */
+  unreadable?: boolean;
   /** Interrupteur de la source : sa lecture s'arrête, rien n'est effacé */
   watched: boolean;
 }
@@ -104,9 +106,16 @@ export function SourceCard(props: SourceCardProps) {
         <div className="min-w-0 md:flex-1">
           <p className="flex min-w-0 items-center gap-2 font-medium">
             <span className="truncate">{label}</span>
-            <StatusBadge outdated={outdated} watched={watched} />
+            <StatusBadge outdated={outdated || (props.unreadable ?? false)} watched={watched} />
           </p>
           <p className="truncate font-mono text-xs text-muted">{path}</p>
+          {props.unreadable && (
+            <p className="mt-1 flex items-start gap-1.5 text-xs">
+              <TriangleAlert aria-hidden className="mt-0.5 size-3.5 shrink-0 text-warning" />
+              {APP_NAME} ne sait plus lire le format des sessions de cette version de Claude Code : ses nouvelles
+              sessions ne sont plus lues tant que {APP_NAME} n’est pas mis à jour.
+            </p>
+          )}
           {props.manageHref && (
             <Link href={props.manageHref} className="link text-xs font-medium link-primary">
               Gérer<span className="sr-only"> le profil {label}</span>

@@ -12,6 +12,21 @@ Given(
   },
 );
 
+Given(
+  'une nouvelle version de Claude Code écrit les sessions du profil {texte} dans un format inconnu',
+  async ({ bosco }, profile: string) => {
+    // Trois nouveaux transcripts illisibles d'affilée : la source passe « À mettre à jour »
+    for (const sessionId of ['0d1e2f30', '0d1e2f31', '0d1e2f32'])
+      bosco.writeProfileTranscript(profile, join(TRANSCRIPTS, 'session-unknown-format.jsonl'), sessionId);
+    const unreadable = async () => {
+      const response = await fetch(`${bosco.url}/api/sources`);
+      const body = (await response.json()) as { sources: { path: string; unreadable: boolean }[] };
+      return body.sources.find(({ path }) => path.endsWith(`/${profile}`))?.unreadable;
+    };
+    await expect.poll(unreadable).toBe(true);
+  },
+);
+
 Given('Bosco surveille les profils {texte} et {texte}', async ({ bosco }, first: string, second: string) => {
   const response = await fetch(`${bosco.url}/api/sources`, {
     method: 'POST',

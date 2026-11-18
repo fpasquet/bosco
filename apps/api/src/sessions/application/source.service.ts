@@ -29,7 +29,10 @@ export const HISTORY_DAYS = 30;
 export interface SourcesView {
   /** Dossiers trouvés sur le poste, proposés tant qu'aucun profil n'est choisi (premier lancement) */
   candidates: ProfileCandidate[];
-  sources: SourceSnapshot[];
+  sources: (SourceSnapshot & {
+    /** Format des nouvelles sessions illisible : la source est « À mettre à jour », ses nouvelles sessions ne se lisent plus */
+    unreadable: boolean;
+  })[];
 }
 
 export class SourceService {
@@ -46,7 +49,13 @@ export class SourceService {
   async listSources(): Promise<SourcesView> {
     const sources = await this.sourceRepository.list();
     const candidates = sources.length === 0 ? await this.profileFinder.findCandidates() : [];
-    return { sources: sources.map((source) => source.toSnapshot()), candidates };
+    return {
+      sources: sources.map((source) => ({
+        ...source.toSnapshot(),
+        unreadable: this.transcriptWatcher.isOutdated(source.id),
+      })),
+      candidates,
+    };
   }
 
   /** Premier lancement : retient les profils cochés, garde les autres de côté, puis lit les premiers. */

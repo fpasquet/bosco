@@ -48,7 +48,7 @@ Fonctionnalité: Sources et réglages
     Alors je vois le texte « Dossier ajouté : pro est surveillé. »
     Et l’interrupteur « Lire le profil pro » est « activé »
 
-  @CA-SESS-57
+  @CA-SESS-186
   Scénario: Un suivi en direct installé par une autre version de Bosco est à mettre à jour
     Étant donné le suivi en direct est installé dans le profil « .claude-perso »
     Et le suivi en direct du profil « .claude-perso » vient d’une autre version de Bosco
@@ -58,6 +58,13 @@ Fonctionnalité: Sources et réglages
     Et je clique sur le bouton « Mettre à jour » de la fenêtre
     Alors je vois le texte « Suivi en direct · perso »
     Et je ne vois plus le texte « À mettre à jour »
+
+  @CA-SESS-57
+  Scénario: Un profil dont Bosco ne sait plus lire les nouvelles sessions est à mettre à jour
+    Étant donné une nouvelle version de Claude Code écrit les sessions du profil « .claude-perso » dans un format inconnu
+    Quand j'ouvre la page « /settings/sources »
+    Alors je vois l’étiquette « À mettre à jour »
+    Et je vois le texte « ses nouvelles sessions ne sont plus lues »
 
   @CA-SESS-58
   Scénario: « Installer » ouvre le suivi en direct d'un profil, « Vérifier le suivi en direct » sa vérification

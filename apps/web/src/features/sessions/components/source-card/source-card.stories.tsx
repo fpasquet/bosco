@@ -49,3 +49,6 @@ export const ReadOnly: Story = { args: { readOnly: true } };
 
 /** Suivi installé par une autre version de Bosco : la source passe « À mettre à jour ». */
 export const Outdated: Story = { args: { liveTrackingOutdated: true } };
+
+/** Format des sessions changé par Claude Code : la source passe « À mettre à jour », ses nouvelles sessions ne se lisent plus. */
+export const Unreadable: Story = { args: { unreadable: true } };
