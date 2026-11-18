@@ -1,9 +1,9 @@
 # language: fr
 @RF-SESS-05
 @RF-SESS-10
-Fonctionnalité: Historique et coûts
-  En tant que développeur, je veux retrouver une session passée par un mot et voir ce que chaque jour a coûté, afin de
-  savoir où part le budget.
+Fonctionnalité: Historique
+  En tant que développeur, je veux retrouver une session passée par un mot, un projet ou un groupe, et voir ce que
+  chaque jour a coûté, afin de remettre la main sur la session que je cherche.
 
   Contexte:
     Étant donné il est « 2026-11-06T15:10:00+01:00 » dans le navigateur
@@ -24,15 +24,18 @@ Fonctionnalité: Historique et coûts
     Alors je ne vois plus le texte « Specs du tableau de bord Bosco »
     Et je vois le lien « Corriger l’indexation des PDF dans Elasticsearch »
 
-  @CA-SESS-52
-  @CA-SESS-53
-  @NF-18
-  Scénario: Les coûts de la période sont des estimations, par jour et par projet
-    Quand j'ouvre la page « /history?tab=costs »
-    Alors je vois le texte « Total de la période »
-    Et je vois le titre « Par projet »
-    Et je vois le texte « Coût par jour »
-    Et la page est accessible
+  @CA-SESS-127
+  Scénario: Le filtre de groupe garde les sessions de ses projets et se cumule avec les autres puces
+    Étant donné le dossier « creneaux » est un projet
+    Et le groupe « Club des Trois Lacs » réunit le projet « creneaux »
+    Et le groupe « Médias » réunit le projet « labo-ia »
+    Quand j'ouvre la page « /history »
+    Et je choisis « Club des Trois Lacs » dans la liste « Filtrer par groupe »
+    Alors je vois le texte « Aucune session ne correspond. »
+    Quand je choisis « Médias » dans la liste « Filtrer par groupe »
+    Et je saisis « indexation » dans le champ « Rechercher dans les titres, messages et commandes »
+    Alors je vois le lien « Corriger l’indexation des PDF dans Elasticsearch »
+    Et je ne vois plus le texte « Specs du tableau de bord Bosco »
 
   @CA-SESS-13
   Scénario: La vue filtrée sur un projet liste ses sessions terminées aujourd'hui

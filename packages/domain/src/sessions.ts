@@ -363,18 +363,6 @@ export interface HistoryDayDto {
   sessions: SessionDto[];
 }
 
-/** Coûts de la période (GET /api/history/costs, E3b) ; tous les montants sont des estimations (RF-SESS-05). */
-export interface CostReportDto {
-  averagePerWorkingDayUsd: number;
-  byModel: { model: null | string; share: number; usd: number }[];
-  byProject: { name: null | string; sessions: number; share: number; usd: number }[];
-  cacheShare: number;
-  days: { date: string; projects: { name: null | string; sessions: number; usd: number }[] }[];
-  sessions: number;
-  totalUsd: number;
-  workingDays: number;
-}
-
 /** Canal de Bosco dans un profil surveillé (E4f) : installé ou non, et la commande qui lance une session avec lui. */
 export interface ChannelProfileDto {
   command: string;

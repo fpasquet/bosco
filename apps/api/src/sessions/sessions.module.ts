@@ -105,7 +105,7 @@ const conversations = new FileConversationReader();
       provide: HISTORY_SERVICE,
       inject: [ORM, SESSION_SERVICE],
       useFactory: (orm: MikroORM, sessionService: SessionService) =>
-        new HistoryService(sessionService, new MikroOrmSessionRepository(orm), () => clock.now()),
+        new HistoryService(sessionService, new MikroOrmSessionRepository(orm)),
     },
     {
       provide: USAGE_SERVICE,

@@ -5,7 +5,6 @@ export type {
   ConversationPartDto,
   ConversationStepDto,
   ConversationTurnDto,
-  CostReportDto,
   DefaultOriginDto,
   EffortDto,
   HistoryDayDto,

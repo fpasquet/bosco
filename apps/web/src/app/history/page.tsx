@@ -3,16 +3,16 @@ import { AppShell } from '@/shared/layouts/app-shell';
 
 const TITLE = 'Historique';
 
-/** `?tab=costs` ouvre l'onglet des coûts ; `?project=labo-ia` filtre sur un projet (« Voir l'historique » d'un projet). */
+/** `?project=api-tarifs` filtre sur un projet (« Voir l'historique » d'un projet), `?group=2` sur un groupe. */
 export default async function HistoryPage({
   searchParams,
 }: {
-  searchParams: Promise<{ project?: string; tab?: string }>;
+  searchParams: Promise<{ group?: string; project?: string }>;
 }) {
-  const { project, tab } = await searchParams;
+  const { group, project } = await searchParams;
   return (
     <AppShell title={TITLE} place={{ kind: 'history' }}>
-      <HistoryScreen title={TITLE} tab={tab === 'costs' ? 'costs' : 'list'} project={project ?? null} />
+      <HistoryScreen title={TITLE} project={project ?? null} group={group ? Number(group) || null : null} />
     </AppShell>
   );
 }

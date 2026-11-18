@@ -1,8 +1,8 @@
 @RF-SESS-05
 @RF-SESS-10
-Feature: History and costs
-  As the developer, I want to find any past session by a word and see what each day cost, so that I know where the
-  budget goes.
+Feature: History
+  As the developer, I want to find any past session by a word, a project or a group, and see what each day cost, so
+  that I find again the session I am looking for.
 
   Background:
     Given the Claude Code profile ".claude" has the transcript "session-labo-ia-rag.jsonl" for the session "5e0a91c3"
@@ -30,9 +30,11 @@ Feature: History and costs
     When I send GET request to "/api/history?q=migrate&project=api-voix"
     Then the response property "days.length" should equal "0"
 
-  @CA-SESS-52
-  Scenario: The costs of a period are estimates, averaged on the working days
-    When I send GET request to "/api/history/costs?from=2026-11-02"
-    Then the response code should be 200
-    And the response property "sessions" should equal "2"
-    And the response property "byProject.0.name" should equal "labo-ia"
+  @CA-SESS-127
+  Scenario: Filtered on a group, the history keeps the sessions of its projects and adds up with the other filters
+    Given I send POST request to "/api/groups" with the JSON "fixtures/groups/medias.json"
+    When I send GET request to "/api/history?group=2"
+    Then the response property "days.length" should equal "1"
+    And the response property "days.0.sessions.0.id" should equal "a41f07c2"
+    When I send GET request to "/api/history?group=2&q=indexation"
+    Then the response property "days.length" should equal "0"
