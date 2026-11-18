@@ -1,0 +1,114 @@
+---
+title: Installation
+description: Installer Bosco depuis le dépôt, le lancer, en faire un service de l'utilisateur et brancher son serveur MCP.
+---
+
+Bosco s'installe depuis son dépôt Git. Il tourne comme un service local, sur la boucle locale du poste, et sert son interface dans le navigateur. L'[application du poste](/docs/desktop) et l'[application Android](/docs/android) sont facultatives.
+
+## Prérequis
+
+- **Linux** pour tout Bosco. Sous macOS, le service et l'interface marchent dans le navigateur, sans application du poste.
+- **Node 26**, la version de `.nvmrc`. pnpm refuse d'installer avec une autre version : `nvm use` à la racine du dépôt.
+- **pnpm 12**, activé par `corepack enable`.
+- **Claude Code** installé, avec au moins un profil (`~/.claude` par défaut).
+- **Docker**, seulement pour le [bac à sable](/docs/guides/sandbox). Sans Docker, tout le reste marche.
+
+## Installer et lancer
+
+<Steps>
+<Step>
+
+### Récupérer le dépôt et ses dépendances
+
+```bash
+git clone https://github.com/fpasquet/bosco.git ~/www/bosco
+cd ~/www/bosco
+nvm use
+corepack enable
+make install
+```
+
+`make install` installe les dépendances et les skills épinglés par `skills-lock.json`.
+
+</Step>
+<Step>
+
+### Lancer le service
+
+```bash
+make start
+```
+
+`make start` construit chaque paquet, puis lance le service sur `http://127.0.0.1:4870` et ouvre la vue d'ensemble dans le navigateur. Le port se change avec `BOSCO_PORT`, mais le service n'écoute jamais ailleurs que sur `127.0.0.1`.
+
+</Step>
+<Step>
+
+### Choisir les profils à surveiller
+
+Au premier lancement, Bosco affiche « Bienvenue dans Bosco » et liste les profils Claude Code trouvés dans ton dossier personnel (`~/.claude`, `~/.claude-perso`…), avec la date de leur dernière session. Tous sont cochés : décoche ceux que Bosco ne doit pas lire, puis « Surveiller ces profils ». Rien n'est lu avant ce clic.
+
+Bosco importe alors les sessions des 30 derniers jours dans l'historique. Il les lit sans les modifier.
+
+</Step>
+<Step>
+
+### Installer le suivi en direct
+
+Sans suivi en direct, Bosco voit les sessions mais ne sait pas quand l'une t'attend. Ouvre Réglages › Sources, puis « Installer » sur la ligne du profil. Bosco ajoute ses hooks HTTP aux réglages du profil (`settings.json`), en gardant une copie des réglages actuels si tu laisses la case cochée. Ouvre ensuite une session Claude Code dans ce profil : la vérification passe à « Signal reçu d'une session ouverte ».
+
+Le détail est dans [Réglages](/docs/guides/settings#sources).
+
+</Step>
+</Steps>
+
+## En faire un service de l'utilisateur
+
+Pour que Bosco démarre avec ta session Linux, sans terminal ouvert :
+
+```bash
+make service-install
+systemctl --user daemon-reload && systemctl --user enable --now bosco
+```
+
+`make service-install` construit Bosco, puis écrit `~/.config/systemd/user/bosco.service`. Le service lance `bosco start --no-open` avec le Node qui a servi à l'installer, et redémarre seul en cas d'échec. Il reste lié au dépôt : après une mise à jour du dépôt, relance `make build` puis `systemctl --user restart bosco`.
+
+<Callout type="info">
+  L'[application du poste](/docs/desktop) embarque son propre service. Si elle trouve le service systemd déjà lancé,
+  elle propose de s'y relier ou de le remplacer.
+</Callout>
+
+## Brancher le serveur MCP de Bosco
+
+Bosco expose un serveur MCP local, `bosco`, sur `http://127.0.0.1:4870/mcp`. Les agents y lisent le contexte de leur projet (instructions des groupes, décisions, place dans l'architecture) et y proposent des décisions. Pour l'ajouter à un profil Claude Code :
+
+```bash
+make mcp-install                              # profil ~/.claude
+make mcp-install PROFILE=~/.claude-perso      # un autre profil
+make mcp-install-dev                          # pointé sur make dev (port 4880, données dans .data/)
+make mcp-remove                               # le retirer
+```
+
+`make mcp-install` appelle `claude mcp add --scope user` dans le profil choisi : le serveur vaut pour tous les projets de ce profil. Le détail des outils est dans [Canal et serveur MCP](/docs/guides/mcp).
+
+## Où sont les données
+
+| Quoi                                           | Où                                           |
+| ---------------------------------------------- | -------------------------------------------- |
+| Base, réglages, secret des hooks, bacs à sable | `~/.local/share/bosco` (ou `BOSCO_DATA_DIR`) |
+| Service en développement (`make dev`)          | `.data/` du dépôt, port 4880                 |
+| Unité systemd                                  | `~/.config/systemd/user/bosco.service`       |
+| Hooks du suivi en direct                       | `settings.json` de chaque profil surveillé   |
+
+Le dossier `~/.local/share/bosco` est le même pour le service lancé depuis le dépôt et pour l'application du poste. Ne le supprime pas à la main : il contient l'historique que Bosco garde même quand Claude Code efface ses transcripts après 30 jours.
+
+## Variables d'environnement
+
+| Variable           | Défaut                               | Rôle                                                                  |
+| ------------------ | ------------------------------------ | --------------------------------------------------------------------- |
+| `BOSCO_PORT`       | `4870`                               | Port du service, toujours sur `127.0.0.1`                             |
+| `BOSCO_DATA_DIR`   | `~/.local/share/bosco`               | Dossier des données                                                   |
+| `BOSCO_PHONE_PORT` | `BOSCO_PORT + 1`                     | Port HTTPS de l'accès du téléphone, ouvert seulement après activation |
+| `BOSCO_PHONE_HOST` | adresse du poste sur le réseau local | Adresse annoncée au téléphone                                         |
+
+Toutes sont validées au démarrage : une valeur invalide empêche le service de démarrer.
