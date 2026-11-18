@@ -2,7 +2,7 @@
   "expo": {
     "name": "Bosco",
     "slug": "bosco",
-    "version": "0.1.0",
+    "version": "0.1.0-beta.1",
     "orientation": "portrait",
     "icon": "./assets/bosco-icon.png",
     "userInterfaceStyle": "light",
@@ -13,7 +13,8 @@
         "foregroundImage": "./assets/bosco-icon.png"
       },
       "permissions": ["CAMERA", "POST_NOTIFICATIONS", "VIBRATE"],
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "versionCode": 10001
     },
     "plugins": [
       [

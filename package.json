@@ -1,6 +1,6 @@
 {
   "name": "bosco",
-  "version": "0.1.0",
+  "version": "0.1.0-beta.1",
   "private": true,
   "description": "Bosco : poste de pilotage local des sessions Claude Code. Specs et cahier des charges dans le dépôt de specs (bosco/), export du cahier des charges dans docs/requirements.",
   "type": "module",

@@ -2,7 +2,7 @@
 
 Ce qui change d'une version de Bosco à l'autre, tiré des messages de commit de `main`. Les versions beta paraissent en pre-release sur GitHub ; ici, la dernière beta décrit tout ce qui a changé depuis la dernière version stable.
 
-## À venir
+## [0.1.0-beta.1](https://github.com/fpasquet/bosco/releases/tag/v0.1.0-beta.1) - 2026-11-18
 
 ### Nouveautés
 
@@ -64,6 +64,7 @@ Ce qui change d'une version de Bosco à l'autre, tiré des messages de commit de
 
 ### Corrections
 
+- **release** · Download the Electron binary when it is missing, and drop the SDK tools package ([#68](https://github.com/fpasquet/bosco/pull/68))
 - **sandbox** · Start the data services, apply a mode change to the running turn, align the containers panel ([#67](https://github.com/fpasquet/bosco/pull/67))
 - Count the usage of the subagents of a session ([#64](https://github.com/fpasquet/bosco/pull/64))
 - **tasks** · Split the end of an agent out of the worker event handler ([#46](https://github.com/fpasquet/bosco/pull/46))
@@ -84,7 +85,7 @@ Ce qui change d'une version de Bosco à l'autre, tiré des messages de commit de
 
 ### Construction et CI
 
-- **apps** · Build the desktop package and the Android application as downloadable artifacts
+- Publish versions with a Release workflow, a changelog and in-app updates ([#50](https://github.com/fpasquet/bosco/pull/50))
 - **make** · Add a beta target that installs the package of a branch over the running one ([#41](https://github.com/fpasquet/bosco/pull/41))
 - Update the GitHub Actions to their Node 24 versions ([#1](https://github.com/fpasquet/bosco/pull/1))
 - Add a Makefile for the common commands
