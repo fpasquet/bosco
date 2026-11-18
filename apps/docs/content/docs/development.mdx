@@ -1,0 +1,89 @@
+---
+title: Développement
+description: La structure du dépôt, les commandes make, les specs et les exigences, et les tests de bout en bout.
+---
+
+Bosco est un monorepo pnpm 12 et Turborepo, sous Node 26. Les conventions de code sont dans `.claude/rules/` du dépôt, et les instructions des agents dans `AGENTS.md`.
+
+## Structure du dépôt
+
+| Dossier            | Contenu                                                                                                                                                                               |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `apps/api`         | Service NestJS sur Fastify : un module par contexte (domain, application, infrastructure, interface/http), qui sert aussi l'interface sur le même port ; commande `bosco` (`src/cli`) |
+| `apps/web`         | Interface Next.js, design system (tokens des specs, daisyUI, shadcn/ui sur Radix, Storybook)                                                                                          |
+| `apps/desktop`     | Application du poste (Electron, Linux) : fenêtre, barre système, notifications natives ; paquet .deb                                                                                  |
+| `apps/mobile`      | Application Android (Expo) : interface téléphone dans une vue web, appairage par QR code, notifications locales                                                                       |
+| `apps/docs`        | Ce site (Fumadocs), exporté en pages statiques                                                                                                                                        |
+| `packages/domain`  | Contrats partagés avec le web : nom de l'application, types des vues                                                                                                                  |
+| `packages/configs` | Configurations partagées : TypeScript, ESLint, Vitest, Prettier                                                                                                                       |
+| `e2e`              | Scénarios Gherkin de l'API (anglais) et du web (français), module d'enregistrement des appels sortants                                                                                |
+
+## Commandes
+
+Toutes les commandes passent par le Makefile ; `make help` les liste.
+
+```bash
+make install          # dépendances et skills épinglés
+make dev              # service en développement sur http://127.0.0.1:4880, interface rechargée à chaud, données dans .data/
+make check            # lint, types, tests et build de chaque paquet (Turborepo)
+make format-check     # mise en forme (Prettier)
+make e2e              # scénarios de l'API, puis parcours du web (ordinateur et téléphone)
+make storybook        # http://localhost:6006
+make docs             # ce site sur http://127.0.0.1:4890
+make docs-build       # export statique de ce site dans apps/docs/out
+make db-migration     # écrit la migration qui amène la base aux entités
+make claude-compat    # vérifie les hooks et les tours pilotés sur le Claude Code installé
+```
+
+`make dev` garde ses données dans `.data/` du dépôt, sur le port 4880 : il ne touche ni au Bosco installé (4870) ni à `~/.local/share/bosco`.
+
+Avant de rendre la main : `make format-check`, `make check`, puis `make e2e-api` ou `make e2e-web` dès qu'une route, un écran ou un scénario change.
+
+## Specs et exigences
+
+Les specs UI et le cahier des charges vivent dans un dépôt à part, `fpasquet/specs`, dossier `bosco/`, cloné à côté du dépôt (`~/www/specs` et `~/www/bosco`). Ce dépôt n'en reçoit que deux copies, qu'on ne modifie jamais à la main :
+
+- **`docs/requirements/`**, l'export du cahier des charges : règles fonctionnelles (RF), critères d'acceptation (CA), exigences non fonctionnelles (NF) et décisions techniques (DT), par lot. `make requirements` le régénère.
+- **`apps/web/src/styles/tokens.css`**, la copie des tokens de la marque. `make tokens` la régénère.
+
+Pour une question fonctionnelle, lis d'abord `docs/requirements/README.md`, puis le lot : `lots/sessions.md`, `lots/contexte.md`, `lots/apps.md`, `lots/reglages.md`. Un écart entre le code et les specs se tranche, puis se reporte dans le dépôt de specs.
+
+Les identifiants (écrans `E2`, états `E2b`, règles `RF-SESS-03`, critères `CA-SESS-12`) ne sont jamais renumérotés. Un test cite le critère qu'il vérifie dans son nom.
+
+## Tests
+
+- **Vitest** pour ce que les scénarios n'atteignent pas : invariants du domaine, temps exact, cas rares, migrations.
+- **Storybook** : une histoire par état de chaque composant, avec un contrôle d'accessibilité bloquant.
+- **Scénarios Gherkin** (playwright-bdd) pour tout parcours qu'une personne ou un client de l'API déclenche.
+
+### Tests de bout en bout
+
+Deux suites, lancées l'une sans l'autre :
+
+- **`e2e/api`**, en anglais : les routes de l'API, avec des phrases génériques (`I send GET request to "/api/health"`).
+- **`e2e/web`**, en français : les parcours comme les dirait la personne (`je clique sur le bouton « Autoriser »`), sur ordinateur et sur téléphone (`@mobile`). Chaque écran a un scénario qui finit par « la page est accessible » (axe, WCAG 2.2 AA).
+
+```bash
+make e2e-api          # scénarios de l'API, appels sortants rejoués
+make e2e-web          # parcours du web, ordinateur et téléphone
+make e2e-record       # enregistre les appels sortants manquants, avec les vrais accès
+make e2e-clean        # supprime les enregistrements qu'aucun scénario n'utilise
+```
+
+Chaque processus de test lance sa propre instance de Bosco, avec des données temporaires et un faux Claude Code (`e2e/shared/fake-claude.mjs`), remise à zéro entre deux scénarios. Les données reprennent le fil rouge des maquettes : projets `api-tarifs`, `creneaux`, `maison`, groupe « Club des Trois Lacs », session `c41e9a07`.
+
+Les appels sortants sont rejoués depuis des enregistrements (`BOSCO_REPLAY=replay`, par défaut et en CI) : une requête inconnue fait échouer le test.
+
+### Compatibilité avec Claude Code
+
+Le comportement des hooks n'est pas documenté par Claude Code. À chaque nouvelle version, `make claude-compat` lance de courtes sessions sur Haiku, sur l'abonnement : « Autoriser » doit laisser la commande s'exécuter, « Refuser » doit transmettre son motif à l'agent, la fin de session doit arriver, et les tours pilotés doivent marcher.
+
+## Ce site
+
+Le site vit dans `apps/docs` : les pages sont des fichiers MDX dans `content/docs`, rangés par `meta.json`. `make docs` le sert avec rechargement à chaud ; `make docs-build` produit l'export statique dans `apps/docs/out`, avec l'index de la recherche.
+
+Pour le publier sous un sous-chemin, comme un site GitHub Pages de dépôt :
+
+```bash
+BOSCO_DOCS_BASE_PATH=/bosco make docs-build
+```
