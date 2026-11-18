@@ -113,3 +113,18 @@ Fonctionnalité: Groupes de projets
     Alors la liste « pour le projet » vaut « maison »
     Quand je choisis « site-perso » dans la liste « pour le projet »
     Alors je vois le titre « Texte transmis à un agent de site-perso »
+
+  @CA-CONT-135
+  Scénario: « Parcourir les dossiers… » depuis un groupe y range les projets ajoutés
+    Étant donné le groupe « Node.js » réunit le projet « site-perso »
+    Et le dossier personnel contient les dossiers :
+      | dossier        | git |
+      | www/site-clubs | oui |
+    Quand j'ouvre la page « /groups/2/settings »
+    Et je clique sur le bouton « Parcourir les dossiers… »
+    Alors la liste « Dans le groupe : » vaut « Node.js »
+    Quand je clique sur le bouton « Ouvrir www »
+    Et je coche « site-clubs »
+    Et je clique sur le bouton « Ajouter 1 projet »
+    Alors je vois le texte « Projet ajouté »
+    Et je vois le bouton « Retirer site-clubs du groupe »

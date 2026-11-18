@@ -87,3 +87,16 @@ Feature: Groups of projects
     Then the phone gets the code 200
     When the phone sends POST request to "/api/groups"
     Then the phone gets the code 403
+
+  @CA-CONT-135
+  Scenario: Folders added from the browser with a group join it after its projects
+    Given I send POST request to "/api/groups" with the JSON "fixtures/groups/clubs.json"
+    And the home folder has the folders:
+      | folder | git |
+      | maison | yes |
+    When I send POST request to "/api/projects" with the JSON "fixtures/groups/add-maison-to-all.json"
+    Then the response code should be 400
+    When I send POST request to "/api/projects" with the JSON "fixtures/groups/add-maison-to-clubs.json"
+    Then the response code should be 201
+    When I send GET request to "/api/groups/2"
+    Then the response property "projects" should match the names "api-tarifs,creneaux,site-clubs,maison"

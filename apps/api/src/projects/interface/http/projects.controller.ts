@@ -2,16 +2,20 @@ import { Body, Controller, Delete, Get, HttpCode, Inject, Param, ParseIntPipe, P
 import { z } from 'zod';
 import type { FolderSuggestionDto, ProjectDetailDto, ProjectDto, ProjectsDto } from '@bosco/domain';
 import type { LevelDefaults } from '../../../shared/domain/session-settings.ts';
+import type { GroupService } from '../../application/group.service.ts';
 import type { ProjectDetail, ProjectService, ProjectView } from '../../application/project.service.ts';
 import type { ProjectSnapshot } from '../../domain/project.ts';
 import type { Suggestion } from '../../domain/suggestions.ts';
 import { levelDefaultsSchema } from '../../../shared/interface/http/defaults-schema.ts';
 import { parseBody } from '../../../shared/interface/http/parse-body.ts';
-import { PROJECT_SERVICE } from '../../tokens.ts';
+import { GROUP_SERVICE, PROJECT_SERVICE } from '../../tokens.ts';
 import { settle } from './settle.ts';
 
 const PATH = z.string().min(1).max(4096);
-const addSchema = z.object({ paths: z.array(PATH).min(1).max(200) });
+const addSchema = z.object({
+  paths: z.array(PATH).min(1).max(200),
+  group: z.number().int().positive().nullable().optional(),
+});
 const folderSchema = z.object({ path: PATH });
 const domainSchema = z.object({ domain: z.string().trim().min(1).max(253) });
 const changeSchema = z.object({
@@ -50,7 +54,10 @@ function presentSuggestion(suggestion: Suggestion): FolderSuggestionDto {
 /** Projets choisis : la liste se lit partout, elle ne se change que depuis le poste. */
 @Controller('api/projects')
 export class ProjectsController {
-  constructor(@Inject(PROJECT_SERVICE) private readonly projects: ProjectService) {}
+  constructor(
+    @Inject(PROJECT_SERVICE) private readonly projects: ProjectService,
+    @Inject(GROUP_SERVICE) private readonly groups: GroupService,
+  ) {}
 
   @Get()
   async overview(): Promise<ProjectsDto> {
@@ -66,8 +73,17 @@ export class ProjectsController {
 
   @Post()
   async addProjects(@Body() body: unknown): Promise<{ projects: ProjectDto[] }> {
-    const { paths } = parseBody(addSchema, body);
+    const { group, paths } = parseBody(addSchema, body);
+    // Le groupe se vérifie d'abord : un groupe refusé n'ajoute aucun projet
+    if (group) await settle(() => this.groups.checkJoinable(group));
     const added = await settle(() => this.projects.addProjects(paths));
+    if (group)
+      await settle(() =>
+        this.groups.joinGroup(
+          group,
+          added.map(({ id }) => id),
+        ),
+      );
     return { projects: added.map(presentProject) };
   }
 

@@ -143,6 +143,16 @@ export class Group {
     if (settings.sidebar !== undefined) this.snapshot.sidebar = settings.sidebar;
   }
 
+  /** Un groupe qu'on règle soi-même : « Tous les projets » ne s'arrange pas. */
+  checkArrangeable(): void {
+    this.expectOwn();
+  }
+
+  /** Projets ajoutés en fin de groupe, depuis le navigateur de dossiers : le principal ne change pas. */
+  join(projects: readonly number[]): void {
+    this.arrange([...this.snapshot.projects, ...projects]);
+  }
+
   /** Nouvel ordre des projets, le premier devenant le principal ; un projet n'y figure qu'une fois. */
   arrange(projects: readonly number[]): void {
     this.expectOwn();

@@ -79,8 +79,9 @@ export const folderQuery = (path: null | string) => ({
   queryFn: () => read<FolderListingDto>(path ? `/api/folders?path=${encodeURIComponent(path)}` : '/api/folders'),
 });
 
-export async function addProjects(paths: readonly string[]): Promise<ProjectDto[]> {
-  const response = await send('/api/projects', { paths });
+/** Ajoute des dossiers comme projets, rangés à la suite dans un groupe s'il est choisi. */
+export async function addProjects(paths: readonly string[], group: null | number = null): Promise<ProjectDto[]> {
+  const response = await send('/api/projects', { paths, group });
   const { projects } = (await response.json()) as { projects: ProjectDto[] };
   return projects;
 }

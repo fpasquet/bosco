@@ -59,7 +59,7 @@ export function ProjectsSidebar({ activity }: ProjectsSidebarProps) {
         count: projects.reduce((total, project) => total + (activityOf.get(project.id)?.count ?? 0), 0),
         waiting: projects.reduce((total, project) => total + (activityOf.get(project.id)?.waiting ?? 0), 0),
       }))}
-      onBrowse={actions.browse}
+      onBrowse={() => actions.browse()}
       onNewGroup={() => actions.newGroup()}
       projectMenu={(id) => {
         const project = known.get(id);

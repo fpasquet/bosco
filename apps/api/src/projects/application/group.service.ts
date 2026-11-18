@@ -94,6 +94,21 @@ export class GroupService {
     return this.view(group);
   }
 
+  /** Avant d'ajouter des projets à un groupe : il existe et se règle (pas « Tous les projets »). */
+  async checkJoinable(id: number): Promise<void> {
+    const group = await this.find(id);
+    group.checkArrangeable();
+  }
+
+  /** Projets tout juste ajoutés depuis le navigateur de dossiers, rangés à la suite dans le groupe choisi. */
+  async joinGroup(id: number, projects: number[]): Promise<GroupView> {
+    this.checkProjects(projects);
+    const group = await this.find(id);
+    group.join(projects);
+    await this.groups.save([group]);
+    return this.view(group);
+  }
+
   /** Supprimer un groupe ne retire aucun projet. */
   async deleteGroup(id: number): Promise<void> {
     const group = await this.find(id);
