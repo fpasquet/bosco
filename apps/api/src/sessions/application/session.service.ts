@@ -21,6 +21,7 @@ const RECENT_QUESTION_MS = 2 * 60 * 1000;
 /** Avant que les projets soient branchés, toutes les sessions sont hors projet. */
 const NO_PROJECTS: ProjectCatalog = {
   groups: () => Promise.resolve([]),
+  folderOf: (gitRoot, path) => gitRoot ?? path,
   list: () => [],
   placeOf: () => null,
   rememberPlace: () => Promise.resolve(),
@@ -34,6 +35,8 @@ export interface SessionView {
   changedFiles: FileChange[];
   /** Coût estimé en dollars ; unpriced : une partie des tokens vient d'un modèle sans tarif connu (« non chiffré ») */
   cost: { unpriced: boolean; usd: number };
+  /** Dossier d'une session hors projet, où l'Usage range son coût ; null dans un projet ou sans dossier connu */
+  folder: null | string;
   id: string;
   lastAction: null | string;
   lastEventAt: Date;
@@ -256,6 +259,7 @@ export class SessionService {
       title,
     } = snapshot;
     const { usage } = snapshot;
+    const project = this.projects.placeOf(snapshot.projectRoot, projectPath);
     return {
       addedProjects: (pilot?.projects ?? []).map((root) => {
         const place = this.projects.placeOf(root, root);
@@ -264,6 +268,7 @@ export class SessionService {
       branch,
       channel: this.pilots.channelOpen(snapshot.id),
       cost: { usd: costMicros / 1_000_000, unpriced: snapshot.unpricedTokens > 0 },
+      folder: project ? null : this.projects.folderOf(snapshot.projectRoot, projectPath),
       id,
       lastAction,
       lastEventAt,
@@ -273,7 +278,7 @@ export class SessionService {
       pilot,
       recentActions: snapshot.recentActions,
       projectPath,
-      project: this.projects.placeOf(snapshot.projectRoot, projectPath),
+      project,
       sourceId,
       startedAt,
       state,

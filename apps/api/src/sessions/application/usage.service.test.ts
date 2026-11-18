@@ -10,10 +10,17 @@ import { UsageService, workSeconds } from './usage.service.ts';
 
 const NOW = new Date('2026-11-17T15:00:00');
 
-function view(id: string, project: null | number, added: number[] = [], sourceId = 'pro'): SessionView {
+function view(
+  id: string,
+  project: null | number,
+  added: number[] = [],
+  sourceId = 'pro',
+  folder: null | string = null,
+): SessionView {
   return {
     id,
     sourceId,
+    folder: project === null ? folder : null,
     project: project === null ? null : { id: project, name: `projet-${project}`, folder: '', root: `/p/${project}` },
     addedProjects: added.map((other) => ({ id: other, name: `projet-${other}`, root: `/p/${other}` })),
   } as unknown as SessionView;
@@ -158,26 +165,41 @@ describe('UsageService', () => {
     ]);
   });
 
-  it('gathers the smaller projects in « autres » beyond five, and the sessions outside any project apart', async () => {
+  it('CA-SESS-189 · lists every project by cost, without gathering the smaller ones in « autres »', async () => {
     const views = [1, 2, 3, 4, 5, 6, 7].map((project) => view(`s${project}`, project));
     const report = await service({
-      views: [...views, view('loose', null)],
+      views,
+      turns: views.map((entry, index) =>
+        turn(entry.id, '2026-11-16T10:00:00', 'claude-sonnet-5-5', [(7 - index) * 100_000, 0, 0, 0]),
+      ),
+    }).usageReport(all);
+    expect(report.byProject.map(({ key }) => key)).toEqual([1, 2, 3, 4, 5, 6, 7].map((id) => `project:${id}`));
+    expect(report.byProject.some(({ count }) => count !== undefined)).toBe(false);
+  });
+
+  it('CA-SESS-190 · details the sessions outside any project by folder, subagents included', async () => {
+    const report = await service({
+      views: [
+        view('a', 1),
+        view('b', null, [], 'pro', '/home/dev/scripts'),
+        view('c', null, [], 'pro', '/home/dev/scripts'),
+        view('d', null, [], 'pro', '/home/dev'),
+        view('e', null),
+      ],
       turns: [
-        ...views.map((entry, index) =>
-          turn(entry.id, '2026-11-16T10:00:00', 'claude-sonnet-5-5', [(7 - index) * 100_000, 0, 0, 0]),
-        ),
-        turn('loose', '2026-11-16T10:00:00', 'claude-sonnet-5-5', [50_000, 0, 0, 0]),
+        turn('a', '2026-11-16T10:00:00', 'claude-sonnet-5-5', [100_000, 0, 0, 0]),
+        turn('b', '2026-11-16T10:00:00', 'claude-sonnet-5-5', [200_000, 0, 0, 0]),
+        turn('c', '2026-11-16T10:00:00', 'claude-sonnet-5-5', [100_000, 0, 0, 0], true),
+        turn('d', '2026-11-16T10:00:00', 'claude-sonnet-5-5', [50_000, 0, 0, 0]),
+        turn('e', '2026-11-16T10:00:00', 'claude-sonnet-5-5', [10_000, 0, 0, 0]),
       ],
     }).usageReport(all);
-    expect(report.byProject.map(({ count, key }) => [key, count])).toEqual([
-      ['project:1', undefined],
-      ['project:2', undefined],
-      ['project:3', undefined],
-      ['project:4', undefined],
-      ['project:5', undefined],
-      ['others', 3],
+    expect(report.byProject.map(({ folder, key, projectId, usd }) => [key, folder, projectId, usd])).toEqual([
+      ['outside:/home/dev/scripts', '/home/dev/scripts', null, 0.6],
+      ['project:1', undefined, 1, 0.2],
+      ['outside:/home/dev', '/home/dev', null, 0.1],
+      ['outside', undefined, null, 0.02],
     ]);
-    expect(report.byProject.at(-1)?.label).toBe('3 autres');
   });
 
   it('gives one bar per day of the period, today included, with the tokens and the cost of each series', async () => {

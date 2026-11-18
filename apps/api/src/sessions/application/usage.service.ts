@@ -26,9 +26,11 @@ export interface UsageDay {
 export interface UsageShare {
   /** Lignes regroupées dans « autres » */
   count?: number;
+  /** Dossier d'une ligne hors projet (chemin absolu) : ses sessions n'ont pas de projet */
+  folder?: string;
   key: string;
   label: string;
-  /** Projet de la ligne, qui filtre la page au clic ; null : « Hors projet » ou « autres » */
+  /** Projet de la ligne, qui filtre la page au clic ; null : hors projet ou « autres » */
   projectId?: null | number;
   share: number;
   usd: null | number;
@@ -112,15 +114,34 @@ function projectsOf(view: SessionView): number[] {
   );
 }
 
+/** Lignes de la répartition par projet d'une session : ses projets, sinon son dossier hors projet. */
+function linesOf(
+  folder: null | string,
+  projects: number[],
+  names: Map<number, string>,
+): Omit<UsageShare, 'share' | 'usd'>[] {
+  if (projects.length > 0)
+    return projects.map((id) => ({ key: `project:${id}`, label: names.get(id) ?? `Projet ${id}`, projectId: id }));
+  // Hors projet : une ligne par dossier, pour voir ce qui n'est rangé nulle part
+  if (folder) return [{ folder, key: `outside:${folder}`, label: folder, projectId: null }];
+  return [{ key: 'outside', label: 'Hors projet', projectId: null }];
+}
+
+/** Les plus gros d'abord, sans en regrouper aucun. */
+function sorted(entries: UsageShare[]): UsageShare[] {
+  return entries
+    .map((share) => ({ ...share, usd: share.usd === null ? null : dollars(share.usd) }))
+    .toSorted((left, right) => (right.usd ?? -1) - (left.usd ?? -1) || left.label.localeCompare(right.label, 'fr'));
+}
+
 /** Les plus gros d'abord ; au-delà de cinq, les suivants sont regroupés en « autres ». */
 function ranked(entries: UsageShare[], total: number): UsageShare[] {
-  const shares = entries.map((share) => ({ ...share, usd: share.usd === null ? null : dollars(share.usd) }));
-  const sorted = shares.toSorted((left, right) => (right.usd ?? -1) - (left.usd ?? -1));
-  if (sorted.length <= SHOWN_SHARES + 1) return sorted;
-  const rest = sorted.slice(SHOWN_SHARES);
+  const shares = sorted(entries);
+  if (shares.length <= SHOWN_SHARES + 1) return shares;
+  const rest = shares.slice(SHOWN_SHARES);
   const usd = rest.reduce((sum, share) => sum + (share.usd ?? 0), 0);
   return [
-    ...sorted.slice(0, SHOWN_SHARES),
+    ...shares.slice(0, SHOWN_SHARES),
     {
       key: 'others',
       label: `${rest.length} autres`,
@@ -272,7 +293,10 @@ export class UsageService {
     };
   }
 
-  /** Une session à plusieurs projets compte pour chacun de ses projets du périmètre. */
+  /**
+   * Chaque projet, les plus gros d'abord, sans regroupement : la page les montre tous. Une session à plusieurs projets
+   * compte pour chacun de ses projets du périmètre ; une session hors projet compte pour son dossier.
+   */
   private byProject(
     priced: { cost: ReturnType<typeof estimateCostBreakdown>; turn: RecordedTurn }[],
     byId: Map<string, SessionView>,
@@ -281,26 +305,19 @@ export class UsageService {
     total: number,
     costOf: (cost: ReturnType<typeof estimateCostBreakdown>) => number,
   ): UsageShare[] {
-    const usd = new Map<null | number, number>();
+    const lines = new Map<string, Omit<UsageShare, 'share' | 'usd'> & { usd: number }>();
     const names = new Map<number, string>(projects.map((project) => [project.id, project.name]));
+    const add = (line: Omit<UsageShare, 'share' | 'usd'>, usd: number) =>
+      lines.set(line.key, { ...line, usd: (lines.get(line.key)?.usd ?? 0) + usd });
     for (const { cost, turn } of priced) {
       const view = byId.get(turn.sessionId);
       if (!view) continue;
       const own = projectsOf(view).filter((id) => !scope || scope.has(id));
       for (const known of [view.project, ...view.addedProjects])
         if (known && typeof known.id === 'number' && !names.has(known.id)) names.set(known.id, known.name);
-      for (const id of own.length > 0 ? own : [null]) usd.set(id, (usd.get(id) ?? 0) + costOf(cost));
+      for (const line of linesOf(view.folder, own, names)) add(line, costOf(cost));
     }
-    return ranked(
-      [...usd.entries()].map(([id, value]) => ({
-        key: id === null ? 'outside' : `project:${id}`,
-        label: id === null ? 'Hors projet' : (names.get(id) ?? `Projet ${id}`),
-        projectId: id,
-        usd: value,
-        share: percent(value, total),
-      })),
-      total,
-    );
+    return sorted([...lines.values()].map((line) => ({ ...line, share: percent(line.usd, total) })));
   }
 
   private byModel(

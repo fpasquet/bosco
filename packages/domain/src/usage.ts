@@ -17,10 +17,12 @@ export interface UsageDayDto {
 export interface UsageShareDto {
   /** Lignes regroupées dans « autres » */
   count?: number;
+  /** Dossier d'une ligne hors projet (chemin absolu) : ses sessions ne sont dans aucun projet */
+  folder?: string;
   key: string;
   /** Nom du projet ou du profil, identifiant du modèle (« claude-opus-5-5 ») */
   label: string;
-  /** Projet de la ligne, qui filtre la page au clic ; null : « Hors projet » ou « autres » */
+  /** Projet de la ligne, qui filtre la page au clic ; null : hors projet ou « autres » */
   projectId?: null | number;
   /** En % du coût estimé total ; une session à plusieurs projets compte pour chacun */
   share: number;
@@ -41,6 +43,7 @@ export interface UsageReportDto {
   /** Sessions elles-mêmes et sous-agents : ce que coûtent les sous-agents sur la période */
   byOrigin: UsageShareDto[];
   byProfile: UsageShareDto[];
+  /** Chaque projet et chaque dossier hors projet, les plus gros d'abord, sans regroupement en « autres » */
   byProject: UsageShareDto[];
   days: UsageDayDto[];
   /** Premier jour de la période (AAAA-MM-JJ) */

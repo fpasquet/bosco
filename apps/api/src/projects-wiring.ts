@@ -56,6 +56,7 @@ export class ProjectsWiring implements OnModuleInit {
             projects: projects.map((project) => project.id),
           }));
       },
+      folderOf: (gitRoot, path) => this.projects.folderOf(gitRoot, path),
       placeOf: (gitRoot, path) => this.projects.placeOf(gitRoot, path),
       rememberPlace: (root, place) => this.projects.rememberPlace(root, place),
     });

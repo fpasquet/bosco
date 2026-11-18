@@ -115,6 +115,7 @@ export function UsageView({
             byModel={report.byModel}
             byOrigin={report.byOrigin}
             byProfile={report.byProfile}
+            home={home}
             onProject={(id) => onChange({ ...filters, scope: { kind: 'project', id } })}
           />
         </>

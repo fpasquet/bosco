@@ -17,6 +17,7 @@ import {
   crumbsOf,
   FolderNotFound,
   FolderPath,
+  isInside,
   parentOf,
   visibleFiles,
   visibleFolders,
@@ -122,6 +123,15 @@ export class ProjectService {
   /** Projet d'une session ; null quand elle est hors projet. */
   placeOf(gitRoot: null | string, path: null | string): null | ProjectPlace {
     return this.placement.placeOf(gitRoot, path);
+  }
+
+  /**
+   * Dossier d'une session hors projet : sa racine git (celle d'origine pour un worktree), sinon son dossier de travail ;
+   * sous un dossier temporaire ou de données, ce dossier lui-même, pour ne pas compter chaque essai à part.
+   */
+  folderOf(gitRoot: null | string, path: null | string): null | string {
+    const folder = this.placement.suggestionOf(gitRoot, path)?.path ?? null;
+    return (folder && this.unproposed.find((below) => isInside(folder, below))) ?? folder;
   }
 
   listProjects(): ProjectSnapshot[] {
