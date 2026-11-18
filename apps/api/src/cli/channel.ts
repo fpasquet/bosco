@@ -1,4 +1,4 @@
-// Serveur du canal de Bosco (E2i, DT-32) : Claude Code le lance avec une session du terminal démarrée avec
+// Serveur du canal de Bosco : Claude Code le lance avec une session du terminal démarrée avec
 // `--dangerously-load-development-channels server:bosco-channel`. Il parle MCP sur son entrée et sa sortie, se déclare
 // canal (capacité expérimentale claude/channel), puis suit le flux de sa session chez Bosco : chaque message écrit dans
 // Bosco devient une notification notifications/claude/channel, que Claude Code injecte dans la session.

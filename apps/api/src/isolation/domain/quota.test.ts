@@ -40,7 +40,7 @@ describe('subscription quota', () => {
     expect(usageOf(windows, 'sevenDay', now)).toBeNull();
   });
 
-  it('CA-TACH-99 · holds a task from the wait threshold of either window', () => {
+  it('CA-SESS-116 · holds a message from the wait threshold of either window', () => {
     expect(quotaWait({ fiveHour: { utilization: 0.49, resetsAt: later } }, DEFAULT_QUOTA_THRESHOLDS, now)).toBeNull();
     expect(quotaWait({ fiveHour: { utilization: 0.52, resetsAt: later } }, DEFAULT_QUOTA_THRESHOLDS, now)).toMatch(
       /^Quota de l’abonnement : 5 h à 52 %, reprise vers /,
@@ -51,7 +51,7 @@ describe('subscription quota', () => {
     expect(quotaWait({}, DEFAULT_QUOTA_THRESHOLDS, now)).toBeNull();
   });
 
-  it('CA-TACH-100 · stops an agent from the stop threshold', () => {
+  it('CA-SESS-117 · stops a turn from the stop threshold', () => {
     expect(quotaStop({ fiveHour: { utilization: 0.79, resetsAt: later } }, DEFAULT_QUOTA_THRESHOLDS, now)).toBeNull();
     expect(quotaStop({ fiveHour: { utilization: 0.81, resetsAt: later } }, DEFAULT_QUOTA_THRESHOLDS, now)).toBe(
       'Quota de l’abonnement atteint : fenêtre de 5 h à 81 %',

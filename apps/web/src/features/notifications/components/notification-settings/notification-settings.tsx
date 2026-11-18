@@ -65,7 +65,7 @@ function Card({ children, icon, title }: { children: ReactNode; icon?: ReactNode
 
 const TURN_LABELS = { always: 'Toujours', long: 'Après un long tour', never: 'Jamais' } as const;
 
-/** Aperçu d'une notification du bureau (E15b) : l'icône de Bosco, le type, la session et un extrait. */
+/** Aperçu d'une notification du bureau : l'icône de Bosco, le type, la session et un extrait. */
 function Preview({ excerpt, kind, title, tone }: { excerpt: string; kind: string; title: string; tone: string }) {
   return (
     <div className="flex gap-3 rounded-card border border-line bg-surface p-3 shadow-overlay">
@@ -85,7 +85,7 @@ function Preview({ excerpt, kind, title, tone }: { excerpt: string; kind: string
 }
 
 /**
- * Réglages › Notifications (E15b) : ce qui mérite une notification, type par type, et la notification du bureau.
+ * Réglages › Notifications : ce qui mérite une notification, type par type, et la notification du bureau.
  * Sur le téléphone, tout se lit sans se changer.
  */
 export function NotificationSettings({ busy, desktop, onChange, settings }: NotificationSettingsProps) {

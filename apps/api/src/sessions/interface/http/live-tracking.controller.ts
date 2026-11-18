@@ -1,8 +1,19 @@
-import { Body, Controller, Delete, Get, Inject, NotFoundException, Param, Put } from '@nestjs/common';
+import {
+  Body,
+  ConflictException,
+  Controller,
+  Delete,
+  Get,
+  Inject,
+  NotFoundException,
+  Param,
+  Put,
+} from '@nestjs/common';
 import { z } from 'zod';
 import type { LiveTrackingService, LiveTrackingStatus } from '../../application/live-tracking.service.ts';
 import { parseBody } from '../../../shared/interface/http/parse-body.ts';
 import { UnknownSource } from '../../application/live-tracking.service.ts';
+import { ManagedSource } from '../../domain/source.ts';
 import { LIVE_TRACKING_SERVICE } from '../../tokens.ts';
 
 const installSchema = z.object({ backup: z.boolean().default(true) });
@@ -11,6 +22,10 @@ interface LiveTrackingDto {
   backupPath?: null | string;
   installed: boolean;
   lastSignalAt: null | string;
+  /** Serveur MCP de Bosco présent dans le profil : ajouté avec le suivi en direct */
+  mcpServer: boolean;
+  /** Installé par une autre version de Bosco : à mettre à jour */
+  outdated: boolean;
   settingsPath: string;
 }
 
@@ -18,7 +33,7 @@ function present(status: LiveTrackingStatus & { backupPath?: null | string }): L
   return { ...status, lastSignalAt: status.lastSignalAt?.toISOString() ?? null };
 }
 
-/** Installation du suivi en direct d'un profil (E4b) : état, installation, désinstallation. */
+/** Installation du suivi en direct d'un profil : état, installation, désinstallation. */
 @Controller('api/sources/:sourceId/live-tracking')
 export class LiveTrackingController {
   constructor(@Inject(LIVE_TRACKING_SERVICE) private readonly liveTracking: LiveTrackingService) {}
@@ -48,6 +63,7 @@ async function guard<T>(work: Promise<T>): Promise<T> {
     return await work;
   } catch (error) {
     if (error instanceof UnknownSource) throw new NotFoundException({ code: error.code });
+    if (error instanceof ManagedSource) throw new ConflictException({ code: error.code, message: error.message });
     throw error;
   }
 }

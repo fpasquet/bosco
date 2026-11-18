@@ -24,16 +24,29 @@ function decision(
   };
 }
 
-export const STORY_PROPOSED = decision(
-  6,
-  'Normaliser les fuseaux horaires avant le calcul du tarif',
-  { state: 'proposed', fromTask: 12, specifies: [3] },
-  {
-    context:
-      'Un créneau réservé à 23:30 depuis un autre fuseau tombait le lendemain et prenait le tarif du jour suivant.',
-    decision: 'Ramener chaque créneau au fuseau du club avant de chercher son tarif dans la grille.',
-  },
-);
+const proposedText = {
+  title: 'Normaliser les fuseaux horaires avant le calcul du tarif',
+  context:
+    'Un créneau réservé à 23:30 depuis un autre fuseau tombait le lendemain et prenait le tarif du jour suivant.',
+  decision: 'Ramener chaque créneau au fuseau du club avant de chercher son tarif dans la grille.',
+  consequences: null,
+  alternatives: null,
+};
+
+/** Proposée par l'agent de la session « Monter TypeScript en version 6 », en bac à sable. */
+export const STORY_PROPOSED = decision(6, proposedText.title, {
+  state: 'proposed',
+  specifies: [3],
+  versions: [
+    {
+      ...proposedText,
+      at: at('10-12'),
+      author: 'l’agent de la session « Monter TypeScript en version 6 »',
+      note: 'Proposition',
+      session: { id: 'b7e2c914', title: 'Monter TypeScript en version 6' },
+    },
+  ],
+});
 
 export const STORY_DEC3: DecisionDto = {
   ...decision(3, 'Arrondir les prix au centime supérieur, sauf exceptions des grilles'),

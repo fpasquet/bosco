@@ -2,7 +2,7 @@ import type { SessionState } from '../domain/session.ts';
 import type { SessionRepository } from './ports.ts';
 import type { SessionService, SessionView } from './session.service.ts';
 
-/** Filtres de l'historique (E3a) : ils se cumulent (CA-SESS-48). */
+/** Filtres de l'historique : ils se cumulent. */
 export interface HistoryFilters {
   /** Sessions commencées depuis cette date ; aucune : tout l'historique */
   from: Date | null;
@@ -14,7 +14,7 @@ export interface HistoryFilters {
   state: null | SessionState;
 }
 
-/** Un jour de l'historique, du plus récent au plus ancien, avec son total (CA-SESS-49). */
+/** Un jour de l'historique, du plus récent au plus ancien, avec son total. */
 export interface HistoryDay {
   costUsd: number;
   date: string;
@@ -26,7 +26,7 @@ export function dayOf(date: Date): string {
   return date.toLocaleDateString('sv');
 }
 
-/** Projets d'une session : le principal, puis ceux qu'elle voit en plus (règle 14). */
+/** Projets d'une session : le principal, puis ceux qu'elle voit en plus. */
 function projectsOf(session: SessionView): number[] {
   return [session.project?.id, ...session.addedProjects.map(({ id }) => id)].filter(
     (id): id is number => typeof id === 'number',
@@ -37,7 +37,7 @@ function sum<T>(items: readonly T[], value: (item: T) => number): number {
   return items.reduce((total, item) => total + value(item), 0);
 }
 
-/** Cas d'usage de l'historique (E3a) ; les coûts sont des estimations (RF-SESS-05), l'usage a sa page. */
+/** Cas d'usage de l'historique ; les coûts sont des estimations, l'usage a sa page. */
 export class HistoryService {
   constructor(
     private readonly sessionService: Pick<SessionService, 'knownGroups' | 'listSessions'>,

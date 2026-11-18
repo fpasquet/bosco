@@ -32,6 +32,9 @@ Fonctionnalité: Sessions pilotées par Bosco
     Et je saisis « Pose une question » dans le champ « Premier message »
     Et je clique sur le bouton « Démarrer »
     Alors je vois le texte « L’agent te pose une question »
+    Et le bouton radio « Normaliser la casse à la lecture Recommandé » est coché
+    Et je vois l’étiquette « Recommandé »
+    Et je ne vois plus le texte « (Recommended) »
     Et la page est accessible
     Quand je clique sur le bouton radio « Corriger les entrées du lexique »
     Et je clique sur le bouton « Répondre »

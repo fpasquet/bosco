@@ -24,7 +24,8 @@ type Named = { id: number; name: string };
 /** Actions des menus ⋯ et des ＋ de la barre latérale, offertes à toute page : les fenêtres s'ouvrent par-dessus. */
 export interface ProjectActions {
   addToGroup: (project: Named, group: GroupDto) => void;
-  browse: () => void;
+  /** Navigateur de dossiers ; ouvert depuis un groupe, il y range les nouveaux projets */
+  browse: (group?: number) => void;
   deleteGroup: (group: GroupDto) => void;
   newGroup: (projects?: number[]) => void;
   pin: (project: Named, pinned: boolean) => void;
@@ -52,7 +53,7 @@ export function useProjectActions(): ProjectActions {
 type Open =
   | { group: GroupDto; kind: 'delete-group' }
   | { group: GroupDto; kind: 'join'; project: Named }
-  | { kind: 'browse' }
+  | { group: null | number; kind: 'browse' }
   | { kind: 'new-group'; projects: number[] }
   | { kind: 'remove'; project: Named };
 
@@ -144,7 +145,7 @@ export function ProjectActionsProvider({ children }: { children: ReactNode }) {
       instructionLines(group.instructions).length > 0
         ? setOpen({ kind: 'join', group, project })
         : join(group, project),
-    browse: () => setOpen({ kind: 'browse' }),
+    browse: (group) => setOpen({ kind: 'browse', group: group ?? null }),
     deleteGroup: (group) => setOpen({ kind: 'delete-group', group }),
     newGroup: (projects = []) => {
       setGroupError(null);
@@ -221,7 +222,7 @@ export function ProjectActionsProvider({ children }: { children: ReactNode }) {
           }}
         />
       )}
-      {open?.kind === 'browse' && <FolderBrowserDialog open onClose={close} />}
+      {open?.kind === 'browse' && <FolderBrowserDialog open group={open.group} onClose={close} />}
     </Actions.Provider>
   );
 }

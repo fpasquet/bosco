@@ -1,4 +1,4 @@
-// L'interface téléphone de Bosco, telle qu'elle est (E18b, CA-APPS-06) : la vue web ne fait confiance qu'au certificat
+// L'interface téléphone de Bosco, telle qu'elle est : la vue web ne fait confiance qu'au certificat
 // du poste ; les notifications et l'ouverture des réglages arrivent par des messages de la page.
 import { forwardRef, useImperativeHandle, useState } from 'react';
 import { StyleSheet, View } from 'react-native';

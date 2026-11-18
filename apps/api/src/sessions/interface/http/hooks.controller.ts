@@ -19,7 +19,7 @@ import { parseBody } from '../../../shared/interface/http/parse-body.ts';
 import { describeAction } from '../../domain/action-summary.ts';
 import { HOOK_SECRET, LIVE_SIGNAL_SERVICE, SOURCE_SERVICE } from '../../tokens.ts';
 
-/** Entrée commune des hooks de Claude Code ; le reste du corps, propre à chaque événement, est ignoré (NF-08). */
+/** Entrée commune des hooks de Claude Code ; le reste du corps, propre à chaque événement, est ignoré. */
 const hookSchema = z.looseObject({
   session_id: z.string().min(1),
   hook_event_name: z.string().min(1),
@@ -33,7 +33,7 @@ type HookInput = z.infer<typeof hookSchema>;
 
 /**
  * Message d'un refus : Claude Code le rend à l'agent comme une erreur de l'outil, sans rien autour. Il dit donc que la
- * personne a refusé, sinon un motif court (« description ») passe pour une panne de l'outil (CA-SESS-34).
+ * personne a refusé, sinon un motif court (« description ») passe pour une panne de l'outil.
  */
 export function refusalMessage(reason: null | string): string {
   const refused = 'La personne a refusé cette commande depuis Bosco.';
@@ -65,7 +65,7 @@ function signalOf(input: HookInput): LiveSignal | null {
 }
 
 /**
- * Entrée des hooks HTTP du suivi en direct (DT-05, DT-07). Bosco n'écoute que sur la boucle locale, et chaque appel
+ * Entrée des hooks HTTP du suivi en direct. Bosco n'écoute que sur la boucle locale, et chaque appel
  * porte le secret de l'installation. Une autorisation reste en attente jusqu'à la première réponse : celle de Bosco
  * part dans la réponse du hook ; si Claude Code ferme la connexion, le terminal a répondu le premier.
  */

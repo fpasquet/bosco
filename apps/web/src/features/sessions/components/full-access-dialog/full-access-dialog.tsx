@@ -14,7 +14,7 @@ export interface FullAccessDialogProps {
 }
 
 /**
- * Confirmation de l'accès complet sur le poste (E16e) : à chaque session, jamais une fois pour toutes, même quand le
+ * Confirmation de l'accès complet sur le poste : à chaque session, jamais une fois pour toutes, même quand le
  * mode vient d'un réglage par défaut. Sur le téléphone, une feuille du bas, « Donner l'accès complet » en tête.
  */
 export function FullAccessDialog({ onCancel, onConfirm, onSandbox, open, project }: FullAccessDialogProps) {

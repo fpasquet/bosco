@@ -1,4 +1,4 @@
-// Menu de la barre système (E17a, CA-APPS-02), décrit sans Electron : le processus principal le traduit en menu natif.
+// Menu de la barre système, décrit sans Electron : le processus principal le traduit en menu natif.
 import type { SessionDto } from '@bosco/domain';
 import { displayVersion } from './update.ts';
 
@@ -37,7 +37,7 @@ export function trayMenu(
 ): TrayItem[] {
   const count = waiting.length;
   const header = `Bosco · ${waitingCount(count)}`;
-  // Une mise à jour installée passe en tête du menu, jusqu'à la relance (CA-APPS-10)
+  // Une mise à jour installée passe en tête du menu, jusqu'à la relance
   const update: TrayItem[] = options.update
     ? [
         {

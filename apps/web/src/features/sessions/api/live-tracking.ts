@@ -1,8 +1,12 @@
-/** État du suivi en direct d'un profil (E4b) : réglages écrits, dernier signal reçu d'une session. */
+/** État du suivi en direct d'un profil : réglages écrits, dernier signal reçu d'une session. */
 export interface LiveTrackingDto {
   backupPath?: null | string;
   installed: boolean;
   lastSignalAt: null | string;
+  /** Serveur MCP de Bosco présent dans le profil : ajouté avec le suivi en direct */
+  mcpServer: boolean;
+  /** Installé par une autre version de Bosco : à mettre à jour */
+  outdated: boolean;
   settingsPath: string;
 }
 

@@ -18,13 +18,13 @@ const schema = z.object({
   BOSCO_TEST: z.enum(['0', '1']).default('0'),
   // Mode développement (pnpm dev) : Next.js compile l'interface à la demande et la recharge à chaud
   BOSCO_DEV: z.enum(['0', '1']).default('0'),
-  // Accès du téléphone (E4c) : port HTTPS sur le réseau local (par défaut, celui du service + 1) et adresse imposée
+  // Accès du téléphone : port HTTPS sur le réseau local (par défaut, celui du service + 1) et adresse imposée
   BOSCO_PHONE_PORT: z.coerce.number().int().min(1024).max(65535).optional(),
   BOSCO_PHONE_HOST: z.string().min(1).optional(),
-  // Worker (DT-09) : identifiants de l'abonnement Claude du poste et exécutable de Claude Code monté dans l'agent
+  // Worker : identifiants de l'abonnement Claude du poste et exécutable de Claude Code monté dans l'agent
   BOSCO_WORKER_CREDENTIALS: z.string().min(1).optional(),
   BOSCO_CLAUDE_BIN: z.string().min(1).optional(),
-  // Sessions pilotées (DT-31) : Claude Code lancé sur le poste ; un faux Claude Code dans les scénarios
+  // Sessions pilotées : Claude Code lancé sur le poste ; un faux Claude Code dans les scénarios
   BOSCO_PILOT_CLAUDE: z.string().min(1).optional(),
 });
 
@@ -36,7 +36,7 @@ export type Config = Readonly<{
   webDir: null | string;
   testing: boolean;
   dev: boolean;
-  /** Écoute HTTPS du téléphone, ouverte seulement quand l'accès est activé (NF-13) */
+  /** Écoute HTTPS du téléphone, ouverte seulement quand l'accès est activé */
   phone: { host: null | string; port: number };
   worker: { claudeBinary: string; credentials: string };
   /** Claude Code lancé pour les tours des sessions pilotées par Bosco */
@@ -60,7 +60,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     throw new Error(`Invalid configuration: ${issues}`);
   }
   const values = parsed.data;
-  // Boucle locale seulement : l'accès du téléphone ouvrira sa propre écoute, après appairage (NF-13)
+  // Boucle locale seulement : l'accès du téléphone ouvrira sa propre écoute, après appairage
   return {
     port: values.BOSCO_PORT,
     host: '127.0.0.1',

@@ -1,6 +1,6 @@
 import type { ChannelProfileDto } from '@bosco/domain';
 
-/** Canal de Bosco dans les profils surveillés (E4f) : installé ou non, et la commande de lancement. */
+/** Canal de Bosco dans les profils surveillés : installé ou non, et la commande de lancement. */
 export const channelProfilesQuery = {
   queryKey: ['channel', 'profiles'],
   queryFn: async (): Promise<ChannelProfileDto[]> => {

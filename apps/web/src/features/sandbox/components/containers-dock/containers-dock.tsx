@@ -19,9 +19,9 @@ import {
   timeOf,
 } from '../../lib/containers';
 
-/** Processeur et mémoire d'un élément ; en orange avec « Proche du plafond » à partir de 80 % (CA-CONT-73). */
+/** Processeur et mémoire d'un élément ; en orange avec « Proche du plafond » à partir de 80 %. */
 export function UsageCells({ frozen = false, usage }: { frozen?: boolean; usage: UsageDto }) {
-  // Dernières mesures d'un Docker muet : grisées, sans alerte (E19c)
+  // Dernières mesures d'un Docker muet : grisées, sans alerte
   const near = frozen ? { cpu: false, memory: false } : nearCeiling(usage);
   return (
     <>
@@ -128,7 +128,7 @@ function useNow(): number {
 }
 
 /**
- * Panneau des conteneurs en cours (E19a, E19c), par-dessus le bas de la page, qui reste utilisable : les bacs à sable
+ * Panneau des conteneurs en cours, par-dessus le bas de la page, qui reste utilisable : les bacs à sable
  * démarrés et les tours pilotés sur le poste. Il s'ouvre depuis le résumé de la barre latérale, et reste déplié d'une
  * page à l'autre ; un bac à sable s'arrête depuis sa session.
  */

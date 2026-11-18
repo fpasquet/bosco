@@ -8,9 +8,22 @@ import type {
   TranscriptWatcher,
 } from './ports.ts';
 import type { SessionService } from './session.service.ts';
+import { DomainError } from '../../shared/domain/domain-error.ts';
 import { Source, type SourceSnapshot } from '../domain/source.ts';
 
-/** Profils lus au premier lancement : les 30 derniers jours (CA-SESS-03). */
+export class NotAProfile extends DomainError {
+  constructor(path: string) {
+    super('notAProfile', `${path} is not a Claude Code configuration folder`);
+  }
+}
+
+export class SourceAlreadyKnown extends DomainError {
+  constructor(path: string) {
+    super('sourceAlreadyKnown', `${path} is already a source`);
+  }
+}
+
+/** Profils lus au premier lancement : les 30 derniers jours. */
 export const HISTORY_DAYS = 30;
 
 export interface SourcesView {
@@ -47,7 +60,19 @@ export class SourceService {
     return sources.map((source) => source.toSnapshot());
   }
 
-  /** Interrupteur d'une source (E4a) : la lecture s'arrête, ou reprend là où elle en était (CA-SESS-56). */
+  /** « Ajouter un dossier » : un autre dossier de configuration de Claude Code, surveillé comme un profil. */
+  async addSource(path: string): Promise<SourceSnapshot> {
+    const sources = await this.sourceRepository.list();
+    if (sources.some((source) => source.path === path)) throw new SourceAlreadyKnown(path);
+    const candidate = await this.profileFinder.inspect(path);
+    if (!candidate) throw new NotAProfile(path);
+    const source = Source.choose(this.idGenerator.next(), candidate.path, true);
+    await this.sourceRepository.save([source]);
+    await this.resumeWatching([source]);
+    return source.toSnapshot();
+  }
+
+  /** Interrupteur d'une source : la lecture s'arrête, ou reprend là où elle en était. */
   async setWatched(sourceId: string, watched: boolean): Promise<null | SourceSnapshot> {
     const sources = await this.sourceRepository.list();
     const source = sources.find((candidate) => candidate.id === sourceId);
@@ -62,15 +87,30 @@ export class SourceService {
     return source.toSnapshot();
   }
 
-  /** Profil tenu par Bosco (celui du worker) : surveillé dès qu'il existe, sans passer par le premier lancement. */
+  /**
+   * Profil des bacs à sable, tenu par Bosco : ajouté au premier bac à sable, toujours lu. Un profil déjà connu comme
+   * source ordinaire (avant que Bosco le tienne à part) est repris sans changer d'identifiant.
+   */
   async ensureSource(path: string): Promise<SourceSnapshot> {
-    const sources = await this.sourceRepository.list();
-    const known = sources.find((source) => source.toSnapshot().path === path);
-    if (known) return known.toSnapshot();
-    const source = Source.choose(this.idGenerator.next(), path, true);
+    const known = await this.keepManaged(path);
+    if (known) return known;
+    const source = Source.manage(this.idGenerator.next(), path);
     await this.sourceRepository.save([source]);
     await this.resumeWatching([source]);
     return source.toSnapshot();
+  }
+
+  /** Au démarrage : reprend à part le profil des bacs à sable s'il est déjà connu, sans le créer. */
+  async keepManaged(path: string): Promise<null | SourceSnapshot> {
+    const sources = await this.sourceRepository.list();
+    const known = sources.find((source) => source.path === path);
+    if (!known) return null;
+    if (known.managed) return known.toSnapshot();
+    const wasWatched = known.watched;
+    known.takeOver();
+    await this.sourceRepository.save([known]);
+    if (!wasWatched) await this.resumeWatching([known]);
+    return known.toSnapshot();
   }
 
   /** Au démarrage du service : reprend la lecture des profils surveillés là où elle s'était arrêtée. */

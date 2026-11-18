@@ -43,7 +43,7 @@ function Select({
 }
 
 /**
- * Ligne de filtres de la page Usage (E23a, E23b) : période, profil, projet ou groupe, modèle. Un projet ou un groupe
+ * Ligne de filtres de la page Usage : période, profil, projet ou groupe, modèle. Un projet ou un groupe
  * choisi devient une puce qui se retire d'un clic ; « Réinitialiser » remet les valeurs par défaut (30 j, tous). Sur le
  * téléphone, la ligne défile.
  */

@@ -16,7 +16,14 @@ const meta = {
       claude: { effort: 'medium', model: 'claude-sonnet-5-5', permissionMode: null },
       defaults: { effort: null, model: null, permissionMode: 'ask' },
       isDefault: true,
-      source: { id: 'pro', label: 'pro', liveTracking: true, path: '/home/camille/.claude', watched: true },
+      source: {
+        id: 'pro',
+        label: 'pro',
+        liveTracking: true,
+        managed: false,
+        path: '/home/camille/.claude',
+        watched: true,
+      },
       usedBy: {
         groups: [
           { id: 2, name: 'Club des Trois Lacs' },

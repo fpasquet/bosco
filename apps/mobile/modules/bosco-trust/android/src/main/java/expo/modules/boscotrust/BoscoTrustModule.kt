@@ -1,4 +1,4 @@
-// Confiance dans le certificat du poste (CA-APPS-05) : l'empreinte SHA-256 lue dans le QR code d'appairage est gardée
+// Confiance dans le certificat du poste : l'empreinte SHA-256 lue dans le QR code d'appairage est gardée
 // dans les préférences de l'application ; la vue web (correctif de react-native-webview) n'accepte que ce certificat.
 package expo.modules.boscotrust
 
@@ -23,7 +23,7 @@ class BoscoTrustModule : Module() {
       preferences.getString("certificate", null)
     }
 
-    // « Rester connecté en arrière-plan » (E18d) : le service au premier plan démarre ou s'arrête
+    // « Rester connecté en arrière-plan » : le service au premier plan démarre ou s'arrête
     Function("setKeepAlive") { enabled: Boolean ->
       val context = requireNotNull(appContext.reactContext)
       val intent = Intent(context, BoscoKeepAliveService::class.java)

@@ -5,6 +5,7 @@ import type { HistoryDayDto, SessionDto } from '@bosco/domain';
 import { clockOf, durationEnd } from '../../lib/detail';
 import { elapsed, formatCost, sessions as sessionsLabel } from '../../lib/format';
 import { dayTitle, whereOf } from '../../lib/history';
+import { SandboxMark } from '../sandbox-mark';
 import { SessionStateBadge } from '../session-state-badge';
 import { titleOf } from '../sessions-table';
 
@@ -14,7 +15,7 @@ export interface HistoryListProps {
   profileOf: (session: SessionDto) => null | string;
 }
 
-/** Jours affichés d'abord, puis à chaque arrivée en bas de la liste (CA-SESS-49). */
+/** Jours affichés d'abord, puis à chaque arrivée en bas de la liste. */
 const DAYS_PER_PAGE = 7;
 
 function Row({ now, profile, session }: { now: Date; profile: null | string; session: SessionDto }) {
@@ -24,12 +25,15 @@ function Row({ now, profile, session }: { now: Date; profile: null | string; ses
         <SessionStateBadge state={session.state} />
       </td>
       <td className="min-w-0">
-        <Link
-          href={`/sessions/${encodeURIComponent(session.id)}`}
-          className="block truncate font-medium after:absolute after:inset-0"
-        >
-          {titleOf(session)}
-        </Link>
+        <span className="flex min-w-0 items-center gap-2">
+          <Link
+            href={`/sessions/${encodeURIComponent(session.id)}`}
+            className="truncate font-medium after:absolute after:inset-0"
+          >
+            {titleOf(session)}
+          </Link>
+          {session.pilot?.sandbox && <SandboxMark />}
+        </span>
         <span className="block truncate font-mono text-xs text-muted">{whereOf(session)}</span>
       </td>
       <td className="text-xs text-muted">{profile ?? '—'}</td>
@@ -42,7 +46,7 @@ function Row({ now, profile, session }: { now: Date; profile: null | string; ses
   );
 }
 
-/** Historique jour par jour, du plus récent au plus ancien, chaque jour avec son total (E3a). */
+/** Historique jour par jour, du plus récent au plus ancien, chaque jour avec son total. */
 export function HistoryList({ days, now, profileOf }: HistoryListProps) {
   const [shown, setShown] = useState(DAYS_PER_PAGE);
   const sentinel = useRef<HTMLDivElement>(null);

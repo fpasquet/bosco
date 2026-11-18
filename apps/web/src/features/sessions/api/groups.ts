@@ -10,7 +10,7 @@ export const groupQuery = (id: number) => ({
   },
 });
 
-/** Tous les groupes, « Tous les projets » compris : la nouvelle session les propose avant les projets (E16a). */
+/** Tous les groupes, « Tous les projets » compris : la nouvelle session les propose avant les projets. */
 export const groupsQuery = {
   queryKey: ['groups'],
   queryFn: async (): Promise<GroupDto[]> => {

@@ -10,6 +10,7 @@ Fonctionnalité: Canal de Bosco
     Et la session « c41e9a07 » est ouverte dans Claude Code
 
   @CA-SESS-102
+  @CA-SESS-104
   Scénario: Le canal s'installe dans un profil depuis la bande d'une session du terminal
     Quand j'ouvre la page « /sessions/c41e9a07 »
     Et je clique sur le lien « Lancer tes sessions avec le canal de Bosco pour leur écrire d’ici »

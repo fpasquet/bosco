@@ -35,8 +35,8 @@ const egressDir = (config: Config) => join(config.dataDir, 'worker', 'egress');
 const NO_SANDBOXES: SandboxProbe = { list: () => Promise.resolve([]) };
 
 /**
- * Isolation des bacs à sable (DT-37) : l'image et les limites de l'agent, la liste des domaines de son proxy de sortie,
- * l'abonnement Claude par défaut et son quota, et les conteneurs en cours (E19).
+ * Isolation des bacs à sable : l'image et les limites de l'agent, la liste des domaines de son proxy de sortie,
+ * l'abonnement Claude par défaut et son quota, et les conteneurs en cours.
  */
 @Module({
   imports: [SessionsModule],
@@ -94,7 +94,7 @@ const NO_SANDBOXES: SandboxProbe = { list: () => Promise.resolve([]) };
           events,
           hostCpus: availableParallelism(),
           limits: { cpus: AGENT_LIMITS.cpus, memory: AGENT_LIMITS.memory },
-          // Un tour piloté sur le poste se mesure sur l'arbre des processus de son agent (DT-35)
+          // Un tour piloté sur le poste se mesure sur l'arbre des processus de son agent
           pilots: {
             list: async () => {
               const turns = pilot.runningTurns();
@@ -140,7 +140,7 @@ export class IsolationModule implements OnApplicationBootstrap, OnApplicationShu
   async onApplicationBootstrap(): Promise<void> {
     await this.isolation.load();
     await this.quota.load();
-    // Conteneurs en cours : mesurés toutes les 5 s (E19, DT-35)
+    // Conteneurs en cours : mesurés toutes les 5 s
     this.timer = setInterval(() => void this.containers.tick().catch(() => undefined), MEASURE_MS);
     this.timer.unref();
   }

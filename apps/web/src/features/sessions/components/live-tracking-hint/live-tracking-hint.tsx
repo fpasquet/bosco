@@ -4,7 +4,7 @@ import { Button } from '@/shared/ui/button';
 import { APP_NAME } from '@bosco/domain';
 import { useSourcesPreferences } from '../../lib/preferences';
 
-/** Encart du suivi en direct, facultatif : « Plus tard » le masque (CA-SESS-04). */
+/** Encart du suivi en direct, facultatif : « Plus tard » le masque. */
 export function LiveTrackingHint() {
   const dismissed = useSourcesPreferences((state) => state.liveTrackingHintDismissed);
   const dismiss = useSourcesPreferences((state) => state.dismissLiveTrackingHint);

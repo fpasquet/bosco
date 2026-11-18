@@ -129,3 +129,12 @@ Feature: Chosen projects
     When I send PATCH request to "/api/projects/1" with the JSON "fixtures/projects/bad-branch.json"
     Then the response code should be 400
     And the response property "code" should equal "invalidStartBranch"
+
+  @RF-CONT-16
+  Scenario: A monorepo is a single project, marked as such
+    Given the folder "maison" has the file "turbo.json"
+    And the folders "maison,site-perso" are projects
+    When I send GET request to "/api/projects"
+    Then the response property "projects" should match the names "maison,site-perso"
+    And the response property "projects.0.monorepo" should equal "true"
+    And the response property "projects.1.monorepo" should equal "false"

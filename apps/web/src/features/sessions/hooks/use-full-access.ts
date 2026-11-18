@@ -8,7 +8,7 @@ interface Pending {
 }
 
 /**
- * Confirmation de l'accès complet sur le poste (E16e) : quand on le choisit dans le menu, ou au démarrage quand il vient
+ * Confirmation de l'accès complet sur le poste : quand on le choisit dans le menu, ou au démarrage quand il vient
  * d'un réglage par défaut ; à chaque session, jamais une fois pour toutes.
  */
 export function useFullAccess() {

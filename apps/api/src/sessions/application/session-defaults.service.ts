@@ -38,7 +38,7 @@ export interface ResolvedDefaults extends ResolvedSettings {
   profile: Resolved<null | string>;
 }
 
-/** Réglages d'un profil (E4g) : ses valeurs dans Bosco, celles de Claude Code, son compte et ce qui l'utilise. */
+/** Réglages d'un profil : ses valeurs dans Bosco, celles de Claude Code, son compte et ce qui l'utilise. */
 export interface ProfileSettingsView {
   account: null | string;
   claude: SessionDefaults;
@@ -51,7 +51,7 @@ export interface ProfileSettingsView {
 const NO_PROFILES: PilotProfiles = { subscriptions: () => Promise.resolve({ choices: [], effective: null }) };
 
 /**
- * Valeurs par défaut des sessions (règle 16, DT-44) : résolues au démarrage par le domaine, du choix de la session au
+ * Valeurs par défaut des sessions : résolues au démarrage par le domaine, du choix de la session au
  * profil Claude Code, avec l'origine de chacune ; les réglages d'un profil se gardent dans Bosco, jamais dans le
  * profil.
  */
@@ -65,12 +65,12 @@ export class SessionDefaultsService {
     private readonly sessions: Pick<SessionService, 'knownGroups' | 'knownProjects' | 'listSessions'>,
   ) {}
 
-  /** Abonnements Claude et profil par défaut (E11c), branchés au démarrage. */
+  /** Abonnements Claude et profil par défaut, branchés au démarrage. */
   useProfiles(profiles: PilotProfiles): void {
     this.profiles = profiles;
   }
 
-  /** Profil, mode, modèle et effort d'une nouvelle session, chacun avec son origine (CA-SESS-156, CA-SESS-157). */
+  /** Profil, mode, modèle et effort d'une nouvelle session, chacun avec son origine. */
   async resolveDefaults(request: DefaultsRequest): Promise<ResolvedDefaults> {
     const [projects, groups, sources, accounts] = await Promise.all([
       this.sessions.knownProjects(),
@@ -104,7 +104,7 @@ export class SessionDefaultsService {
     return { ...settings, profile };
   }
 
-  /** Page d'un profil (E4g, CA-REGL-17) : ses réglages dans Bosco, ceux du profil Claude Code et ce qui l'utilise. */
+  /** Page d'un profil : ses réglages dans Bosco, ceux du profil Claude Code et ce qui l'utilise. */
   async getProfileSettings(sourceId: string): Promise<ProfileSettingsView> {
     const sources = await this.sources.list();
     const source = sources.find(({ id }) => id === sourceId);
@@ -130,7 +130,7 @@ export class SessionDefaultsService {
   }
 
   /**
-   * « Enregistrer » les réglages d'un profil (CA-REGL-19, CA-REGL-21) : gardés par Bosco, sans toucher aux fichiers du
+   * « Enregistrer » les réglages d'un profil : gardés par Bosco, sans toucher aux fichiers du
    * profil ; ils valent pour les sessions suivantes.
    */
   async changeProfileDefaults(sourceId: string, changes: SessionDefaultsChanges): Promise<ProfileSettingsView> {

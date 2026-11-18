@@ -45,3 +45,23 @@ Feature: Sources and settings
     Then the desktop notifications should be:
       | title             | body                                                                                         |
       | Question · maison | <b>Specs du tableau de bord Bosco</b>\nLe digest est généré. Veux-tu que je lance les tests ? |
+
+  @RF-SESS-01
+  Scenario: Another configuration folder of Claude Code is added as a source, and read
+    Given the Claude Code profile ".claude-pro" has the transcript "session-maison-rag.jsonl" for the session "5e0a91c3"
+    When I send POST request to "/api/sources/folder" with the JSON "fixtures/add-pro-folder.json"
+    Then the response code should be 201
+    And the response property "label" should equal "pro"
+    And the response property "watched" should equal "true"
+    When I send GET request to "/api/sessions"
+    Then the response property "sessions.length" should equal "3"
+    When I send POST request to "/api/sources/folder" with the JSON "fixtures/add-pro-folder.json"
+    Then the response code should be 409
+    And the response property "code" should equal "sourceAlreadyKnown"
+
+  @RF-SESS-01
+  Scenario: A folder that is not a configuration folder of Claude Code is refused
+    Given the folder "maison" is a project
+    When I send POST request to "/api/sources/folder" with the JSON "fixtures/add-maison-folder.json"
+    Then the response code should be 400
+    And the response property "code" should equal "notAProfile"

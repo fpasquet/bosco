@@ -4,6 +4,8 @@ import { LiveTrackingPanel } from './live-tracking-panel';
 
 const installed = {
   installed: true,
+  outdated: false,
+  mcpServer: true,
   lastSignalAt: new Date(Date.now() - 2000).toISOString(),
   settingsPath: '/home/dev/.claude-perso/settings.json',
 };
@@ -15,7 +17,7 @@ const meta = {
   args: {
     source: { label: 'perso', path: '~/.claude-perso' },
     step: 'intro',
-    status: { ...installed, installed: false, lastSignalAt: null },
+    status: { ...installed, installed: false, mcpServer: false, lastSignalAt: null },
     busy: false,
     now: new Date(),
     onClose: fn(),
@@ -35,3 +37,8 @@ export const Installation: Story = { args: { step: 'install' } };
 export const WaitingForASignal: Story = { args: { step: 'check', status: { ...installed, lastSignalAt: null } } };
 
 export const Working: Story = { args: { step: 'check', status: installed } };
+
+/** Réglages installés par une autre version de Bosco. */
+export const Outdated: Story = {
+  args: { step: 'install', status: { ...installed, installed: false, outdated: true, lastSignalAt: null } },
+};

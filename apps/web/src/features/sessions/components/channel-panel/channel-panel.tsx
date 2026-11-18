@@ -34,7 +34,7 @@ function CommandLine({ label, onCopy, text }: { label: string; onCopy: ChannelPa
 }
 
 /**
- * Installation du canal de Bosco dans un profil (E4f, CA-SESS-102) : ce que cela permet, l'installation, puis la
+ * Installation du canal de Bosco dans un profil : ce que cela permet, l'installation, puis la
  * commande qui lance une session avec le canal et son alias. Rien ne change pour une session lancée sans lui.
  */
 export function ChannelPanel({ busy, onClose, onCopy, onInstall, onUninstall, profile, shownPath }: ChannelPanelProps) {

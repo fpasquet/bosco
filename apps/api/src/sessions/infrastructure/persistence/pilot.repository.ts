@@ -12,10 +12,12 @@ type StoredSandbox = Partial<Record<'copies', StoredCopy[]>> &
   Record<Exclude<keyof SandboxInfo, 'copies'>, null | string>;
 
 export interface PilotRow {
+  /** Contexte transmis au premier tour, repris aux suivants */
+  context: null | string;
   cwd: string;
   /** Autres projets de la session, en JSON ; [] : un seul projet */
   projects: string[];
-  /** Bac à sable de la session (DT-37), en JSON ; null : elle tourne sur le poste */
+  /** Bac à sable de la session, en JSON ; null : elle tourne sur le poste */
   sandbox: null | StoredSandbox;
   sessionId: string;
   /** Réglages du dernier message, en JSON */
@@ -24,7 +26,7 @@ export interface PilotRow {
   sourceId: string;
 }
 
-/** Sessions pilotées par Bosco (E2e) : où elles tournent et leurs réglages, gardés d'un tour à l'autre. */
+/** Sessions pilotées par Bosco : où elles tournent et leurs réglages, gardés d'un tour à l'autre. */
 export const PilotSchema = new EntitySchema<PilotRow>({
   name: 'Pilot',
   tableName: 'pilot',
@@ -32,6 +34,7 @@ export const PilotSchema = new EntitySchema<PilotRow>({
     sessionId: { type: 'string', fieldName: 'session_id', primary: true },
     sourceId: { type: 'string', fieldName: 'source_id' },
     cwd: { type: 'text' },
+    context: { type: 'text', nullable: true },
     projects: { type: 'json', default: '[]' },
     sandbox: { type: 'json', nullable: true },
     settings: { type: 'json' },
@@ -49,7 +52,7 @@ export class MikroOrmPilotRepository implements PilotRepository {
 
   async save(record: PilotRecord): Promise<void> {
     const sandbox = record.sandbox ? (JSON.parse(JSON.stringify(record.sandbox)) as StoredSandbox) : null;
-    await this.orm.em.fork().upsert(PilotSchema, { ...record, sandbox });
+    await this.orm.em.fork().upsert(PilotSchema, { ...record, context: record.context ?? null, sandbox });
   }
 }
 

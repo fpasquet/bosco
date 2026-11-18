@@ -1,11 +1,11 @@
 import { DomainError } from '../../shared/domain/domain-error.ts';
 
 /**
- * Notifications (E15, règle 8) : ce qui t'attend (autorisation, question de l'agent, fin de tour qui pose une
+ * Notifications : ce qui t'attend (autorisation, question de l'agent, fin de tour qui pose une
  * question) et ce qui est fini (tâche du worker à relire ou en échec, fin d'un long tour, session terminée).
  */
 export type NotificationKind =
-  'ended' | 'failed' | 'long-turn' | 'permission' | 'question' | 'review' | 'sandbox' | 'turn-question';
+  'decision' | 'ended' | 'failed' | 'long-turn' | 'permission' | 'question' | 'review' | 'sandbox' | 'turn-question';
 
 /** Ce qui attend une réponse : ces notifications passent en priorité haute et restent affichées. */
 export const ASKING: readonly NotificationKind[] = ['permission', 'question', 'turn-question'];
@@ -73,17 +73,19 @@ export function endsWithQuestion(message: null | string): boolean {
 /** Ce qui vient d'arriver, avant de savoir s'il mérite une notification. */
 export type NotificationEvent =
   | { kind: 'ended' | 'failed' | 'permission' | 'question' | 'review' }
-  /** Bac à sable supprimé demain avec du travail non récupéré (CA-SESS-115) : toujours notifié */
+  /** Bac à sable supprimé demain avec du travail non récupéré : toujours notifié */
   | { kind: 'sandbox' }
+  /** Décision proposée par un agent, à valider : toujours notifiée, les réglages n'en ont pas */
+  | { kind: 'decision' }
   | { kind: 'turn'; message: null | string; minutes: null | number };
 
 /**
- * Type de la notification à envoyer pour cet événement selon les réglages, ou null s'il ne mérite pas d'en être une
- * (CA-SESS-83, CA-SESS-84). Une fin de tour qui pose une question est une question ; sinon, elle ne compte que si le
- * tour a été long, ou toujours selon le réglage. Un tour de durée inconnue (Bosco redémarré) compte comme long.
+ * Type de la notification à envoyer pour cet événement selon les réglages, ou null s'il n'en mérite pas. Une fin
+ * de tour qui pose une question est une question ; sinon, elle ne compte que si le tour a été long, ou toujours
+ * selon le réglage. Un tour de durée inconnue (Bosco redémarré) compte comme long.
  */
 export function notificationOf(event: NotificationEvent, settings: NotificationSettings): NotificationKind | null {
-  if (event.kind === 'sandbox') return 'sandbox';
+  if (event.kind === 'sandbox' || event.kind === 'decision') return event.kind;
   if (event.kind !== 'turn') return settings[event.kind] ? event.kind : null;
   if (endsWithQuestion(event.message)) return settings.turnQuestion ? 'turn-question' : null;
   if (settings.turn === 'never') return null;
@@ -91,9 +93,11 @@ export function notificationOf(event: NotificationEvent, settings: NotificationS
   return event.minutes === null || event.minutes >= settings.longTurnMinutes ? 'long-turn' : null;
 }
 
-/** Une notification gardée 7 jours dans le centre de notifications (E15a). */
+/** Une notification gardée 7 jours dans le centre de notifications. */
 export interface NotificationRecord {
   at: Date;
+  /** Décision proposée à valider ; elle s'ouvre au clic */
+  decisionId: null | number;
   excerpt: null | string;
   id: number;
   kind: NotificationKind;
@@ -163,8 +167,9 @@ export function shortTitle(title: string, max: number): string {
   return `${kept}…`;
 }
 
-/** Libellé du type, en tête de la notification (E15a, E15b). */
+/** Libellé du type, en tête de la notification. */
 export const KIND_LABELS: Record<NotificationKind, string> = {
+  decision: 'Décision proposée',
   ended: 'Session terminée',
   failed: 'En échec',
   'long-turn': 'Fin de tour',

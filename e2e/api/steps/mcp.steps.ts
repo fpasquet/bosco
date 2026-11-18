@@ -39,8 +39,36 @@ When(
   },
 );
 
+When(
+  'a Claude Code session in {string} proposes the decision {string}',
+  async ({ bosco }, folder: string, title: string) => {
+    answer = await call(bosco.url, bosco.secret(), 'bosco_propose_decision', {
+      path: join(bosco.profilesRoot, folder),
+      title,
+      context: 'Les sigles arrivent avec ou sans points.',
+      decision: 'Retirer les points avant la recherche.',
+    });
+  },
+);
+
 When('a program without the secret calls the Bosco tool {string}', async ({ bosco }, name: string) => {
   answer = await call(bosco.url, null, name, {});
+});
+
+let tools: string[] = [];
+
+When('a Claude Code session lists the Bosco tools', async ({ bosco }) => {
+  const response = await fetch(`${bosco.url}/mcp`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', authorization: `Bearer ${bosco.secret()}` },
+    body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list' }),
+  });
+  const body = (await response.json()) as { result: { tools: { name: string }[] } };
+  tools = body.result.tools.map(({ name }) => name);
+});
+
+Then('the Bosco tools are {string}', ({}, names: string) => {
+  expect(tools.toSorted((a, b) => a.localeCompare(b))).toEqual(names.split(','));
 });
 
 Then('the Bosco tool answers {string}', ({}, text: string) => {

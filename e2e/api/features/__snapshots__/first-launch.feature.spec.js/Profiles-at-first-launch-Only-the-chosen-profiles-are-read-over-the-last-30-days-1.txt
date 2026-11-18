@@ -5,14 +5,16 @@
       "path": "<profiles>/.claude",
       "label": "claude",
       "watched": false,
-      "liveTracking": false
+      "liveTracking": false,
+      "managed": false
     },
     {
       "id": "<masked>",
       "path": "<profiles>/.claude-perso",
       "label": "perso",
       "watched": true,
-      "liveTracking": false
+      "liveTracking": false,
+      "managed": false
     }
   ]
 }

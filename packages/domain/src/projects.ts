@@ -2,7 +2,7 @@ import type { SessionDefaultsDto } from './sessions.ts';
 
 /** Un projet : un dossier ajouté par la personne, avec l'activité de ses sessions. */
 export interface ProjectDto {
-  /** Valeurs par défaut de ses nouvelles sessions (E21a) */
+  /** Valeurs par défaut de ses nouvelles sessions */
   defaults: SessionDefaultsDto;
   /** Domaines propres au projet, ajoutés à la liste générale pour ses bacs à sable */
   domains: string[];
@@ -10,6 +10,8 @@ export interface ProjectDto {
   id: number;
   /** Dernière activité de ses sessions ; null sans session */
   lastSessionAt: null | string;
+  /** Monodépôt (pnpm-workspace.yaml, workspaces, turbo.json, nx.json) : un seul projet, ses paquets en sous-dossiers */
+  monorepo: boolean;
   name: string;
   path: string;
   /** Montré dans la barre latérale même sans session ouverte */
@@ -65,7 +67,7 @@ export interface FolderListingDto {
 
 /** Un groupe de projets ; « Tous les projets » (system) contient toujours tous les projets et n'a que des instructions. */
 export interface GroupDto {
-  /** Valeurs par défaut des sessions démarrées avec le groupe (E22a) ; elles passent avant celles des projets */
+  /** Valeurs par défaut des sessions démarrées avec le groupe ; elles passent avant celles des projets */
   defaults: SessionDefaultsDto;
   description: null | string;
   id: number;

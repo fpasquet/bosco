@@ -53,7 +53,7 @@ export interface EgressRefusalRow {
   taskId: number;
 }
 
-/** Refus du proxy de sortie (E11b) : une ligne par tâche et par domaine, à l'heure du dernier essai. */
+/** Refus du proxy de sortie : une ligne par tâche et par domaine, à l'heure du dernier essai. */
 export const EgressRefusalSchema = new EntitySchema<EgressRefusalRow>({
   name: 'EgressRefusal',
   tableName: 'egress_refusal',

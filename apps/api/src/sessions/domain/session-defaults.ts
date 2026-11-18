@@ -93,7 +93,7 @@ function firstSet<K extends Key>(levels: SettingsLevels, key: K): null | Resolve
 }
 
 /**
- * Réglages d'une nouvelle session (règle 16) : chacun prend la valeur du premier niveau qui la règle (session, groupe
+ * Réglages d'une nouvelle session : chacun prend la valeur du premier niveau qui la règle (session, groupe
  * choisi, projet principal, profil réglé dans Bosco, profil Claude Code) et dit d'où elle vient. En bac à sable, sans
  * mode réglé dans Bosco, « Accepter les modifications » : l'agent n'y abîme que sa copie.
  */

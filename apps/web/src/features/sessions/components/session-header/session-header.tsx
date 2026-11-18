@@ -1,8 +1,9 @@
-import { Box, Copy, FolderOpen, MessageSquare, RadioTower } from 'lucide-react';
+import { Copy, FolderOpen, MessageSquare, RadioTower } from 'lucide-react';
 import type { SessionDto } from '@bosco/domain';
 import { Breadcrumbs } from '@/shared/ui/breadcrumbs';
 import { Button } from '@/shared/ui/button';
 import { elapsed } from '../../lib/format';
+import { SandboxMark } from '../sandbox-mark';
 import { SessionStateBadge } from '../session-state-badge';
 import { titleOf } from '../sessions-table';
 import { placeOf } from '../waiting-banner';
@@ -13,7 +14,7 @@ export interface SessionHeaderProps {
   now: Date;
   onCopy: (text: string, label: string) => void;
   profile: null | string;
-  /** Commande de reprise d'une session close (CA-SESS-42) ; null tant qu'elle est ouverte */
+  /** Commande de reprise d'une session close ; null tant qu'elle est ouverte */
   resume: null | string;
   session: SessionDto;
 }
@@ -26,7 +27,7 @@ function since(session: SessionDto, now: Date): string {
   return `dernier événement il y a ${elapsed(new Date(session.lastEventAt), now)}`;
 }
 
-/** En-tête du détail d'une session (E2a) : état, titre, projet, profil, durée, et ce qu'on peut copier. */
+/** En-tête du détail d'une session : état, titre, projet, profil, durée, et ce qu'on peut copier. */
 export function SessionHeader({ mark, now, onCopy, profile, resume, session }: SessionHeaderProps) {
   const folder = session.project ? session.projectPath : null;
   return (
@@ -47,10 +48,7 @@ export function SessionHeader({ mark, now, onCopy, profile, resume, session }: S
           <SessionStateBadge state={session.state} />
           <span className="line-clamp-2 min-w-0">{titleOf(session)}</span>
           {session.pilot?.sandbox ? (
-            <span className="badge gap-1 badge-soft font-sans badge-sm font-medium badge-primary">
-              <Box aria-hidden className="size-3" />
-              Bac à sable
-            </span>
+            <SandboxMark />
           ) : (
             session.pilot && (
               <span className="badge gap-1 badge-outline font-sans badge-sm font-normal text-muted">

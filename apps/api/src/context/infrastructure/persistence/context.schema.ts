@@ -46,7 +46,7 @@ export interface LinkRow {
   url: string;
 }
 
-/** Liens des tâches (RF-CONT-04) : l'adresse et ce que Bosco en a lu, jamais le contenu. */
+/** Liens des tâches : l'adresse et ce que Bosco en a lu, jamais le contenu. */
 export const LinkSchema = new EntitySchema<LinkRow>({
   name: 'Link',
   tableName: 'link',

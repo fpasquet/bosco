@@ -6,13 +6,13 @@ import {
   type NotificationSettings,
 } from './notification.ts';
 
-/** Réglages de Bosco : seuil d'inactivité et notification du bureau (E4a). */
+/** Réglages de Bosco : seuil d'inactivité et notification du bureau. */
 export interface SettingsSnapshot {
-  /** Notification du bureau à chaque nouvelle attente, activée par défaut (RF-SESS-08, CA-SESS-61) */
+  /** Notification du bureau à chaque nouvelle attente, activée par défaut */
   desktopNotifications: boolean;
-  /** Délai sans événement après lequel une session passe Inactive : 15 min par défaut, de 5 à 60 (CA-SESS-59) */
+  /** Délai sans événement après lequel une session passe Inactive : 15 min par défaut, de 5 à 60 */
   inactivityMinutes: number;
-  /** Ce qui mérite une notification, type par type (E15b) */
+  /** Ce qui mérite une notification, type par type */
   notifications: NotificationSettings;
 }
 

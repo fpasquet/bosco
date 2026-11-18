@@ -53,7 +53,7 @@ export function PhoneAccess() {
     mutationFn: revokeDevice,
     onSuccess: () => client.invalidateQueries({ queryKey: devicesQuery.queryKey }),
   });
-  // Un téléphone nouvellement appairé ferme la fenêtre et rejoint la liste (CA-SESS-68)
+  // Un téléphone nouvellement appairé ferme la fenêtre et rejoint la liste
   useEffect(() => {
     if (!code || !devices) return;
     if (devices.some((device) => !known.current.has(device.id))) {

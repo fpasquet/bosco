@@ -1,6 +1,6 @@
 import type { ContainersDto } from '@bosco/domain';
 
-/** Conteneurs en cours (E19), remplis par le flux en direct ; lus une fois avant son premier message. */
+/** Conteneurs en cours, remplis par le flux en direct ; lus une fois avant son premier message. */
 export const containersQuery = {
   queryKey: ['containers'],
   queryFn: async (): Promise<ContainersDto> => {
@@ -16,10 +16,10 @@ async function act(method: 'POST', path: string): Promise<ContainersDto> {
   return (await response.json()) as ContainersDto;
 }
 
-/** « Réessayer » quand Docker ne répond pas (CA-CONT-82). */
+/** « Réessayer » quand Docker ne répond pas. */
 export const checkContainers = () => act('POST', '/api/containers/check');
 
-/** « Arrêter le tour » d'une session pilotée, comme dans son fil (E2g). */
+/** « Arrêter le tour » d'une session pilotée, comme dans son fil. */
 export async function interruptTurn(sessionId: string): Promise<void> {
   const response = await fetch(`/api/sessions/${encodeURIComponent(sessionId)}/interrupt`, { method: 'POST' });
   if (!response.ok) throw new Error(`POST interrupt answered ${response.status}`);

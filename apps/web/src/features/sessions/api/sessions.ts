@@ -37,7 +37,7 @@ export async function answerPermission(
   return true;
 }
 
-/** Détail d'une session (E2) : le flux en direct l'invalide à chaque changement de la session. */
+/** Détail d'une session : le flux en direct l'invalide à chaque changement de la session. */
 export const sessionDetailQuery = (id: string) => ({
   queryKey: ['session', id],
   queryFn: async (): Promise<SessionDetailDto> => {

@@ -7,7 +7,7 @@ interface ContainersPanel {
   toggle: () => void;
 }
 
-/** Panneau des conteneurs déplié ou replié : il le reste d'une page à l'autre, et l'appareil s'en souvient (CA-CONT-71). */
+/** Panneau des conteneurs déplié ou replié : il le reste d'une page à l'autre, et l'appareil s'en souvient. */
 export const useContainersPanel = create<ContainersPanel>()(
   persist(
     (set) => ({

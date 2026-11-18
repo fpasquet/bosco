@@ -20,7 +20,7 @@ import { CONVERSATION_SERVICE, LIVE_SIGNAL_SERVICE, SESSION_SERVICE } from '../.
 import { presentConversation } from './conversation.presenter.ts';
 import { presentSession } from './session.presenter.ts';
 
-/** Réponse à une autorisation : pour cette seule commande, sans « toujours autoriser » (CA-SESS-35). */
+/** Réponse à une autorisation : pour cette seule commande, sans « toujours autoriser ». */
 const permissionAnswerSchema = z.discriminatedUnion('behavior', [
   z.object({ behavior: z.literal('allow'), requestId: z.string().min(1) }),
   z.object({
@@ -44,7 +44,7 @@ export class SessionsController {
     return { sessions: sessions.map(presentSession) };
   }
 
-  /** Détail d'une session (E2) : sa vue et son fil ; le flux en direct signale ses changements. */
+  /** Détail d'une session : sa vue et son fil ; le flux en direct signale ses changements. */
   @Get(':id')
   async sessionDetail(@Param('id') id: string): Promise<SessionDetailDto> {
     const detail = await this.sessionService.sessionDetail(id);
@@ -56,7 +56,7 @@ export class SessionsController {
   }
 
   /**
-   * Fil complet d'une session (E2a), lu dans son transcript : réflexions, outils avec entrée et résultat, réponses en
+   * Fil complet d'une session, lu dans son transcript : réflexions, outils avec entrée et résultat, réponses en
    * Markdown. 404 transcriptGone quand le fichier n'existe plus : le fil se rabat alors sur le journal.
    */
   @Get(':id/conversation')
@@ -67,7 +67,7 @@ export class SessionsController {
     return presentConversation(result.conversation);
   }
 
-  /** 409 quand le terminal a répondu le premier : la première réponse l'emporte (RF-SESS-03, CA-SESS-33). */
+  /** 409 quand le terminal a répondu le premier : la première réponse l'emporte. */
   @Post(':id/permission')
   @HttpCode(204)
   async answerPermission(@Param('id') id: string, @Body() body: unknown): Promise<void> {

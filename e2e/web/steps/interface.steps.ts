@@ -97,6 +97,14 @@ Then('l’interrupteur {texte} est {texte}', async ({ page }, label: string, sta
   await (state === 'activé' ? expect(toggle).toBeChecked() : expect(toggle).not.toBeChecked());
 });
 
+Then('l’interrupteur {texte} n’est pas modifiable', async ({ page }, label: string) => {
+  await expect(page.getByRole('switch', { name: label })).toBeDisabled();
+});
+
+Then('je ne vois pas l’interrupteur {texte}', async ({ page }, label: string) => {
+  await expect(page.getByRole('switch', { name: label })).toHaveCount(0);
+});
+
 Then('le bouton {texte} est désactivé', async ({ page }, name: string) => {
   await expect(page.getByRole('button', { name })).toBeDisabled();
 });

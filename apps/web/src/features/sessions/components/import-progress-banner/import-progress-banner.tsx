@@ -2,7 +2,7 @@ import type { ImportProgressDto } from '@bosco/domain';
 
 const COUNT = new Intl.NumberFormat('fr');
 
-/** Première lecture de l'historique (E1e) : la progression est réelle, le total est connu avant la lecture. */
+/** Première lecture de l'historique : la progression est réelle, le total est connu avant la lecture. */
 export function ImportProgressBanner({ progress }: { progress: ImportProgressDto }) {
   const percent = progress.total > 0 ? Math.floor((progress.read / progress.total) * 100) : 0;
   const label = `${COUNT.format(progress.read)} sessions lues sur ${COUNT.format(progress.total)}`;

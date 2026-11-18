@@ -1,9 +1,9 @@
 import type { IsolationDto, QuotaDto, QuotaScopeDto, QuotaThresholdsDto, SourcesDto } from '@bosco/domain';
 
-/** Réglage refusé par l'API (400) : son message s'affiche sous le champ. */
+/** Réglage refusé par l'API : son message s'affiche sous le champ. */
 export class IsolationRefused extends Error {}
 
-/** Isolation des bacs à sable et abonnement Claude par défaut (E11). */
+/** Isolation des bacs à sable et abonnement Claude par défaut. */
 export const isolationQuery = {
   queryKey: ['isolation'],
   queryFn: async () => {
@@ -40,10 +40,10 @@ async function change(method: 'DELETE' | 'POST' | 'PUT', path: string, body?: un
 export const addDomain = (domain: string) => change('POST', '/api/isolation/domains', { domain });
 export const removeDomain = (domain: string) =>
   change('DELETE', `/api/isolation/domains/${encodeURIComponent(domain)}`);
-/** Abonnement Claude par défaut : celui que prend une nouvelle session (E11). */
+/** Abonnement Claude par défaut : celui que prend une nouvelle session. */
 export const setSubscription = (profile: null | string) => change('PUT', '/api/isolation/subscription', { profile });
 
-/** Quota de l'abonnement (E11, DT-39) : l'usage de chaque abonnement, les seuils et leur portée. */
+/** Quota de l'abonnement : l'usage de chaque abonnement, les seuils et leur portée. */
 export const quotaQuery = {
   queryKey: ['quota'],
   queryFn: async (): Promise<QuotaDto> => {
@@ -54,7 +54,7 @@ export const quotaQuery = {
   refetchInterval: 30_000,
 };
 
-/** Seuils refusés (400) : le message dit pourquoi (CA-CONT-99). */
+/** Seuils refusés : le message dit pourquoi. */
 export class QuotaRefused extends Error {}
 
 export async function setQuotaThresholds(thresholds: QuotaThresholdsDto): Promise<QuotaDto> {

@@ -1,7 +1,8 @@
-// Ce que les scénarios ne voient pas : sous make dev, la page du téléphone a besoin de la connexion WebSocket de
-// Next.js ; l'écoute la passe au serveur du poste pour /_next/ seulement, et ferme toute autre connexion.
+// Ce que les scénarios ne voient pas : l'écoute limitée à l'adresse du réseau local, et, sous make dev, la connexion
+// WebSocket de Next.js passée au serveur du poste pour /_next/ seulement, toute autre connexion étant fermée.
 import { mkdtempSync } from 'node:fs';
 import { request } from 'node:https';
+import { connect } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -52,6 +53,26 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await listener.stop();
+});
+
+/** Une connexion TCP à cette adresse : ouverte, ou refusée. */
+function reach(host: string): Promise<'open' | 'refused'> {
+  return new Promise((resolve) => {
+    const socket = connect({ host, port: PORT }, () => {
+      socket.destroy();
+      resolve('open');
+    });
+    socket.on('error', () => resolve('refused'));
+  });
+}
+
+describe('HttpsPhoneListener address', () => {
+  it('CA-SESS-70 · listens on the address of the local network only, never on every interface', async () => {
+    expect(listener.urls()).toEqual([`https://127.0.0.1:${PORT}`]);
+    // 127.0.0.2 mène au même poste : une écoute sur toutes les interfaces y répondrait
+    const [local, other] = await Promise.all([reach('127.0.0.1'), reach('127.0.0.2')]);
+    expect([local, other]).toEqual(['open', 'refused']);
+  });
 });
 
 describe('HttpsPhoneListener upgrades', () => {

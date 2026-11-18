@@ -23,11 +23,12 @@ import { useCopy } from '../../hooks/use-copy';
 import { useLiveEvents } from '../../hooks/use-live-events';
 import { usePermissionAnswers } from '../../hooks/use-permission-answers';
 import { useOffline } from '../../lib/connection';
-import { profileOf, resumeCommand } from '../../lib/detail';
+import { missingLiveTracking, profileOf, resumeCommand } from '../../lib/detail';
 import { profileMark, waitingSessions } from '../../lib/overview';
 import { useSettlements } from '../../lib/settlements';
 import { AllowDialog } from '../allow-dialog';
 import { ConnectionStatus } from '../connection-status';
+import { LiveTrackingOffer } from '../live-tracking-offer';
 import { PendingMessage } from '../pending-message';
 import { PermissionCard } from '../permission-card';
 import { openTab, type PhoneTab, PhoneTabs, phoneTabsOf, tabPanel } from '../phone-tabs';
@@ -54,8 +55,8 @@ function agentSays(journal: JournalEntryDto[], session: SessionDto): null | stri
 }
 
 /**
- * Détail d'une session (E2a, E2b) : le fil en direct, et la carte d'autorisation quand l'agent attend. Après une
- * réponse, retour à la vue d'ensemble s'il reste d'autres sessions en attente ; sinon le fil repart (CA-SESS-36).
+ * Détail d'une session : le fil en direct, et la carte d'autorisation quand l'agent attend. Après une
+ * réponse, retour à la vue d'ensemble s'il reste d'autres sessions en attente ; sinon le fil repart.
  */
 export function SessionDetailScreen({ id }: { id: string }) {
   const now = useNow();
@@ -117,10 +118,12 @@ export function SessionDetailScreen({ id }: { id: string }) {
   }
   if (!data || !sources) return <PageSkeleton variant="detail" rows={8} />;
   const { journal, session } = data;
-  // Une session en bac à sable ne se reprend que dans Bosco (règle 12)
-  const resume = session.pilot?.sandbox ? null : resumeCommand(session, sources.sources, sources.home);
-  // Une session à plusieurs projets a la carte « Projets », « Branches » en bac à sable (E2k)
+  // Effacée par Claude Code, la session ne se reprend plus ; en bac à sable, elle ne se reprend que dans Bosco
+  const erased = !conversationPending && conversation === null;
+  const resume = session.pilot?.sandbox || erased ? null : resumeCommand(session, sources.sources, sources.home);
+  // Une session à plusieurs projets a la carte « Projets », « Branches » en bac à sable
   const several = session.addedProjects.length > 0;
+  const untracked = missingLiveTracking(session, sources.sources);
   // Sur le téléphone, des onglets remplacent la colonne de droite ; « Projets » porte la carte et la reprise
   const tabs = phoneTabsOf(several);
   const shown = openTab(phone, tab, tabs);
@@ -151,6 +154,7 @@ export function SessionDetailScreen({ id }: { id: string }) {
             now={now}
             tail={
               <>
+                {untracked && <LiveTrackingOffer profile={untracked.label} sourceId={untracked.id} />}
                 <PermissionCard
                   session={session}
                   now={now}
@@ -188,7 +192,7 @@ export function SessionDetailScreen({ id }: { id: string }) {
                 )}
               </>
             }
-            footer={<PilotPanel key={session.id} session={session} />}
+            footer={<PilotPanel key={session.id} session={session} erased={erased} />}
           />
         </div>
         {shown === 'projects' && (

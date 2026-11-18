@@ -7,7 +7,7 @@ import { useNotificationsLive } from '../../hooks/use-notifications-live';
 import { NotificationsDrawer } from '../notifications-drawer';
 
 /**
- * Monté une fois par l'application (E15) : notifications en direct, présence de l'onglet, et le tiroir des
+ * Monté une fois par l'application : notifications en direct, présence de l'onglet, et le tiroir des
  * notifications que les cloches ouvrent sur ordinateur.
  */
 export function NotificationsLive() {

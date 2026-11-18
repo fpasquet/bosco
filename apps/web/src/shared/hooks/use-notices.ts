@@ -6,7 +6,7 @@ export interface NoticeAction {
   run: () => void;
 }
 
-/** Message bref (« Autorisé · Specs du tableau de bord »), retiré seul après quelques secondes (E15c). */
+/** Message bref (« Autorisé · Specs du tableau de bord »), retiré seul après quelques secondes. */
 export interface Notice {
   action?: NoticeAction;
   /** Durée d'affichage ; null : il reste jusqu'à ce qu'on le ferme ou qu'on suive son action (une question) */

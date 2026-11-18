@@ -7,7 +7,7 @@ export interface PendingMessageProps {
   text: string;
 }
 
-/** Message en attente sous le fil (E2e, CA-SESS-93) : il partira à la fin du tour, sauf s'il est annulé. */
+/** Message en attente sous le fil : il partira à la fin du tour, sauf s'il est annulé. */
 export function PendingMessage({ busy, images, onCancel, text }: PendingMessageProps) {
   return (
     <div className="mt-4 flex flex-col items-end gap-1">

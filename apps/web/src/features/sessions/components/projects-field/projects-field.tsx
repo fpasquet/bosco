@@ -24,7 +24,7 @@ const ITEM = 'flex cursor-pointer items-center gap-2 px-3 py-2 outline-none focu
 const LABEL = 'px-3 pt-2 pb-1 text-xs font-semibold text-muted';
 
 /**
- * Champ « Projets » d'une nouvelle session (E16a, E16c) : une puce par projet, le principal marqué de l'étoile et en
+ * Champ « Projets » d'une nouvelle session : une puce par projet, le principal marqué de l'étoile et en
  * tête ; l'étoile d'un autre projet le rend principal, la croix le retire pour cette session seulement. « + Projet »
  * propose les groupes, qui remplissent le champ, puis les projets.
  */

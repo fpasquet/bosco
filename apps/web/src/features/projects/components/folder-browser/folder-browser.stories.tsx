@@ -11,9 +11,15 @@ const meta = {
     busy: false,
     chosen: [],
     error: null,
+    group: null,
+    groups: [
+      { id: 2, name: 'Club des Trois Lacs' },
+      { id: 3, name: 'Gîtes du Haut-Vallon' },
+    ],
     listing: wwwListing,
     onCancel: fn(),
     onCheck: fn(),
+    onGroupChange: fn(),
     onOpen: fn(),
     onSubmit: fn(),
     onToggle: fn(),
@@ -47,3 +53,6 @@ export const Refused: Story = {
     error: 'No folder /home/camille/www/site-tournois',
   },
 };
+
+/** Ouvert depuis les réglages du groupe Club des Trois Lacs : le groupe est choisi d'avance. */
+export const FromGroup: Story = { args: { group: 2 } };

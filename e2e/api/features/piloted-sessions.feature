@@ -71,6 +71,16 @@ Feature: Piloted sessions
     Then the response property "status" should equal "sent"
     And "c41e9a07" should end its turn with "Reçu : Reprends · mode plan · modèle défaut · effort défaut · images 0"
 
+  @CA-SESS-51
+  @CA-SESS-97
+  Scenario: A session erased by Claude Code stays readable, but is not resumed
+    Given Claude Code erased the transcript of the session "c41e9a07"
+    When I write to "c41e9a07" with the JSON "fixtures/pilot/resume.json"
+    Then the response code should be 409
+    And the response property "code" should equal "sessionErased"
+    When I send GET request to "/api/sessions/c41e9a07"
+    Then the response code should be 200
+
   @CA-SESS-98
   Scenario: A session open in a terminal is answered in its terminal
     Given the session "c41e9a07" is open in a terminal of the profile ".claude-perso"

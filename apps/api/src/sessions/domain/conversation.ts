@@ -1,5 +1,5 @@
 /**
- * Conversation complète d'une session, lue dans son transcript pour le fil du détail (E2a) : les demandes de la
+ * Conversation complète d'une session, lue dans son transcript pour le fil du détail : les demandes de la
  * personne, et pour chaque tour de l'agent ses réflexions, ses appels d'outils avec leur entrée et leur résultat, et ses
  * réponses en Markdown. Elle n'est jamais enregistrée : le transcript reste la source, le journal garde l'essentiel.
  */
@@ -42,7 +42,7 @@ export interface ConversationTurn {
   id: string;
   parts: ConversationPart[];
   role: 'assistant' | 'user';
-  /** Demande écrite dans Bosco et arrivée par le canal de Bosco (E2i) */
+  /** Demande écrite dans Bosco et arrivée par le canal de Bosco */
   viaChannel?: boolean;
 }
 

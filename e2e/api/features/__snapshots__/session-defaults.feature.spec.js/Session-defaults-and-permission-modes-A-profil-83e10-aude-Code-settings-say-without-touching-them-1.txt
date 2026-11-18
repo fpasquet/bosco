@@ -16,7 +16,8 @@
     "path": "<profiles>/.claude-perso",
     "label": "perso",
     "watched": true,
-    "liveTracking": false
+    "liveTracking": false,
+    "managed": false
   },
   "usedBy": {
     "groups": [

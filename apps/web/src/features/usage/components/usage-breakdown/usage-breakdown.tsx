@@ -44,7 +44,7 @@ function Column({ children, title }: { children: React.ReactNode; title: string 
 }
 
 /**
- * Répartition du coût estimé (E23a) : par projet, par modèle et par profil, les plus gros d'abord, les petits
+ * Répartition du coût estimé : par projet, par modèle et par profil, les plus gros d'abord, les petits
  * regroupés en « autres ». Une session à plusieurs projets compte pour chacun : la somme des projets peut dépasser le
  * total. Un modèle sans tarif connu s'affiche « non chiffré ».
  */

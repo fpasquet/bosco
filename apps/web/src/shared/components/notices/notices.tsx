@@ -56,7 +56,7 @@ function NoticeItem({ notice }: { notice: Notice }) {
 }
 
 /**
- * Messages brefs en bas de l'écran (E15c), montés une fois dans la coquille : une confirmation (« Autorisé · … »), ou
+ * Messages brefs en bas de l'écran, montés une fois dans la coquille : une confirmation (« Autorisé · … »), ou
  * la notification qui remplace celle du bureau quand Bosco est devant toi. Trois au plus, annoncés aux lecteurs
  * d'écran ; au-dessus de la barre d'onglets sur le téléphone.
  */

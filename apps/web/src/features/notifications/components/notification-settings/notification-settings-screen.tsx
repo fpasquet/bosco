@@ -6,7 +6,7 @@ import { SettingsHeader } from '@/shared/layouts/settings-tabs';
 import { notificationSettingsQuery, updateNotificationSettings } from '../../api/settings';
 import { NotificationSettings } from './notification-settings';
 
-/** Réglages › Notifications (E15b) ; en lecture seule sur le téléphone. */
+/** Réglages › Notifications ; en lecture seule sur le téléphone. */
 export function NotificationSettingsScreen() {
   const client = useQueryClient();
   const { data } = useQuery(notificationSettingsQuery);

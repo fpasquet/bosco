@@ -112,3 +112,24 @@ Fonctionnalité: Vue d'ensemble
     Alors la vue d’ensemble montre la session « Corriger l’indexation des PDF dans Elasticsearch »
     Quand la session « 5e0a91c3 » est arrêtée dans Claude Code
     Alors la vue d’ensemble ne montre plus la session « Corriger l’indexation des PDF dans Elasticsearch »
+
+  @CA-SESS-118
+  Scénario: « Regrouper par » propose le projet, le groupe et l'état, et garde le dernier choix
+    Étant donné la session « 5e0a91c3 » a agi il y a quelques secondes
+    Et Bosco surveille les profils « .claude » et « .claude-perso »
+    Quand j'ouvre la page « / »
+    Alors le bouton « Projet » est enfoncé
+    Quand je clique sur le bouton « Groupe »
+    Alors le bouton « Groupe » est enfoncé
+    Quand je clique sur le bouton « État »
+    Et je recharge la page
+    Alors le bouton « État » est enfoncé
+
+  @CA-SESS-120
+  Scénario: Une session dont le dossier n'est dans aucun projet se range sous « Hors projet »
+    Étant donné le profil Claude Code « .claude » contient le transcript « session-home-notes.jsonl » de la session « e7d2b410 »
+    Et la session « e7d2b410 » a agi il y a quelques secondes
+    Et Bosco surveille les profils « .claude » et « .claude-perso »
+    Quand j'ouvre la page « / »
+    Alors le tableau des sessions montre « Hors projet »
+    Et le tableau des sessions montre « Ranger les notes de la semaine »

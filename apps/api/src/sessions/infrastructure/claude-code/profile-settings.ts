@@ -1,10 +1,15 @@
 // Réglages d'un profil Claude Code (<profil>/settings.json) : Bosco ajoute ses hooks HTTP à ceux qui existent, sans
 // toucher aux autres. Un seul Bosco suit un profil : installer le suivi remplace les hooks d'un autre Bosco du poste
-// (le service de développement, l'application du poste…), qui échoueraient quand il est arrêté (CA-SESS-105).
+// (le service de développement, l'application du poste…), qui échoueraient quand il est arrêté.
 // Désinstaller ne retire que les siens. Un fichier illisible n'est jamais réécrit.
 import { copyFile, readFile, rename, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import type { ClaudeProfileDefaults, HookEndpoint, ProfileSettings } from '../../application/ports.ts';
+import type {
+  ClaudeProfileDefaults,
+  HookEndpoint,
+  LiveTrackingInstallation,
+  ProfileSettings,
+} from '../../application/ports.ts';
 import { DomainError } from '../../../shared/domain/domain-error.ts';
 import {
   effortOf,
@@ -28,6 +33,13 @@ function hookUrl(hook: unknown): null | URL {
   if (typeof hook !== 'object' || hook === null) return null;
   const { type, url } = hook as { type?: unknown; url?: unknown };
   return type === 'http' && typeof url === 'string' && URL.canParse(url) ? new URL(url) : null;
+}
+
+function authorizationOf(hook: unknown): null | string {
+  const headers = (hook as { headers?: unknown }).headers;
+  if (typeof headers !== 'object' || headers === null) return null;
+  const value = (headers as Record<string, unknown>).Authorization;
+  return typeof value === 'string' ? value : null;
 }
 
 /** Un hook de ce Bosco pour ce profil : son adresse désigne l'entrée des hooks du profil, quel que soit le port. */
@@ -96,18 +108,28 @@ export class FileProfileSettings implements ProfileSettings, ClaudeProfileDefaul
     return { backupPath };
   }
 
-  async isInstalled(profilePath: string, endpoint: HookEndpoint): Promise<boolean> {
+  async installation(profilePath: string, endpoint: HookEndpoint): Promise<LiveTrackingInstallation> {
     let settings: Settings;
     try {
       settings = await this.read(join(profilePath, 'settings.json'));
     } catch {
-      return false;
+      return 'missing';
     }
-    const groupsOf = (event: string): HookGroup[] => settings.hooks?.[event] ?? [];
-    return LIVE_TRACKING_EVENTS.every((event) =>
-      // Installé par ce Bosco, sur son port : des hooks vers un autre port n'arrivent pas jusqu'à lui
-      groupsOf(event).some((group) => (group.hooks ?? []).some((hook) => hookUrl(hook)?.href === endpoint.url)),
+    const groups = Object.entries(settings.hooks ?? {});
+    const own = groups.flatMap(([event, eventGroups]) =>
+      eventGroups.flatMap((group) =>
+        (group.hooks ?? []).filter((hook) => isOwnHook(hook, endpoint)).map((hook) => ({ event, hook })),
+      ),
     );
+    if (own.length === 0) return 'missing';
+    // À jour : chaque événement suivi appelle ce Bosco, sur son port et avec son secret, et rien d'autre ne reste
+    const current = (hook: unknown) =>
+      hookUrl(hook)?.href === endpoint.url && authorizationOf(hook) === `Bearer ${endpoint.secret}`;
+    const followed = new Set<string>(LIVE_TRACKING_EVENTS);
+    const upToDate =
+      own.every(({ event, hook }) => followed.has(event) && current(hook)) &&
+      LIVE_TRACKING_EVENTS.every((event) => own.some((entry) => entry.event === event));
+    return upToDate ? 'installed' : 'outdated';
   }
 
   async uninstall(profilePath: string, endpoint: HookEndpoint): Promise<void> {

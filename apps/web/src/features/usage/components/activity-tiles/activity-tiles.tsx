@@ -11,7 +11,7 @@ interface Tile {
 }
 
 /**
- * Activité de Bosco (E23a) : sessions pilotées lancées, temps de travail des agents, bacs à sable créés, branches
+ * Activité de Bosco : sessions pilotées lancées, temps de travail des agents, bacs à sable créés, branches
  * récupérées et PR créées, repérées dans le fil des sessions.
  */
 export function ActivityTiles({ activity }: { activity: UsageReportDto['activity'] }) {

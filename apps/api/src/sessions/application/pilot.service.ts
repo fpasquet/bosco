@@ -10,6 +10,7 @@ import type {
   SessionRegistry,
   SessionRepository,
   SourceRepository,
+  TranscriptFiles,
 } from './ports.ts';
 import type { SessionDefaultsService } from './session-defaults.service.ts';
 import type { SessionService } from './session.service.ts';
@@ -27,6 +28,7 @@ import {
   PilotTargetNotFound,
   questionsOf,
   QuotaHeld,
+  SessionErased,
   SessionOpenInTerminal,
 } from '../domain/pilot.ts';
 import {
@@ -43,15 +45,17 @@ import {
 } from '../domain/sandbox.ts';
 import { settingsOf } from '../domain/session-defaults.ts';
 
-/** Un tour à lancer : `claude -p` dans le dossier du projet, avec le profil, une session nouvelle ou reprise (DT-31). */
+/** Un tour à lancer : `claude -p` dans le dossier du projet, avec le profil, une session nouvelle ou reprise. */
 export interface TurnRequest {
-  /** Autres projets de la session, passés par --add-dir à chaque tour (règle 14) */
+  /** Autres projets de la session, passés par --add-dir à chaque tour */
   addDirs: string[];
+  /** Contexte des projets de la session, ajouté au prompt système ; null hors des projets connus */
+  appendSystemPrompt: null | string;
   /** Dossier de configuration du profil Claude Code */
   configDir: string;
   cwd: string;
   message: PilotMessage;
-  /** Commande d'un tour en bac à sable (DT-37) : l'agent tourne dans le conteneur de la session ; null : sur le poste */
+  /** Commande d'un tour en bac à sable : l'agent tourne dans le conteneur de la session ; null : sur le poste */
   launch: null | TurnLaunch;
   /** false : une nouvelle session, créée avec cet identifiant */
   resume: boolean;
@@ -69,7 +73,7 @@ export interface TurnLaunch {
 export type SandboxState = 'missing' | 'running' | 'stopped';
 
 /**
- * Bacs à sable des sessions (règle 12, DT-37) : copie du projet sur la branche de la session et dossier personnel de
+ * Bacs à sable des sessions : copie du projet sur la branche de la session et dossier personnel de
  * l'agent, gardés hors du conteneur ; conteneur isolé comme un agent du worker.
  */
 export interface Sandboxes {
@@ -115,7 +119,7 @@ export interface TurnListener {
    */
   suspended(count: number, total: boolean): void;
   question(requestId: string, input: Record<string, unknown>): void;
-  /** Usage de l'abonnement, donné à chaque tour (DT-39) */
+  /** Usage de l'abonnement, donné à chaque tour */
   quota(windows: QuotaWindows): void;
   /** L'agent a rendu la main : son dernier message */
   result(message: null | string): void;
@@ -128,7 +132,7 @@ export interface RunningTurn {
   finish(): void;
   /** « Arrêter » : interrompt le tour, comme Échap dans le terminal */
   interrupt(): void;
-  /** Processus de l'agent sur le poste, pour mesurer ce qu'il consomme (E19a) ; null s'il n'a pas démarré */
+  /** Processus de l'agent sur le poste, pour mesurer ce qu'il consomme ; null s'il n'a pas démarré */
   pid: null | number;
 }
 
@@ -138,11 +142,16 @@ export interface TurnRunner {
 
 /** Une session pilotée par Bosco : où elle tourne et ses réglages, gardés d'un tour à l'autre. */
 export interface PilotRecord {
+  /**
+   * Contexte transmis au premier tour lancé par Bosco, repris tel quel aux suivants : les décisions acceptées ensuite
+   * n'atteignent que les sessions lancées après. null : pas encore fixé, ou hors des projets connus
+   */
+  context?: null | string;
   /** Projet principal : le dossier de travail de la session */
   cwd: string;
-  /** Autres projets de la session (règle 14), passés par --add-dir à chaque tour ; [] : un seul projet */
+  /** Autres projets de la session, passés par --add-dir à chaque tour ; [] : un seul projet */
   projects: string[];
-  /** Bac à sable de la session (règle 12) ; null : elle tourne sur le poste */
+  /** Bac à sable de la session ; null : elle tourne sur le poste */
   sandbox: null | SandboxInfo;
   sessionId: string;
   settings: PilotSettings;
@@ -150,12 +159,18 @@ export interface PilotRecord {
   sourceId: string;
 }
 
+/** Contexte des projets d'une session : instructions des groupes, décisions acceptées, place dans l'architecture. */
+export interface PilotContext {
+  /** Le projet principal d'abord, puis les autres, coupé à 10 000 caractères ; null hors des projets connus */
+  textOf(cwd: string, projects: readonly string[]): Promise<null | string>;
+}
+
 export interface PilotRepository {
   list(): Promise<PilotRecord[]>;
   save(record: PilotRecord): Promise<void>;
 }
 
-/** Abonnements Claude (E11) : les profils qui ont un accès, et celui par défaut. */
+/** Abonnements Claude : les profils qui ont un accès, et celui par défaut. */
 export interface PilotProfiles {
   subscriptions(): Promise<{
     choices: { account: null | string; label: string; path: string }[];
@@ -163,7 +178,7 @@ export interface PilotProfiles {
   }>;
 }
 
-/** Quota de l'abonnement (DT-39) : l'usage lu à chaque tour, et les seuils qui retiennent puis arrêtent un tour. */
+/** Quota de l'abonnement : l'usage lu à chaque tour, et les seuils qui retiennent puis arrêtent un tour. */
 export interface PilotQuota {
   /** Pourquoi un tour de cet abonnement ne part pas ; null s'il peut partir */
   holdReason(profile: string, sandboxed: boolean): null | string;
@@ -172,7 +187,7 @@ export interface PilotQuota {
   stopReason(profile: string, sandboxed: boolean): null | string;
 }
 
-/** Ce que l'interface voit d'une session pilotée (E2e). */
+/** Ce que l'interface voit d'une session pilotée. */
 export interface PilotView {
   pending: null | { images: number; text: string };
   /** Autres projets de la session, que l'agent voit en plus de son projet principal */
@@ -214,7 +229,7 @@ const NO_QUOTA: PilotQuota = { holdReason: () => null, record: () => undefined, 
 interface SandboxDeps {
   ensureSource: (path: string) => Promise<{ id: string }>;
   sandboxes: Sandboxes;
-  /** La branche a du travail non récupéré : le bac à sable sera supprimé demain (CA-SESS-115) */
+  /** La branche a du travail non récupéré : le bac à sable sera supprimé demain */
   warn: (sessionId: string, branch: string) => Promise<void>;
 }
 
@@ -228,7 +243,7 @@ function detailOf(input: Record<string, unknown>): null | string {
 }
 
 /**
- * Sessions pilotées par Bosco (E2e à E2h, E16a, règle 4, DT-31) : démarrer une session, lui écrire, mettre un message
+ * Sessions pilotées par Bosco : démarrer une session, lui écrire, mettre un message
  * en attente pendant un tour, arrêter un tour, répondre à ses autorisations et à ses questions depuis Bosco.
  */
 export class PilotService {
@@ -236,9 +251,10 @@ export class PilotService {
   private readonly turns = new Map<string, Turn>();
   private readonly pending = new Map<string, PilotMessage>();
   private defaults: null | Pick<SessionDefaultsService, 'resolveDefaults'> = null;
+  private context: PilotContext = { textOf: () => Promise.resolve(null) };
   private profiles: PilotProfiles = NO_PROFILES;
   private sandbox: null | SandboxDeps = null;
-  /** Usage de l'abonnement lu dans le flux d'un tour, rangé par profil Claude, et ses seuils (DT-39) */
+  /** Usage de l'abonnement lu dans le flux d'un tour, rangé par profil Claude, et ses seuils */
   private quota: PilotQuota = NO_QUOTA;
   /** État de chaque conteneur, relu par l'entretien : la vue de la session le montre sans attendre Docker */
   private readonly sandboxStates = new Map<string, SandboxState>();
@@ -258,6 +274,7 @@ export class PilotService {
     private readonly events: Pick<SessionEvents, 'sessionChanged'>,
     private readonly clock: Clock,
     private readonly ids: IdGenerator,
+    private readonly transcripts: TranscriptFiles = { exists: () => Promise.resolve(true) },
   ) {}
 
   /** Sessions pilotées connues, lues au démarrage (et après une remise à zéro des scénarios). */
@@ -266,22 +283,27 @@ export class PilotService {
     for (const record of await this.repository.list()) this.records.set(record.sessionId, record);
   }
 
-  /** Quota de l'abonnement, branché au démarrage : chaque tour piloté le tient à jour, ses seuils le retiennent (DT-39). */
+  /** Quota de l'abonnement, branché au démarrage : chaque tour piloté le tient à jour, ses seuils le retiennent. */
   useQuota(quota: PilotQuota): void {
     this.quota = quota;
   }
 
-  /** Bacs à sable des sessions (DT-37), branchés au démarrage. */
+  /** Bacs à sable des sessions, branchés au démarrage. */
   useSandboxes(deps: SandboxDeps): void {
     this.sandbox = deps;
   }
 
-  /** Valeurs par défaut des nouvelles sessions (règle 16), branchées au démarrage. */
+  /** Valeurs par défaut des nouvelles sessions, branchées au démarrage. */
+  /** Contexte des projets, branché au démarrage : chaque session pilotée le reçoit dès son premier tour. */
+  useContext(context: PilotContext): void {
+    this.context = context;
+  }
+
   useDefaults(defaults: Pick<SessionDefaultsService, 'resolveDefaults'>): void {
     this.defaults = defaults;
   }
 
-  /** Abonnements Claude et celui par défaut (E11), branchés au démarrage. */
+  /** Abonnements Claude et celui par défaut, branchés au démarrage. */
   useProfiles(profiles: PilotProfiles): void {
     this.profiles = profiles;
   }
@@ -290,14 +312,14 @@ export class PilotService {
     return this.turns.has(sessionId);
   }
 
-  /** Sessions dont le bac à sable existe encore : le panneau des conteneurs les nomme (E19a). */
+  /** Sessions dont le bac à sable existe encore : le panneau des conteneurs les nomme. */
   sandboxedSessions(): string[] {
     return [...this.records.values()]
       .filter(({ sandbox }) => sandbox !== null && sandbox.removedAt === null)
       .map(({ sessionId }) => sessionId);
   }
 
-  /** Tours en cours, avec le processus de leur agent : le panneau des conteneurs les mesure (E19a). */
+  /** Tours en cours, avec le processus de leur agent : le panneau des conteneurs les mesure. */
   runningTurns(): { pid: null | number; sessionId: string; since: Date }[] {
     return [...this.turns].map(([sessionId, turn]) => ({ pid: turn.process.pid, sessionId, since: turn.startedAt }));
   }
@@ -325,13 +347,13 @@ export class PilotService {
     };
   }
 
-  /** Ouverte dans un terminal : le registre de Claude Code la dit ouverte, sans tour piloté en cours (CA-SESS-98). */
+  /** Ouverte dans un terminal : le registre de Claude Code la dit ouverte, sans tour piloté en cours. */
   openInTerminal(sourceId: string, sessionId: string): boolean {
     if (this.records.get(sessionId)?.sandbox) return false;
     return !this.turns.has(sessionId) && this.registry.isOpen(sourceId, sessionId) === true;
   }
 
-  /** Formulaire d'une nouvelle session (E16a) : projets connus, abonnements et celui par défaut. */
+  /** Formulaire d'une nouvelle session : projets connus, abonnements et celui par défaut. */
   async options(): Promise<{
     profiles: { account: null | string; label: string; path: string }[];
     projects: {
@@ -371,9 +393,9 @@ export class PilotService {
   }
 
   /**
-   * « Démarrer la session » (CA-SESS-155, CA-SESS-163) : une nouvelle session dans le dossier du projet principal, qui
-   * voit aussi les autres projets choisis (règle 14). Son profil, son mode, son modèle et son effort sont ceux choisis
-   * pour elle, sinon ceux du groupe, du projet principal, du profil, puis du profil Claude Code (règle 16).
+   * « Démarrer la session » : une nouvelle session dans le dossier du projet principal, qui
+   * voit aussi les autres projets choisis. Son profil, son mode, son modèle et son effort sont ceux choisis
+   * pour elle, sinon ceux du groupe, du projet principal, du profil, puis du profil Claude Code.
    */
   async start(input: {
     /** Groupe choisi : ses valeurs par défaut passent avant celles du projet principal */
@@ -385,7 +407,7 @@ export class PilotService {
     /** Autres projets de la session, dans l'ordre ; absent : un seul projet */
     projects?: readonly string[];
     /**
-     * Dans un bac à sable (E16b, E16d) : branche de la session (null : proposée) et branche de départ de chaque
+     * Dans un bac à sable : branche de la session (null : proposée) et branche de départ de chaque
      * projet (null : celle réglée pour le projet, sinon la courante) ; startBranch vaut pour le projet principal
      */
     sandbox?: null | {
@@ -438,7 +460,7 @@ export class PilotService {
     return record.sessionId;
   }
 
-  /** Profil et réglages du premier tour : le choix de la session, sinon les valeurs par défaut (DT-44). */
+  /** Profil et réglages du premier tour : le choix de la session, sinon les valeurs par défaut. */
   private async resolveStart(
     input: { group?: null | number; profile: null | string; sandbox?: unknown; settings: SessionDefaults },
     project: string,
@@ -462,7 +484,7 @@ export class PilotService {
   }
 
   /**
-   * Prépare le bac à sable d'une nouvelle session (CA-SESS-106) : la copie du projet sur sa branche, l'accès à
+   * Prépare le bac à sable d'une nouvelle session : la copie du projet sur sa branche, l'accès à
    * l'abonnement du profil choisi ; ses conversations rejoignent le profil des bacs à sable, une source surveillée.
    */
   private async sandboxed(
@@ -539,8 +561,8 @@ export class PilotService {
   }
 
   /**
-   * « Récupérer la branche » (CA-SESS-112) : le travail rejoint le dépôt du poste, sans toucher à sa branche courante.
-   * « Récupérer les branches » (CA-SESS-141) : un projet à la fois, ou toutes celles qui ont du travail, les projets
+   * « Récupérer la branche » : le travail rejoint le dépôt du poste, sans toucher à sa branche courante.
+   * « Récupérer les branches » : un projet à la fois, ou toutes celles qui ont du travail, les projets
    * sans changement étant laissés. Les branches reçues, projet par projet.
    */
   async retrieve(sessionId: string, project: null | string = null): Promise<{ branch: string; project: string }[]> {
@@ -568,7 +590,7 @@ export class PilotService {
     return found;
   }
 
-  /** Branches du bac à sable, une par projet, avec ce qu'elles contiennent : la carte « Branches » (E2k). */
+  /** Branches du bac à sable, une par projet, avec ce qu'elles contiennent : la carte « Branches ». */
   async branches(
     sessionId: string,
   ): Promise<{ files: number; from: string; project: string; retrievedAt: Date | null }[]> {
@@ -591,7 +613,7 @@ export class PilotService {
     await this.publish(sessionId);
   }
 
-  /** « Supprimer le bac à sable » (CA-SESS-114) : conteneur et copie effacés ; la session reste lisible. */
+  /** « Supprimer le bac à sable » : conteneur et copie effacés ; la session reste lisible. */
   async removeSandbox(sessionId: string): Promise<void> {
     const { deps, record, sandbox } = this.idleSandbox(sessionId);
     await deps.sandboxes.remove(sessionId);
@@ -600,7 +622,7 @@ export class PilotService {
     await this.publish(sessionId);
   }
 
-  /** Sorties réseau refusées du bac à sable, lues à la demande (CA-SESS-108). */
+  /** Sorties réseau refusées du bac à sable, lues à la demande. */
   async refusals(sessionId: string): Promise<{ at: Date; host: string }[]> {
     const record = this.records.get(sessionId);
     if (!record?.sandbox || !this.sandbox) return [];
@@ -608,7 +630,7 @@ export class PilotService {
   }
 
   /**
-   * Entretien des bacs à sable (règle 12) : l'état de chaque conteneur est relu ; un conteneur sans message depuis
+   * Entretien des bacs à sable : l'état de chaque conteneur est relu ; un conteneur sans message depuis
    * 30 min s'arrête, la veille de la suppression une notification part si la branche a du travail, puis le bac à
    * sable est supprimé au bout de 7 jours.
    */
@@ -639,9 +661,9 @@ export class PilotService {
   }
 
   /**
-   * Un message à une session (CA-SESS-92, CA-SESS-93, CA-SESS-97) : il lance un tour, ou attend la fin du tour en cours.
+   * Un message à une session : il lance un tour, ou attend la fin du tour en cours.
    * Une session close, du terminal ou de Bosco, reprend dans Bosco et devient pilotée. Une session ouverte dans un
-   * terminal le reçoit par le canal de Bosco, si elle a été lancée avec lui (CA-SESS-101).
+   * terminal le reçoit par le canal de Bosco, si elle a été lancée avec lui.
    */
   async send(
     sessionId: string,
@@ -655,8 +677,9 @@ export class PilotService {
       this.openInTerminal(record.sourceId, sessionId) ||
       (!this.records.has(sessionId) && (await this.isLive(sessionId)));
     if (inTerminal) return this.throughChannel(sessionId, message);
+    if (!this.turns.has(sessionId)) await this.checkResumable(record);
     await this.checkQuotaOf(record);
-    // Un message repousse l'arrêt et la suppression du bac à sable (règle 12)
+    // Un message repousse l'arrêt et la suppression du bac à sable
     const sandbox = record.sandbox && { ...record.sandbox, lastMessageAt: this.clock.now(), warnedAt: null };
     await this.keep({ ...record, sandbox, settings: input.settings });
     if (this.turns.has(sessionId)) {
@@ -673,7 +696,7 @@ export class PilotService {
     this.channel = channel;
   }
 
-  /** Le canal de la session est ouvert : l'étiquette « Canal de Bosco » et la zone réduite (E2i). */
+  /** Le canal de la session est ouvert : l'étiquette « Canal de Bosco » et la zone réduite. */
   channelOpen(sessionId: string): boolean {
     return this.channel.isConnected(sessionId);
   }
@@ -687,13 +710,13 @@ export class PilotService {
     return 'channel';
   }
 
-  /** « Annuler » le message en attente (CA-SESS-93). */
+  /** « Annuler » le message en attente. */
   async cancelPending(sessionId: string): Promise<void> {
     if (!this.pending.delete(sessionId)) throw new NoPilotedTurn(sessionId);
     await this.publish(sessionId);
   }
 
-  /** « Arrêter » (CA-SESS-93) : le tour s'interrompt, le message en attente reste. */
+  /** « Arrêter » : le tour s'interrompt, le message en attente reste. */
   interrupt(sessionId: string): void {
     const turn = this.turns.get(sessionId);
     if (!turn) throw new NoPilotedTurn(sessionId);
@@ -707,7 +730,7 @@ export class PilotService {
     this.pending.clear();
   }
 
-  /** Au-delà du seuil d'attente, aucun tour ne part : le message est refusé avec la raison (DT-39). */
+  /** Au-delà du seuil d'attente, aucun tour ne part : le message est refusé avec la raison. */
   private checkQuota(profile: string, sandboxed: boolean): void {
     const held = this.quota.holdReason(profile, sandboxed);
     if (held) throw new QuotaHeld(held);
@@ -743,6 +766,26 @@ export class PilotService {
     };
   }
 
+  /**
+   * Contexte transmis à la session, fixé à son premier tour lancé par Bosco, sur le poste comme en bac à sable : une
+   * session en bac à sable n'a pas le serveur MCP de Bosco pour le lire.
+   */
+  private async launchContext(record: PilotRecord): Promise<null | string> {
+    if (record.context) return record.context;
+    const context = await this.context.textOf(record.cwd, record.projects);
+    if (context) await this.keep({ ...(this.records.get(record.sessionId) ?? record), context });
+    return context;
+  }
+
+  /** Une session dont Claude Code a effacé le transcript ne se reprend plus : le refus le dit, sans lancer de tour. */
+  private async checkResumable(record: PilotRecord): Promise<void> {
+    const sources = await this.sources.list();
+    const source = sources.find(({ id }) => id === record.sourceId);
+    if (!source) return;
+    const kept = await this.transcripts.exists(source.path, record.sessionId);
+    if (!kept) throw new SessionErased(record.sessionId);
+  }
+
   private async isLive(sessionId: string): Promise<boolean> {
     const session = await this.sessionRepository.find(sessionId);
     if (!session) return false;
@@ -761,7 +804,7 @@ export class PilotService {
     if (!source) throw new PilotTargetNotFound(`Le profil de la session ${record.sessionId} n'est plus surveillé.`);
     const origin = { cwd: record.cwd, sessionId: record.sessionId, sourceId: record.sourceId };
     // Le conteneur du bac à sable démarre (ou se recrée) avant le tour ; ses hooks ne joignent pas Bosco : c'est le
-    // flux du tour qui dit sa fin (CA-SESS-109, CA-SESS-111)
+    // flux du tour qui dit sa fin
     const launch =
       record.sandbox && this.sandbox
         ? await this.sandbox.sandboxes.ensure(record.sessionId, [record.cwd, ...record.projects])
@@ -780,9 +823,12 @@ export class PilotService {
     };
     const profile = record.sandbox?.profile ?? source.path;
     const sandboxed = record.sandbox !== null;
+    const context = await this.launchContext(record);
     const request: TurnRequest = {
       // Les autres projets sont rejoués à chaque tour : une reprise ne les garde pas d'elle-même
       addDirs: [...record.projects],
+      // Le même texte à chaque tour : Claude Code garde le premier, et le reprend si la conversation est compactée
+      appendSystemPrompt: context,
       configDir: source.path,
       cwd: record.cwd,
       launch,

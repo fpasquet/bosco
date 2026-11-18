@@ -1,4 +1,4 @@
-/** Ce qui mérite une notification, type par type (E15b). */
+/** Ce qui mérite une notification, type par type. */
 export interface NotificationSettingsDto {
   ended: boolean;
   failed: boolean;

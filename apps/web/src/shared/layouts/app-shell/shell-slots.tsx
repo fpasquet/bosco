@@ -3,7 +3,7 @@ import { createContext, type ReactNode, useContext } from 'react';
 import type { ShellPlace } from './nav-items';
 
 /**
- * Ce que l'application place dans la coquille sans que la coquille le connaisse : la cloche des notifications (E15a),
+ * Ce que l'application place dans la coquille sans que la coquille le connaisse : la cloche des notifications,
  * les groupes, projets et profils de la barre latérale, l'état des sources en pied, le résumé des conteneurs et leur
  * panneau en bas de page.
  */

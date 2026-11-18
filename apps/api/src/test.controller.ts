@@ -51,7 +51,7 @@ export class TestController {
     @Inject(PILOT_SERVICE) private readonly pilot: PilotService,
   ) {}
 
-  /** Simule l'usage de l'abonnement par défaut, comme le donnerait un tour (DT-39) : la fenêtre de 5 h, en %. */
+  /** Simule l'usage de l'abonnement par défaut, comme le donnerait un tour : la fenêtre de 5 h, en %. */
   @Post('quota')
   @HttpCode(204)
   async setQuota(@Body() body: { fiveHour: number; profile?: string }): Promise<void> {
@@ -61,7 +61,7 @@ export class TestController {
     });
   }
 
-  /** Notifications du bureau envoyées depuis la dernière remise à zéro (RF-SESS-08). */
+  /** Notifications du bureau envoyées depuis la dernière remise à zéro. */
   @Get('notifications')
   notifications(): { notifications: { body: string; title: string }[] } {
     return { notifications: this.notifier.sent };

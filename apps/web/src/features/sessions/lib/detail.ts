@@ -9,12 +9,12 @@ export function clockOf(iso: string): string {
 }
 
 /**
- * Commande qui reprend une session close (RF-SESS-09) : claude --resume avec l'identifiant complet, précédée du
- * dossier de configuration pour un autre profil que celui par défaut (CA-SESS-42). Une session ouverte n'en a pas.
- * Une session à plusieurs projets ajoute les autres projets, avec le réglage qui lit leurs instructions (CA-SESS-140).
+ * Commande qui reprend une session close : claude --resume avec l'identifiant complet, précédée du
+ * dossier de configuration pour un autre profil que celui par défaut. Une session ouverte n'en a pas.
+ * Une session à plusieurs projets ajoute les autres projets, avec le réglage qui lit leurs instructions.
  */
 export function resumeCommand(session: SessionDto, sources: readonly SourceDto[], home: string): null | string {
-  // Une session pilotée par Bosco se reprend aussi dans un terminal entre deux tours (règle 9)
+  // Une session pilotée par Bosco se reprend aussi dans un terminal entre deux tours
   const betweenTurns = !!session.pilot && !session.pilot.running;
   if (session.state !== 'ended' && !betweenTurns) return null;
   const source = sources.find((candidate) => candidate.id === session.sourceId);
@@ -52,6 +52,16 @@ export function durationEnd(session: SessionDto, now: Date): Date {
 }
 
 /** Profil d'une session, par son nom court (« pro », « perso »). */
+/**
+ * Profil d'une session du terminal encore ouverte, sans suivi en direct : rien ne signale qu'elle attend, Bosco
+ * propose de l'installer. null pour une session pilotée, terminée, ou d'un profil déjà suivi.
+ */
+export function missingLiveTracking(session: SessionDto, sources: readonly SourceDto[]): null | SourceDto {
+  if (session.pilot !== null || session.state === 'ended') return null;
+  const source = sources.find((candidate) => candidate.id === session.sourceId);
+  return source && !source.liveTracking && !source.managed ? source : null;
+}
+
 export function profileOf(session: SessionDto, sources: readonly SourceDto[]): null | string {
   return sources.find((candidate) => candidate.id === session.sourceId)?.label ?? null;
 }

@@ -24,10 +24,12 @@ import { UsageService } from './application/usage.service.ts';
 import { ClaudeChannelInstaller } from './infrastructure/claude-code/channel-installer.ts';
 import { ClaudeTurnRunner } from './infrastructure/claude-code/claude-turn-runner.ts';
 import { FileConversationReader } from './infrastructure/claude-code/conversation-reader.ts';
+import { ClaudeMcpServerInstaller, MCP_SERVER } from './infrastructure/claude-code/mcp-server-installer.ts';
 import { FileProfileFinder } from './infrastructure/claude-code/profile-finder.ts';
 import { FileProfileSettings } from './infrastructure/claude-code/profile-settings.ts';
 import { FileSessionRegistry } from './infrastructure/claude-code/session-registry.ts';
 import { DiskSuggestions } from './infrastructure/claude-code/suggestions.ts';
+import { FileTranscriptFiles } from './infrastructure/claude-code/transcript-files.ts';
 import { FileTranscriptReplay } from './infrastructure/claude-code/transcript-replay.ts';
 import { FileTranscriptWatcher } from './infrastructure/claude-code/transcript-watcher.ts';
 import { SessionEventsBus } from './infrastructure/events/session-events.bus.ts';
@@ -129,7 +131,7 @@ const conversations = new FileConversationReader();
       inject: [CONFIG],
       useFactory: (config: Config) => {
         if (config.testing) return new RecordingNotifier();
-        // L'icône de Bosco, servie par l'interface : la notification du bureau la montre (E15b)
+        // L'icône de Bosco, servie par l'interface : la notification du bureau la montre
         const icon = config.webDir ? join(config.webDir, 'public', 'logo.svg') : null;
         return new NotifySendAlerts(APP_NAME, icon);
       },
@@ -184,6 +186,10 @@ const conversations = new FileConversationReader();
           new FileProfileSettings(),
           (sourceId) => ({ secret, url: `http://${config.host}:${config.port}/api/hooks/${sourceId}` }),
           (sourceId) => liveSignals.lastSignalAt(sourceId),
+          new ClaudeMcpServerInstaller(config.pilotClaude, config.profilesRoot, MCP_SERVER, {
+            secret,
+            url: `http://${config.host}:${config.port}/mcp`,
+          }),
         ),
     },
     {
@@ -234,6 +240,7 @@ const conversations = new FileConversationReader();
           bus,
           clock,
           { next: randomUUID },
+          new FileTranscriptFiles(),
         ),
     },
     {

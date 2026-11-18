@@ -53,3 +53,6 @@ export const WorkstationToo: Story = {
 export const Refused: Story = {
   args: { error: 'Pour la fenêtre de 5 h, le seuil d’attente reste sous le seuil d’arrêt.' },
 };
+
+/** Sur le téléphone : jauges, seuils et portée se lisent, sans champ ni bouton. */
+export const ReadOnly: Story = { args: { readOnly: true } };

@@ -1,6 +1,6 @@
 import type { Notice } from '@/shared/hooks/use-notices';
 
-/** Ce que dit Bosco quand une autorisation a reçu sa réponse, ici ou dans le terminal (CA-SESS-07, CA-SESS-36). */
+/** Ce que dit Bosco quand une autorisation a reçu sa réponse, ici ou dans le terminal. */
 export function settledNotice(
   outcome: 'allowed' | 'denied' | 'elsewhere',
   title: string,

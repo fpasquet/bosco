@@ -15,7 +15,7 @@ function window(value: QuotaUsage['fiveHour']) {
   return value ? { resetsAt: value.resetsAt.toISOString(), usage: value.usage } : null;
 }
 
-/** Quota de l'abonnement (E11, DT-39) : l'usage de chaque abonnement, les seuils et leur portée, réglés sur le poste. */
+/** Quota de l'abonnement : l'usage de chaque abonnement, les seuils et leur portée, réglés sur le poste. */
 @Controller('api/quota')
 export class QuotaController {
   constructor(
@@ -36,7 +36,7 @@ export class QuotaController {
     };
   }
 
-  /** Seuils valables pour toutes les sessions pilotées, dès le prochain tour (CA-CONT-99). */
+  /** Seuils valables pour toutes les sessions pilotées, dès le prochain tour. */
   @Put('thresholds')
   async setThresholds(@Body() body: unknown): Promise<QuotaDto> {
     const thresholds = parseBody(thresholdsSchema, body);

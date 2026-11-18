@@ -12,7 +12,7 @@ export interface AllowDialogProps {
   session: null | SessionDto;
 }
 
-/** Sur téléphone, « Autoriser » demande une confirmation rappelant la commande (RF-SESS-07, CA-SESS-37). */
+/** Sur téléphone, « Autoriser » demande une confirmation rappelant la commande. */
 export function AllowDialog({ onCancel, onConfirm, session }: AllowDialogProps) {
   const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => {

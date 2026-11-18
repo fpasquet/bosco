@@ -1,4 +1,4 @@
-// Conteneurs en cours (E19) : les bacs à sable des sessions et les tours pilotés, et ce que chacun consomme
+// Conteneurs en cours : les bacs à sable des sessions et les tours pilotés, et ce que chacun consomme
 // (GET /api/containers).
 
 /** Consommation d'un élément : processeur en cœurs, mémoire en octets, rapportés à son plafond (null : sans plafond) */
@@ -9,7 +9,7 @@ export interface UsageDto {
   memoryLimit: null | number;
 }
 
-/** Le bac à sable d'une session, démarré (E19a, règle 12) */
+/** Le bac à sable d'une session, démarré */
 export interface RunningSandboxDto extends UsageDto {
   /** Nom du conteneur de l'agent */
   name: string;
@@ -18,7 +18,7 @@ export interface RunningSandboxDto extends UsageDto {
   title: string;
 }
 
-/** Une session pilotée dont un tour est en cours sur le poste, sans plafond (E19a) */
+/** Une session pilotée dont un tour est en cours sur le poste, sans plafond */
 export interface PilotedTurnDto extends UsageDto {
   sessionId: string;
   since: string;
@@ -33,6 +33,6 @@ export interface ContainersDto {
   piloted: PilotedTurnDto[];
   sandboxes: RunningSandboxDto[];
   totals: { cpu: number; memory: number; piloted: number; sandboxes: number };
-  /** Depuis quand Docker ne répond pas ; null s'il répond (E19c) */
+  /** Depuis quand Docker ne répond pas ; null s'il répond */
   unreachableSince: null | string;
 }

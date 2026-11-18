@@ -1,7 +1,7 @@
 import type { ConversationPart, ConversationStep, ConversationTurn } from '../../domain/conversation.ts';
 // Conversation d'une session, ligne par ligne de son transcript. Le format est interne à Claude Code et change d'une
-// version à l'autre (DT-05) : on ne garde que les demandes, les réflexions, les outils et les réponses, et toute ligne
-// inconnue, incomplète ou mal formée est ignorée sans erreur (NF-08).
+// version à l'autre : on ne garde que les demandes, les réflexions, les outils et les réponses, et toute ligne
+// inconnue, incomplète ou mal formée est ignorée sans erreur.
 import { describeAction } from '../../domain/action-summary.ts';
 import { channelMessageOf } from '../../domain/channel.ts';
 import { type Conversation, lastParts } from '../../domain/conversation.ts';

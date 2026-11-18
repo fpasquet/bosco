@@ -10,9 +10,9 @@ import type { SessionView } from './session.service.ts';
 
 export interface SessionRepository {
   find(id: string): Promise<null | Session>;
-  /** Journal d'une session, dans l'ordre (E2a) */
+  /** Journal d'une session, dans l'ordre */
   journal(id: string): Promise<JournalEntry[]>;
-  /** Sessions dont le titre, un message ou une commande contient chacun des mots (E3a, CA-SESS-47) */
+  /** Sessions dont le titre, un message ou une commande contient chacun des mots */
   search(text: string): Promise<Set<string>>;
   list(): Promise<Session[]>;
   /** Enregistre la session et ajoute les nouvelles entrées de son journal, jamais modifiées ensuite. */
@@ -27,11 +27,13 @@ export interface SourceRepository {
 /** Dossiers de configuration de Claude Code présents sur le poste, avec leur aperçu. */
 export interface ProfileFinder {
   findCandidates(): Promise<ProfileCandidate[]>;
+  /** Aperçu d'un dossier choisi à la main ; null s'il n'est pas un dossier de configuration de Claude Code */
+  inspect(path: string): Promise<null | ProfileCandidate>;
 }
 
 /** Lit les transcripts d'un profil depuis une date, puis suit leurs ajouts, sans jamais les modifier. */
 export interface TranscriptWatcher {
-  /** Arrête la lecture d'un profil ; rien n'est effacé (CA-SESS-56) */
+  /** Arrête la lecture d'un profil ; rien n'est effacé */
   unwatch(sourceId: string): Promise<void>;
   watch(source: Source, since: Date): Promise<void>;
 }
@@ -52,9 +54,9 @@ export interface SessionRegistry {
   watch(source: Source, changed: (sessionIds: string[]) => void): Promise<void>;
 }
 
-/** Publie chaque changement d'une session vers le flux en direct (DT-06) ; le domaine ne connaît pas le transport. */
+/** Publie chaque changement d'une session vers le flux en direct ; le domaine ne connaît pas le transport. */
 export interface SessionEvents {
-  /** Une autorisation a reçu sa réponse : ici, ou dans le terminal (« elsewhere »), pour un message bref (CA-SESS-07) */
+  /** Une autorisation a reçu sa réponse : ici, ou dans le terminal (« elsewhere »), pour un message bref */
   permissionSettled(settled: PermissionSettled): void;
   sessionChanged(session: SessionView): void;
 }
@@ -71,17 +73,30 @@ export interface HookEndpoint {
   url: string;
 }
 
+export type LiveTrackingInstallation = 'installed' | 'missing' | 'outdated';
+
 /** Réglages d'un profil Claude Code (<profil>/settings.json) : Bosco y ajoute ses hooks sans rien remplacer. */
 export interface ProfileSettings {
-  /** Hooks de Bosco ajoutés aux réglages ; `backup` garde d'abord une copie des réglages actuels (CA-SESS-62) */
+  /** Hooks de Bosco ajoutés aux réglages ; `backup` garde d'abord une copie des réglages actuels */
   install(profilePath: string, endpoint: HookEndpoint, backup: boolean): Promise<{ backupPath: null | string }>;
-  isInstalled(profilePath: string, endpoint: HookEndpoint): Promise<boolean>;
-  /** Retire les seuls hooks de Bosco : les réglages redeviennent ceux d'avant l'installation (CA-SESS-63) */
+  /**
+   * installed : les hooks de cette version de Bosco, sur son adresse et avec son secret ; outdated : des hooks de ce
+   * Bosco qui ne sont plus ceux-là (port, secret ou événements changés) ; missing : aucun
+   */
+  installation(profilePath: string, endpoint: HookEndpoint): Promise<LiveTrackingInstallation>;
+  /** Retire les seuls hooks de Bosco : les réglages redeviennent ceux d'avant l'installation */
   uninstall(profilePath: string, endpoint: HookEndpoint): Promise<void>;
 }
 
+/** Serveur MCP de Bosco dans un profil Claude Code, ajouté sans rien remplacer des serveurs existants. */
+export interface McpServerInstaller {
+  install(profilePath: string): Promise<void>;
+  isInstalled(profilePath: string): Promise<boolean>;
+  uninstall(profilePath: string): Promise<void>;
+}
+
 /**
- * Valeurs par défaut des sessions lancées dans Bosco avec un profil (E4g), gardées par Bosco ; NO_DEFAULTS sans
+ * Valeurs par défaut des sessions lancées dans Bosco avec un profil, gardées par Bosco ; NO_DEFAULTS sans
  * réglage.
  */
 export interface ProfileDefaultsRepository {
@@ -104,7 +119,7 @@ export interface CatalogGroup {
 
 /** Projet où démarrer une session, avec ce que propose le formulaire par défaut. */
 export interface CatalogProject {
-  /** Valeurs par défaut de ses nouvelles sessions (E21a) */
+  /** Valeurs par défaut de ses nouvelles sessions */
   defaults: LevelDefaults;
   /** Domaines propres au projet, ajoutés à la liste générale pour ses bacs à sable */
   domains: string[];
@@ -166,6 +181,11 @@ export interface UsageRepository {
   listActivity(from: Date | null): Promise<{ at: Date; kind: string; sessionId: string }[]>;
   listPullRequests(from: Date | null): Promise<RecordedPullRequest[]>;
   listTurns(from: Date | null): Promise<RecordedTurn[]>;
+}
+
+/** Le transcript d'une session existe-t-il encore dans son profil ? */
+export interface TranscriptFiles {
+  exists(profile: string, sessionId: string): Promise<boolean>;
 }
 
 /** Relit tout le transcript d'une session ; null quand il n'existe plus. */

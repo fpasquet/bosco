@@ -1,7 +1,7 @@
 import type { SandboxSample } from '../domain/containers.ts';
 import type { Clock } from './ports.ts';
 
-/** Mesure de l'état du poste toutes les 5 s (DT-35) ; Docker injoignable se retente toutes les 30 s (E19c). */
+/** Mesure de l'état du poste toutes les 5 s ; Docker injoignable se retente toutes les 30 s. */
 export const MEASURE_MS = 5000;
 export const RETRY_MS = 30_000;
 
@@ -10,7 +10,7 @@ export interface SandboxProbe {
   list(): Promise<SandboxSample[]>;
 }
 
-/** Tours de sessions pilotées en cours sur le poste, mesurés sur leurs processus (DT-35) */
+/** Tours de sessions pilotées en cours sur le poste, mesurés sur leurs processus */
 export interface PilotedTurnsProbe {
   list(): Promise<{ cpu: number; memory: number; sessionId: string; since: Date; title: string }[]>;
 }
@@ -39,7 +39,7 @@ export interface ContainersDeps {
   clock: Clock;
   events: ContainerEvents;
   hostCpus: number;
-  /** Plafonds de chaque bac à sable (E11a) */
+  /** Plafonds de chaque bac à sable */
   limits: { cpus: number; memory: number };
   pilots: PilotedTurnsProbe;
   probe: SandboxProbe;
@@ -48,7 +48,7 @@ export interface ContainersDeps {
 }
 
 /**
- * Conteneurs en cours (E19, RF-CONT-13) : les bacs à sable démarrés et les tours pilotés sur le poste, mesurés toutes
+ * Conteneurs en cours : les bacs à sable démarrés et les tours pilotés sur le poste, mesurés toutes
  * les 5 s et publiés en direct. Bosco ne lance rien d'ici : un bac à sable s'arrête depuis sa session.
  */
 export class ContainersService {
@@ -70,14 +70,14 @@ export class ContainersService {
     return this.view;
   }
 
-  /** Un passage du minuteur : Docker injoignable n'est retenté que toutes les 30 s (E19c). */
+  /** Un passage du minuteur : Docker injoignable n'est retenté que toutes les 30 s. */
   async tick(): Promise<ContainersView> {
     const now = this.deps.clock.now().getTime();
     if (this.view.unreachableSince && now - this.lastAttempt < RETRY_MS) return this.view;
     return this.measure();
   }
 
-  /** « Réessayer » : une mesure tout de suite (CA-CONT-82). */
+  /** « Réessayer » : une mesure tout de suite. */
   async measure(): Promise<ContainersView> {
     this.lastAttempt = this.deps.clock.now().getTime();
     const view = await this.measureOnce();
@@ -92,7 +92,7 @@ export class ContainersService {
     try {
       samples = await this.deps.probe.list();
     } catch {
-      // Docker ne répond pas : les dernières mesures restent, datées (E19c)
+      // Docker ne répond pas : les dernières mesures restent, datées
       return { ...this.view, piloted: pilotedView, unreachableSince: this.view.unreachableSince ?? now };
     }
     const sessions = await this.deps.sandboxedSessions().catch(() => []);

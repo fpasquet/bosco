@@ -1,7 +1,7 @@
 import { Skeleton } from '@/shared/ui/skeleton';
 
 export interface PageSkeletonProps {
-  /** Indicateurs en bandeau sous le titre (vue d'ensemble, E1e) */
+  /** Indicateurs en bandeau sous le titre (vue d'ensemble) */
   indicators?: boolean;
   /** Lignes d'une liste, ou champs d'un formulaire */
   rows?: number;
@@ -98,7 +98,7 @@ function Body({ indicators, rows, variant }: Required<PageSkeletonProps>) {
 
 /**
  * Écran en chargement : des blocs animés à la place du contenu, dans la forme de l'écran, plutôt qu'une page vide
- * (E1e : le chargement ordinaire n'affiche que ces blocs). Les lecteurs d'écran entendent « Chargement ».
+ * (le chargement ordinaire n'affiche que ces blocs). Les lecteurs d'écran entendent « Chargement ».
  */
 export function PageSkeleton({ indicators = false, rows = 4, variant }: PageSkeletonProps) {
   return (

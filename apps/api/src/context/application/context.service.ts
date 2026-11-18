@@ -8,7 +8,13 @@ import {
   sessionContextText,
   tokensOf,
 } from '../domain/context-text.ts';
-import { Decision, type DecisionSnapshot, type DecisionTarget, type DecisionText } from '../domain/decision.ts';
+import {
+  Decision,
+  type DecisionSnapshot,
+  type DecisionTarget,
+  type DecisionText,
+  type ProposingSession,
+} from '../domain/decision.ts';
 
 export interface DecisionRepository {
   list(): Promise<Decision[]>;
@@ -25,6 +31,19 @@ export interface ProjectGroups {
 export interface ArchitectureStore {
   of(project: string): Promise<Architecture>;
   save(project: string, architecture: Architecture): Promise<void>;
+}
+
+/** Sessions lues par Bosco : celle qui travaille dans un dossier, pour nommer l'auteur d'une proposition. */
+export interface WorkingSessions {
+  /** Session la plus récemment active dans ce dossier ; null s'il n'y en a pas */
+  latestIn(path: string): Promise<null | ProposingSession>;
+}
+
+/** Proposition arrivée : la notification la signale, avec sa session. */
+export interface ProposalAlerts {
+  proposed(decision: DecisionSnapshot): Promise<void>;
+  /** Acceptée ou refusée : sa notification est traitée */
+  settled(decision: DecisionSnapshot, note: string): Promise<void>;
 }
 
 /** Projets ajoutés par la personne. */
@@ -61,7 +80,15 @@ export class ContextService {
     private readonly architectures: ArchitectureStore,
     private readonly projects: KnownProjects,
     private readonly clock: { now(): Date },
+    private readonly sessions: WorkingSessions = { latestIn: () => Promise.resolve(null) },
   ) {}
+
+  private alerts: null | ProposalAlerts = null;
+
+  /** Notifications des propositions, branchées par le point de composition. */
+  useAlerts(alerts: ProposalAlerts): void {
+    this.alerts = alerts;
+  }
 
   /** Projet d'un dossier de travail (le plus profond qui le contient) et son dossier relatif ; null hors des projets. */
   async projectOf(path: string): Promise<null | { folder: string; name: string }> {
@@ -77,7 +104,7 @@ export class ContextService {
     return { project, ...context };
   }
 
-  /** Texte exact qu'une session lira par le serveur MCP de Bosco (E9f). */
+  /** Texte exact qu'une session lira par le serveur MCP de Bosco. */
   async preview(project: string): Promise<ContextPreview> {
     const context = await this.contextOf(project);
     const text = contextText(project, context);
@@ -91,7 +118,7 @@ export class ContextService {
 
   /**
    * Texte qu'une session lit par le serveur MCP de Bosco : le contexte de son projet principal, celui de son dossier de
-   * travail, puis de chacun des autres projets qu'elle voit (--add-dir), une fois chacun (CA-SESS-142) ; null hors des
+   * travail, puis de chacun des autres projets qu'elle voit (--add-dir), une fois chacun ; null hors des
    * projets connus.
    */
   async sessionContext(path: string, others: readonly string[]): Promise<null | string> {
@@ -108,16 +135,6 @@ export class ContextService {
       blocks.push({ project, text: contextText(project, context) });
     }
     return sessionContextText(blocks);
-  }
-
-  /** Projets qui ont une décision à eux, proposée ou acceptée : ceux que l'écran du contexte propose de consulter. */
-  async listDecidedProjects(): Promise<string[]> {
-    const all = await this.decisions.list();
-    const names = all.flatMap((decision) => {
-      const { state, target } = decision.toSnapshot();
-      return state === 'accepted' || state === 'proposed' ? [target.name] : [];
-    });
-    return [...new Set(names)].toSorted((a, b) => a.localeCompare(b));
   }
 
   async proposals(): Promise<DecisionSnapshot[]> {
@@ -138,7 +155,7 @@ export class ContextService {
     };
   }
 
-  /** Nouvelle décision, écrite par toi ; elle peut en remplacer une autre (CA-CONT-16). */
+  /** Nouvelle décision, écrite par toi ; elle peut en remplacer une autre. */
   async write(
     target: DecisionTarget,
     text: DecisionText,
@@ -157,20 +174,29 @@ export class ContextService {
     return decision.toSnapshot();
   }
 
-  /** Proposée par un agent ou une session : elle attend ta validation (RF-CONT-02). */
-  async propose(project: string, text: DecisionText, taskId: null | number): Promise<DecisionSnapshot> {
-    const id = await this.decisions.nextId();
-    const decision = Decision.propose(id, project, text, taskId, this.clock.now());
+  /**
+   * Proposée par l'agent de la session qui travaille dans ce dossier : elle attend ta validation, et arrive en
+   * notification.
+   */
+  async propose(project: string, text: DecisionText, path: string): Promise<DecisionSnapshot> {
+    const [id, session] = await Promise.all([this.decisions.nextId(), this.sessions.latestIn(path)]);
+    const decision = Decision.propose(id, project, text, session, this.clock.now());
     await this.decisions.save([decision]);
-    return decision.toSnapshot();
+    const snapshot = decision.toSnapshot();
+    await this.alerts?.proposed(snapshot).catch(() => undefined);
+    return snapshot;
   }
 
-  accept(id: number, edited: DecisionText | null): Promise<DecisionSnapshot> {
-    return this.change(id, (decision) => decision.accept(this.clock.now(), edited));
+  async accept(id: number, edited: DecisionText | null): Promise<DecisionSnapshot> {
+    const decision = await this.change(id, (found) => found.accept(this.clock.now(), edited));
+    await this.alerts?.settled(decision, 'Acceptée').catch(() => undefined);
+    return decision;
   }
 
-  refuse(id: number, reason: null | string): Promise<DecisionSnapshot> {
-    return this.change(id, (decision) => decision.refuse(reason));
+  async refuse(id: number, reason: null | string): Promise<DecisionSnapshot> {
+    const decision = await this.change(id, (found) => found.refuse(reason));
+    await this.alerts?.settled(decision, 'Refusée').catch(() => undefined);
+    return decision;
   }
 
   edit(id: number, text: DecisionText, note: string): Promise<DecisionSnapshot> {

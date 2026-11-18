@@ -7,7 +7,7 @@ import { notificationsQuery } from '../../api/notifications';
 import { useNotificationsDrawer } from '../../hooks/use-drawer';
 
 /**
- * Cloche des notifications, dans la coquille (E15a) : le nombre de non lues ; elle ouvre le tiroir sur ordinateur et
+ * Cloche des notifications, dans la coquille : le nombre de non lues ; elle ouvre le tiroir sur ordinateur et
  * l'écran des notifications sur le téléphone.
  */
 export function NotificationBell() {

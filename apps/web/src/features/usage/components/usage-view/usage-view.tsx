@@ -38,7 +38,7 @@ const MEASURES = [
 const PHONE_DAYS = 7;
 
 /**
- * Page Usage (E23a, E23b) : une ligne de filtres pour toute la page, sauf le quota ; l'activité de Bosco, les tokens et
+ * Page Usage : une ligne de filtres pour toute la page, sauf le quota ; l'activité de Bosco, les tokens et
  * le coût estimé, le graphique quotidien, le quota des abonnements et la répartition par projet, modèle et profil.
  */
 export function UsageView({

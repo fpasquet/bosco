@@ -1,6 +1,6 @@
 import type { HistoryDayDto, SessionStateDto } from '@bosco/domain';
 
-/** Filtres de l'historique (E3a), qui se cumulent. */
+/** Filtres de l'historique, qui se cumulent. */
 export interface HistoryFilters {
   /** Jours en arrière ; null : tout l'historique */
   days: null | number;

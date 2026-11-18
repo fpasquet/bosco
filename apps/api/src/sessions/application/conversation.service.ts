@@ -8,7 +8,7 @@ export type ConversationResult =
   | { kind: 'gone' }
   | { kind: 'unknownSession' };
 
-/** Fil complet d'une session (E2a) : demandes, réflexions, outils et réponses, lus dans son transcript. */
+/** Fil complet d'une session : demandes, réflexions, outils et réponses, lus dans son transcript. */
 export class ConversationService {
   constructor(
     private readonly sessionRepository: SessionRepository,

@@ -45,13 +45,16 @@ Fonctionnalité: Contexte des agents
     Et je clique sur le bouton « Accepter la décision »
     Alors je vois le lien « DEC-1 Découper les tableaux par ligne »
 
+  @CA-CONT-20
   @CA-CONT-21
   @CA-CONT-22
   Scénario: Une décision acceptée change avec une note et garde sa version précédente
     Étant donné le projet « maison » a la décision acceptée « Garder Jest pour les tests »
     Quand j'ouvre la page « /projects/1/context/decisions/1/edit »
     Et je saisis « Garder Jest pour les tests existants » dans le champ « Titre »
-    Et je clique sur le bouton « Enregistrer la version 2 »
+    Alors je vois le texte « Changé : Garder Jest pour les tests existants »
+    Et la page est accessible
+    Quand je clique sur le bouton « Enregistrer la version 2 »
     Alors je vois le texte « Écris une note pour dire ce qui change. »
     Quand je saisis « Les nouveaux tests aussi » dans le champ « Note du changement (obligatoire) »
     Et je clique sur le bouton « Enregistrer la version 2 »
@@ -112,3 +115,28 @@ Fonctionnalité: Contexte des agents
     Quand j'ouvre la page « /projects/1/context/decisions/1 »
     Alors je vois le texte « Modifier, remplacer ou abandonner une décision se fait depuis le poste. »
     Et la page est accessible
+
+  @CA-CONT-10
+  Scénario: Une décision proposée arrive en notification et nomme la session de son agent, avec un lien vers elle
+    Quand j'ouvre la page « / »
+    Et la session du dossier « maison/packages/recettes » propose la décision « Normaliser les sigles »
+    Et je clique sur le bouton « Notifications : 1 non lues »
+    Alors le tiroir des notifications montre « Décision proposée »
+    Quand je clique sur le bouton « Normaliser les sigles » du tiroir
+    Alors je vois le texte « Proposée par l’agent de la session »
+    Quand je clique sur le lien « Corriger l’indexation des PDF dans Elasticsearch » de la page
+    Alors je suis sur la page « /sessions/5e0a91c3 »
+
+  @CA-CONT-04
+  Scénario: Sans décision à valider, l'onglet Contexte n'a pas de bandeau
+    Étant donné le projet « maison » a la décision acceptée « Garder Jest pour les tests »
+    Quand j'ouvre la page « /projects/1/context »
+    Alors je vois le lien « DEC-1 Garder Jest pour les tests »
+    Et je ne vois plus le texte « attend ta validation »
+
+  @mobile
+  @CA-CONT-24
+  Scénario: Sur le téléphone, modifier une décision renvoie vers le poste
+    Étant donné le projet « maison » a la décision acceptée « Garder Jest pour les tests »
+    Quand j'ouvre la page « /projects/1/context/decisions/1/edit »
+    Alors je vois le texte « Une décision se modifie depuis le poste. »

@@ -37,7 +37,8 @@ Fonctionnalité: Historique
     Alors je vois le lien « Corriger l’indexation des PDF dans Elasticsearch »
     Et je ne vois plus le texte « Specs du tableau de bord Bosco »
 
-  @CA-SESS-13
+  @CA-SESS-149
+  @CA-CONT-156
   Scénario: La vue filtrée sur un projet liste ses sessions terminées aujourd'hui
     Étant donné le suivi en direct est installé dans le profil « .claude-perso »
     Et la session « c41e9a07 » du profil « .claude-perso » se termine

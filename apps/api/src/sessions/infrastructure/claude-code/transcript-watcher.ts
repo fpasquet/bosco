@@ -1,6 +1,6 @@
 import { type FSWatcher, watch } from 'chokidar';
 // Lecture des transcripts d'un profil : d'abord ceux des derniers jours, puis chaque ajout, à partir de la dernière
-// position lue. Bosco ne modifie jamais ces fichiers (RF-SESS-01) ; une ligne incomplète attend la lecture suivante.
+// position lue. Bosco ne modifie jamais ces fichiers ; une ligne incomplète attend la lecture suivante.
 import { open, readdir, stat } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import type { TranscriptWatcher } from '../../application/ports.ts';

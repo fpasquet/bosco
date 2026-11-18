@@ -1,4 +1,4 @@
-/** Réglages des sources (E4a). */
+/** Réglages des sources. */
 export interface SettingsDto {
   desktopNotifications: boolean;
   inactivityMinutes: number;

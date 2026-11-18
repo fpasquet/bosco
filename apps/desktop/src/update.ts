@@ -1,4 +1,4 @@
-// Mise à jour de l'application du poste (CA-APPS-10) : un paquet plus récent installé par-dessus celui qui tourne
+// Mise à jour de l'application du poste : un paquet plus récent installé par-dessus celui qui tourne
 // remplace ses fichiers, mais pas le code déjà chargé. L'application le remarque et propose de relancer Bosco.
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';

@@ -22,7 +22,7 @@ const STATES = {
 } as const;
 
 /**
- * Bac à sable d'une session (E2j, règle 12) : l'état de son conteneur et son arrêt prévu, la branche de la session et
+ * Bac à sable d'une session : l'état de son conteneur et son arrêt prévu, la branche de la session et
  * sa récupération dans le dépôt du poste, puis l'arrêt et la suppression, confirmée.
  */
 export function SandboxCard({ busy, onRemove, onRetrieve, onStop, sandbox }: SandboxCardProps) {

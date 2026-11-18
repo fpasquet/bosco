@@ -16,7 +16,7 @@ export interface NotificationListProps {
   onOpen: (notification: NotificationDto) => void;
 }
 
-/** Notifications rangées par jour, filtrées « À traiter » ou « Toutes » (E15a). */
+/** Notifications rangées par jour, filtrées « À traiter » ou « Toutes ». */
 export function NotificationList({
   busy,
   filter,

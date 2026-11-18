@@ -15,7 +15,7 @@ export interface ProfileDefaultsRow {
   sourceId: string;
 }
 
-/** Valeurs par défaut des sessions lancées dans Bosco avec un profil (E4g) ; sans ligne, celles du profil Claude Code. */
+/** Valeurs par défaut des sessions lancées dans Bosco avec un profil ; sans ligne, celles du profil Claude Code. */
 export const ProfileDefaultsSchema = new EntitySchema<ProfileDefaultsRow>({
   name: 'ProfileDefaults',
   tableName: 'profile_defaults',

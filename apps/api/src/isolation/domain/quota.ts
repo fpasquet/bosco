@@ -2,7 +2,7 @@ import type { QuotaWindowName, QuotaWindows } from '../../shared/domain/subscrip
 import { DomainError } from '../../shared/domain/domain-error.ts';
 
 /**
- * Quota de l'abonnement (DT-39) : au-delà de son seuil d'attente, une session pilotée de cet abonnement ne lance plus
+ * Quota de l'abonnement : au-delà de son seuil d'attente, une session pilotée de cet abonnement ne lance plus
  * de tour ; au-delà de son seuil d'arrêt, le tour en cours s'arrête. Seuils en pourcentage, par fenêtre.
  */
 export type QuotaThresholds = Record<QuotaWindowName, { stop: number; wait: number }>;
@@ -56,7 +56,7 @@ export function quotaStop(windows: QuotaWindows, thresholds: QuotaThresholds, no
   return null;
 }
 
-/** Des seuils entiers de 1 à 100 %, l'attente sous l'arrêt (CA-CONT-99). */
+/** Des seuils entiers de 1 à 100 %, l'attente sous l'arrêt. */
 export function checkQuotaThresholds(thresholds: QuotaThresholds): QuotaThresholds {
   for (const name of ORDER) {
     const { stop, wait } = thresholds[name];

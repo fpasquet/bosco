@@ -1,4 +1,4 @@
-// Isolation Docker des bacs à sable (DT-37) : l'image de l'agent, ses limites de mémoire, de processeurs et de
+// Isolation Docker des bacs à sable : l'image de l'agent, ses limites de mémoire, de processeurs et de
 // processus, un utilisateur sans droits d'administration, et un réseau privé sans Internet dont la seule sortie est un
 // proxy qui ne laisse passer que les domaines autorisés.
 import { execFile, spawn } from 'node:child_process';

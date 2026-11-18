@@ -12,9 +12,9 @@ import {
 import { homedir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-// Application du poste (E17, DT-33) : une coquille autour du service et de l'interface de Bosco. Elle démarre le service
+// Application du poste : une coquille autour du service et de l'interface de Bosco. Elle démarre le service
 // (ou se relie à celui qui tourne déjà), montre l'interface dans sa fenêtre, tient l'icône de la barre système et
-// montre les notifications en natif. Facultative : Bosco se lance toujours dans le navigateur (règle 2 du lot 4).
+// montre les notifications en natif. Facultative : Bosco se lance toujours dans le navigateur.
 import type { NotificationDto, SessionDto } from '@bosco/domain';
 import { isAutostart, setAutostart } from './autostart.ts';
 import { LiveEvents } from './events.ts';
@@ -38,10 +38,10 @@ const APP_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const ASSETS = join(APP_DIR, 'assets');
 const PORT = Number(process.env.BOSCO_PORT ?? 4870);
 const BASE = `http://127.0.0.1:${PORT}`;
-/** L'application redit sa présence à ce rythme : le service lui laisse alors les notifications (CA-APPS-03) */
+/** L'application redit sa présence à ce rythme : le service lui laisse alors les notifications */
 const PRESENCE_MS = 15_000;
 const PAUSE_MS = 60 * 60 * 1000;
-/** L'application regarde à ce rythme si un paquet plus récent a été installé (CA-APPS-10) */
+/** L'application regarde à ce rythme si un paquet plus récent a été installé */
 const UPDATE_CHECK_MS = 30_000;
 
 let window: BrowserWindow | null = null;
@@ -132,7 +132,7 @@ function refreshTray(): void {
 }
 
 function notify(notification: NotificationDto, inApp: boolean): void {
-  // Bosco au premier plan : le message bref s'affiche déjà dans la fenêtre (CA-SESS-86)
+  // Bosco au premier plan : le message bref s'affiche déjà dans la fenêtre
   if (inApp || pausedUntil > Date.now() || !Notification.isSupported()) return;
   const { body, title } = nativeText(notification);
   const native = new Notification({
@@ -172,7 +172,7 @@ function checkUpdate(): void {
   native.show();
 }
 
-/** Un service répond déjà : s'y relier (par défaut) ou le remplacer ; le choix est gardé (E17b). */
+/** Un service répond déjà : s'y relier (par défaut) ou le remplacer ; le choix est gardé. */
 async function serviceChoice(): Promise<'attach' | 'own' | 'quit'> {
   const preferences = loadPreferences(app.getPath('userData'));
   if (preferences.service) return preferences.service;

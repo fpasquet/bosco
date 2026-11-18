@@ -30,8 +30,8 @@ function remaining(expiresAt: string, now: Date): string {
 }
 
 /**
- * Appairage d'un téléphone (E4c) : l'adresse sur le réseau local, l'avertissement du certificat à accepter une fois,
- * et un code valable 5 minutes, à usage unique, avec 5 essais au plus (CA-SESS-66).
+ * Appairage d'un téléphone : l'adresse sur le réseau local, l'avertissement du certificat à accepter une fois,
+ * et un code valable 5 minutes, à usage unique, avec 5 essais au plus.
  */
 export function PairingDialog({
   code,

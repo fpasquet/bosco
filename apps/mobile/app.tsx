@@ -1,4 +1,4 @@
-// Application Android de Bosco (E18, DT-33) : une coquille autour de l'interface téléphone ; seuls l'appairage, la
+// Application Android de Bosco : une coquille autour de l'interface téléphone ; seuls l'appairage, la
 // confiance dans le certificat du poste, le trousseau et les notifications sont natifs.
 import * as Notifications from 'expo-notifications';
 import { StatusBar } from 'expo-status-bar';
@@ -38,7 +38,7 @@ export default function App() {
     })();
   }, []);
 
-  // Une notification touchée ouvre sa session dans la vue web (CA-APPS-06) : par l'écouteur, et au retour au premier
+  // Une notification touchée ouvre sa session dans la vue web : par l'écouteur, et au retour au premier
   // plan par la dernière réponse, que l'écouteur ne reçoit pas toujours quand Android rouvre l'application
   const handled = useRef<null | string>(null);
   useEffect(() => {
@@ -61,7 +61,7 @@ export default function App() {
     };
   }, []);
 
-  // Connecté en arrière-plan (E18d, désactivé par défaut) : un service au premier plan, avec sa notification permanente,
+  // Connecté en arrière-plan (désactivé par défaut) : un service au premier plan, avec sa notification permanente,
   // empêche Android de geler l'application ; sans lui, les notifications n'arrivent qu'application ouverte
   useEffect(() => {
     boscoTrust.setKeepAlive(preferences.background && workstation !== null);
@@ -94,7 +94,7 @@ export default function App() {
               const paired = { fingerprint, url, pairedAt: new Date().toISOString() };
               void saveWorkstation(paired).then(() => {
                 setWorkstation(paired);
-                // La page d'appairage du poste s'appaire seule avec le code de son adresse (E4c)
+                // La page d'appairage du poste s'appaire seule avec le code de son adresse
                 setScreen({ kind: 'bosco', path: `/pair?code=${code ?? ''}` });
               });
             }}

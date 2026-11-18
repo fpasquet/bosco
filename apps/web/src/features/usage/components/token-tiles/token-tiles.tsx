@@ -3,7 +3,7 @@ import { modelName } from '@/shared/lib/session-settings';
 import { formatPercent, formatTokens, formatUsd } from '../../lib/format';
 
 /**
- * Tokens de la période (E23a) : les quatre sortes, la réutilisation du cache (lecture du cache / (entrée + lecture du
+ * Tokens de la période : les quatre sortes, la réutilisation du cache (lecture du cache / (entrée + lecture du
  * cache)), les tours sans lecture du cache, sessions et tours, et le coût estimé au tarif public de l'API. Un modèle
  * sans tarif connu est exclu du coût et signalé sous le chiffre.
  */

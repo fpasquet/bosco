@@ -3,7 +3,7 @@ import type { TokenUsage } from './token-usage.ts';
 
 /**
  * Ce qu'une ligne de transcript dit d'une session, une fois lue. Le format de Claude Code est interne et change d'une
- * version à l'autre (DT-05) : l'adaptateur n'en garde que ces faits, et tout le reste est ignoré (NF-08).
+ * version à l'autre : l'adaptateur n'en garde que ces faits, et tout le reste est ignoré.
  */
 export interface TranscriptEvent {
   /** Moment de l'événement ; absent pour les lignes de métadonnées (titre) */
@@ -15,7 +15,7 @@ export interface TranscriptEvent {
   cwd: null | string;
   /** pullRequest : une PR créée par l'agent (`gh pr create`), dont `text` est l'adresse */
   kind: 'prompt' | 'pullRequest' | 'reply' | 'title' | 'tool';
-  /** Question posée par l'agent (outil AskUserQuestion) : elle attend ta réponse (E15) */
+  /** Question posée par l'agent (outil AskUserQuestion) : elle attend ta réponse */
   question?: null | string;
   model: null | string;
   /** Racine git du dossier de travail, trouvée par l'adaptateur : elle donne le projet de la session */

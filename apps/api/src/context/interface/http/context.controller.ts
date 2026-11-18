@@ -84,14 +84,7 @@ export class ContextController {
     };
   }
 
-  /** Projets qui ont une décision à eux, proposée ou acceptée. */
-  @Get('context/projects')
-  async listDecidedProjects(): Promise<{ projects: string[] }> {
-    const projects = await this.context.listDecidedProjects();
-    return { projects };
-  }
-
-  /** Décisions proposées, tous projets : le compteur de l'entrée « Contexte » (CA-CONT-03). */
+  /** Décisions proposées, tous projets : le compteur de l'entrée « Contexte ». */
   @Get('context/proposals')
   async proposals(): Promise<{ proposals: DecisionDto[] }> {
     const proposals = await this.context.proposals();

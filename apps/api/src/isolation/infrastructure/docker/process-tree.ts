@@ -1,4 +1,4 @@
-// Mesure d'un tour piloté (DT-35) : l'agent tourne sur le poste, hors conteneur. On lit dans /proc son processus et ceux
+// Mesure d'un tour piloté : l'agent tourne sur le poste, hors conteneur. On lit dans /proc son processus et ceux
 // qu'il a lancés (commandes, serveurs de test) : temps processeur écoulé depuis la dernière lecture et mémoire résidente.
 import { readdir, readFile } from 'node:fs/promises';
 

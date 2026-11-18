@@ -8,7 +8,7 @@ const USES = [
   { icon: Box, strong: 'Isole une session', before: '', after: ' dans un bac à sable, sur sa propre branche' },
 ];
 
-/** Bienvenue du premier lancement : dans la page, sans fenêtre à fermer (RF-SESS-11). */
+/** Bienvenue du premier lancement : dans la page, sans fenêtre à fermer. */
 export function Welcome() {
   return (
     <section aria-labelledby="welcome-title" className="w-full">

@@ -7,7 +7,7 @@ function recordOf(row: NotificationRow): NotificationRecord {
   return { ...row, kind: row.kind as NotificationKind };
 }
 
-/** Notifications du centre de notifications (E15a), dans leur table. */
+/** Notifications du centre de notifications, dans leur table. */
 export class MikroOrmNotificationRepository implements NotificationRepository {
   constructor(private readonly orm: MikroORM) {}
 
@@ -36,7 +36,7 @@ export class MikroOrmNotificationRepository implements NotificationRepository {
   }
 
   settle(
-    match: { kinds: readonly NotificationKind[]; sessionId?: string; taskId?: number },
+    match: { decisionId?: number; kinds: readonly NotificationKind[]; sessionId?: string; taskId?: number },
     note: string,
   ): Promise<number> {
     return this.orm.em.fork().nativeUpdate(
@@ -46,6 +46,7 @@ export class MikroOrmNotificationRepository implements NotificationRepository {
         kind: { $in: [...match.kinds] },
         ...(match.sessionId !== undefined && { sessionId: match.sessionId }),
         ...(match.taskId !== undefined && { taskId: match.taskId }),
+        ...(match.decisionId !== undefined && { decisionId: match.decisionId }),
       },
       { settled: note },
     );

@@ -10,7 +10,7 @@ import { WaitingSummary } from '../waiting-summary';
 export interface WaitingActionsProps {
   /** Session dont la réponse part : ses boutons attendent */
   busyId: null | string;
-  /** Bosco injoignable : une réponse n'arriverait pas à l'agent, elle se donne dans le terminal (CA-SESS-24) */
+  /** Bosco injoignable : une réponse n'arriverait pas à l'agent, elle se donne dans le terminal */
   offline?: boolean;
   onAllow: (session: SessionDto) => void;
 }
@@ -18,8 +18,8 @@ export interface WaitingActionsProps {
 export const detailOf = (session: SessionDto) => `/sessions/${encodeURIComponent(session.id)}`;
 
 /**
- * « Autoriser » et « Refuser » pour une autorisation ; « Refuser » ouvre le détail pour écrire un motif (E2b). Un tour
- * terminé se répond dans le terminal : seulement « Voir la session » (RF-SESS-03, RF-SESS-04).
+ * « Autoriser » et « Refuser » pour une autorisation ; « Refuser » ouvre le détail pour écrire un motif. Un tour
+ * terminé se répond dans le terminal : seulement « Voir la session ».
  */
 export function WaitingActions({
   busyId,
@@ -73,8 +73,8 @@ export function placeOf(session: SessionDto): string {
 }
 
 /**
- * Bandeau des sessions qui t'attendent, en tête de la vue d'ensemble, la plus ancienne attente en premier (E1b,
- * CA-SESS-05). Il n'existe qu'avec le suivi en direct, et disparaît quand la dernière reçoit sa réponse.
+ * Bandeau des sessions qui t'attendent, en tête de la vue d'ensemble, la plus ancienne attente en premier.
+ * Il n'existe qu'avec le suivi en direct, et disparaît quand la dernière reçoit sa réponse.
  */
 export function WaitingBanner({
   now,

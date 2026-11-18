@@ -16,7 +16,7 @@ const STEPS: { label: string; value: LiveTrackingStep }[] = [
   { label: 'Vérification', value: 'check' },
 ];
 
-/** Les six événements que suit Bosco (CA-SESS-62). */
+/** Les six événements que suit Bosco. */
 const EVENTS = [
   'démarrage et fin de session',
   'ton message',
@@ -36,6 +36,11 @@ export interface LiveTrackingPanelProps {
   source: null | { label: string; path: string };
   status: LiveTrackingDto | undefined;
   step: LiveTrackingStep;
+}
+
+function installLabel(status: LiveTrackingDto | undefined): string {
+  if (status?.outdated) return 'Mettre à jour';
+  return status?.installed ? 'Réinstaller' : 'Installer';
 }
 
 function CheckLine({ detail, done, label }: { detail: string; done: boolean; label: string }) {
@@ -61,7 +66,7 @@ function CheckLine({ detail, done, label }: { detail: string; done: boolean; lab
 }
 
 /**
- * Panneau d'installation du suivi en direct d'un profil (E4b) : présentation, installation, vérification sur un vrai
+ * Panneau d'installation du suivi en direct d'un profil : présentation, installation, vérification sur un vrai
  * signal. Rien n'est installé sans clic, et « Désinstaller » remet les réglages d'avant.
  */
 export function LiveTrackingPanel(props: LiveTrackingPanelProps) {
@@ -126,6 +131,10 @@ export function LiveTrackingPanel(props: LiveTrackingPanelProps) {
                   <li key={event}>{event}</li>
                 ))}
               </ul>
+              <p>
+                Il ajoute aussi le serveur {APP_NAME} au profil : ses sessions lisent le contexte de leur projet et
+                proposent leurs décisions.
+              </p>
               <label className="flex items-center gap-2">
                 <input
                   type="checkbox"
@@ -136,6 +145,12 @@ export function LiveTrackingPanel(props: LiveTrackingPanelProps) {
                 Garder une copie des réglages actuels
               </label>
               {status?.installed && <p className="text-success">Installé dans {status.settingsPath}</p>}
+              {status?.outdated && (
+                <p role="note" className="rounded-card bg-warning-soft px-4 py-3 text-warning">
+                  Les réglages du profil viennent d’une autre version de {APP_NAME} : « Mettre à jour » les remplace par
+                  ceux d’aujourd’hui.
+                </p>
+              )}
             </div>
           )}
           {step === 'check' && (
@@ -146,8 +161,13 @@ export function LiveTrackingPanel(props: LiveTrackingPanelProps) {
               <ul className="flex flex-col gap-3">
                 <CheckLine
                   label="Réglages écrits"
-                  detail={status?.settingsPath ?? '…'}
+                  detail={status?.outdated ? 'À mettre à jour' : (status?.settingsPath ?? '…')}
                   done={Boolean(status?.installed)}
+                />
+                <CheckLine
+                  label={`Serveur ${APP_NAME} ajouté au profil`}
+                  detail="contexte des projets et décisions proposées"
+                  done={Boolean(status?.mcpServer)}
                 />
                 <CheckLine label={`${APP_NAME} joignable`} detail="port local" done />
                 <CheckLine
@@ -183,7 +203,7 @@ export function LiveTrackingPanel(props: LiveTrackingPanelProps) {
           {step === 'intro' && <Button onClick={() => onStepChange('install')}>Suivant</Button>}
           {step === 'install' && (
             <Button disabled={busy} onClick={() => onInstall(backup)}>
-              {status?.installed ? 'Réinstaller' : 'Installer'}
+              {installLabel(status)}
             </Button>
           )}
           {step === 'check' && (

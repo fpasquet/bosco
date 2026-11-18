@@ -11,7 +11,7 @@ Feature: Sandbox isolation
     And Bosco watches the profiles ".claude" and ".claude-perso"
     And the folders "maison,site-perso" are projects
 
-  @CA-CONT-43
+  @CA-REGL-10
   Scenario: The default domains are locked, and the limits of each sandbox are shown
     When I send GET request to "/api/isolation"
     Then the response property "domains.locked" should equal "api.anthropic.com,claude.ai,platform.claude.com,registry.npmjs.org,registry.yarnpkg.com"
@@ -19,14 +19,14 @@ Feature: Sandbox isolation
     When I send DELETE request to "/api/isolation/domains/claude.ai"
     Then the response code should be 400
 
-  @CA-CONT-44
+  @CA-REGL-10
   Scenario: A domain is added by name, then removed in one click
     When I send POST request to "/api/isolation/domains" with the JSON "fixtures/isolation/pypi.json"
     Then the response property "domains.added" should equal "pypi.org"
     When I send DELETE request to "/api/isolation/domains/pypi.org"
     Then the response property "domains.added.length" should equal "0"
 
-  @CA-CONT-44
+  @CA-REGL-10
   Scenario: An address is not a domain
     When I send POST request to "/api/isolation/domains" with the JSON "fixtures/isolation/url.json"
     Then the response code should be 400

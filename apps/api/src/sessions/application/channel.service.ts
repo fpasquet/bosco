@@ -4,7 +4,7 @@ import type { SessionService } from './session.service.ts';
 /** Un serveur du canal de Bosco connecté pour une session du terminal : il pousse les messages dans la session. */
 export type ChannelListener = (text: string) => void;
 
-/** Installation du canal de Bosco dans un profil Claude Code (E4f). */
+/** Installation du canal de Bosco dans un profil Claude Code. */
 export interface ChannelInstaller {
   install(profilePath: string): Promise<void>;
   /** Commande qui lance une session du profil avec le canal */
@@ -14,7 +14,7 @@ export interface ChannelInstaller {
 }
 
 /**
- * Canal de Bosco (E2i, règle 9) : chaque session du terminal lancée avec le canal s'y connecte ; un message écrit dans
+ * Canal de Bosco : chaque session du terminal lancée avec le canal s'y connecte ; un message écrit dans
  * Bosco lui est poussé, et arrive dans son terminal comme une saisie.
  */
 export class ChannelService {
@@ -26,7 +26,7 @@ export class ChannelService {
     private readonly events: Pick<SessionEvents, 'sessionChanged'>,
   ) {}
 
-  /** La session a son canal ouvert : Bosco peut lui écrire (CA-SESS-101). */
+  /** La session a son canal ouvert : Bosco peut lui écrire. */
   isConnected(sessionId: string): boolean {
     return (this.channels.get(sessionId)?.size ?? 0) > 0;
   }

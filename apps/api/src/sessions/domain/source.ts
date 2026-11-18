@@ -1,10 +1,21 @@
-/** Dossier de configuration de Claude Code (un profil) proposé ou surveillé par Bosco (RF-SESS-01). */
+import { DomainError } from '../../shared/domain/domain-error.ts';
+
+/** Dossier de configuration de Claude Code (un profil) proposé ou surveillé par Bosco. */
 export interface SourceSnapshot {
   id: string;
   label: string;
   liveTracking: boolean;
+  /** Tenue par Bosco (le profil des bacs à sable) : toujours lue, sans suivi en direct ni canal à installer */
+  managed: boolean;
   path: string;
   watched: boolean;
+}
+
+/** Bosco tient seul le profil des bacs à sable : le couper ferait disparaître leurs sessions. */
+export class ManagedSource extends DomainError {
+  constructor(path: string) {
+    super('managedSource', `The source ${path} is kept by Bosco`);
+  }
 }
 
 export class Source {
@@ -31,13 +42,19 @@ export class Source {
     return this.snapshot.liveTracking;
   }
 
-  /** Le suivi en direct est installé dans le profil : T'attend et les autorisations deviennent possibles (RF-SESS-03). */
+  get managed(): boolean {
+    return this.snapshot.managed;
+  }
+
+  /** Le suivi en direct est installé dans le profil : T'attend et les autorisations deviennent possibles. */
   enableLiveTracking(): void {
+    if (this.managed) throw new ManagedSource(this.path);
     this.snapshot = { ...this.snapshot, liveTracking: true };
   }
 
-  /** Interrupteur de la source (E4a) : la lecture s'arrête ou reprend, rien n'est effacé (CA-SESS-56). */
+  /** Interrupteur de la source : la lecture s'arrête ou reprend, rien n'est effacé. */
   setWatched(watched: boolean): void {
+    if (this.managed && !watched) throw new ManagedSource(this.path);
     this.snapshot = { ...this.snapshot, watched };
   }
 
@@ -47,7 +64,17 @@ export class Source {
 
   /** Un profil retenu au premier lancement, ou laissé de côté : il garde sa place pour être activé plus tard. */
   static choose(id: string, path: string, watched: boolean): Source {
-    return new Source({ id, path, label: labelOf(path), watched, liveTracking: false });
+    return new Source({ id, path, label: labelOf(path), watched, liveTracking: false, managed: false });
+  }
+
+  /** Le profil des bacs à sable, ajouté par Bosco au premier bac à sable : toujours lu, sous le nom « Bacs à sable ». */
+  static manage(id: string, path: string): Source {
+    return new Source({ id, path, label: 'Bacs à sable', watched: true, liveTracking: false, managed: true });
+  }
+
+  /** Un profil des bacs à sable lu avant que Bosco le tienne à part : il le reprend, sans changer son identifiant. */
+  takeOver(): void {
+    this.snapshot = { ...this.snapshot, label: 'Bacs à sable', watched: true, liveTracking: false, managed: true };
   }
 
   static restore(snapshot: SourceSnapshot): Source {

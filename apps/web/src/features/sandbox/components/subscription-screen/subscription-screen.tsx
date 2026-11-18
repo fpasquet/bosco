@@ -2,6 +2,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { SectionSkeleton } from '@/shared/components/section-skeleton';
+import { useIsPhone } from '@/shared/hooks/use-is-phone';
 import { SettingsHeader } from '@/shared/layouts/settings-tabs';
 import {
   isolationQuery,
@@ -17,11 +18,12 @@ import { QuotaPanel } from '../quota-panel';
 import { SubscriptionPanel } from '../subscription-panel';
 
 /**
- * Réglages › Abonnement Claude (E11) : l'abonnement par défaut des nouvelles sessions, l'usage de chaque abonnement et
+ * Réglages › Abonnement Claude : l'abonnement par défaut des nouvelles sessions, l'usage de chaque abonnement et
  * les seuils du quota. Sur le téléphone, tout se lit sans se changer.
  */
 export function SubscriptionScreen() {
   const client = useQueryClient();
+  const phone = useIsPhone();
   const { data: isolation } = useQuery(isolationQuery);
   const { data: quota } = useQuery(quotaQuery);
   const { data: profiles } = useQuery(profilesQuery);
@@ -66,6 +68,7 @@ export function SubscriptionScreen() {
           />
           <QuotaPanel
             quota={quota}
+            readOnly={phone}
             busy={busy}
             error={quotaError}
             onThresholds={(next) => thresholds.mutate(next)}

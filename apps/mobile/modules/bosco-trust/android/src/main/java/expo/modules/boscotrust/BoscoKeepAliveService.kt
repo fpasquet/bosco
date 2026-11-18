@@ -1,4 +1,4 @@
-// Rester connecté en arrière-plan (E18d, CA-APPS-08) : un service au premier plan, avec sa notification permanente
+// Rester connecté en arrière-plan : un service au premier plan, avec sa notification permanente
 // « Bosco suit tes sessions », garde l'application active ; la vue web continue de suivre le poste et de notifier.
 package expo.modules.boscotrust
 

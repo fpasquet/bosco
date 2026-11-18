@@ -72,8 +72,23 @@ function Relation({ decision, href, label }: { decision: DecisionDto; href: stri
   );
 }
 
+/** Auteur d'une version : toi, ou l'agent d'une session, avec le lien vers elle. */
+function Author({ version }: { version: DecisionDto['versions'][number] }) {
+  const { session } = version;
+  if (!session) return <>{version.author}</>;
+  return (
+    <>
+      l’agent de la session «{' '}
+      <Link href={`/sessions/${encodeURIComponent(session.id)}`} className="link link-primary">
+        {session.title ?? session.id.slice(0, 8)}
+      </Link>{' '}
+      »
+    </>
+  );
+}
+
 /**
- * Une décision (E9b, E9d) : proposée par un agent, elle attend que tu l'acceptes, la modifies ou la refuses ; acceptée,
+ * Une décision : proposée par un agent, elle attend que tu l'acceptes, la modifies ou la refuses ; acceptée,
  * elle se lit avec ses versions et ses liens, et se modifie, se remplace ou s'abandonne sans rien perdre.
  */
 export function DecisionView({
@@ -107,9 +122,9 @@ export function DecisionView({
           DEC-{decision.id} · {titleOf(decision)}
         </h1>
         <p className="mt-1 text-xs text-muted">
-          {proposed
-            ? `Proposée par ${version.author} · ${dateOf(version.at, now)} · ${targetLabel}`
-            : `Version ${shown + 1} · ${dateOf(version.at, now)} · ${version.author} · ${targetLabel}`}
+          {proposed ? 'Proposée par ' : `Version ${shown + 1} · ${dateOf(version.at, now)} · `}
+          <Author version={version} />
+          {proposed ? ` · ${dateOf(version.at, now)} · ${targetLabel}` : ` · ${targetLabel}`}
         </p>
       </header>
       {decision.reason && (

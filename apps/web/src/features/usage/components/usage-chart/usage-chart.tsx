@@ -77,7 +77,7 @@ function Tooltip({ day, id, left, today }: { day: UsageDayDto; id: string; left:
 }
 
 /**
- * Utilisation quotidienne (E23a) : une barre par jour, les quatre séries empilées dans un ordre fixe (lecture du cache
+ * Utilisation quotidienne : une barre par jour, les quatre séries empilées dans un ordre fixe (lecture du cache
  * en bas, entrée en haut), 2 px entre deux segments, un seul axe, gradué en tokens ou en dollars. Le total ne s'inscrit
  * que sur le pic et sur le dernier jour. Au survol ou au focus d'un jour, les autres s'estompent et une info-bulle
  * détaille ses séries ; chaque jour est un bouton nommé pour le clavier et les lecteurs d'écran.

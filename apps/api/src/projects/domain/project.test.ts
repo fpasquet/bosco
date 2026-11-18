@@ -39,7 +39,7 @@ describe('Project', () => {
     });
   });
 
-  it('takes the name of its parent folder too when the name is already taken, then a number', () => {
+  it('CA-CONT-173 · takes the name of its parent folder too when the name is already taken, then a number', () => {
     const projects: ProjectSnapshot[] = [];
     projects.push(add('/home/dev/www/api', projects));
     projects.push(add('/home/dev/clients/api', projects));

@@ -78,7 +78,7 @@ function AgentTurn({
 }
 
 /**
- * Fil complet d'une session (E2a), sur les patterns d'AI Elements : tes demandes en bulles (Message), les réponses de
+ * Fil complet d'une session, sur les patterns d'AI Elements : tes demandes en bulles (Message), les réponses de
  * l'agent en Markdown, ses réflexions (Reasoning) et ses outils (Tool, Terminal, Test Results, Stack Trace, Task).
  */
 export function ConversationView({ conversation, live, notices = [] }: ConversationViewProps) {

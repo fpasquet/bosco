@@ -81,7 +81,7 @@ function Gauge({
 }
 
 /**
- * Quota des abonnements (E23a) : une ligne par abonnement, la fenêtre de 5 h et la semaine telles que Claude Code les
+ * Quota des abonnements : une ligne par abonnement, la fenêtre de 5 h et la semaine telles que Claude Code les
  * donne à chaque tour, avec les seuils d'attente et d'arrêt. Il ne se filtre pas : il vaut pour tout l'abonnement.
  */
 export function QuotaCard({ home, quota }: QuotaCardProps) {

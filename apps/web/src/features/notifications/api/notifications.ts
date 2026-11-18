@@ -1,6 +1,6 @@
 import type { NotificationDto, SessionDetailDto } from '@bosco/domain';
 
-/** Centre de notifications (E15a) : 7 jours, les plus récentes d'abord, et le nombre de non lues. */
+/** Centre de notifications : 7 jours, les plus récentes d'abord, et le nombre de non lues. */
 export const notificationsQuery = {
   queryKey: ['notifications'],
   queryFn: async (): Promise<{ notifications: NotificationDto[]; unread: number }> => {
@@ -41,7 +41,7 @@ export async function answerFromNotification(sessionId: string, allow: boolean):
   return response.ok;
 }
 
-/** L'onglet du poste se dit au premier plan, ou ne l'est plus (E15b) ; le téléphone, refusé, n'en dit rien. */
+/** L'onglet du poste se dit au premier plan, ou ne l'est plus ; le téléphone, refusé, n'en dit rien. */
 export function reportPresence(foreground: boolean): void {
   void fetch('/api/presence', {
     method: 'POST',

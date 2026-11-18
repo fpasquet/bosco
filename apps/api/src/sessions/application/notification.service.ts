@@ -11,6 +11,8 @@ import {
 
 /** Ce que la notification désigne : une session ou une tâche, son titre, et un extrait. */
 export interface NotificationSubject {
+  /** Décision proposée à valider, que la notification ouvre */
+  decisionId?: null | number;
   excerpt: null | string;
   /** Projet de la session ou de la tâche */
   place: null | string;
@@ -28,19 +30,19 @@ export interface NotificationRepository {
   purge(before: Date): Promise<void>;
   /** Marque traitées les notifications encore à traiter de cette session ou de cette tâche */
   settle(
-    match: { kinds: readonly NotificationKind[]; sessionId?: string; taskId?: number },
+    match: { decisionId?: number; kinds: readonly NotificationKind[]; sessionId?: string; taskId?: number },
     note: string,
   ): Promise<number>;
 }
 
-/** Notification du bureau (E15b) : une par session ou tâche, remplacée par la suivante ; un clic ouvre l'adresse. */
+/** Notification du bureau : une par session ou tâche, remplacée par la suivante ; un clic ouvre l'adresse. */
 export interface DesktopAlerts {
   show(notification: NotificationRecord, options: { url: string; urgent: boolean }): void;
 }
 
 /** L'onglet Bosco est-il au premier plan sur le poste ? */
 export interface Presence {
-  /** L'application du poste est là : elle montre les notifications en natif, le service ne les envoie pas (E17a) */
+  /** L'application du poste est là : elle montre les notifications en natif, le service ne les envoie pas */
   appAttached(): boolean;
   foreground(): boolean;
 }
@@ -54,7 +56,7 @@ export interface NotificationEvents {
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 /**
- * Notifications (E15, règle 8) : ce qui arrive est jugé selon les réglages, gardé dans le centre de notifications,
+ * Notifications : ce qui arrive est jugé selon les réglages, gardé dans le centre de notifications,
  * puis montré par une notification du bureau, ou par un message bref quand l'onglet Bosco est au premier plan.
  */
 export class NotificationService {
@@ -69,13 +71,14 @@ export class NotificationService {
     private readonly baseUrl: string,
   ) {}
 
-  /** Un événement arrive : null s'il ne mérite pas de notification selon les réglages (CA-SESS-83, CA-SESS-84). */
+  /** Un événement arrive : null s'il ne mérite pas de notification selon les réglages. */
   async notify(event: NotificationEvent, subject: NotificationSubject): Promise<NotificationRecord | null> {
     const kind = notificationOf(event, this.settings.notifications());
     if (!kind) return null;
     const at = this.clock.now();
     const notification = await this.repository.add({
       at,
+      decisionId: subject.decisionId ?? null,
       excerpt: subject.excerpt,
       kind,
       place: subject.place,
@@ -95,14 +98,14 @@ export class NotificationService {
 
   /** Une attente a reçu sa réponse, une tâche a été relue : ses notifications sortent de « À traiter ». */
   async settle(
-    match: { kinds: readonly NotificationKind[]; sessionId?: string; taskId?: number },
+    match: { decisionId?: number; kinds: readonly NotificationKind[]; sessionId?: string; taskId?: number },
     note: string,
   ): Promise<void> {
     const count = await this.repository.settle(match, note);
     if (count > 0) this.events.changed();
   }
 
-  /** Centre de notifications (E15a) : 7 jours, les plus récentes d'abord, et le nombre de non lues. */
+  /** Centre de notifications : 7 jours, les plus récentes d'abord, et le nombre de non lues. */
   async list(): Promise<{ notifications: NotificationRecord[]; unread: number }> {
     const since = new Date(this.clock.now().getTime() - NOTIFICATION_RETENTION_DAYS * DAY_MS);
     await this.repository.purge(since);
@@ -117,6 +120,7 @@ export class NotificationService {
   }
 
   private urlOf(notification: NotificationRecord): string {
+    if (notification.decisionId !== null) return `${this.baseUrl}/context/decisions/${notification.decisionId}`;
     if (notification.taskId !== null) return `${this.baseUrl}/tasks/${notification.taskId}`;
     return notification.sessionId ? `${this.baseUrl}/sessions/${notification.sessionId}` : this.baseUrl;
   }

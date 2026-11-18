@@ -1,4 +1,4 @@
-// Appairage par le QR code du poste (E18a, CA-APPS-05) : l'adresse, le code et l'empreinte du certificat ; la vue web
+// Appairage par le QR code du poste : l'adresse, le code et l'empreinte du certificat ; la vue web
 // ne fera confiance qu'à ce certificat, sans avertissement.
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useState } from 'react';
@@ -27,7 +27,7 @@ export function PairScreen({ onPair }: Readonly<{ onPair: (pairing: Pairing & { 
     <View style={styles.screen}>
       <Text style={styles.brand}>Bosco</Text>
       <Text style={styles.title}>Appairer Bosco</Text>
-      <Text style={styles.muted}>Sur le poste, ouvre Sources › Accès depuis le téléphone et scanne le QR code.</Text>
+      <Text style={styles.muted}>Sur le poste, ouvre Réglages › Téléphone et scanne le QR code.</Text>
       {!found && !manual && (
         <View style={styles.viewfinder}>
           {permission?.granted ? (

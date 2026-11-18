@@ -1,5 +1,5 @@
 import type { NestFastifyApplication } from '@nestjs/platform-fastify';
-// Next.js servi par NestJS sur le même port (DT-13) : toute requête qui n'est pas une route de l'API va à l'interface.
+// Next.js servi par NestJS sur le même port : toute requête qui n'est pas une route de l'API va à l'interface.
 import type { IncomingMessage } from 'node:http';
 import type { Duplex } from 'node:stream';
 import nextModule from 'next';

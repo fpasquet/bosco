@@ -27,7 +27,7 @@ function filtersOf(query: unknown): HistoryFilters {
   };
 }
 
-/** Historique (E3a) : les sessions jour par jour, avec leurs filtres cumulés. */
+/** Historique : les sessions jour par jour, avec leurs filtres cumulés. */
 @Controller('api/history')
 export class HistoryController {
   constructor(@Inject(HISTORY_SERVICE) private readonly history: HistoryService) {}

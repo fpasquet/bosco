@@ -1,4 +1,4 @@
-// Certificat du téléphone (DT-10), créé par Bosco avec openssl : les échanges sont chiffrés, et le navigateur demande
+// Certificat du téléphone, créé par Bosco avec openssl : les échanges sont chiffrés, et le navigateur demande
 // une fois de l'accepter. Il est refait quand l'adresse du poste sur le réseau change.
 import { execFile } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';

@@ -48,7 +48,7 @@ function Chip({
   );
 }
 
-/** Recherche et filtres en puces de l'historique, qui se cumulent (CA-SESS-47, CA-SESS-48). */
+/** Recherche et filtres en puces de l'historique, qui se cumulent. */
 export function HistoryFilters({ filters, groups, onChange, profiles, projects }: HistoryFiltersProps) {
   const search = useRef<HTMLInputElement>(null);
   useEffect(() => {

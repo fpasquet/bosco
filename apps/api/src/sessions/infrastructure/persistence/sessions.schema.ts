@@ -4,6 +4,7 @@ export interface SourceRow {
   id: string;
   label: string;
   liveTracking: boolean;
+  managed: boolean;
   path: string;
   watched: boolean;
 }
@@ -79,6 +80,7 @@ export const SourceSchema = new EntitySchema<SourceRow>({
     label: { type: 'string' },
     watched: { type: 'boolean' },
     liveTracking: { type: 'boolean', fieldName: 'live_tracking' },
+    managed: { type: 'boolean', default: false },
   },
 });
 

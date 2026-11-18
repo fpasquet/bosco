@@ -1,4 +1,4 @@
-/** Accès depuis le téléphone (E4c). */
+/** Accès depuis le téléphone. */
 export interface PhoneAccessDto {
   enabled: boolean;
   /** Empreinte du certificat, portée par le QR code pour l'application Android */
@@ -28,7 +28,7 @@ async function send<T>(path: string, method: string, body?: unknown): Promise<T>
   return (response.status === 204 ? undefined : await response.json()) as T;
 }
 
-/** Réservés au poste : depuis le téléphone, la réponse est un refus définitif (403), sans nouvel essai. */
+/** Réservés au poste : depuis le téléphone, la réponse est un refus définitif, sans nouvel essai. */
 export const phoneAccessQuery = {
   queryKey: ['phone-access'],
   queryFn: () => send<PhoneAccessDto>('/api/phone-access', 'GET'),

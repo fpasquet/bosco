@@ -8,7 +8,7 @@ import { useLiveContainers } from '../../hooks/use-live-containers';
 import { coresOf, memoryOf, memoryUsageOf, nearCeiling, timeOf } from '../../lib/containers';
 
 /**
- * Conteneurs en cours sur le téléphone (E19a, E19c) : une carte par bac à sable et par tour piloté sur le poste.
+ * Conteneurs en cours sur le téléphone : une carte par bac à sable et par tour piloté sur le poste.
  * Arrêter un tour s'y fait ; un bac à sable s'arrête depuis sa session.
  */
 export function ContainersScreen() {

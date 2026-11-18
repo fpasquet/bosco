@@ -1,9 +1,9 @@
 import { create } from 'zustand';
 
-/** Délai entre deux tentatives de reconnexion, sans action de la personne (CA-SESS-25). */
+/** Délai entre deux tentatives de reconnexion, sans action de la personne. */
 export const RETRY_MS = 5000;
 
-/** État du lien avec Bosco (E1f) : la vue garde les dernières informations reçues, datées, tant qu'il est coupé. */
+/** État du lien avec Bosco : la vue garde les dernières informations reçues, datées, tant qu'il est coupé. */
 interface ConnectionState {
   /** Heure de la dernière information reçue du flux en direct */
   lastDataAt: null | string;
@@ -30,5 +30,5 @@ export const useConnection = create<ConnectionState>()((set, get) => ({
   setRetry: (retry) => set({ retry }),
 }));
 
-/** true quand Bosco ne répond plus : les réponses aux autorisations sont désactivées (CA-SESS-24). */
+/** true quand Bosco ne répond plus : les réponses aux autorisations sont désactivées. */
 export const useOffline = () => useConnection((state) => state.offlineSince !== null);

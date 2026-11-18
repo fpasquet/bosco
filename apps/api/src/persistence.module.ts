@@ -19,7 +19,7 @@ import { CONFIG, ORM } from './shared/tokens.ts';
         mkdirSync(config.dataDir, { recursive: true });
         const file = join(config.dataDir, 'bosco.db');
         const orm = await MikroORM.init(ormConfig(file));
-        // Une base migrée par un Bosco plus récent n'est jamais touchée par celui-ci (CA-APPS-10)
+        // Une base migrée par un Bosco plus récent n'est jamais touchée par celui-ci
         const executed = await orm.migrator.getExecuted();
         const newer = newerMigrations(
           executed.map((row) => row.name),

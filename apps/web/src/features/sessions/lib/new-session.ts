@@ -3,7 +3,7 @@ import type { GroupDto, PilotOptionsDto, SessionDto } from '@bosco/domain';
 export type OptionProject = PilotOptionsDto['projects'][number];
 
 /**
- * Ce que propose le champ « Projets » (E16a) : d'abord les groupes qui ont des projets, « Tous les projets » excepté,
+ * Ce que propose le champ « Projets » : d'abord les groupes qui ont des projets, « Tous les projets » excepté,
  * puis les projets pas encore choisis, les plus récemment ajoutés d'abord.
  */
 export function projectsOffer(
@@ -25,12 +25,12 @@ export function groupProjects(group: GroupDto, projects: readonly OptionProject[
   });
 }
 
-/** Le projet choisi devient le principal : il passe en tête, les autres gardent leur ordre (CA-SESS-133). */
+/** Le projet choisi devient le principal : il passe en tête, les autres gardent leur ordre. */
 export function withPrincipal(chosen: readonly string[], root: string): string[] {
   return [root, ...chosen.filter((candidate) => candidate !== root)];
 }
 
-/** Domaines que joint le bac à sable : la liste générale et ceux de chacun des projets, une fois chacun (CA-SESS-137). */
+/** Domaines que joint le bac à sable : la liste générale et ceux de chacun des projets, une fois chacun. */
 export function sandboxDomains(general: readonly string[], projects: readonly OptionProject[]): string[] {
   return [...new Set([...general, ...projects.flatMap(({ domains }) => domains)])];
 }

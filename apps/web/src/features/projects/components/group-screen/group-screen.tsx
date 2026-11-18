@@ -179,7 +179,7 @@ export function GroupScreen({ children, id, tab }: { children?: ReactNode; id: n
           projects={(overview?.projects ?? []).map(({ id: project, name }) => ({ id: project, name }))}
           serverError={nameError}
           onArrange={arrange}
-          onBrowse={actions.browse}
+          onBrowse={() => actions.browse(id)}
           onDelete={() => setPending({ kind: 'delete' })}
           onDefaults={(defaults) => change.mutate(() => changeGroup(id, { defaults }))}
           onSidebar={(sidebar) => change.mutate(() => changeGroup(id, { sidebar }))}

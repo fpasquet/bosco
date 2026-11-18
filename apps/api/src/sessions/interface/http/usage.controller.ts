@@ -25,7 +25,7 @@ function filtersOf(query: unknown): UsageFilters {
   };
 }
 
-/** Page Usage (E23a, E23b) : les mêmes filtres pour toute la page, sauf le quota, lu par abonnement. */
+/** Page Usage : les mêmes filtres pour toute la page, sauf le quota, lu par abonnement. */
 @Controller('api/usage')
 export class UsageController {
   constructor(@Inject(USAGE_SERVICE) private readonly usage: UsageService) {}

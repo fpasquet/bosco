@@ -21,7 +21,7 @@ const CODE_LENGTH = 6;
 const codeSchema = z.object({ code: z.string().refine((value) => pairingDigits(value) !== null) });
 
 /**
- * Sur le téléphone, un écran plein ne demande que le code affiché sur le poste (E4c). Ouvert par le QR code, il reçoit
+ * Sur le téléphone, un écran plein ne demande que le code affiché sur le poste. Ouvert par le QR code, il reçoit
  * le code dans son adresse (?code=) et s'appaire seul, une fois ; un code refusé laisse la saisie à la personne.
  */
 export function PairingScreen() {

@@ -28,7 +28,7 @@ export interface UsageShareDto {
   usd: null | number;
 }
 
-/** Page Usage (GET /api/usage) : ce que consomment les sessions, d'après leurs transcripts (règle 18). */
+/** Page Usage (GET /api/usage) : ce que consomment les sessions, d'après leurs transcripts. */
 export interface UsageReportDto {
   activity: {
     agentWorkSeconds: number;

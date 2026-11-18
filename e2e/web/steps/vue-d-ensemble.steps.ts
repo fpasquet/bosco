@@ -13,6 +13,10 @@ function transcriptOf(transcripts: Map<string, string>, sessionId: string): stri
   return file;
 }
 
+Given('Claude Code a effacé le transcript de la session {texte}', ({ transcripts }, sessionId: string) => {
+  rmSync(transcriptOf(transcripts, sessionId));
+});
+
 Given('il est {texte} dans le navigateur', async ({ page }, time: string) => {
   await page.clock.setFixedTime(new Date(time));
 });

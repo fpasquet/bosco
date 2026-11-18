@@ -1,4 +1,4 @@
-// Un tour piloté par Bosco (DT-31) : `claude -p` en flux JSON en entrée et en sortie, dans le dossier du projet, avec le
+// Un tour piloté par Bosco : `claude -p` en flux JSON en entrée et en sortie, dans le dossier du projet, avec le
 // dossier de configuration du profil. `--permission-prompt-tool stdio` fait passer les autorisations et les questions de
 // l'agent par le protocole de contrôle : Bosco les reçoit sur la sortie et y répond sur l'entrée. Vérifié sur Claude
 // Code 2.1.319 ; le protocole de contrôle est celui des SDK, à revérifier à chaque version.
@@ -72,6 +72,7 @@ export function turnArguments(request: TurnRequest): string[] {
     ...(model ? ['--model', model] : []),
     ...(effort ? ['--effort', effort] : []),
     ...request.addDirs.flatMap((dir) => ['--add-dir', dir]),
+    ...(request.appendSystemPrompt ? ['--append-system-prompt', request.appendSystemPrompt] : []),
     ...(request.resume ? ['--resume', request.sessionId] : ['--session-id', request.sessionId]),
   ];
 }
@@ -103,7 +104,7 @@ export class ClaudeTurnRunner implements TurnRunner {
     // Les instructions (CLAUDE.md) des projets ajoutés par --add-dir ne se lisent qu'avec ce réglage (vérifié sur
     // Claude Code 2.1.326) ; en bac à sable, la commande du conteneur le passe
     if (request.addDirs.length > 0) env.CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD = '1';
-    // En bac à sable, le tour s'exécute dans le conteneur de la session, entrée ouverte (DT-37)
+    // En bac à sable, le tour s'exécute dans le conteneur de la session, entrée ouverte
     const [file, args] = request.launch
       ? [request.launch.file, [...request.launch.args, ...turnArguments(request)]]
       : [this.claudeBinary, turnArguments(request)];

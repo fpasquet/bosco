@@ -70,7 +70,7 @@ export function ProjectsScreen({ title }: { title: string }) {
               <Layers aria-hidden className="size-4" />
               Nouveau groupe
             </Button>
-            <Button variant="primary" onClick={actions.browse}>
+            <Button variant="primary" onClick={() => actions.browse()}>
               <FolderPlus aria-hidden className="size-4" />
               Ajouter des projets
             </Button>
@@ -88,7 +88,7 @@ export function ProjectsScreen({ title }: { title: string }) {
           busy={change.isPending}
           home={data.home}
           suggestions={data.suggestions}
-          onBrowse={actions.browse}
+          onBrowse={() => actions.browse()}
           onAdd={(paths) => change.mutate(() => addProjects(paths))}
         />
       ) : (

@@ -8,7 +8,7 @@ import type { NotificationFilter } from '../components/notification-list';
 import { answerFromNotification, markRead, notificationsQuery } from '../api/notifications';
 import { hrefOf } from '../lib/notifications';
 
-/** Centre de notifications (E15a) : la liste, le filtre, ouvrir (et marquer lue), répondre, tout marquer comme lu. */
+/** Centre de notifications : la liste, le filtre, ouvrir (et marquer lue), répondre, tout marquer comme lu. */
 export function useNotificationCenter(onLeave: () => void = () => undefined) {
   const client = useQueryClient();
   const router = useRouter();

@@ -10,10 +10,14 @@ export interface FolderBrowserProps {
   busy: boolean;
   chosen: readonly ChosenFolder[];
   error: null | string;
+  /** Groupe où ranger les nouveaux projets ; null : « Aucun groupe » */
+  group: null | number;
+  groups: readonly { id: number; name: string }[];
   /** Dossier ouvert ; null pendant sa lecture */
   listing: FolderListingDto | null;
   onCancel: () => void;
   onCheck: (folders: ChosenFolder[]) => void;
+  onGroupChange: (group: null | number) => void;
   onOpen: (path: string) => void;
   onSubmit: () => void;
   onToggle: (folder: ChosenFolder) => void;
@@ -28,9 +32,12 @@ export function FolderBrowser({
   busy,
   chosen,
   error,
+  group,
+  groups,
   listing,
   onCancel,
   onCheck,
+  onGroupChange,
   onOpen,
   onSubmit,
   onToggle,
@@ -163,7 +170,22 @@ export function FolderBrowser({
             {error}
           </p>
         )}
-        <div className="flex items-center gap-3 border-t border-line px-5 py-3">
+        <div className="flex flex-wrap items-center gap-3 border-t border-line px-5 py-3">
+          <label className="flex items-center gap-2">
+            <span className="text-muted">Dans le groupe :</span>
+            <select
+              className="select w-56"
+              value={group ?? ''}
+              onChange={(event) => onGroupChange(event.target.value ? Number(event.target.value) : null)}
+            >
+              <option value="">Aucun groupe</option>
+              {groups.map(({ id, name }) => (
+                <option key={id} value={id}>
+                  {name}
+                </option>
+              ))}
+            </select>
+          </label>
           <span className="ml-auto text-muted">{checkedLabel(chosen.length)}</span>
           <Button variant="ghost" className="text-muted" onClick={onCancel}>
             Annuler

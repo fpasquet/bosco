@@ -1,13 +1,24 @@
 import type { NotificationDto } from '@bosco/domain';
 import type { NotificationSettingsDto } from './api/settings';
 
-/** Le fil rouge à 15:13 (E15a). */
+/** Le fil rouge à 15:13. */
 export const STORY_NOW = new Date('2026-11-06T15:13:30');
 
 const at = (time: string, day = '2026-11-06') => new Date(`${day}T${time}:00`).toISOString();
-const base = { readAt: null, settled: null, taskId: null, turnMinutes: null } as const;
+const base = { decisionId: null, readAt: null, settled: null, taskId: null, turnMinutes: null } as const;
 
 export const STORY_NOTIFICATIONS: NotificationDto[] = [
+  {
+    ...base,
+    id: 7,
+    kind: 'decision',
+    at: at('15:20'),
+    decisionId: 6,
+    sessionId: 'b7e2c914',
+    place: 'api-tarifs',
+    title: 'Normaliser les fuseaux horaires',
+    excerpt: 'L’agent de la session « Monter TypeScript en version 6 » la propose ; elle attend ta validation.',
+  },
   {
     ...base,
     id: 6,

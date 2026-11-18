@@ -1,7 +1,7 @@
 {
   "name": "@bosco/mobile",
   "private": true,
-  "description": "Application Android (E18, DT-33) : une coquille autour de l'interface téléphone de Bosco, appairée par QR code, qui ne fait confiance qu'au certificat du poste et notifie sans service de push.",
+  "description": "Application Android : une coquille autour de l'interface téléphone de Bosco, appairée par QR code, qui ne fait confiance qu'au certificat du poste et notifie sans service de push.",
   "main": "index.ts",
   "scripts": {
     "start": "expo start",

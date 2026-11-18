@@ -7,7 +7,7 @@ async function read<T>(path: string): Promise<T> {
   return (await response.json()) as T;
 }
 
-/** Usage des sessions pour les filtres de la page (E23a). */
+/** Usage des sessions pour les filtres de la page. */
 export const usageQuery = (filters: UsageFilters) => ({
   queryKey: ['usage', filters],
   queryFn: () => read<UsageReportDto>(`/api/usage${apiSearchOf(filters)}`),

@@ -12,7 +12,7 @@ export interface OfflineBannerProps {
   onRetry: () => void;
 }
 
-/** Bosco ne répond plus (E1f) : l'écran garde ses informations, datées, et se reconnecte seul (CA-SESS-23, 25). */
+/** Bosco ne répond plus : l'écran garde ses informations, datées, et se reconnecte seul. */
 export function OfflineBanner({ lastDataAt, nextRetryAt, now, offlineSince, onRetry }: OfflineBannerProps) {
   const retryIn = nextRetryAt ? Math.max(0, Math.ceil((new Date(nextRetryAt).getTime() - now.getTime()) / 1000)) : 0;
   return (

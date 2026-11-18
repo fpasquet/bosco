@@ -1,11 +1,22 @@
 'use client';
-import { Box, CircleCheck, CircleX, Flag, Hand, ListChecks, LogOut, MessageCircleQuestion } from 'lucide-react';
+import {
+  Box,
+  CircleCheck,
+  CircleX,
+  Flag,
+  Hand,
+  Lightbulb,
+  ListChecks,
+  LogOut,
+  MessageCircleQuestion,
+} from 'lucide-react';
 import type { NotificationDto } from '@bosco/domain';
 import { cn } from '@/lib/cn';
 import { Button } from '@/shared/ui/button';
 import { kindLabel, timeOf } from '../../lib/notifications';
 
 const LOOKS: Record<NotificationDto['kind'], { icon: typeof Hand; tone: string }> = {
+  decision: { icon: Lightbulb, tone: 'bg-primary-soft text-primary' },
   ended: { icon: LogOut, tone: 'bg-surface-alt text-muted' },
   failed: { icon: CircleX, tone: 'bg-danger-soft text-danger' },
   'long-turn': { icon: Flag, tone: 'bg-surface-alt text-muted' },
@@ -25,7 +36,7 @@ export interface NotificationItemProps {
 }
 
 /**
- * Une notification (E15a) : son type, la session ou la tâche, un extrait et l'heure ; une autorisation encore en
+ * Une notification : son type, la session ou la tâche, un extrait et l'heure ; une autorisation encore en
  * attente se répond ici, le reste s'ouvre d'un clic. Une notification traitée le dit.
  */
 export function NotificationItem({ busy, notification, now, onAnswer, onOpen }: NotificationItemProps) {

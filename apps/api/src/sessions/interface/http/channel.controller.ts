@@ -25,7 +25,7 @@ import { CHANNEL_INSTALLER, CHANNEL_SERVICE, HOOK_SECRET, SOURCE_SERVICE } from 
 const profileSchema = z.object({ path: z.string().min(1) });
 
 /**
- * Canal de Bosco (E2i, E4f) : le flux qu'ouvre chaque session du terminal lancée avec le canal, et son installation
+ * Canal de Bosco : le flux qu'ouvre chaque session du terminal lancée avec le canal, et son installation
  * dans les profils. Le flux exige le secret de l'installation, comme l'entrée des hooks ; il reste sur le poste.
  */
 @Controller('api/channel')
@@ -50,13 +50,14 @@ export class ChannelController {
     );
   }
 
-  /** Profils surveillés et leur canal : installé ou non, et la commande qui lance une session avec lui (E4f). */
+  /** Profils surveillés et leur canal : installé ou non, et la commande qui lance une session avec lui. */
   @Get('profiles')
   async profiles(): Promise<{ profiles: ChannelProfileDto[] }> {
     const { sources } = await this.sources.listSources();
     const profiles = await Promise.all(
       sources
-        .filter((source) => source.watched)
+        // Le profil des bacs à sable n'a pas de canal : c'est Bosco qui lance ses sessions
+        .filter((source) => source.watched && !source.managed)
         .map(async (source) => {
           const installed = await this.installer.isInstalled(source.path);
           return {
@@ -88,7 +89,8 @@ export class ChannelController {
 
   private async watched(path: string): Promise<void> {
     const { sources } = await this.sources.listSources();
-    if (!sources.some((source) => source.path === path)) throw new NotFoundException({ code: 'unknownSource' });
+    if (!sources.some((source) => source.path === path && !source.managed))
+      throw new NotFoundException({ code: 'unknownSource' });
   }
 
   private authenticate(authorization: string | undefined): void {

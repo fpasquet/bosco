@@ -21,7 +21,7 @@ export interface NotificationsDrawerProps {
 }
 
 /**
- * Tiroir des notifications (E15a) : à droite, sur toute la hauteur, au-dessus de l'écran en cours. La croix, Échap
+ * Tiroir des notifications : à droite, sur toute la hauteur, au-dessus de l'écran en cours. La croix, Échap
  * ou un clic à côté le referment.
  */
 export function NotificationsDrawer({ onClose, onReadAll, open, unread, ...list }: NotificationsDrawerProps) {

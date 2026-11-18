@@ -12,7 +12,7 @@ export interface EndedTodayProps {
   sessions: SessionDto[];
 }
 
-/** Lignes montrées ; le reste est dans l'historique (E1d). */
+/** Lignes montrées ; le reste est dans l'historique. */
 const SHOWN = 4;
 
 /** Lignes montrées sur le téléphone, avant le lien vers l'historique. */

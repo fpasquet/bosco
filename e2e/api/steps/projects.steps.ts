@@ -1,5 +1,6 @@
 // Phrases des projets choisis : des dossiers ajoutés par la personne, et le dossier personnel que parcourt Bosco.
 import type { DataTable } from 'playwright-bdd';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { addProjects, createFolders } from '../../shared/projects.ts';
 import { Given, When } from './fixtures.ts';
@@ -23,6 +24,11 @@ Given('the home folder has the folders:', ({ bosco }, table: DataTable) => {
     bosco,
     table.hashes().map((row) => ({ folder: row.folder ?? '', git: row.git === 'yes' })),
   );
+});
+
+Given('the folder {string} has the file {string}', ({ bosco }, folder: string, file: string) => {
+  mkdirSync(join(bosco.profilesRoot, folder), { recursive: true });
+  writeFileSync(join(bosco.profilesRoot, folder, file), '{}\n');
 });
 
 When('I browse the home folder', async ({ last, request }) => {

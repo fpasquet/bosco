@@ -9,8 +9,8 @@ Feature: Sessions in a sandbox
     And Bosco watches the profiles ".claude-perso"
     And the folder "maison" is a project
 
-  @CA-SESS-106
   @CA-SESS-109
+  @CA-SESS-161
   Scenario: A session starts in a sandbox on its own branch, and its turns run in its container
     When I start a session in the project "maison" with the JSON "fixtures/pilot/start-sandbox.json"
     Then the response code should be 201
@@ -19,7 +19,7 @@ Feature: Sessions in a sandbox
     When I write to "the started session" with the JSON "fixtures/pilot/schema.json"
     Then "the started session" should end its turn with "Reçu : Vérifie aussi le schéma de config · mode acceptEdits · modèle défaut · effort défaut · images 0"
 
-  @CA-SESS-106
+  @RF-SESS-12
   Scenario: The branch of a session is under the prefix of the sandboxes
     When I start a session in the project "maison" with the JSON "fixtures/pilot/start-sandbox-bad-branch.json"
     Then the response code should be 400
@@ -54,3 +54,21 @@ Feature: Sessions in a sandbox
     When I write to "the started session" with the JSON "fixtures/pilot/schema.json"
     Then the response code should be 409
     And the response property "code" should equal "sandboxRemoved"
+
+  @CA-REGL-15
+  Scenario: The sandboxes source is kept by Bosco, always read, without live tracking
+    When I start a session in the project "maison" with the JSON "fixtures/pilot/start-sandbox.json"
+    And "the started session" should end its turn with "Reçu : Monte TypeScript en version 6 · mode acceptEdits · modèle défaut · effort défaut · images 0"
+    And I switch off the source of the profile "sandboxes/profile"
+    Then the response code should be 409
+    And the response property "code" should equal "managedSource"
+    When I install live tracking for the profile "sandboxes/profile"
+    Then the response code should be 409
+    When I send GET request to "/api/channel/profiles"
+    Then the response should not contain "sandboxes/profile"
+
+  @RF-CONT-01
+  Scenario: A session in a sandbox, without the MCP server of Bosco, receives the context of its project at launch
+    Given I send POST request to "/api/decisions" with the JSON "fixtures/context/project-decision.json"
+    When I start a session in the project "maison" with the JSON "fixtures/pilot/start-context-sandbox.json"
+    Then "the started session" should end its turn with "Contexte reçu : # Contexte du projet maison · - DEC-1 Découper les tableaux par ligne"

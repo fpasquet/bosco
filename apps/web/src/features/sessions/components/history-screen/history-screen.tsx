@@ -13,7 +13,7 @@ import { useLiveEvents } from '../../hooks/use-live-events';
 import { HistoryFilters } from '../history-filters';
 import { HistoryList } from '../history-list';
 
-/** Historique (E3a) : la recherche des sessions, jour par jour ; l'usage a sa page. */
+/** Historique : la recherche des sessions, jour par jour ; l'usage a sa page. */
 export function HistoryScreen({
   group,
   project,
@@ -26,7 +26,7 @@ export function HistoryScreen({
   const now = useNow(60_000);
   useLiveEvents(true);
   const [filters, setFilters] = useState<Filters>({ days: 7, group, profile: null, query: '', project, state: null });
-  // La recherche part pendant la frappe, sans attendre la fin de chaque requête (CA-SESS-47)
+  // La recherche part pendant la frappe, sans attendre la fin de chaque requête
   const deferred = useDeferredValue(filters);
   const { data: sources } = useQuery(sourcesQuery);
   const { data: sessions } = useQuery(sessionsQuery);

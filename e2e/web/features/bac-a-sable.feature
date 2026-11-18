@@ -11,8 +11,7 @@ Fonctionnalité: Sessions en bac à sable
     Et le dossier « maison » est un projet
 
   @NF-18
-  @CA-SESS-106
-  @CA-SESS-113
+  @CA-SESS-161
   Scénario: Une session démarre dans un bac à sable et se pilote comme les autres
     Quand j'ouvre la page « /sessions/new »
     Et je clique sur le bouton radio « Bac à sable »
@@ -60,3 +59,29 @@ Fonctionnalité: Sessions en bac à sable
     Et je clique sur l’élément de menu « À la liste générale »
     Alors je suis sur la page « /settings/sandbox »
     Et le champ « Ajouter un domaine » vaut « raw.githubusercontent.com »
+
+  @CA-REGL-15
+  Scénario: La source « Bacs à sable » est tenue par Bosco, sans interrupteur ni suivi en direct
+    Quand j'ouvre la page « /sessions/new »
+    Et je clique sur le bouton radio « Bac à sable »
+    Et je saisis « Monte TypeScript en version 6 » dans le champ « Premier message »
+    Et je clique sur le bouton « Démarrer »
+    Et je vois le texte « Reçu : Monte TypeScript en version 6 · mode acceptEdits · modèle défaut · effort défaut · images 0 »
+    Et j'ouvre la page « /settings/sources »
+    Alors je vois l’étiquette « Tenue par Bosco »
+    Et je vois le texte « Piloté par Bosco »
+    Et je vois le texte « 1 bac à sable · dernier tour à »
+    Et je ne vois pas l’interrupteur « Lire le profil Bacs à sable »
+    Et l’interrupteur « Lire le profil perso » est « activé »
+
+  @RF-SESS-12
+  Scénario: La marque « Bac à sable » suit la session dans la vue d'ensemble et l'historique
+    Quand j'ouvre la page « /sessions/new »
+    Et je clique sur le bouton radio « Bac à sable »
+    Et je saisis « Monte TypeScript en version 6 » dans le champ « Premier message »
+    Et je clique sur le bouton « Démarrer »
+    Et je vois le texte « Reçu : Monte TypeScript en version 6 · mode acceptEdits · modèle défaut · effort défaut · images 0 »
+    Et j'ouvre la page « / »
+    Alors le tableau des sessions montre « Bac à sable »
+    Quand j'ouvre la page « /history »
+    Alors je vois l’étiquette « Bac à sable »

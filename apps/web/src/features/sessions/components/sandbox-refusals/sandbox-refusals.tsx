@@ -69,7 +69,7 @@ function AddToList({ host, project }: { host: string; project: SandboxRefusalsPr
 }
 
 /**
- * Sorties réseau refusées d'un bac à sable (E2j, CA-SESS-108) : le domaine et l'heure, à la fin du fil. « Ajouter à
+ * Sorties réseau refusées d'un bac à sable : le domaine et l'heure, à la fin du fil. « Ajouter à
  * la liste » ouvre, sur le poste, les domaines du projet de la session ou la liste générale, le domaine déjà rempli.
  */
 export function SandboxRefusals({ project, refusals }: SandboxRefusalsProps) {

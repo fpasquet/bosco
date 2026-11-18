@@ -4,8 +4,8 @@ import type { PermissionSettled, SessionEvents } from '../../application/ports.t
 import type { SessionView } from '../../application/session.service.ts';
 import type { NotificationRecord } from '../../domain/notification.ts';
 
-/** Bus en mémoire des changements de sessions, que le flux en direct relaie (DT-06). */
-/** Avancement de la première lecture de l'historique : transcripts lus sur le total à lire (E1e). */
+/** Bus en mémoire des changements de sessions, que le flux en direct relaie. */
+/** Avancement de la première lecture de l'historique : transcripts lus sur le total à lire. */
 export interface ImportProgress {
   read: number;
   total: number;

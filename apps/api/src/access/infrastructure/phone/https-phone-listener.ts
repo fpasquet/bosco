@@ -1,5 +1,5 @@
-// Écoute HTTPS du téléphone sur le réseau local (DT-10, NF-13) : ouverte seulement quand l'accès est activé, elle
-// passe chaque requête au même serveur que le poste, après le contrôle du jeton de l'appareil (NF-14).
+// Écoute HTTPS du téléphone sur le réseau local : ouverte seulement quand l'accès est activé, elle
+// passe chaque requête au même serveur que le poste, après le contrôle du jeton de l'appareil.
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { Duplex } from 'node:stream';
 import { X509Certificate } from 'node:crypto';
@@ -13,14 +13,14 @@ export const DEVICE_COOKIE = 'bosco_device';
 /** Ce que le téléphone peut ouvrir sans être appairé : la page d'appairage et ce qu'elle charge. */
 const OPEN_PATHS = [/^\/pair(\/|$|\?)/, /^\/_next\//, /^\/api\/pairing\/claim$/, /^\/favicon/];
 
-/** Réservé au poste, même pour un téléphone appairé : les hooks, l'accès, les tests, et tout réglage (E4b mobile). */
+/** Réservé au poste, même pour un téléphone appairé : les hooks, l'accès, les tests, et tout réglage. */
 const WORKSTATION_ONLY = [
   /^\/api\/hooks\//,
   /^\/api\/phone-access/,
   /^\/api\/devices/,
-  // Seul l'onglet du poste dit s'il est au premier plan (E15b)
+  // Seul l'onglet du poste dit s'il est au premier plan
   /^\/api\/presence/,
-  // Le flux du canal de Bosco ne sert qu'aux sessions du terminal du poste (E2i)
+  // Le flux du canal de Bosco ne sert qu'aux sessions du terminal du poste
   /^\/api\/channel\/stream/,
   // Le navigateur de dossiers parcourt le poste : il ne s'ouvre pas depuis le téléphone, même pour lire
   /^\/api\/folders/,
@@ -36,10 +36,10 @@ const SETTINGS = [
   /^\/api\/projects/,
   /^\/api\/groups/,
   /^\/api\/context/,
-  // Sur le téléphone, une décision proposée s'accepte ou se refuse ; le reste s'écrit sur le poste (E9b mobile)
+  // Sur le téléphone, une décision proposée s'accepte ou se refuse ; le reste s'écrit sur le poste
   /^\/api\/decisions(\/\d+\/(versions|abandon))?$/,
   /^\/api\/integrations/,
-  // Un lien s'ajoute depuis le téléphone ; il se retire sur le poste (E10b mobile)
+  // Un lien s'ajoute depuis le téléphone ; il se retire sur le poste
   /^\/api\/tasks\/\d+\/links\/\d+$/,
 ];
 
@@ -122,7 +122,7 @@ export class HttpsPhoneListener implements PhoneListener {
     if (workstationOnly(request, path)) return this.refuse(response, 403);
     if (OPEN_PATHS.some((pattern) => pattern.test(path)) || (await this.options.authorize(tokenOf(request))))
       return this.options.handle(request, response);
-    // Un téléphone non appairé n'accède à rien : les pages mènent à l'appairage, l'API répond 401 (NF-14)
+    // Un téléphone non appairé n'accède à rien : les pages mènent à l'appairage, l'API répond 401
     if (path.startsWith('/api/')) return this.refuse(response, 401);
     response.writeHead(302, { location: '/pair' }).end();
   }

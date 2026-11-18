@@ -51,11 +51,11 @@ export interface SessionView {
   turns: number;
   /** Ce qu'attend la session tant qu'elle t'attend ; rien sinon */
   waiting: null | Waiting;
-  /** Ouverte dans un terminal : Bosco ne lui écrit pas (CA-SESS-98) */
+  /** Ouverte dans un terminal : Bosco ne lui écrit pas */
   openInTerminal: boolean;
-  /** Session pilotée par Bosco (E2e) ; null sinon */
+  /** Session pilotée par Bosco ; null sinon */
   pilot: null | PilotView;
-  /** Session du terminal lancée avec le canal de Bosco, ouvert : Bosco peut lui écrire (E2i) */
+  /** Session du terminal lancée avec le canal de Bosco, ouvert : Bosco peut lui écrire */
   channel: boolean;
 }
 
@@ -68,7 +68,7 @@ export interface PilotsView {
 
 const NO_PILOTS: PilotsView = { channelOpen: () => false, openInTerminal: () => false, pilotOf: () => null };
 
-/** Détail d'une session (E2) : sa vue et son journal, du plus ancien au plus récent. */
+/** Détail d'une session : sa vue et son journal, du plus ancien au plus récent. */
 export interface SessionDetail {
   journal: JournalEntry[];
   session: SessionView;
@@ -90,7 +90,7 @@ export class SessionService {
       sessionChanged: () => undefined,
     },
     private readonly registry: Pick<SessionRegistry, 'isOpen'> = { isOpen: () => null },
-    /** Seuil d'inactivité réglé dans les sources (CA-SESS-59) */
+    /** Seuil d'inactivité réglé dans les sources */
     private readonly inactivityDelayMs: () => number = () => DEFAULT_INACTIVITY_DELAY_MS,
   ) {}
 
@@ -112,6 +112,18 @@ export class SessionService {
   /** « Où elle tourne » d'une session démarrée : la prochaine du même projet le reprend. */
   rememberPlace(root: string, place: 'sandbox' | 'workstation'): Promise<void> {
     return this.projects.rememberPlace(root, place);
+  }
+
+  /**
+   * Session la plus récemment active dans un dossier : celle dont l'agent vient d'appeler le serveur MCP de Bosco
+   * depuis ce dossier, pour nommer l'auteur d'une décision proposée.
+   */
+  async latestIn(path: string): Promise<null | { id: string; title: null | string }> {
+    const sessions = await this.listSessions();
+    const [latest] = sessions
+      .filter((session) => session.projectPath === path)
+      .toSorted((a, b) => b.lastEventAt.getTime() - a.lastEventAt.getTime());
+    return latest ? { id: latest.id, title: latest.title } : null;
   }
 
   /** Dossiers de travail des sessions déjà lues, que les projets rangent et proposent. */
@@ -136,7 +148,7 @@ export class SessionService {
     }
   }
 
-  /** Notifications des questions de l'agent lues dans les transcripts (E15), branchées au démarrage. */
+  /** Notifications des questions de l'agent lues dans les transcripts, branchées au démarrage. */
   useNotifications(notifications: Pick<NotificationService, 'notify' | 'settle'>): void {
     this.notifications = notifications;
   }
@@ -159,7 +171,7 @@ export class SessionService {
     return next;
   }
 
-  /** Claude Code a suspendu « Approuver pour moi » d'une session pilotée : son fil le dit, à son heure (règle 17). */
+  /** Claude Code a suspendu « Approuver pour moi » d'une session pilotée : son fil le dit, à son heure. */
   noteAutoModeSuspended(sessionId: string, count: number, total: boolean): Promise<void> {
     return this.exclusive(sessionId, async () => {
       const session = await this.sessionRepository.find(sessionId);

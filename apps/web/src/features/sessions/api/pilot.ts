@@ -40,7 +40,7 @@ async function call(path: string, init: RequestInit = {}): Promise<Response> {
   throw new PilotError(code, MESSAGES[code] ?? body.message ?? `Bosco a répondu ${response.status}.`);
 }
 
-/** Formulaire d'une nouvelle session (E16a) : projets et abonnements Claude. */
+/** Formulaire d'une nouvelle session : projets et abonnements Claude. */
 export const pilotOptionsQuery = {
   queryKey: ['pilot', 'options'],
   queryFn: async (): Promise<PilotOptionsDto> => {
@@ -57,7 +57,7 @@ export interface DefaultsTarget {
   sandbox: boolean;
 }
 
-/** Valeurs d'une nouvelle session avant tout choix, chacune avec son origine (règle 16). */
+/** Valeurs d'une nouvelle session avant tout choix, chacune avec son origine. */
 export function pilotDefaultsQuery(target: DefaultsTarget) {
   return {
     queryKey: ['pilot', 'defaults', target],
@@ -73,14 +73,14 @@ export function pilotDefaultsQuery(target: DefaultsTarget) {
   };
 }
 
-/** « Démarrer la session » (CA-SESS-91) : l'identifiant de la session créée. */
+/** « Démarrer la session » : l'identifiant de la session créée. */
 export async function startSession(input: StartSessionDto): Promise<string> {
   const response = await call('/api/pilot/sessions', { method: 'POST', body: JSON.stringify(input) });
   const body = (await response.json()) as { sessionId: string };
   return body.sessionId;
 }
 
-/** Un message à une session : il part tout de suite, ou attend la fin du tour (CA-SESS-92, CA-SESS-93). */
+/** Un message à une session : il part tout de suite, ou attend la fin du tour. */
 export async function sendMessage(sessionId: string, message: PilotMessageDto): Promise<'channel' | 'queued' | 'sent'> {
   const response = await call(`/api/sessions/${encodeURIComponent(sessionId)}/messages`, {
     method: 'POST',
@@ -98,7 +98,7 @@ export async function interruptTurn(sessionId: string): Promise<void> {
   await call(`/api/sessions/${encodeURIComponent(sessionId)}/interrupt`, { method: 'POST' });
 }
 
-/** Réponses à une question de l'agent, une liste de choix par question ; null pour « Passer » (CA-SESS-96). */
+/** Réponses à une question de l'agent, une liste de choix par question ; null pour « Passer ». */
 export async function answerQuestion(sessionId: string, requestId: string, answers: null | string[][]): Promise<void> {
   await call(`/api/sessions/${encodeURIComponent(sessionId)}/answers`, {
     method: 'POST',
@@ -109,7 +109,7 @@ export async function answerQuestion(sessionId: string, requestId: string, answe
 /** Où chercher les suggestions : une session, ou le projet et le profil d'une nouvelle session. */
 export type SuggestionTarget = { profile: null | string; project: string } | { sessionId: string };
 
-/** Suggestions de « @ » et « / » (CA-SESS-99) ; [] si Bosco ne répond pas. */
+/** Suggestions de « @ » et « / » ; [] si Bosco ne répond pas. */
 export async function suggestions(
   target: SuggestionTarget,
   kind: 'command' | 'file',
@@ -131,7 +131,7 @@ export async function suggestions(
 }
 
 /**
- * « Récupérer la branche » (CA-SESS-112), « Récupérer les branches » (CA-SESS-141) : un projet (sa racine), ou toutes
+ * « Récupérer la branche », « Récupérer les branches » : un projet (sa racine), ou toutes
  * les branches qui ont du travail ; les branches reçues dans les dépôts du poste.
  */
 export async function retrieveBranches(
@@ -145,7 +145,7 @@ export async function retrieveBranches(
   return (await response.json()) as RetrievedBranchesDto;
 }
 
-/** Branches d'un bac à sable, une par projet, avec les fichiers qu'elles ont changés (E2k). */
+/** Branches d'un bac à sable, une par projet, avec les fichiers qu'elles ont changés. */
 export const sandboxBranchesQuery = (sessionId: string) => ({
   queryKey: ['session', sessionId, 'branches'],
   queryFn: async (): Promise<SandboxBranchesDto> => {
@@ -168,12 +168,12 @@ export async function stopSandbox(sessionId: string): Promise<void> {
   await call(`/api/sessions/${encodeURIComponent(sessionId)}/sandbox/stop`, { method: 'POST' });
 }
 
-/** « Supprimer le bac à sable » (CA-SESS-114). */
+/** « Supprimer le bac à sable ». */
 export async function removeSandbox(sessionId: string): Promise<void> {
   await call(`/api/sessions/${encodeURIComponent(sessionId)}/sandbox`, { method: 'DELETE' });
 }
 
-/** Sorties réseau refusées d'un bac à sable (CA-SESS-108). */
+/** Sorties réseau refusées d'un bac à sable. */
 export const sandboxRefusalsQuery = (sessionId: string) => ({
   queryKey: ['session', sessionId, 'refusals'],
   queryFn: async (): Promise<SandboxRefusalsDto> => {

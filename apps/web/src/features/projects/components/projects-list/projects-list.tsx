@@ -109,6 +109,9 @@ export function ProjectsList({
                     <button type="button" className="text-left md:hidden" onClick={() => onOpen(project)}>
                       {project.name}
                     </button>
+                    {project.monorepo && (
+                      <span className="badge badge-ghost badge-sm whitespace-nowrap">monodépôt</span>
+                    )}
                     {!project.git && <span className="badge badge-outline badge-sm">sans git</span>}
                   </p>
                   <p className="truncate text-xs text-muted">

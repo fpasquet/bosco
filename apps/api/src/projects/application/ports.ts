@@ -32,6 +32,8 @@ export interface IgnoredFolders {
 export interface Folders {
   /** Le dossier existe : est-ce un dépôt git ? null quand ce n'est pas un dossier */
   inspect(path: string): Promise<null | { git: boolean }>;
+  /** Un monodépôt : ses paquets sont des sous-dossiers d'un seul projet */
+  isMonorepo(path: string): Promise<boolean>;
   /** Ce que contient un dossier, sans rien lire des fichiers */
   list(path: string): Promise<FolderEntry[]>;
   /** Chemin réel, liens symboliques suivis ; null quand il n'existe pas */

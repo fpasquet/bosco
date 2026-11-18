@@ -15,3 +15,6 @@ type Story = StoryObj<typeof meta>;
 export const Defaults: Story = {};
 
 export const Quiet: Story = { args: { settings: { inactivityMinutes: 45, desktopNotifications: false } } };
+
+/** Sur le téléphone : le seuil se lit, il se modifie depuis le poste. */
+export const ReadOnly: Story = { args: { readOnly: true } };

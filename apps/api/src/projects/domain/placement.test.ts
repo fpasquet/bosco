@@ -127,7 +127,7 @@ describe('Suggestions', () => {
     ]);
   });
 
-  it('never proposes the home folder itself, nor what is under the temporary or Bosco data folders', () => {
+  it('CA-CONT-172 · never proposes the home folder itself, nor what is under the temporary or Bosco folders', () => {
     const unproposed = { below: ['/tmp', '/run/user/1000/tmp', '/home/dev/.local/share/bosco'], home: '/home/dev' };
     expect(isProposable('/home/dev', unproposed)).toBe(false);
     expect(isProposable('/home/dev/notes-clubs', unproposed)).toBe(true);
@@ -137,7 +137,7 @@ describe('Suggestions', () => {
     expect(isProposable('/home/dev/.local/share/boscoo', unproposed)).toBe(true);
   });
 
-  it('keeps the sessions of the folders not proposed outside of the projects', () => {
+  it('CA-CONT-172 · keeps the sessions of the folders not proposed outside of the projects', () => {
     const NOW2 = new Date('2026-11-17T12:00:00Z');
     const activity = activityOf(
       [

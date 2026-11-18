@@ -31,7 +31,7 @@ function deviceName(userAgent: string | undefined): string {
   return `${system.replace('Mac OS', 'macOS')} · ${names[browser] ?? browser}`;
 }
 
-/** Accès depuis le téléphone (E4c) : activation, code d'appairage, téléphones appairés (RF-SESS-07). */
+/** Accès depuis le téléphone : activation, code d'appairage, téléphones appairés. */
 @Controller('api')
 export class AccessController {
   constructor(@Inject(ACCESS_SERVICE) private readonly access: AccessService) {}
@@ -47,14 +47,14 @@ export class AccessController {
     return enabled ? this.access.enable() : this.access.disable();
   }
 
-  /** Nouveau code : 6 chiffres, valable 5 minutes et une seule fois ; l'ancien ne vaut plus (CA-SESS-66, 67). */
+  /** Nouveau code : 6 chiffres, valable 5 minutes et une seule fois ; l'ancien ne vaut plus. */
   @Post('pairing/code')
   issueCode(): { attempts: number; code: string; expiresAt: string } {
     const { code, expiresAt } = this.access.issueCode();
     return { code, expiresAt: expiresAt.toISOString(), attempts: PAIRING_CODE.attempts };
   }
 
-  /** Le téléphone saisit le code ; accepté, il reçoit son jeton dans un cookie réservé à HTTPS (CA-SESS-68). */
+  /** Le téléphone saisit le code ; accepté, il reçoit son jeton dans un cookie réservé à HTTPS. */
   @Post('pairing/claim')
   async claim(
     @Body() body: unknown,

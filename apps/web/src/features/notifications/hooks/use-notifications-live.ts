@@ -16,7 +16,7 @@ function foreground(): boolean {
 }
 
 /**
- * Notifications en direct (E15) : le centre se relit à chaque notification, une notification qui arrive pendant que
+ * Notifications en direct : le centre se relit à chaque notification, une notification qui arrive pendant que
  * l'onglet est au premier plan s'affiche en message bref, et l'onglet dit au service s'il est devant toi.
  */
 export function useNotificationsLive(): void {
@@ -32,7 +32,7 @@ export function useNotificationsLive(): void {
       const event = JSON.parse(message.data) as Extract<LiveEventDto, { type: 'notification.created' }>['data'];
       const { notification } = event;
       const asking = ASKING.includes(notification.kind);
-      // Dans l'application Android, la notification part au téléphone, sans service de push (CA-APPS-06)
+      // Dans l'application Android, la notification part au téléphone, sans service de push
       const subject = notification.place ?? notification.title;
       const sent = postToAndroidApp({
         type: 'notification',

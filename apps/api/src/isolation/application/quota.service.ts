@@ -21,14 +21,14 @@ export interface QuotaStore {
   windows(): Promise<Record<string, QuotaWindows>>;
 }
 
-/** Usage d'un abonnement tel qu'on le montre (E11) : pourcentage et remise à zéro de chaque fenêtre. */
+/** Usage d'un abonnement tel qu'on le montre : pourcentage et remise à zéro de chaque fenêtre. */
 export interface QuotaUsage {
   fiveHour: null | { resetsAt: Date; usage: number };
   sevenDay: null | { resetsAt: Date; usage: number };
 }
 
 /**
- * Quota de l'abonnement (DT-39) : l'usage de chaque abonnement, lu à chaque tour d'une session pilotée, et les seuils
+ * Quota de l'abonnement : l'usage de chaque abonnement, lu à chaque tour d'une session pilotée, et les seuils
  * qui retiennent puis arrêtent ses tours ; en bac à sable seulement, ou aussi sur le poste. Les sessions lancées dans
  * un terminal ne sont jamais touchées.
  */
