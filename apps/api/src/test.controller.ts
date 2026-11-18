@@ -3,6 +3,7 @@ import { Body, Controller, Get, HttpCode, Inject, Post } from '@nestjs/common';
 import type { AccessService } from './access/application/access.service.ts';
 import type { IsolationService } from './isolation/application/isolation.service.ts';
 import type { QuotaService } from './isolation/application/quota.service.ts';
+import type { GroupService } from './projects/application/group.service.ts';
 import type { ProjectService } from './projects/application/project.service.ts';
 import type { ChannelService } from './sessions/application/channel.service.ts';
 import type { LiveSignalService } from './sessions/application/live-signal.service.ts';
@@ -14,7 +15,7 @@ import type { RecordingNotifier } from './sessions/infrastructure/notifications/
 import type { PresenceTracker } from './sessions/infrastructure/notifications/presence.ts';
 import { ACCESS_SERVICE } from './access/tokens.ts';
 import { ISOLATION_SERVICE, QUOTA_SERVICE } from './isolation/tokens.ts';
-import { PROJECT_SERVICE } from './projects/tokens.ts';
+import { GROUP_SERVICE, PROJECT_SERVICE } from './projects/tokens.ts';
 import {
   CHANNEL_SERVICE,
   LIVE_SIGNAL_SERVICE,
@@ -46,6 +47,7 @@ export class TestController {
     @Inject(CHANNEL_SERVICE) private readonly channel: ChannelService,
     @Inject(QUOTA_SERVICE) private readonly quota: QuotaService,
     @Inject(PROJECT_SERVICE) private readonly projects: ProjectService,
+    @Inject(GROUP_SERVICE) private readonly groups: GroupService,
     @Inject(PILOT_SERVICE) private readonly pilot: PilotService,
   ) {}
 
@@ -85,6 +87,7 @@ export class TestController {
     await this.isolation.load();
     await this.quota.load();
     await this.projects.load();
+    await this.groups.load();
     (globalThis as { boscoReplayReset?: () => void }).boscoReplayReset?.();
   }
 }

@@ -1,17 +1,22 @@
 'use client';
 import { ChevronDown, Folder, FolderGit2, FolderOpen } from 'lucide-react';
 import { useId, useState } from 'react';
-import type { FolderSuggestionDto, ProjectsDto } from '@bosco/domain';
+import type { FolderSuggestionDto, GroupDto, ProjectDto, ProjectsDto } from '@bosco/domain';
 import { displayPath, sinceNow } from '@/lib/format';
 import { Button } from '@/shared/ui/button';
+import { groupsOfProject } from '../../lib/groups';
 import { sessionsLabel } from '../../lib/selection';
+import { AddToGroupMenu } from '../add-to-group-menu';
 
 export interface ProjectsListProps {
   busy: boolean;
   data: ProjectsDto;
+  groups: GroupDto[];
   now: Date;
   onAdd: (path: string) => void;
+  onAddToGroup: (project: ProjectDto, group: GroupDto) => void;
   onIgnore: (path: string) => void;
+  onNewGroup: (project: ProjectDto) => void;
   onRestore: (path: string) => void;
 }
 
@@ -46,10 +51,21 @@ function SuggestionRow({
 }
 
 /**
- * Tous les projets : les dossiers ajoutés par la personne, la ligne « Hors projet » toujours visible, et les dossiers
- * où une session a tourné hors des projets, à ajouter d'un clic ou à ignorer. Sur le téléphone, tout se lit.
+ * Tous les projets : les dossiers ajoutés par la personne avec leurs groupes, la ligne « Hors projet » toujours
+ * visible, et les dossiers où une session a tourné hors des projets, à ajouter d'un clic ou à ignorer. Sur le
+ * téléphone, tout se lit.
  */
-export function ProjectsList({ busy, data, now, onAdd, onIgnore, onRestore }: ProjectsListProps) {
+export function ProjectsList({
+  busy,
+  data,
+  groups,
+  now,
+  onAdd,
+  onAddToGroup,
+  onIgnore,
+  onNewGroup,
+  onRestore,
+}: ProjectsListProps) {
   const [showIgnored, setShowIgnored] = useState(false);
   const ids = { ignored: useId(), projects: useId(), suggestions: useId() };
   const { home, ignored, outside, projects, suggestions } = data;
@@ -65,6 +81,7 @@ export function ProjectsList({ busy, data, now, onAdd, onIgnore, onRestore }: Pr
         <ul aria-labelledby={ids.projects} className="divide-y divide-line">
           {projects.map((project) => {
             const Icon = project.git ? FolderGit2 : Folder;
+            const names = groupsOfProject(groups, project.id).map(({ name }) => name);
             return (
               <li key={project.id} className="flex items-center gap-3 px-4 py-2.5">
                 <Icon aria-hidden className="size-4 shrink-0 text-muted" />
@@ -73,11 +90,23 @@ export function ProjectsList({ busy, data, now, onAdd, onIgnore, onRestore }: Pr
                     {project.name}
                     {!project.git && <span className="badge badge-outline badge-sm">sans git</span>}
                   </p>
-                  <p className="truncate font-mono text-xs text-muted">{displayPath(project.path, home)}</p>
+                  <p className="truncate text-xs text-muted">
+                    <span className="font-mono">{displayPath(project.path, home)}</span> ·{' '}
+                    {names.length > 0 ? names.join(', ') : 'Aucun groupe'}
+                  </p>
                 </div>
                 <span className="text-xs whitespace-nowrap text-muted">
                   {project.lastSessionAt ? sinceNow(new Date(project.lastSessionAt), now) : 'aucune session'}
                 </span>
+                <div className="hidden md:block">
+                  <AddToGroupMenu
+                    disabled={busy}
+                    groups={groups}
+                    project={project}
+                    onAdd={(group) => onAddToGroup(project, group)}
+                    onNewGroup={() => onNewGroup(project)}
+                  />
+                </div>
               </li>
             );
           })}

@@ -1,7 +1,11 @@
-/** Décisions, socles et contexte transmis aux agents (lot 3, E9, E14). */
+/** Décisions, instructions des groupes et contexte transmis aux agents. */
 export type DecisionStateDto = 'abandoned' | 'accepted' | 'proposed' | 'refused' | 'replaced';
 
-export type DecisionTargetDto = { id: number; kind: 'socle' } | { kind: 'project'; name: string };
+/** Une décision porte sur un projet ; ce qui vaut pour plusieurs projets s'écrit dans un groupe. */
+export interface DecisionTargetDto {
+  kind: 'project';
+  name: string;
+}
 
 export interface DecisionTextDto {
   alternatives: null | string;
@@ -18,7 +22,6 @@ export interface DecisionVersionDto extends DecisionTextDto {
 }
 
 export interface DecisionDto {
-  exceptionTo: null | number;
   fromTask: null | number;
   id: number;
   reason: null | string;
@@ -34,29 +37,27 @@ export interface ArchitectureDto {
   calls: string[];
 }
 
-export interface SocleDto {
-  applied: string[];
-  decisions: DecisionDto[];
-  exceptions: { decision: DecisionDto; replaces: DecisionDto; project: string }[];
+/** Instructions d'un groupe du projet ; system : « Tous les projets ». */
+export interface GroupInstructionsDto {
   id: number;
-  inherits: null | number;
+  instructions: string;
   name: string;
-  projects: string[];
-  scope: 'global' | 'shared';
+  system: boolean;
 }
 
-/** Contexte d'un projet (E9a) : ce qui est transmis, ce qui attend ta validation, ce qui est écarté. */
+/** Contexte d'un projet : ce qui est transmis, dans l'ordre, et ce qui attend ta validation. */
 export interface ContextDto {
   architecture: ArchitectureDto;
+  /** Décisions acceptées du projet, qui l'emportent sur les instructions */
   decisions: DecisionDto[];
-  excluded: DecisionDto[];
+  /** « Tous les projets » d'abord, puis chacun des groupes du projet */
+  groups: GroupInstructionsDto[];
   proposed: DecisionDto[];
   project: string;
-  socles: { decisions: DecisionDto[]; socle: { id: number; name: string; scope: 'global' | 'shared' } }[];
 }
 
 export interface ContextPreviewDto {
-  absent: { excluded: DecisionDto[]; proposed: DecisionDto[] };
+  absent: { proposed: DecisionDto[] };
   at: string;
   text: string;
   tokens: number;

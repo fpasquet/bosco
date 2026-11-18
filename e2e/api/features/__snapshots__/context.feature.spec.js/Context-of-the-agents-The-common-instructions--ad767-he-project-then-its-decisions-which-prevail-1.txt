@@ -1,0 +1,8 @@
+{
+  "text": "# Contexte du projet labo-ia\n\n## Instructions communes (Tous les projets)\n- Messages de commit en anglais, au format Conventional Commits.\n- Node 22 au minimum.\n\n## Instructions du groupe Node.js\n- Tests avec Vitest.\n- Journaux au format JSON.\n\n## Décisions du projet (elles l’emportent sur les instructions ci-dessus)\n- DEC-1 Découper les tableaux par ligne\n  Découper chaque tableau par ligne avant l'indexation.",
+  "tokens": 104,
+  "at": "<masked>",
+  "absent": {
+    "proposed": []
+  }
+}

@@ -1,7 +1,9 @@
 import type { DiscoverySettings } from '../domain/discovered-import.ts';
 import type { FolderEntry } from '../domain/folder.ts';
+import type { Group } from '../domain/group.ts';
 import type { SessionFolder } from '../domain/placement.ts';
 import type { Project } from '../domain/project.ts';
+import type { RetiredSocle, RetiredSocleDecision } from '../domain/socle-import.ts';
 
 export type { GitOrigins, SessionFolder } from '../domain/placement.ts';
 
@@ -10,6 +12,13 @@ export interface ProjectRepository {
   nextId(): Promise<number>;
   remove(id: number): Promise<void>;
   save(projects: readonly Project[]): Promise<void>;
+}
+
+export interface GroupRepository {
+  list(): Promise<Group[]>;
+  nextId(): Promise<number>;
+  remove(id: number): Promise<void>;
+  save(groups: readonly Group[]): Promise<void>;
 }
 
 /** Dossiers proposés que la personne a choisi d'ignorer. */
@@ -38,6 +47,13 @@ export interface SessionFolders {
 export interface DiscoveryToImport {
   /** null quand la reprise est déjà faite (ou que la base est neuve) */
   pending(): Promise<null | Partial<DiscoverySettings>>;
+  settle(): Promise<void>;
+}
+
+/** Socles d'avant les groupes, tant qu'ils n'ont pas été repris en groupes. */
+export interface SoclesToImport {
+  /** null quand la reprise est déjà faite (ou que la base est neuve) */
+  pending(): Promise<null | { decisions: RetiredSocleDecision[]; socles: RetiredSocle[] }>;
   settle(): Promise<void>;
 }
 

@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite';
 import { fn } from 'storybook/test';
-import { STORY_DEC3, STORY_VITEST } from '../../fixtures';
+import { STORY_DEC3 } from '../../fixtures';
 import { DecisionForm } from './decision-form';
 
 const meta = {
@@ -11,7 +11,6 @@ const meta = {
     mode: 'new',
     initial: null,
     targetLabel: 'api-voix',
-    exceptionChoices: [STORY_VITEST],
     busy: false,
     serverError: null,
     onCancel: fn(),
@@ -26,12 +25,11 @@ export const NewDecision: Story = {
   args: { targetChoices: ['api-voix', 'labo-ia', 'outils-node'], onTargetChange: fn() },
 };
 
-export const SocleDecision: Story = {
-  args: { targetLabel: 'Socle Node.js', exceptionChoices: [] },
-};
+/** La cible est fixe : un remplacement, ou une décision ouverte depuis un projet. */
+export const FixedTarget: Story = {};
 
 export const NewVersion: Story = {
-  args: { mode: 'edit', initial: STORY_DEC3.versions.at(-1)!, nextVersion: 3, exceptionChoices: [] },
+  args: { mode: 'edit', initial: STORY_DEC3.versions.at(-1)!, nextVersion: 3 },
 };
 
 export const NoteMissing: Story = {

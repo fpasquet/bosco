@@ -1,12 +1,16 @@
-import { FolderGit2, SquareTerminal } from 'lucide-react';
+import { FolderGit2, Layers, SquareTerminal } from 'lucide-react';
 import Link from 'next/link';
 
 export interface SessionsSidebarProps {
+  /** Groupes affichés dans la barre latérale ; chacun ouvre sa page */
+  groups?: { id: number; name: string }[];
   liveTracking: boolean;
   profiles: { count: number; label: string; path: string }[];
   projects: { count: number; name: string }[];
   /** Projet filtré (E1c) : son lien porte aria-current */
   selected: null | string;
+  /** Groupe dont la page est ouverte : son lien porte aria-current */
+  selectedGroup?: null | number;
   /** L'état des sources se cache quand Bosco est injoignable : il serait périmé (E1f) */
   showStatus?: boolean;
 }
@@ -15,12 +19,17 @@ const ITEM =
   'flex h-8 items-center gap-3 rounded-control px-2.5 aria-current:bg-nav-active aria-current:font-medium aria-current:text-nav-ink';
 const HEADING = 'mt-6 px-2.5 text-xs font-semibold tracking-wider uppercase';
 
-/** Projets, profils et état des sources dans la barre latérale ; un clic sur un projet filtre la vue d'ensemble. */
+/**
+ * Projets, groupes, profils et état des sources dans la barre latérale ; un clic sur un projet filtre la vue
+ * d'ensemble, un clic sur un groupe ouvre sa page.
+ */
 export function SessionsSidebar({
+  groups = [],
   liveTracking,
   profiles,
   projects,
   selected,
+  selectedGroup = null,
   showStatus = true,
 }: SessionsSidebarProps) {
   return (
@@ -41,6 +50,26 @@ export function SessionsSidebar({
                 <FolderGit2 aria-hidden className="size-4 shrink-0" />
                 <span className="truncate">{name}</span>
                 <span className="ml-auto font-mono text-xs">{count}</span>
+              </Link>
+            ))}
+          </nav>
+        </>
+      )}
+      {groups.length > 0 && (
+        <>
+          <p id="sidebar-groups" className={HEADING}>
+            Groupes
+          </p>
+          <nav aria-labelledby="sidebar-groups" className="mt-1.5 flex flex-col gap-0.5">
+            {groups.map(({ id, name }) => (
+              <Link
+                key={id}
+                href={`/groups/${id}`}
+                aria-current={selectedGroup === id ? 'page' : undefined}
+                className={ITEM}
+              >
+                <Layers aria-hidden className="size-4 shrink-0" />
+                <span className="truncate">{name}</span>
               </Link>
             ))}
           </nav>

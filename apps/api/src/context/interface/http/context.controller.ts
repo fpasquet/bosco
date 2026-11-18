@@ -12,14 +12,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { z } from 'zod';
-import type {
-  ArchitectureDto,
-  ContextDto,
-  ContextPreviewDto,
-  DecisionDetailDto,
-  DecisionDto,
-  SocleDto,
-} from '@bosco/domain';
+import type { ArchitectureDto, ContextDto, ContextPreviewDto, DecisionDetailDto, DecisionDto } from '@bosco/domain';
 import type { DecisionSnapshot } from '../../domain/decision.ts';
 import { DomainError } from '../../../shared/domain/domain-error.ts';
 import { parseBody } from '../../../shared/interface/http/parse-body.ts';
@@ -33,15 +26,11 @@ const textSchema = z.object({
   consequences: z.string().max(10_000).nullable().default(null),
   alternatives: z.string().max(10_000).nullable().default(null),
 });
-const targetSchema = z.union([
-  z.object({ kind: z.literal('project'), name: z.string().min(1) }),
-  z.object({ kind: z.literal('socle'), id: z.number().int() }),
-]);
+const targetSchema = z.object({ kind: z.literal('project'), name: z.string().min(1) });
 const writeSchema = z.object({
   target: targetSchema,
   text: textSchema,
   accept: z.boolean(),
-  exceptionTo: z.number().int().nullable().default(null),
   replaces: z.number().int().nullable().default(null),
 });
 const acceptSchema = z.object({ edited: textSchema.nullable().default(null) });
@@ -50,12 +39,6 @@ const versionSchema = z.object({ text: textSchema, note: z.string().max(500) });
 const architectureSchema = z.object({
   calls: z.array(z.string().max(200)).max(50),
   calledBy: z.array(z.string().max(200)).max(50),
-});
-const socleSchema = z.object({
-  name: z.string().max(200),
-  scope: z.enum(['global', 'shared']),
-  inherits: z.number().int().nullable().default(null),
-  projects: z.array(z.string()).max(500).default([]),
 });
 
 function present(decision: DecisionSnapshot): DecisionDto {
@@ -73,7 +56,7 @@ async function settle<T>(work: () => Promise<T>): Promise<T> {
   }
 }
 
-/** Contexte des agents (E9, E14), réservé à toi : le téléphone lit, accepte ou refuse seulement. */
+/** Contexte des agents, réservé à toi : le téléphone lit, accepte ou refuse seulement. */
 @Controller('api')
 export class ContextController {
   constructor(@Inject(CONTEXT_SERVICE) private readonly context: ContextService) {}
@@ -86,11 +69,7 @@ export class ContextController {
       architecture: overview.architecture,
       decisions: overview.decisions.map(present),
       proposed: overview.proposed.map(present),
-      excluded: overview.excluded.map(present),
-      socles: overview.socles.map(({ decisions, socle }) => ({
-        socle: { id: socle.id, name: socle.name, scope: socle.scope },
-        decisions: decisions.map(present),
-      })),
+      groups: overview.groups,
     };
   }
 
@@ -101,11 +80,11 @@ export class ContextController {
       text: preview.text,
       tokens: preview.tokens,
       at: preview.at.toISOString(),
-      absent: { proposed: preview.absent.proposed.map(present), excluded: preview.absent.excluded.map(present) },
+      absent: { proposed: preview.absent.proposed.map(present) },
     };
   }
 
-  /** Projets connus de Bosco : ceux auxquels une décision ou un socle s'applique. */
+  /** Projets qui ont une décision à eux, proposée ou acceptée. */
   @Get('context/projects')
   async listDecidedProjects(): Promise<{ projects: string[] }> {
     const projects = await this.context.listDecidedProjects();
@@ -136,8 +115,8 @@ export class ContextController {
 
   @Post('decisions')
   async write(@Body() body: unknown): Promise<DecisionDto> {
-    const { accept, exceptionTo, replaces, target, text } = parseBody(writeSchema, body);
-    const decision = await settle(() => this.context.write(target, text, { accept, exceptionTo, replaces }));
+    const { accept, replaces, target, text } = parseBody(writeSchema, body);
+    const decision = await settle(() => this.context.write(target, text, { accept, replaces }));
     return present(decision);
   }
 
@@ -167,33 +146,5 @@ export class ContextController {
     const { reason } = parseBody(reasonSchema, body ?? {});
     const decision = await settle(() => this.context.abandon(id, reason));
     return present(decision);
-  }
-
-  @Get('socles')
-  async socles(): Promise<{ socles: SocleDto[] }> {
-    const socles = await this.context.listSocles();
-    return {
-      socles: socles.map((socle) => ({
-        ...socle,
-        decisions: socle.decisions.map(present),
-        exceptions: socle.exceptions.map((exception) => ({
-          project: exception.project,
-          decision: present(exception.decision),
-          replaces: present(exception.replaces),
-        })),
-      })),
-    };
-  }
-
-  @Post('socles')
-  createSocle(@Body() body: unknown) {
-    const socle = parseBody(socleSchema, body);
-    return settle(() => this.context.saveSocle({ ...socle, id: null }));
-  }
-
-  @Put('socles/:id')
-  updateSocle(@Param('id', ParseIntPipe) id: number, @Body() body: unknown) {
-    const socle = parseBody(socleSchema, body);
-    return settle(() => this.context.saveSocle({ ...socle, id }));
   }
 }

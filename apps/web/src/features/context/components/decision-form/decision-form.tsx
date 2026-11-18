@@ -3,9 +3,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import type { DecisionDto, DecisionTextDto } from '@bosco/domain';
+import type { DecisionTextDto } from '@bosco/domain';
 import { Button } from '@/shared/ui/button';
-import { titleOf } from '../../lib/decisions';
 
 /** Nouvelle décision (E9c), nouvelle version d'une décision acceptée (E9e), ou relecture avant d'accepter (E9b). */
 export type DecisionFormMode = 'edit' | 'new' | 'review';
@@ -13,15 +12,12 @@ export type DecisionFormMode = 'edit' | 'new' | 'review';
 export interface DecisionFormValues {
   /** Accepter tout de suite, ou garder en proposition (nouvelle décision) */
   accept: boolean;
-  exceptionTo: null | number;
   note: string;
   text: DecisionTextDto;
 }
 
 export interface DecisionFormProps {
   busy: boolean;
-  /** Décisions des socles du projet, que celle-ci peut écarter (« fait exception à ») */
-  exceptionChoices: DecisionDto[];
   initial: DecisionTextDto | null;
   mode: DecisionFormMode;
   /** Numéro de la version créée par l'enregistrement (E9e) */
@@ -32,7 +28,7 @@ export interface DecisionFormProps {
   serverError: null | string;
   /** Projets entre lesquels choisir la cible d'une nouvelle décision ; sans eux, la cible est fixe */
   targetChoices?: string[];
-  /** « api-voix », « Socle Node.js » */
+  /** Projet visé (« api-voix ») */
   targetLabel: string;
   onTargetChange?: (project: string) => void;
 }
@@ -46,7 +42,6 @@ function schemaOf(mode: DecisionFormMode) {
     decision: required('Écris ce qui est décidé.'),
     consequences: z.string(),
     alternatives: z.string(),
-    exceptionTo: z.string(),
     note: mode === 'edit' ? required('Écris une note pour dire ce qui change.') : z.string(),
   });
 }
@@ -64,7 +59,6 @@ const FIELDS: { label: string; name: keyof Values; optional?: boolean; rows: num
 /** Formulaire d'une décision : titre, contexte et décision obligatoires, le reste facultatif (CA-CONT-12). */
 export function DecisionForm({
   busy,
-  exceptionChoices,
   initial,
   mode,
   nextVersion,
@@ -83,7 +77,6 @@ export function DecisionForm({
       decision: initial?.decision ?? '',
       consequences: initial?.consequences ?? '',
       alternatives: initial?.alternatives ?? '',
-      exceptionTo: '',
       note: '',
     },
   });
@@ -98,7 +91,6 @@ export function DecisionForm({
       onSubmit({
         accept,
         note: values.note,
-        exceptionTo: values.exceptionTo ? Number(values.exceptionTo) : null,
         text: {
           title: values.title,
           context: values.context,
@@ -165,21 +157,6 @@ export function DecisionForm({
           </label>
         );
       })}
-      {mode === 'new' && exceptionChoices.length > 0 && (
-        <label className="flex flex-col gap-1.5">
-          <span className="text-xs font-medium">
-            Fait exception à <span className="text-muted">(facultatif)</span>
-          </span>
-          <select className="select w-full" {...register('exceptionTo')}>
-            <option value="">Aucune décision d’un socle</option>
-            {exceptionChoices.map((decision) => (
-              <option key={decision.id} value={decision.id}>
-                {titleOf(decision)}
-              </option>
-            ))}
-          </select>
-        </label>
-      )}
       {mode === 'edit' && (
         <label className="flex flex-col gap-1.5">
           <span className="text-xs font-medium">Note du changement (obligatoire)</span>

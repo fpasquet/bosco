@@ -1,0 +1,23 @@
+{
+  "description": "Client : le Club des Trois Lacs",
+  "id": 2,
+  "instructions": "Les textes lus par les joueurs sont en français.\n\nLes tickets du club se citent par leur clé (LAC-123).",
+  "name": "Club des Trois Lacs",
+  "profile": null,
+  "projects": [
+    {
+      "id": 1,
+      "name": "api-tarifs"
+    },
+    {
+      "id": 2,
+      "name": "creneaux"
+    },
+    {
+      "id": 3,
+      "name": "site-clubs"
+    }
+  ],
+  "sidebar": true,
+  "system": false
+}

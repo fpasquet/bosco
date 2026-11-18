@@ -1,5 +1,5 @@
 // Contexte du fil rouge des specs (lot 3), pour les histoires.
-import type { ContextDto, ContextPreviewDto, DecisionDto, SocleDto } from '@bosco/domain';
+import type { ContextDto, DecisionDto } from '@bosco/domain';
 
 const at = (day: string) => new Date(`2026-${day}T14:00:00`).toISOString();
 
@@ -13,7 +13,6 @@ function decision(
     id,
     state: 'accepted',
     target: { kind: 'project', name: 'api-voix' },
-    exceptionTo: null,
     fromTask: null,
     reason: null,
     replacedBy: null,
@@ -24,8 +23,6 @@ function decision(
     ...overrides,
   };
 }
-
-export const STORY_VITEST = decision(10, 'Tests avec Vitest', { target: { kind: 'socle', id: 2 } });
 
 export const STORY_PROPOSED = decision(
   6,
@@ -69,54 +66,18 @@ export const STORY_CONTEXT: ContextDto = {
     decision(1, 'Synthèse vocale par un service externe'),
     decision(2, 'Lexique de prononciation versionné dans le projet'),
     STORY_DEC3,
-    decision(5, 'Garder Jest pour les tests', { exceptionTo: 10 }),
+    decision(5, 'Garder Jest pour les tests'),
   ],
   proposed: [STORY_PROPOSED],
-  excluded: [STORY_VITEST],
-  socles: [
+  groups: [
     {
-      socle: { id: 1, name: 'Socle commun', scope: 'global' },
-      decisions: [
-        decision(8, 'Messages de commit en anglais, au format Conventional Commits', {
-          target: { kind: 'socle', id: 1 },
-        }),
-        decision(9, 'Node 22 au minimum', { target: { kind: 'socle', id: 1 } }),
-      ],
+      id: 1,
+      name: 'Tous les projets',
+      system: true,
+      instructions: 'Messages de commit en anglais, au format Conventional Commits.\nNode 22 au minimum.',
     },
-    {
-      socle: { id: 2, name: 'Socle Node.js', scope: 'shared' },
-      decisions: [decision(11, 'Journaux au format JSON', { target: { kind: 'socle', id: 2 } })],
-    },
+    { id: 2, name: 'Médias', system: false, instructions: 'Les textes lus sont en français.' },
+    { id: 3, name: 'Node.js', system: false, instructions: 'Tests avec Vitest.\nJournaux au format JSON.' },
   ],
   architecture: { calls: ['Service de synthèse', 'Stockage audio'], calledBy: ['veille-presse', 'site-articles'] },
 };
-
-export const STORY_PREVIEW: ContextPreviewDto = {
-  text: '# Contexte du projet api-voix\n\n## Décisions du projet\n- DEC-1 Synthèse vocale par un service externe\n  Synthèse vocale par un service externe.\n\n## Socles\nSocle commun\n- Node 22 au minimum\n  Node 22 au minimum.',
-  tokens: 1240,
-  at: new Date('2026-11-06T15:14:00').toISOString(),
-  absent: { proposed: [STORY_PROPOSED], excluded: [STORY_VITEST] },
-};
-
-export const STORY_SOCLES: SocleDto[] = [
-  {
-    id: 1,
-    name: 'Socle commun',
-    scope: 'global',
-    inherits: null,
-    projects: [],
-    applied: ['api-voix', 'api-signets', 'api-liens', 'labo-ia', 'site-articles'],
-    decisions: STORY_CONTEXT.socles[0]!.decisions,
-    exceptions: [],
-  },
-  {
-    id: 2,
-    name: 'Socle Node.js',
-    scope: 'shared',
-    inherits: null,
-    projects: ['api-voix', 'api-signets', 'api-liens', 'labo-ia'],
-    applied: ['api-voix', 'api-signets', 'api-liens', 'labo-ia'],
-    decisions: [STORY_VITEST, ...STORY_CONTEXT.socles[1]!.decisions],
-    exceptions: [{ project: 'api-voix', decision: STORY_CONTEXT.decisions[3]!, replaces: STORY_VITEST }],
-  },
-];

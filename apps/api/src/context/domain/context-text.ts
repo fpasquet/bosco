@@ -1,13 +1,12 @@
 import type { DecisionSnapshot } from './decision.ts';
-import { type SocleSnapshot, soclesOf } from './socle.ts';
 
-/** Ce que le projet appelle et qui l'appelle, pour mesurer l'effet d'un changement ailleurs (E9a, annotation 4). */
+/** Ce que le projet appelle et qui l'appelle, pour mesurer l'effet d'un changement ailleurs. */
 export interface Architecture {
   calledBy: string[];
   calls: string[];
 }
 
-/** Lien d'une tâche transmis à l'agent : titre, nature et état, jamais le contenu ni les accès (CA-CONT-38). */
+/** Lien d'une tâche transmis à l'agent : titre, nature et état, jamais le contenu ni les accès. */
 export interface ContextLink {
   kind: string;
   state: null | string;
@@ -15,79 +14,76 @@ export interface ContextLink {
   url: string;
 }
 
+/** Instructions d'un groupe du projet ; system : « Tous les projets », qui contient tous les projets. */
+export interface GroupInstructions {
+  id: number;
+  instructions: string;
+  name: string;
+  system: boolean;
+}
+
 export interface ProjectContext {
   architecture: Architecture;
-  /** Décisions acceptées du projet */
+  /** Décisions acceptées du projet, qui l'emportent sur les instructions des groupes */
   decisions: DecisionSnapshot[];
-  /** Décisions des socles écartées par une exception du projet */
-  excluded: DecisionSnapshot[];
+  /** « Tous les projets » d'abord, puis chacun des groupes du projet */
+  groups: GroupInstructions[];
   proposed: DecisionSnapshot[];
-  socles: { decisions: DecisionSnapshot[]; socle: SocleSnapshot }[];
 }
 
 function title(decision: DecisionSnapshot): string {
   return decision.versions.at(-1)?.title ?? '';
 }
 
-/** Le contexte d'un projet : ce qui est transmis, ce qui attend, ce qui est écarté (RF-CONT-01 à 03). */
+/** Le contexte d'un projet : les instructions de ses groupes, ses décisions transmises et celles qui attendent. */
 export function contextOf(
   project: string,
   decisions: readonly DecisionSnapshot[],
-  socles: readonly SocleSnapshot[],
+  groups: readonly GroupInstructions[],
   architecture: Architecture,
 ): ProjectContext {
-  const own = decisions.filter((decision) => decision.target.kind === 'project' && decision.target.name === project);
-  const accepted = own.filter((decision) => decision.state === 'accepted');
-  const exceptions = new Set(accepted.map((decision) => decision.exceptionTo).filter((id) => id !== null));
-  const applied = soclesOf(project, socles).map((socle) => ({
-    socle,
-    decisions: decisions.filter(
-      (decision) =>
-        decision.target.kind === 'socle' && decision.target.id === socle.id && decision.state === 'accepted',
-    ),
-  }));
+  const own = decisions.filter((decision) => decision.target.name === project);
   return {
-    decisions: accepted,
+    decisions: own.filter((decision) => decision.state === 'accepted'),
     proposed: own.filter((decision) => decision.state === 'proposed'),
-    excluded: applied.flatMap(({ decisions: list }) => list.filter((decision) => exceptions.has(decision.id))),
-    socles: applied.map(({ decisions: list, socle }) => ({
-      socle,
-      decisions: list.filter((decision) => !exceptions.has(decision.id)),
-    })),
+    groups: [...groups],
     architecture,
   };
 }
 
+/** Une consigne par ligne non vide, en liste. */
+function instructionLines(text: string): string[] {
+  return text
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => (line.startsWith('- ') ? line : `- ${line}`));
+}
+
+function groupsSection(groups: readonly GroupInstructions[]): string[] {
+  return groups.flatMap((group) => {
+    const lines = instructionLines(group.instructions);
+    if (lines.length === 0) return [];
+    const heading = group.system
+      ? `## Instructions communes (${group.name})`
+      : `## Instructions du groupe ${group.name}`;
+    return ['', heading, ...lines];
+  });
+}
+
 /** Une décision dans le texte transmis : son titre, puis ce qui est décidé, sur une ligne. */
-function decisionLines(decision: DecisionSnapshot, prefix: string, suffix = ''): string[] {
+function decisionLines(decision: DecisionSnapshot): string[] {
   const body = decision.versions.at(-1)?.decision.replaceAll('\n', ' ') ?? '';
-  return [`- ${prefix}${title(decision)}${suffix}`, `  ${body}`];
+  return [`- DEC-${decision.id} ${title(decision)}`, `  ${body}`];
 }
 
-function ownSection(context: ProjectContext): string[] {
+/** Les décisions du projet viennent après les instructions et l'emportent : le texte le dit à l'agent. */
+function decisionsSection(context: ProjectContext, afterInstructions: boolean): string[] {
   if (context.decisions.length === 0) return [];
-  return [
-    '',
-    '## Décisions du projet',
-    ...context.decisions.flatMap((decision) => {
-      const exception = context.excluded.find((excluded) => excluded.id === decision.exceptionTo);
-      const suffix = exception ? ` (fait exception à « ${title(exception)} »)` : '';
-      return decisionLines(decision, `DEC-${decision.id} `, suffix);
-    }),
-  ];
-}
-
-function soclesSection(context: ProjectContext): string[] {
-  const socles = context.socles.filter(({ decisions }) => decisions.length > 0);
-  if (socles.length === 0) return [];
-  return [
-    '',
-    '## Socles',
-    ...socles.flatMap(({ decisions, socle }) => [
-      socle.name,
-      ...decisions.flatMap((decision) => decisionLines(decision, '')),
-    ]),
-  ];
+  const heading = afterInstructions
+    ? '## Décisions du projet (elles l’emportent sur les instructions ci-dessus)'
+    : '## Décisions du projet';
+  return ['', heading, ...context.decisions.flatMap(decisionLines)];
 }
 
 function architectureSection({ calledBy, calls }: Architecture): string[] {
@@ -109,18 +105,22 @@ function linksSection(links: readonly ContextLink[]): string[] {
   ];
 }
 
-/** Texte exact que lit l'agent au lancement (E9f) : décisions acceptées, socles, architecture, liens de la tâche. */
+/**
+ * Texte exact que lit l'agent au lancement : les instructions de « Tous les projets », puis de chacun des groupes du
+ * projet, ses décisions acceptées, qui l'emportent, sa place dans l'architecture et les liens de la tâche.
+ */
 export function contextText(project: string, context: ProjectContext, links: readonly ContextLink[] = []): string {
+  const instructions = groupsSection(context.groups);
   return [
     `# Contexte du projet ${project}`,
-    ...ownSection(context),
-    ...soclesSection(context),
+    ...instructions,
+    ...decisionsSection(context, instructions.length > 0),
     ...architectureSection(context.architecture),
     ...linksSection(links),
   ].join('\n');
 }
 
-/** Estimation grossière : un token pour quatre caractères (E9f, annotation 3). */
+/** Estimation grossière : un token pour quatre caractères. */
 export function tokensOf(text: string): number {
   return Math.ceil(text.length / 4);
 }
