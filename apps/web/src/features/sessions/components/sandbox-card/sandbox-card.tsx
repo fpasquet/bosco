@@ -1,7 +1,8 @@
 'use client';
 import { Download, Moon, Square, Trash2 } from 'lucide-react';
 import { useState } from 'react';
-import type { PilotSandboxDto } from '@bosco/domain';
+import type { PilotSandboxDto, UsageDto } from '@bosco/domain';
+import { coresOf, memoryUsageOf } from '@/shared/lib/usage';
 import { Button } from '@/shared/ui/button';
 import { clockOf } from '../../lib/detail';
 
@@ -13,6 +14,8 @@ export interface SandboxCardProps {
   onRetrieve?: () => void;
   onStop: () => void;
   sandbox: PilotSandboxDto;
+  /** Consommation du conteneur démarré, mesurée avec les conteneurs en cours ; null avant la première mesure */
+  usage?: null | UsageDto;
 }
 
 const STATES = {
@@ -22,10 +25,10 @@ const STATES = {
 } as const;
 
 /**
- * Bac à sable d'une session : l'état de son conteneur et son arrêt prévu, la branche de la session et
+ * Bac à sable d'une session : l'état de son conteneur, ce qu'il consomme et son arrêt prévu, la branche de la session et
  * sa récupération dans le dépôt du poste, puis l'arrêt et la suppression, confirmée.
  */
-export function SandboxCard({ busy, onRemove, onRetrieve, onStop, sandbox }: SandboxCardProps) {
+export function SandboxCard({ busy, onRemove, onRetrieve, onStop, sandbox, usage = null }: SandboxCardProps) {
   const [confirming, setConfirming] = useState(false);
   const state = sandbox.removed ? STATES.missing : STATES[sandbox.state];
   return (
@@ -36,6 +39,18 @@ export function SandboxCard({ busy, onRemove, onRetrieve, onStop, sandbox }: San
         </h2>
         <span className={`ml-auto badge badge-soft badge-sm ${state.badge}`}>{state.label}</span>
       </div>
+      {sandbox.state === 'running' && !sandbox.removed && usage && (
+        <dl aria-label="Consommation du conteneur" className="mb-3 grid grid-cols-2 gap-2 text-xs">
+          <div>
+            <dt className="text-muted">Processeur</dt>
+            <dd className="font-mono tabular-nums">{coresOf(usage)}</dd>
+          </div>
+          <div>
+            <dt className="text-muted">Mémoire</dt>
+            <dd className="font-mono tabular-nums">{memoryUsageOf(usage)}</dd>
+          </div>
+        </dl>
+      )}
       <p className="font-mono text-xs">{sandbox.branch}</p>
       <p className="mt-1 text-xs text-muted">
         depuis {sandbox.from} ·{' '}

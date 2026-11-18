@@ -1,37 +1,9 @@
 import type { ContainersDto, UsageDto } from '@bosco/domain';
 
-const GIGABYTE = 1024 ** 3;
-const MEGABYTE = 1024 ** 2;
-const ONE = new Intl.NumberFormat('fr', { maximumFractionDigits: 1, minimumFractionDigits: 1 });
-const ROUND = new Intl.NumberFormat('fr', { maximumFractionDigits: 0 });
-const UP_TO_ONE = new Intl.NumberFormat('fr', { maximumFractionDigits: 1 });
-
 /** À partir de cette part de son plafond, la valeur passe en orange. */
 export const NEAR_CEILING = 0.8;
 
-/** « 3,6 Go », « 4 Go », « 412 Mo » */
-export function memoryOf(bytes: number): string {
-  return bytes >= GIGABYTE ? `${UP_TO_ONE.format(bytes / GIGABYTE)} Go` : `${ROUND.format(bytes / MEGABYTE)} Mo`;
-}
-
-/** « 4 Go » pour un plafond rond, sinon comme memoryOf */
-function limitOf(bytes: number): string {
-  return bytes >= GIGABYTE && bytes % GIGABYTE === 0 ? `${bytes / GIGABYTE} Go` : memoryOf(bytes);
-}
-
-/** « 1,7 / 2 cœurs », « 0,3 cœur » sans plafond */
-export function coresOf({ cpu, cpuLimit }: Pick<UsageDto, 'cpu' | 'cpuLimit'>): string {
-  const value = ONE.format(cpu);
-  if (cpuLimit === null) return `${value} ${cpu >= 2 ? 'cœurs' : 'cœur'}`;
-  return `${value} / ${ROUND.format(cpuLimit)} ${cpuLimit >= 2 ? 'cœurs' : 'cœur'}`;
-}
-
-/** « 3,6 / 4 Go », « 410 Mo » sans plafond */
-export function memoryUsageOf({ memory, memoryLimit }: Pick<UsageDto, 'memory' | 'memoryLimit'>): string {
-  if (memoryLimit === null) return memoryOf(memory);
-  if (memory >= GIGABYTE) return `${ONE.format(memory / GIGABYTE)} / ${limitOf(memoryLimit)}`;
-  return `${memoryOf(memory)} / ${limitOf(memoryLimit)}`;
-}
+export { coresOf, memoryOf, memoryUsageOf } from '@/shared/lib/usage';
 
 /** Processeur ou mémoire à 80 % ou plus de son plafond : « Proche du plafond ». */
 export function nearCeiling(usage: UsageDto): { cpu: boolean; memory: boolean } {

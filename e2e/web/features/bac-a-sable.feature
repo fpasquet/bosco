@@ -24,6 +24,23 @@ Fonctionnalité: Sessions en bac à sable
     Et je vois le texte « Elle ne se reprend que dans Bosco »
     Et la page est accessible
 
+  @CA-SESS-113
+  @RF-CONT-13
+  Scénario: Le détail d'une session en bac à sable montre son bac à sable, sa consommation et sa branche
+    Quand j'ouvre la page « /sessions/new »
+    Et je clique sur le bouton radio « Bac à sable »
+    Et je saisis « Monte TypeScript en version 6 » dans le champ « Premier message »
+    Et je clique sur le bouton « Démarrer »
+    Et je vois le texte « Reçu : Monte TypeScript en version 6 · mode acceptEdits · modèle défaut · effort défaut · images 0 »
+    Alors le titre de la page porte « Bac à sable »
+    Et je vois l’étiquette « Démarré »
+    Et je vois le texte « 0,0 / 2 cœurs »
+    Et je vois le texte « 1,3 / 4 Go »
+    Et je vois le texte « S’arrête à »
+    Et je vois le texte « Aucun fichier modifié par l’agent »
+    Et je ne vois plus le texte « Reprendre dans un terminal »
+    Et je vois le texte « 1 bac à sable »
+
   @CA-SESS-108
   @CA-SESS-112
   Scénario: Les sorties refusées se lisent dans le fil, et la branche se récupère

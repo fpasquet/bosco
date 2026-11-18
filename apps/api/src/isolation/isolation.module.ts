@@ -31,8 +31,24 @@ const clock = { now: () => new Date() };
 /** Liste des domaines autorisés : à la place qu'elle avait avant les bacs à sable, montée par les proxies existants */
 const egressDir = (config: Config) => join(config.dataDir, 'worker', 'egress');
 
-/** Dans les scénarios, pas de Docker : aucun conteneur */
-const NO_SANDBOXES: SandboxProbe = { list: () => Promise.resolve([]) };
+/** Mémoire qu'un bac à sable démarré consomme dans les scénarios : 1,3 Go */
+const SCRIPTED_MEMORY = 1.3 * 1024 ** 3;
+
+/** Dans les scénarios, pas de Docker : chaque bac à sable démarré d'une session donne la même mesure */
+function scriptedProbe(pilot: PilotService): SandboxProbe {
+  return {
+    list: () =>
+      Promise.resolve(
+        pilot
+          .sandboxedSessions()
+          .filter((sessionId) => pilot.pilotOf(sessionId)?.sandbox?.state === 'running')
+          .map((sessionId) => {
+            const key = sandboxKeyOf(sessionId);
+            return { cpu: 0, key, memory: SCRIPTED_MEMORY, name: `bosco-s-${key}-agent` };
+          }),
+      ),
+  };
+}
 
 /**
  * Isolation des bacs à sable : l'image et les limites de l'agent, la liste des domaines de son proxy de sortie,
@@ -113,7 +129,7 @@ const NO_SANDBOXES: SandboxProbe = { list: () => Promise.resolve([]) };
               });
             },
           },
-          probe: config.testing ? NO_SANDBOXES : new DockerSandboxProbe(),
+          probe: config.testing ? scriptedProbe(pilot) : new DockerSandboxProbe(),
           sandboxedSessions: async () => {
             const named = await titles();
             return pilot.sandboxedSessions().map((sessionId) => ({
