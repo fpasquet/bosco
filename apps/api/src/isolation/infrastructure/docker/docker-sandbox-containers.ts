@@ -1,4 +1,4 @@
-// Conteneurs des bacs à sable des sessions (DT-37) : l'isolation des agents du worker (image, limites, utilisateur
+// Conteneurs des bacs à sable des sessions : l'isolation des agents du worker (image, limites, utilisateur
 // sans droits, réseau privé et proxy de sortie), mais un conteneur qui vit le temps de la session. Il attend sans
 // rien faire entre deux tours ; chaque tour s'y exécute par docker exec. Arrêté, il se relance sans être recréé.
 import { execFile } from 'node:child_process';

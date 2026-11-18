@@ -1,7 +1,7 @@
 'use client';
 import type { SettingsDto } from '../../api/settings';
 
-/** Pas proposés pour le seuil d'inactivité : de 5 à 60 minutes (CA-SESS-59). */
+/** Pas proposés pour le seuil d'inactivité : de 5 à 60 minutes. */
 const THRESHOLDS = [5, 10, 15, 20, 30, 45, 60];
 
 export interface SettingsPanelProps {

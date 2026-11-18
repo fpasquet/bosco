@@ -28,7 +28,7 @@ export class EventsController {
   ) {}
 
   /**
-   * Flux en direct : un instantané des sessions, puis chaque changement, sur le même canal (DT-06). L'abonnement aux
+   * Flux en direct : un instantané des sessions, puis chaque changement, sur le même canal. L'abonnement aux
    * changements précède la lecture de l'instantané, et ce qui arrive entre les deux est rejoué après lui : aucun
    * changement ne se perd. Une reconnexion reçoit un nouvel instantané.
    */
@@ -45,13 +45,13 @@ export class EventsController {
         switchMap(() => from(this.sessionService.listSessions())),
         map(snapshotEvent),
       );
-      // Avancement de la première lecture de l'historique (E1e), le dernier connu d'abord
+      // Avancement de la première lecture de l'historique, le dernier connu d'abord
       const progress = this.bus.importProgress.pipe(
         map((value) => ({ type: 'import.progress', data: { progress: value } })),
       );
-      // Réponse à une autorisation, donnée ici ou dans le terminal : un message bref dans l'interface (CA-SESS-07)
+      // Réponse à une autorisation, donnée ici ou dans le terminal : un message bref dans l'interface
       const settlements = this.bus.settlements.pipe(map((settled) => ({ type: 'permission.settled', data: settled })));
-      // Notification nouvelle (et si elle s'affiche en message bref), ou centre de notifications à relire (E15)
+      // Notification nouvelle (et si elle s'affiche en message bref), ou centre de notifications à relire
       const notifications = this.bus.notifications.pipe(
         map((event) =>
           event

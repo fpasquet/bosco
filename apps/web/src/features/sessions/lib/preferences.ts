@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware';
 
 interface SourcesPreferences {
   dismissLiveTrackingHint: () => void;
-  /** Encart « Suivi en direct » masqué par « Plus tard » ; l'installation reste proposée dans les sources (CA-SESS-04). */
+  /** Encart « Suivi en direct » masqué par « Plus tard » ; l'installation reste proposée dans les sources. */
   liveTrackingHintDismissed: boolean;
 }
 
@@ -26,7 +26,7 @@ interface OverviewPreferences {
   toggleHideInactive: () => void;
 }
 
-/** Regroupement de la vue d'ensemble et masquage des inactives, gardés d'une visite à l'autre (CA-SESS-18). */
+/** Regroupement de la vue d'ensemble et masquage des inactives, gardés d'une visite à l'autre. */
 export const useOverviewPreferences = create<OverviewPreferences>()(
   persist(
     (set) => ({

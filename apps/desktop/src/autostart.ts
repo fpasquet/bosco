@@ -1,4 +1,4 @@
-// « Lancer au démarrage » (E17a) : une entrée de démarrage automatique du bureau (~/.config/autostart), fenêtre fermée.
+// « Lancer au démarrage » : une entrée de démarrage automatique du bureau (~/.config/autostart), fenêtre fermée.
 import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 

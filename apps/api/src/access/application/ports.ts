@@ -7,9 +7,9 @@ export interface DeviceRepository {
   save(device: DeviceSnapshot): Promise<void>;
 }
 
-/** Écoute HTTPS sur le réseau local, ouverte seulement quand l'accès du téléphone est activé (NF-13). */
+/** Écoute HTTPS sur le réseau local, ouverte seulement quand l'accès du téléphone est activé. */
 export interface PhoneListener {
-  /** Empreinte SHA-256 du certificat de l'écoute, que le QR code porte à l'application Android (CA-APPS-05) */
+  /** Empreinte SHA-256 du certificat de l'écoute, que le QR code porte à l'application Android */
   fingerprint(): null | string;
   start(): Promise<{ urls: string[] }>;
   stop(): Promise<void>;

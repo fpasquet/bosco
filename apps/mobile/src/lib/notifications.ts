@@ -1,4 +1,4 @@
-// Notifications locales du téléphone (CA-APPS-06, CA-APPS-08) : l'interface de Bosco, dans la vue web, les transmet à
+// Notifications locales du téléphone : l'interface de Bosco, dans la vue web, les transmet à
 // l'application ; rien ne passe par un service de push.
 import * as Notifications from 'expo-notifications';
 

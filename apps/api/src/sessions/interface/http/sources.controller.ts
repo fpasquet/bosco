@@ -56,14 +56,14 @@ export class SourcesController {
     @Inject(SESSION_DEFAULTS_SERVICE) private readonly defaults: SessionDefaultsService,
   ) {}
 
-  /** Réglages d'un profil (E4g) : son compte, ses valeurs par défaut et leur origine, ce qui l'utilise. */
+  /** Réglages d'un profil : son compte, ses valeurs par défaut et leur origine, ce qui l'utilise. */
   @Get(':id/settings')
   async getProfileSettings(@Param('id') id: string): Promise<ProfileSettingsDto> {
     const view = await known(() => this.defaults.getProfileSettings(id));
     return presentProfile(view);
   }
 
-  /** « Enregistrer » les valeurs par défaut d'un profil, gardées par Bosco (CA-REGL-19). */
+  /** « Enregistrer » les valeurs par défaut d'un profil, gardées par Bosco. */
   @Put(':id/defaults')
   async changeProfileDefaults(@Param('id') id: string, @Body() body: unknown): Promise<ProfileSettingsDto> {
     const changes = parseBody(sessionDefaultsSchema.partial(), body) as SessionDefaultsChanges;
@@ -97,7 +97,7 @@ export class SourcesController {
     });
   }
 
-  /** Interrupteur d'une source (E4a) : la lecture s'arrête ou reprend, rien n'est effacé (CA-SESS-56). */
+  /** Interrupteur d'une source : la lecture s'arrête ou reprend, rien n'est effacé. */
   @Patch(':id')
   async updateSource(@Param('id') id: string, @Body() body: unknown): Promise<SourceSnapshot> {
     const { watched } = parseBody(sourceSchema, body);

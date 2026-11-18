@@ -1,4 +1,4 @@
-// Suggestions de l'éditeur (E2h, CA-SESS-99) : les fichiers suivis du projet après « @ », les commandes et skills du
+// Suggestions de l'éditeur : les fichiers suivis du projet après « @ », les commandes et skills du
 // profil et du projet après « / ». Lus sur le disque, sans rien modifier.
 import { execFile } from 'node:child_process';
 import { readdir, readFile } from 'node:fs/promises';

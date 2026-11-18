@@ -19,9 +19,9 @@ export interface SessionFeedProps {
   loading?: boolean;
   now: Date;
   session: SessionDto;
-  /** Carte affichée à la fin du fil, quand l'agent attend une autorisation (E2b) */
+  /** Carte affichée à la fin du fil, quand l'agent attend une autorisation */
   tail?: ReactNode;
-  /** Sous le fil, hors du défilement : la zone de message d'une session pilotée (E2e) */
+  /** Sous le fil, hors du défilement : la zone de message d'une session pilotée */
   footer?: ReactNode;
 }
 
@@ -100,8 +100,8 @@ function FeedContent({
 }
 
 /**
- * Fil d'une session (E2a) : le plus récent en bas, mis à jour sans recharger. Il suit les nouveaux événements tant
- * qu'on est en bas ; si on remonte, « Revenir au direct » ramène au dernier (CA-SESS-27, CA-SESS-28).
+ * Fil d'une session : le plus récent en bas, mis à jour sans recharger. Il suit les nouveaux événements tant
+ * qu'on est en bas ; si on remonte, « Revenir au direct » ramène au dernier.
  */
 export function SessionFeed({ conversation, footer, journal, loading = false, now, session, tail }: SessionFeedProps) {
   const scroller = useRef<HTMLDivElement>(null);

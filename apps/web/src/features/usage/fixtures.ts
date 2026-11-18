@@ -1,6 +1,6 @@
 import type { QuotaDto, UsageDayDto, UsageReportDto } from '@bosco/domain';
 
-// Données du fil rouge de la page Usage (E23a, E23b) : 30 derniers jours au 17 nov. 2026, pour les histoires.
+// Données du fil rouge de la page Usage : 30 derniers jours au 17 nov. 2026, pour les histoires.
 
 /** Hauteurs de la lecture et de l'écriture du cache dans la maquette, à 0,6 M de tokens le pixel. */
 const READ = [
@@ -80,7 +80,7 @@ export const STORY_USAGE: UsageReportDto = {
   ],
 };
 
-/** Filtrée sur le groupe Club des Trois Lacs, 7 derniers jours (E23b). */
+/** Filtrée sur le groupe Club des Trois Lacs, 7 derniers jours. */
 export const STORY_USAGE_GROUP: UsageReportDto = {
   ...STORY_USAGE,
   from: '2026-11-11',

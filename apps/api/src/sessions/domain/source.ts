@@ -1,6 +1,6 @@
 import { DomainError } from '../../shared/domain/domain-error.ts';
 
-/** Dossier de configuration de Claude Code (un profil) proposé ou surveillé par Bosco (RF-SESS-01). */
+/** Dossier de configuration de Claude Code (un profil) proposé ou surveillé par Bosco. */
 export interface SourceSnapshot {
   id: string;
   label: string;
@@ -46,13 +46,13 @@ export class Source {
     return this.snapshot.managed;
   }
 
-  /** Le suivi en direct est installé dans le profil : T'attend et les autorisations deviennent possibles (RF-SESS-03). */
+  /** Le suivi en direct est installé dans le profil : T'attend et les autorisations deviennent possibles. */
   enableLiveTracking(): void {
     if (this.managed) throw new ManagedSource(this.path);
     this.snapshot = { ...this.snapshot, liveTracking: true };
   }
 
-  /** Interrupteur de la source (E4a) : la lecture s'arrête ou reprend, rien n'est effacé (CA-SESS-56). */
+  /** Interrupteur de la source : la lecture s'arrête ou reprend, rien n'est effacé. */
   setWatched(watched: boolean): void {
     if (this.managed && !watched) throw new ManagedSource(this.path);
     this.snapshot = { ...this.snapshot, watched };

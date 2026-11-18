@@ -11,7 +11,7 @@ import { lastActionOf, titleOf } from '../sessions-table';
 import { WaitingSummary } from '../waiting-summary';
 
 export interface StateBoardProps {
-  /** Boutons d'une session qui t'attend : les mêmes que dans le bandeau d'E1b (CA-SESS-14) */
+  /** Boutons d'une session qui t'attend : les mêmes que dans le bandeau T'attend */
   actionsOf?: (session: SessionDto) => ReactNode;
   columns: { sessions: SessionDto[]; state: SessionStateDto }[];
   now: Date;
@@ -37,7 +37,7 @@ function Card({ actionsOf, now, session }: Pick<StateBoardProps, 'actionsOf'> & 
         <span className="ml-auto tabular-nums">{elapsed(new Date(session.lastEventAt), now)}</span>
       </p>
       <h3 className="font-medium">
-        {/* La carte entière ouvre le détail de la session (E1d) ; ses boutons restent au-dessus */}
+        {/* La carte entière ouvre le détail de la session ; ses boutons restent au-dessus */}
         <Link href={`/sessions/${encodeURIComponent(session.id)}`} className="after:absolute after:inset-0">
           {titleOf(session)}
         </Link>
@@ -151,7 +151,7 @@ function PhoneBoard({ actionsOf, columns, now }: StateBoardProps) {
 }
 
 /**
- * Vue d'ensemble regroupée par état (E1d) : une colonne par état, côte à côte sur le poste. Sur téléphone, des puces
+ * Vue d'ensemble regroupée par état : une colonne par état, côte à côte sur le poste. Sur téléphone, des puces
  * d'état défilent en haut et une seule colonne s'affiche à la fois.
  */
 export function StateBoard(props: StateBoardProps) {

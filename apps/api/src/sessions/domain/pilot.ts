@@ -4,11 +4,11 @@ import { DomainError } from '../../shared/domain/domain-error.ts';
 export { type Effort, EFFORTS, PERMISSION_MODES, type PermissionMode } from '../../shared/domain/session-settings.ts';
 
 /**
- * Session pilotée par Bosco (E2e à E2h, E16a, règle 4, DT-31) : Bosco la démarre ou la reprend et lui écrit. Un tour
+ * Session pilotée par Bosco : Bosco la démarre ou la reprend et lui écrit. Un tour
  * par lancement de l'agent ; entre deux tours, la session est close et se reprend aussi dans un terminal.
  */
 
-/** Réglages d'un tour : ils valent dès le message envoyé et pour les suivants (CA-SESS-94). */
+/** Réglages d'un tour : ils valent dès le message envoyé et pour les suivants. */
 export interface PilotSettings {
   effort: Effort | null;
   /** null : le modèle par défaut du profil */
@@ -31,7 +31,7 @@ export interface PilotMessage {
   text: string;
 }
 
-/** Images jointes à un message, au plus (CA-SESS-92). */
+/** Images jointes à un message, au plus. */
 export const MAX_IMAGES = 5;
 /** Taille d'une image jointe, au plus : celle qu'accepte l'agent */
 export const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
@@ -57,7 +57,7 @@ export function checkPilotMessage(message: PilotMessage): PilotMessage {
   return { images: message.images, text };
 }
 
-/** Un second message envoyé pendant le tour rejoint le premier, qui attend la fin du tour (CA-SESS-93). */
+/** Un second message envoyé pendant le tour rejoint le premier, qui attend la fin du tour. */
 export function joinMessages(pending: null | PilotMessage, next: PilotMessage): PilotMessage {
   if (!pending) return next;
   const images = [...pending.images, ...next.images];
@@ -65,7 +65,7 @@ export function joinMessages(pending: null | PilotMessage, next: PilotMessage): 
   return { images, text: [pending.text, next.text].filter(Boolean).join('\n\n') };
 }
 
-/** Une session encore ouverte dans un terminal ne reçoit rien de Bosco : on y répond dans le terminal (règle 9). */
+/** Une session encore ouverte dans un terminal ne reçoit rien de Bosco : on y répond dans le terminal. */
 export class SessionOpenInTerminal extends DomainError {
   constructor(sessionId: string) {
     super('sessionOpenInTerminal', `La session ${sessionId} est ouverte dans un terminal : réponds-y là-bas.`);
@@ -79,7 +79,7 @@ export class NoPilotedTurn extends DomainError {
   }
 }
 
-/** Le quota de l'abonnement dépasse son seuil d'attente : aucun tour ne part (DT-39). */
+/** Le quota de l'abonnement dépasse son seuil d'attente : aucun tour ne part. */
 export class QuotaHeld extends DomainError {
   constructor(reason: string) {
     super('quotaHeld', reason);
@@ -103,7 +103,7 @@ export class PilotTargetNotFound extends DomainError {
   }
 }
 
-/** Une question à choix posée par l'agent (AskUserQuestion), à répondre dans Bosco (E2f). */
+/** Une question à choix posée par l'agent (AskUserQuestion), à répondre dans Bosco. */
 export interface AgentQuestion {
   header: string;
   multiSelect: boolean;
@@ -142,7 +142,7 @@ export class InvalidAnswers extends DomainError {
 
 /**
  * Réponses données dans Bosco, une par question dans l'ordre : les choix cochés, ou le texte de « Autre ». L'agent les
- * reçoit par question, plusieurs choix séparés par des virgules (CA-SESS-96).
+ * reçoit par question, plusieurs choix séparés par des virgules.
  */
 export function answersOf(questions: AgentQuestion[], answers: string[][]): Record<string, string> {
   if (answers.length !== questions.length) throw new InvalidAnswers('Une réponse par question.');
@@ -161,7 +161,7 @@ export function answersOf(questions: AgentQuestion[], answers: string[][]): Reco
 export const MAX_SESSION_PROJECTS = 20;
 
 /**
- * Autres projets d'une session pilotée (règle 14) : ceux qu'elle voit en plus de son projet principal, son dossier de
+ * Autres projets d'une session pilotée : ceux qu'elle voit en plus de son projet principal, son dossier de
  * travail, une fois chacun et dans l'ordre choisi.
  */
 export function otherProjects(principal: string, projects: readonly string[]): string[] {

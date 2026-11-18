@@ -56,7 +56,7 @@ export const profilesQuery = {
 
 /**
  * Ce dont hérite une nouvelle session d'un projet ou d'un groupe, avec l'origine de chaque valeur : ce que disent les
- * lignes « Hériter » de leurs réglages (E21a, E22a).
+ * lignes « Hériter » de leurs réglages.
  */
 export const inheritedDefaultsQuery = (level: { group: number } | { project: string }) => ({
   queryKey: ['pilot', 'defaults', 'level', level],

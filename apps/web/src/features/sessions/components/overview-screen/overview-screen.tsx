@@ -41,7 +41,7 @@ interface OverviewProps {
   title: string;
 }
 
-/** Lignes animées pendant un chargement : le premier affichage garde la forme de l'écran (CA-SESS-20, CA-SESS-22). */
+/** Lignes animées pendant un chargement : le premier affichage garde la forme de l'écran. */
 const PENDING_ROWS = 4;
 
 function LiveOverview({ sources, title }: OverviewProps & { sources: SourcesDto }) {
@@ -110,7 +110,7 @@ function LiveOverview({ sources, title }: OverviewProps & { sources: SourcesDto 
   );
 }
 
-/** Vue d'ensemble : premier lancement tant qu'aucun profil n'est choisi (E1a), puis les sessions en direct (E1b à E1e). */
+/** Vue d'ensemble : premier lancement tant qu'aucun profil n'est choisi, puis les sessions en direct. */
 export function OverviewScreen({ title }: OverviewProps) {
   const { data } = useQuery(sourcesQuery);
   const watching = (data?.sources.length ?? 0) > 0;

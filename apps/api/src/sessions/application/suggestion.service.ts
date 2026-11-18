@@ -2,7 +2,7 @@ import { basename } from 'node:path';
 import type { SessionRepository, SourceRepository } from './ports.ts';
 import { PilotTargetNotFound } from '../domain/pilot.ts';
 
-/** Suggestion de l'éditeur (E2h) : un fichier, ou une commande et son origine. */
+/** Suggestion de l'éditeur : un fichier, ou une commande et son origine. */
 export interface Suggestion {
   description: null | string;
   origin: null | string;
@@ -18,10 +18,10 @@ export interface Suggestions {
   filesOf(cwd: string, query: string): Promise<Suggestion[]>;
 }
 
-/** Où chercher : une session, ou le projet et le profil d'une nouvelle session (E16a). */
+/** Où chercher : une session, ou le projet et le profil d'une nouvelle session. */
 export type SuggestionTarget = { profile: null | string; project: string } | { sessionId: string };
 
-/** Suggestions de « @ » et de « / » dans l'éditeur (CA-SESS-99). */
+/** Suggestions de « @ » et de « / » dans l'éditeur. */
 export class SuggestionService {
   constructor(
     private readonly suggestions: Suggestions,

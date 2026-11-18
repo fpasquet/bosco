@@ -16,7 +16,7 @@ const STEPS: { label: string; value: LiveTrackingStep }[] = [
   { label: 'Vérification', value: 'check' },
 ];
 
-/** Les six événements que suit Bosco (CA-SESS-62). */
+/** Les six événements que suit Bosco. */
 const EVENTS = [
   'démarrage et fin de session',
   'ton message',
@@ -66,7 +66,7 @@ function CheckLine({ detail, done, label }: { detail: string; done: boolean; lab
 }
 
 /**
- * Panneau d'installation du suivi en direct d'un profil (E4b) : présentation, installation, vérification sur un vrai
+ * Panneau d'installation du suivi en direct d'un profil : présentation, installation, vérification sur un vrai
  * signal. Rien n'est installé sans clic, et « Désinstaller » remet les réglages d'avant.
  */
 export function LiveTrackingPanel(props: LiveTrackingPanelProps) {

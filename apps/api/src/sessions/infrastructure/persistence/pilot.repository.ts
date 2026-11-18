@@ -17,7 +17,7 @@ export interface PilotRow {
   cwd: string;
   /** Autres projets de la session, en JSON ; [] : un seul projet */
   projects: string[];
-  /** Bac à sable de la session (DT-37), en JSON ; null : elle tourne sur le poste */
+  /** Bac à sable de la session, en JSON ; null : elle tourne sur le poste */
   sandbox: null | StoredSandbox;
   sessionId: string;
   /** Réglages du dernier message, en JSON */
@@ -26,7 +26,7 @@ export interface PilotRow {
   sourceId: string;
 }
 
-/** Sessions pilotées par Bosco (E2e) : où elles tournent et leurs réglages, gardés d'un tour à l'autre. */
+/** Sessions pilotées par Bosco : où elles tournent et leurs réglages, gardés d'un tour à l'autre. */
 export const PilotSchema = new EntitySchema<PilotRow>({
   name: 'Pilot',
   tableName: 'pilot',

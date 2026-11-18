@@ -1,7 +1,7 @@
 import type { NotificationDto } from '@bosco/domain';
 import type { NotificationSettingsDto } from './api/settings';
 
-/** Le fil rouge à 15:13 (E15a). */
+/** Le fil rouge à 15:13. */
 export const STORY_NOW = new Date('2026-11-06T15:13:30');
 
 const at = (time: string, day = '2026-11-06') => new Date(`${day}T${time}:00`).toISOString();

@@ -79,7 +79,7 @@ export class MikroOrmSessionRepository implements SessionRepository, UsageBackfi
               : entry.text,
         })),
       );
-      // Index de recherche de l'historique (E3a), alimenté avec ce que disent le transcript et la personne
+      // Index de recherche de l'historique, alimenté avec ce que disent le transcript et la personne
       const connection = em.getConnection();
       for (const entry of journal)
         if (entry.kind !== 'autoModeSuspended')

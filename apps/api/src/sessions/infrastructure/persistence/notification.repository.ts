@@ -7,7 +7,7 @@ function recordOf(row: NotificationRow): NotificationRecord {
   return { ...row, kind: row.kind as NotificationKind };
 }
 
-/** Notifications du centre de notifications (E15a), dans leur table. */
+/** Notifications du centre de notifications, dans leur table. */
 export class MikroOrmNotificationRepository implements NotificationRepository {
   constructor(private readonly orm: MikroORM) {}
 

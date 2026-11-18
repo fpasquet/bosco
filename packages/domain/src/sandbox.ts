@@ -1,4 +1,4 @@
-// Isolation des bacs à sable et abonnement Claude (E11) : la sortie réseau, l'abonnement par défaut et son quota.
+// Isolation des bacs à sable et abonnement Claude : la sortie réseau, l'abonnement par défaut et son quota.
 
 /** Profil Claude Code qui a un accès à l'abonnement, avec son compte. */
 export interface ClaudeProfileDto {
@@ -17,7 +17,7 @@ export interface SubscriptionDto {
   profile: null | string;
 }
 
-/** Isolation des bacs à sable (E11) : image et limites de l'agent, domaines joints par le proxy de sortie. */
+/** Isolation des bacs à sable : image et limites de l'agent, domaines joints par le proxy de sortie. */
 export interface IsolationDto {
   domains: { added: string[]; locked: string[] };
   image: string;
@@ -40,7 +40,7 @@ export interface QuotaThresholdsDto {
 /** Sessions que les seuils retiennent : en bac à sable seulement, ou aussi celles pilotées sur le poste. */
 export type QuotaScopeDto = 'all' | 'sandbox';
 
-/** Quota de l'abonnement (E11, DT-39) : l'usage de chaque abonnement, les seuils et leur portée. */
+/** Quota de l'abonnement : l'usage de chaque abonnement, les seuils et leur portée. */
 export interface QuotaDto {
   scope: QuotaScopeDto;
   subscriptions: { fiveHour: null | QuotaWindowDto; label: string; path: string; sevenDay: null | QuotaWindowDto }[];

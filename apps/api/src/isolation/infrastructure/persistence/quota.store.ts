@@ -8,7 +8,7 @@ const THRESHOLDS = 'quota.thresholds';
 const WINDOWS = 'quota.windows';
 const SCOPE = 'quota.scope';
 
-/** Seuils du quota, leur portée et dernier usage de chaque abonnement, dans la table des réglages du poste (DT-39). */
+/** Seuils du quota, leur portée et dernier usage de chaque abonnement, dans la table des réglages du poste. */
 export class MikroOrmQuotaStore implements QuotaStore {
   constructor(private readonly orm: MikroORM) {}
 

@@ -5,12 +5,12 @@ import { useNotices } from '@/shared/hooks/use-notices';
 import { answerPermission, type PermissionAnswerDto } from '../api/sessions';
 import { titleOf } from '../components/sessions-table';
 
-/** Téléphone : « Autoriser » demande une confirmation rappelant la commande (RF-SESS-07, CA-SESS-37). */
+/** Téléphone : « Autoriser » demande une confirmation rappelant la commande. */
 const onPhone = () => globalThis.matchMedia?.('(max-width: 767px)').matches ?? false;
 
 /**
  * Réponses aux autorisations depuis Bosco : « Autoriser » part aussitôt sur le poste, après confirmation sur
- * téléphone ; un refus part avec son motif depuis la carte du détail (E2b). Si le terminal a répondu le premier, un
+ * téléphone ; un refus part avec son motif depuis la carte du détail. Si le terminal a répondu le premier, un
  * message le dit : la première réponse l'emporte.
  */
 export function usePermissionAnswers({ onAnswered }: { onAnswered?: (session: SessionDto) => void } = {}) {

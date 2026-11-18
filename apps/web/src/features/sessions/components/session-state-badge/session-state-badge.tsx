@@ -9,8 +9,8 @@ const STYLES: Record<SessionStateDto, { badge: string; dot: string }> = {
   inactive: { badge: 'badge-ghost', dot: 'bg-muted' },
 };
 
-/** État d'une session : le libellé porte l'état, la couleur ne fait que le souligner (NF-18). */
-/** `still` : les données sont figées (Bosco injoignable), la pastille ne s'anime plus (E1f). */
+/** État d'une session : le libellé porte l'état, la couleur ne fait que le souligner. */
+/** `still` : les données sont figées (Bosco injoignable), la pastille ne s'anime plus. */
 export function SessionStateBadge({ state, still = false }: { state: SessionStateDto; still?: boolean }) {
   const { badge, dot } = STYLES[state];
   return (

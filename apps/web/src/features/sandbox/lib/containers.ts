@@ -6,7 +6,7 @@ const ONE = new Intl.NumberFormat('fr', { maximumFractionDigits: 1, minimumFract
 const ROUND = new Intl.NumberFormat('fr', { maximumFractionDigits: 0 });
 const UP_TO_ONE = new Intl.NumberFormat('fr', { maximumFractionDigits: 1 });
 
-/** À partir de cette part de son plafond, la valeur passe en orange (CA-CONT-73). */
+/** À partir de cette part de son plafond, la valeur passe en orange. */
 export const NEAR_CEILING = 0.8;
 
 /** « 3,6 Go », « 4 Go », « 412 Mo » */
@@ -33,7 +33,7 @@ export function memoryUsageOf({ memory, memoryLimit }: Pick<UsageDto, 'memory' |
   return `${memoryOf(memory)} / ${limitOf(memoryLimit)}`;
 }
 
-/** Processeur ou mémoire à 80 % ou plus de son plafond : « Proche du plafond » (CA-CONT-73). */
+/** Processeur ou mémoire à 80 % ou plus de son plafond : « Proche du plafond ». */
 export function nearCeiling(usage: UsageDto): { cpu: boolean; memory: boolean } {
   return {
     cpu: usage.cpuLimit !== null && usage.cpu >= usage.cpuLimit * NEAR_CEILING,
@@ -41,7 +41,7 @@ export function nearCeiling(usage: UsageDto): { cpu: boolean; memory: boolean } 
   };
 }
 
-/** Quelque chose tourne : le résumé de la barre latérale apparaît (CA-CONT-70) ; Docker muet aussi (CA-CONT-80). */
+/** Quelque chose tourne : le résumé de la barre latérale apparaît ; Docker muet aussi. */
 export function somethingRuns(view: ContainersDto | undefined): boolean {
   if (!view) return false;
   return view.unreachableSince !== null || view.sandboxes.length > 0 || view.piloted.length > 0;

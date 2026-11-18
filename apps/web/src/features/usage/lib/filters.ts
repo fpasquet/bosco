@@ -1,7 +1,7 @@
 /** Période de la page Usage : 7, 30 ou 90 jours jusqu'à aujourd'hui, ou depuis le début de l'historique conservé. */
 export type UsagePeriod = '7' | '30' | '90' | 'all';
 
-/** Filtres de la page Usage (E23a) : ils valent pour toute la page, sauf le quota, et vivent dans l'adresse. */
+/** Filtres de la page Usage : ils valent pour toute la page, sauf le quota, et vivent dans l'adresse. */
 export interface UsageFilters {
   model: null | string;
   period: UsagePeriod;

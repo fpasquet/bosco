@@ -17,7 +17,7 @@ import { QuotaPanel } from '../quota-panel';
 import { SubscriptionPanel } from '../subscription-panel';
 
 /**
- * Réglages › Abonnement Claude (E11) : l'abonnement par défaut des nouvelles sessions, l'usage de chaque abonnement et
+ * Réglages › Abonnement Claude : l'abonnement par défaut des nouvelles sessions, l'usage de chaque abonnement et
  * les seuils du quota. Sur le téléphone, tout se lit sans se changer.
  */
 export function SubscriptionScreen() {

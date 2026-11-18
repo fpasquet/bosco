@@ -27,7 +27,7 @@ const settingsSchema = z
   .partial()
   .strict();
 
-/** Réglages des sources (E4a) ; ils ne s'écrivent que depuis le poste. */
+/** Réglages des sources ; ils ne s'écrivent que depuis le poste. */
 @Controller('api/settings')
 export class SettingsController {
   constructor(@Inject(SETTINGS_SERVICE) private readonly settings: SettingsService) {}

@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import type { ContainersDto } from '@bosco/domain';
 import { containersQuery } from '../api/containers';
 
-/** Conteneurs en cours tenus à jour par leur flux en direct : la dernière mesure, puis chacune (DT-06, DT-35). */
+/** Conteneurs en cours tenus à jour par leur flux en direct : la dernière mesure, puis chacune. */
 export function useLiveContainers(): ContainersDto | undefined {
   const client = useQueryClient();
   useEffect(() => {

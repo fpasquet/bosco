@@ -15,7 +15,7 @@ export function presentContainers(view: ContainersView): ContainersDto {
   };
 }
 
-/** Conteneurs en cours (E19) : les bacs à sable et les tours pilotés, mesurés toutes les 5 s. */
+/** Conteneurs en cours : les bacs à sable et les tours pilotés, mesurés toutes les 5 s. */
 @Controller('api/containers')
 export class ContainersController {
   constructor(
@@ -28,7 +28,7 @@ export class ContainersController {
     return presentContainers(this.containers.current());
   }
 
-  /** Flux en direct : la dernière mesure, puis chaque changement (DT-06). */
+  /** Flux en direct : la dernière mesure, puis chaque changement. */
   @Sse('events')
   events(): Observable<MessageEvent> {
     return this.bus.views.pipe(
@@ -39,7 +39,7 @@ export class ContainersController {
     );
   }
 
-  /** « Réessayer » quand Docker ne répond pas : nouvelle mesure tout de suite (CA-CONT-82). */
+  /** « Réessayer » quand Docker ne répond pas : nouvelle mesure tout de suite. */
   @Post('check')
   async measure(): Promise<ContainersDto> {
     const view = await this.containers.measure();

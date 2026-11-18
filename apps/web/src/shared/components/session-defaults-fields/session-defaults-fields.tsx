@@ -56,7 +56,7 @@ function helpOf(
 }
 
 /**
- * Valeurs par défaut des sessions d'un projet (E21a) ou d'un groupe (E22a) : profil, autorisations, modèle et effort,
+ * Valeurs par défaut des sessions d'un projet ou d'un groupe : profil, autorisations, modèle et effort,
  * chacun avec un sélecteur dont la première option est « Hériter » ; une ligne héritée dit d'où vient sa valeur. Sur le
  * téléphone, les valeurs se lisent seulement.
  */

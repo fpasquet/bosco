@@ -120,14 +120,14 @@ export function contextText(project: string, context: ProjectContext, links: rea
   ].join('\n');
 }
 
-/** Texte transmis à une session interactive, au plus (RF-CONT-01). */
+/** Texte transmis à une session interactive, au plus. */
 export const CONTEXT_LIMIT = 10_000;
 
 const CUT = '\n\n[Contexte coupé : 10 000 caractères au plus.]';
 
 /**
  * Texte transmis à une session : un bloc par projet, le projet principal d'abord, annoncés en tête quand il y en a
- * plusieurs, coupé à 10 000 caractères (RF-CONT-01, RF-SESS-14).
+ * plusieurs, coupé à 10 000 caractères.
  */
 export function sessionContextText(blocks: readonly { project: string; text: string }[]): string {
   const [principal, ...others] = blocks;

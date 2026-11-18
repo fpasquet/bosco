@@ -2,7 +2,7 @@ import { Zap } from 'lucide-react';
 import Link from 'next/link';
 import { APP_NAME } from '@bosco/domain';
 
-/** Sans suivi en direct, pas de bandeau T'attend : une ligne discrète propose de l'installer (CA-SESS-08). */
+/** Sans suivi en direct, pas de bandeau T'attend : une ligne discrète propose de l'installer. */
 export function LiveTrackingLine() {
   return (
     <p className="flex items-start gap-2 text-xs text-muted">

@@ -1,4 +1,4 @@
-// Installation du canal de Bosco dans un profil Claude Code (E4f) : un serveur MCP en stdio, ajouté comme celui du
+// Installation du canal de Bosco dans un profil Claude Code : un serveur MCP en stdio, ajouté comme celui du
 // contexte, sans rien remplacer des serveurs existants.
 import type { ChannelInstaller } from '../../application/channel.service.ts';
 import { CHANNEL_SERVER, channelLaunchCommand } from '../../domain/channel.ts';

@@ -25,7 +25,7 @@ export interface SourcesDto {
 }
 
 /**
- * Réglages d'un profil (E4g) : son compte, les valeurs par défaut des sessions lancées dans Bosco avec lui (null :
+ * Réglages d'un profil : son compte, les valeurs par défaut des sessions lancées dans Bosco avec lui (null :
  * celle du profil Claude Code), ce que dit son settings.json, et ce qui l'utilise.
  */
 export interface ProfileSettingsDto {
@@ -35,7 +35,7 @@ export interface ProfileSettingsDto {
   claude: Omit<SessionDefaultsDto, 'profile'>;
   /** Réglés dans Bosco pour ce profil ; null : celui du profil Claude Code */
   defaults: Omit<SessionDefaultsDto, 'profile'>;
-  /** Profil par défaut de Bosco, proposé à chaque nouvelle session (E11c) */
+  /** Profil par défaut de Bosco, proposé à chaque nouvelle session */
   isDefault: boolean;
   source: SourceDto;
   /** Groupes dont il est le profil par défaut, et sessions ouvertes avec lui */
@@ -47,11 +47,11 @@ export type SessionStateDto = 'ended' | 'inactive' | 'running' | 'waiting';
 /** Ce qu'attend une session qui t'attend : une autorisation (« Bash », « npm run db:migrate ») ou ta réponse au tour. */
 export type WaitingDto =
   | { detail: null | string; kind: 'permission'; requestId: string; since: string; tool: string }
-  /** Question à choix de l'agent d'une session pilotée par Bosco (E2f) */
+  /** Question à choix de l'agent d'une session pilotée par Bosco */
   | { kind: 'question'; questions: AgentQuestionDto[]; requestId: string; since: string }
   | { kind: 'turn'; message: null | string; since: string };
 
-/** Question à choix posée par l'agent (E2f) ; multiSelect : plusieurs choix possibles. */
+/** Question à choix posée par l'agent ; multiSelect : plusieurs choix possibles. */
 export interface AgentQuestionDto {
   header: string;
   multiSelect: boolean;
@@ -101,20 +101,20 @@ export interface PilotSettingsDto {
   permissionMode: PermissionModeDto;
 }
 
-/** Session pilotée par Bosco (E2e) : ses réglages, son tour en cours et le message qui attend la fin du tour. */
+/** Session pilotée par Bosco : ses réglages, son tour en cours et le message qui attend la fin du tour. */
 export interface PilotDto {
-  /** Message qui partira à la fin du tour (CA-SESS-93) */
+  /** Message qui partira à la fin du tour */
   pending: null | { images: number; text: string };
-  /** Autres projets de la session (leur racine), que l'agent voit en plus de son projet principal (règle 14) */
+  /** Autres projets de la session (leur racine), que l'agent voit en plus de son projet principal */
   projects: string[];
   running: boolean;
-  /** Bac à sable de la session (règle 12) ; null : elle tourne sur le poste */
+  /** Bac à sable de la session ; null : elle tourne sur le poste */
   sandbox: null | PilotSandboxDto;
   settings: PilotSettingsDto;
   since: string;
 }
 
-/** Bac à sable d'une session pilotée (E2j) : sa branche, l'état de son conteneur et sa récupération. */
+/** Bac à sable d'une session pilotée : sa branche, l'état de son conteneur et sa récupération. */
 export interface PilotSandboxDto {
   branch: string;
   /** Copies des autres projets d'une session à plusieurs projets, sur la même branche */
@@ -128,7 +128,7 @@ export interface PilotSandboxDto {
   stopsAt: string;
 }
 
-/** Branches d'un bac à sable, une par projet, le principal d'abord, avec les fichiers qu'elles ont changés (E2k). */
+/** Branches d'un bac à sable, une par projet, le principal d'abord, avec les fichiers qu'elles ont changés. */
 export interface SandboxBranchesDto {
   branches: { files: number; from: string; project: string; retrievedAt: null | string }[];
 }
@@ -139,7 +139,7 @@ export interface RetrievedBranchesDto {
   branches: { branch: string; project: string }[];
 }
 
-/** Ce que le détail d'un bac à sable lit à la demande (E2j) : les sorties réseau refusées. */
+/** Ce que le détail d'un bac à sable lit à la demande : les sorties réseau refusées. */
 export interface SandboxRefusalsDto {
   refusals: { at: string; host: string }[];
 }
@@ -159,20 +159,20 @@ export interface PilotMessageDto {
 }
 
 /**
- * Nouvelle session (E16a) : projet (sa racine), profil Claude Code (son dossier ; null : selon les valeurs par défaut),
+ * Nouvelle session : projet (sa racine), profil Claude Code (son dossier ; null : selon les valeurs par défaut),
  * premier message, et les réglages choisis pour elle (null : selon les valeurs par défaut).
  */
 export interface StartSessionDto extends Omit<PilotMessageDto, 'settings'> {
-  /** Groupe choisi (E16c) : ses valeurs par défaut passent avant celles du projet principal */
+  /** Groupe choisi : ses valeurs par défaut passent avant celles du projet principal */
   group?: null | number;
   profile: null | string;
   settings: Omit<SessionDefaultsDto, 'profile'>;
   /** Projet principal (sa racine) : le dossier de travail de la session */
   project: string;
-  /** Autres projets de la session, qu'elle voit en plus du principal (E16c) */
+  /** Autres projets de la session, qu'elle voit en plus du principal */
   projects?: string[];
   /**
-   * Dans un bac à sable (E16b, E16d) : branche de la session (null : proposée), branche de départ du principal et des
+   * Dans un bac à sable : branche de la session (null : proposée), branche de départ du principal et des
    * autres projets, par racine (null : celle réglée pour le projet, sinon la courante)
    */
   sandbox?: null | {
@@ -182,7 +182,7 @@ export interface StartSessionDto extends Omit<PilotMessageDto, 'settings'> {
   };
 }
 
-/** Ce que propose le formulaire d'une nouvelle session (E16a) : les projets et les abonnements Claude. */
+/** Ce que propose le formulaire d'une nouvelle session : les projets et les abonnements Claude. */
 export interface PilotOptionsDto {
   /** Profils Claude Code surveillés qui ont un accès, et celui du projet choisi */
   profiles: { account: null | string; label: string; path: string }[];
@@ -207,7 +207,7 @@ export interface PilotOptionsDto {
   sandboxUnavailable: null | string;
 }
 
-/** Suggestion de l'éditeur (E2h) : un fichier du projet après « @ », une commande ou un skill après « / ». */
+/** Suggestion de l'éditeur : un fichier du projet après « @ », une commande ou un skill après « / ». */
 export interface SuggestionDto {
   description: null | string;
   /** Origine d'une commande : « commande », « skill · profil perso », « projet site-perso » */
@@ -237,11 +237,11 @@ export interface SessionDto {
   startedAt: string;
   state: SessionStateDto;
   title: null | string;
-  /** Ouverte dans un terminal : Bosco ne lui écrit pas, on y répond dans le terminal (CA-SESS-98) */
+  /** Ouverte dans un terminal : Bosco ne lui écrit pas, on y répond dans le terminal */
   openInTerminal: boolean;
   /** Session pilotée par Bosco ; null pour une session du terminal ou du worker */
   pilot: null | PilotDto;
-  /** Session du terminal lancée avec le canal de Bosco, ouvert : Bosco peut lui écrire, en texte (E2i) */
+  /** Session du terminal lancée avec le canal de Bosco, ouvert : Bosco peut lui écrire, en texte */
   channel: boolean;
   /** Réponses de l'agent */
   turns: number;
@@ -305,7 +305,7 @@ export interface ConversationTurnDto {
   id: string;
   parts: ConversationPartDto[];
   role: 'assistant' | 'user';
-  /** Demande écrite dans Bosco et arrivée par le canal de Bosco (E2i) */
+  /** Demande écrite dans Bosco et arrivée par le canal de Bosco */
   viaChannel?: boolean;
 }
 
@@ -329,7 +329,7 @@ export interface ImportProgressDto {
 }
 
 /** Événements du flux en direct (GET /api/events) : un instantané d'abord, puis les changements. */
-/** Une notification du centre de notifications (E15a). */
+/** Une notification du centre de notifications. */
 export interface NotificationDto {
   at: string;
   /** Décision proposée par un agent, à valider : la notification l'ouvre */
@@ -360,7 +360,7 @@ export type LiveEventDto =
   | { data: { session: SessionDto }; type: 'session.updated' }
   | { data: { sessions: SessionDto[] }; type: 'sessions.snapshot' };
 
-/** Un jour de l'historique (GET /api/history), avec son total (E3a, CA-SESS-49). */
+/** Un jour de l'historique (GET /api/history), avec son total. */
 export interface HistoryDayDto {
   costUsd: number;
   /** Jour local, AAAA-MM-JJ */
@@ -368,7 +368,7 @@ export interface HistoryDayDto {
   sessions: SessionDto[];
 }
 
-/** Canal de Bosco dans un profil surveillé (E4f) : installé ou non, et la commande qui lance une session avec lui. */
+/** Canal de Bosco dans un profil surveillé : installé ou non, et la commande qui lance une session avec lui. */
 export interface ChannelProfileDto {
   command: string;
   installed: boolean;

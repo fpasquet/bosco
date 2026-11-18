@@ -15,11 +15,11 @@ export interface PermissionCardProps {
   onAllow: () => void;
   onDeny: (reason: null | string) => void;
   session: SessionDto;
-  /** Réponse déjà donnée ailleurs : la carte le dit et ses boutons disparaissent (CA-SESS-33) */
+  /** Réponse déjà donnée ailleurs : la carte le dit et ses boutons disparaissent */
   settlement: null | Settlement;
 }
 
-/** Carte d'autorisation au bout du fil (E2b) : tout ce qu'il faut pour décider, sans quitter Bosco. */
+/** Carte d'autorisation au bout du fil : tout ce qu'il faut pour décider, sans quitter Bosco. */
 export function PermissionCard({ agentSays, busy, now, onAllow, onDeny, session, settlement }: PermissionCardProps) {
   const { getValues, register } = useForm({ defaultValues: { reason: '' } });
   const waiting = session.waiting?.kind === 'permission' ? session.waiting : null;

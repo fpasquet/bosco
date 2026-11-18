@@ -4,7 +4,7 @@ import type { CatalogGroup, CatalogProject, Clock, RecordedTurn, SourceRepositor
 import type { SessionService, SessionView } from './session.service.ts';
 import { estimateCostBreakdown, modelFamily } from '../domain/model-pricing.ts';
 
-/** Filtres de la page Usage (E23a) : ils valent pour toute la page, sauf le quota. */
+/** Filtres de la page Usage : ils valent pour toute la page, sauf le quota. */
 export interface UsageFilters {
   /** Nombre de jours jusqu'à aujourd'hui compris ; null : depuis le début */
   days: null | number;
@@ -100,7 +100,7 @@ function percent(part: number, total: number): number {
   return total === 0 ? 0 : Math.round((part / total) * 1000) / 10;
 }
 
-/** Projets d'une session : le principal, puis ceux qu'elle voit en plus (règle 14). */
+/** Projets d'une session : le principal, puis ceux qu'elle voit en plus. */
 function projectsOf(view: SessionView): number[] {
   return [view.project?.id, ...view.addedProjects.map(({ id }) => id)].filter(
     (id): id is number => typeof id === 'number',
@@ -128,7 +128,7 @@ function ranked(entries: UsageShare[], total: number): UsageShare[] {
 }
 
 /**
- * Page Usage (E23a, E23b, règle 18) : activité de Bosco, tokens et coût estimé, usage par jour et répartition, calculés
+ * Page Usage : activité de Bosco, tokens et coût estimé, usage par jour et répartition, calculés
  * à partir des tours enregistrés à la lecture des transcripts et de ce que Bosco garde de ses sessions pilotées. Une
  * session à plusieurs projets compte pour chacun de ses projets dans la répartition, une seule fois dans les totaux.
  */
@@ -259,7 +259,7 @@ export class UsageService {
     };
   }
 
-  /** Une session à plusieurs projets compte pour chacun de ses projets du périmètre (CA-SESS-184). */
+  /** Une session à plusieurs projets compte pour chacun de ses projets du périmètre. */
   private byProject(
     priced: { cost: ReturnType<typeof estimateCostBreakdown>; turn: RecordedTurn }[],
     byId: Map<string, SessionView>,

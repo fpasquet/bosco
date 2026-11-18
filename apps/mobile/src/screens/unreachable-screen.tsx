@@ -1,4 +1,4 @@
-// Poste injoignable (E18c, CA-APPS-07) : réseau local seulement ; l'application réessaie toute seule.
+// Poste injoignable : réseau local seulement ; l'application réessaie toute seule.
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors } from '../lib/theme';

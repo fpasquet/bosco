@@ -55,8 +55,8 @@ function agentSays(journal: JournalEntryDto[], session: SessionDto): null | stri
 }
 
 /**
- * Détail d'une session (E2a, E2b) : le fil en direct, et la carte d'autorisation quand l'agent attend. Après une
- * réponse, retour à la vue d'ensemble s'il reste d'autres sessions en attente ; sinon le fil repart (CA-SESS-36).
+ * Détail d'une session : le fil en direct, et la carte d'autorisation quand l'agent attend. Après une
+ * réponse, retour à la vue d'ensemble s'il reste d'autres sessions en attente ; sinon le fil repart.
  */
 export function SessionDetailScreen({ id }: { id: string }) {
   const now = useNow();
@@ -121,7 +121,7 @@ export function SessionDetailScreen({ id }: { id: string }) {
   // Effacée par Claude Code, la session ne se reprend plus ; en bac à sable, elle ne se reprend que dans Bosco
   const erased = !conversationPending && conversation === null;
   const resume = session.pilot?.sandbox || erased ? null : resumeCommand(session, sources.sources, sources.home);
-  // Une session à plusieurs projets a la carte « Projets », « Branches » en bac à sable (E2k)
+  // Une session à plusieurs projets a la carte « Projets », « Branches » en bac à sable
   const several = session.addedProjects.length > 0;
   const untracked = missingLiveTracking(session, sources.sources);
   // Sur le téléphone, des onglets remplacent la colonne de droite ; « Projets » porte la carte et la reprise

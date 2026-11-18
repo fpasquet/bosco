@@ -1,4 +1,4 @@
-// Poste appairé, gardé dans le trousseau du téléphone (CA-APPS-05) ; l'empreinte va aussi à la vue web (BoscoTrust).
+// Poste appairé, gardé dans le trousseau du téléphone ; l'empreinte va aussi à la vue web (BoscoTrust).
 import * as SecureStore from 'expo-secure-store';
 import { boscoTrust } from '../../modules/bosco-trust';
 
@@ -9,7 +9,7 @@ export interface Workstation {
 }
 
 export interface AppPreferences {
-  /** Rester connecté en arrière-plan (E18d), désactivé par défaut */
+  /** Rester connecté en arrière-plan, désactivé par défaut */
   background: boolean;
   vibrate: boolean;
 }

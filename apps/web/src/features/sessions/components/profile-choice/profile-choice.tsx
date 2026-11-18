@@ -15,7 +15,7 @@ interface ProfileChoiceProps {
 
 /**
  * Choix des profils au premier lancement : tous cochés d'office ; rien n'est lu avant « Surveiller ces profils »,
- * l'aperçu ne vient que des noms et dates des fichiers (CA-SESS-01, CA-SESS-02).
+ * l'aperçu ne vient que des noms et dates des fichiers.
  */
 export function ProfileChoice({ candidates, home }: ProfileChoiceProps) {
   const queryClient = useQueryClient();

@@ -2,8 +2,8 @@ import type { TranscriptEvent } from '../../domain/transcript-event.ts';
 import { describeAction, shorten } from '../../domain/action-summary.ts';
 import { channelMessageOf } from '../../domain/channel.ts';
 import { changeOf } from '../../domain/file-change.ts';
-// Lecture d'une ligne de transcript de Claude Code. Le format est interne et change d'une version à l'autre (DT-05) :
-// on ne garde que quelques faits, et toute ligne inconnue, incomplète ou mal formée est ignorée sans erreur (NF-08).
+// Lecture d'une ligne de transcript de Claude Code. Le format est interne et change d'une version à l'autre :
+// on ne garde que quelques faits, et toute ligne inconnue, incomplète ou mal formée est ignorée sans erreur.
 import { TokenUsage } from '../../domain/token-usage.ts';
 
 export interface ParsedLine {
@@ -22,7 +22,7 @@ export class TranscriptParser {
     if (!record) return [];
     const sessionId = text(record.sessionId);
     if (!sessionId || record.isSidechain === true) return [];
-    // Un message écrit dans Bosco et arrivé par le canal est une demande de la personne, bien que « méta » (E2i)
+    // Un message écrit dans Bosco et arrivé par le canal est une demande de la personne, bien que « méta »
     const viaChannel = channelMessageOf(record);
     if (record.isMeta === true && !viaChannel) return [];
     const base = {

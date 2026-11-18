@@ -5,7 +5,7 @@ import { Button } from '@/shared/ui/button';
 import { useNotificationCenter } from '../../hooks/use-notification-center';
 import { NotificationList } from '../notification-list';
 
-/** Notifications sur le téléphone (E15a mobile) : écran poussé depuis la cloche, mêmes filtres et réponses. */
+/** Notifications sur le téléphone : écran poussé depuis la cloche, mêmes filtres et réponses. */
 export function NotificationsScreen() {
   const center = useNotificationCenter();
   const now = useNow(60_000);

@@ -59,7 +59,7 @@ function ReadOnly({ label, origin, value }: { label: string; origin: string; val
 }
 
 /**
- * Réglages d'un profil (E4g) : son compte, et les valeurs par défaut des sessions lancées dans Bosco avec lui
+ * Réglages d'un profil : son compte, et les valeurs par défaut des sessions lancées dans Bosco avec lui
  * (autorisations, modèle, effort), chacune avec son origine ; sans réglage, ce que dit le profil Claude Code, lu sans
  * être modifié. « Utilisé par » dit les groupes et les sessions ouvertes, que l'enregistrement ne change pas. Sur le
  * téléphone, tout se lit.

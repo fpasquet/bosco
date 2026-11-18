@@ -43,7 +43,7 @@ function Value({ label, value }: { label: string; value: React.ReactNode }) {
 }
 
 /**
- * Isolation du bac à sable, mode et ressources (E11) : un conteneur par session, ce que l'agent voit et les limites de
+ * Isolation du bac à sable, mode et ressources : un conteneur par session, ce que l'agent voit et les limites de
  * chaque bac à sable. Sur le téléphone, en lecture seule.
  */
 export function IsolationResources({ isolation }: IsolationResourcesProps) {

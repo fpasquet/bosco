@@ -48,7 +48,7 @@ const settingsSchema = z.object({
   permissionMode: z.enum(PERMISSION_MODES as [string, ...string[]]),
 });
 
-/** Message à une session pilotée (CA-SESS-92) : texte, images en base64, réglages du tour (CA-SESS-94). */
+/** Message à une session pilotée : texte, images en base64, réglages du tour. */
 const messageSchema = z.object({
   images: z
     .array(z.object({ data: z.string().min(1), mediaType: z.string().min(1), name: z.string().min(1).max(200) }))
@@ -60,16 +60,16 @@ const messageSchema = z.object({
 const BRANCH = z.string().trim().max(200).nullable();
 
 const startSchema = messageSchema.extend({
-  /** Groupe choisi (E16c) : ses valeurs par défaut passent avant celles du projet principal */
+  /** Groupe choisi : ses valeurs par défaut passent avant celles du projet principal */
   group: z.number().int().positive().nullish(),
   profile: z.string().min(1).nullable(),
-  /** Réglages choisis pour la session ; null : selon les valeurs par défaut (règle 16) */
+  /** Réglages choisis pour la session ; null : selon les valeurs par défaut */
   settings: sessionDefaultsSchema,
   /** Projet principal, dossier de travail de la session */
   project: z.string().min(1),
-  /** Autres projets de la session, qu'elle voit en plus du principal (E16c) */
+  /** Autres projets de la session, qu'elle voit en plus du principal */
   projects: z.array(z.string().min(1)).max(MAX_SESSION_PROJECTS).optional(),
-  /** Dans un bac à sable (E16b, E16d) : branche de la session, branches de départ, null : proposées */
+  /** Dans un bac à sable : branche de la session, branches de départ, null : proposées */
   sandbox: z
     .object({ branch: BRANCH, startBranch: BRANCH, startBranches: z.record(z.string(), BRANCH).optional() })
     .nullish(),
@@ -85,7 +85,7 @@ const defaultsQuery = z.object({
 
 const retrieveSchema = z.object({ project: z.string().min(1).nullish() }).nullish();
 
-/** Réponses à une question de l'agent : une liste de choix par question, ou null pour « Passer » (CA-SESS-96). */
+/** Réponses à une question de l'agent : une liste de choix par question, ou null pour « Passer ». */
 const answersSchema = z.object({
   answers: z.array(z.array(z.string().max(2000))).nullable(),
   requestId: z.string().min(1),
@@ -114,8 +114,8 @@ function translate(error: unknown): never {
 }
 
 /**
- * Sessions pilotées par Bosco (E2e à E2h, E16a) : démarrer, écrire, mettre en attente, arrêter, répondre aux questions
- * de l'agent ; le téléphone y a accès comme le poste (CA-SESS-100).
+ * Sessions pilotées par Bosco : démarrer, écrire, mettre en attente, arrêter, répondre aux questions
+ * de l'agent ; le téléphone y a accès comme le poste.
  */
 @Controller('api')
 export class PilotController {
@@ -127,8 +127,8 @@ export class PilotController {
   ) {}
 
   /**
-   * Valeurs d'une nouvelle session avant tout choix (CA-SESS-156, CA-SESS-157) : profil, mode, modèle et effort, chacun
-   * avec son origine ; aussi ce dont héritent les réglages d'un projet ou d'un groupe (E21a, E22a).
+   * Valeurs d'une nouvelle session avant tout choix : profil, mode, modèle et effort, chacun
+   * avec son origine ; aussi ce dont héritent les réglages d'un projet ou d'un groupe.
    */
   @Get('pilot/defaults')
   async resolveDefaults(@Query() query: unknown): Promise<SessionDefaultsResolvedDto> {
@@ -141,13 +141,13 @@ export class PilotController {
     });
   }
 
-  /** Formulaire d'une nouvelle session (E16a) : projets et abonnements Claude. */
+  /** Formulaire d'une nouvelle session : projets et abonnements Claude. */
   @Get('pilot/options')
   async options(): Promise<PilotOptionsDto> {
     return this.pilot.options();
   }
 
-  /** « Démarrer la session » (CA-SESS-91). */
+  /** « Démarrer la session ». */
   @Post('pilot/sessions')
   async start(@Body() body: unknown): Promise<{ sessionId: string }> {
     const input = parseBody(startSchema, body);
@@ -168,7 +168,7 @@ export class PilotController {
   }
 
   /**
-   * « Récupérer la branche » (CA-SESS-112), « Récupérer les branches » (CA-SESS-141) : un projet, ou toutes les
+   * « Récupérer la branche », « Récupérer les branches » : un projet, ou toutes les
    * branches qui ont du travail ; les branches reçues dans les dépôts du poste.
    */
   @Post('sessions/:id/sandbox/retrieve')
@@ -183,7 +183,7 @@ export class PilotController {
     }
   }
 
-  /** Branches du bac à sable, une par projet, avec ce qu'elles contiennent (E2k). */
+  /** Branches du bac à sable, une par projet, avec ce qu'elles contiennent. */
   @Get('sessions/:id/sandbox/branches')
   async branches(@Param('id') id: string): Promise<SandboxBranchesDto> {
     const branches = await this.pilot.branches(id);
@@ -208,7 +208,7 @@ export class PilotController {
     }
   }
 
-  /** « Supprimer le bac à sable » (CA-SESS-114). */
+  /** « Supprimer le bac à sable ». */
   @Delete('sessions/:id/sandbox')
   @HttpCode(204)
   async removeSandbox(@Param('id') id: string): Promise<void> {
@@ -219,14 +219,14 @@ export class PilotController {
     }
   }
 
-  /** Sorties réseau refusées du bac à sable (CA-SESS-108). */
+  /** Sorties réseau refusées du bac à sable. */
   @Get('sessions/:id/sandbox/refusals')
   async refusals(@Param('id') id: string): Promise<SandboxRefusalsDto> {
     const refusals = await this.pilot.refusals(id);
     return { refusals: refusals.map(({ at, host }) => ({ at: at.toISOString(), host })) };
   }
 
-  /** Un message à une session : il lance un tour, ou attend la fin du tour en cours (CA-SESS-92, CA-SESS-93). */
+  /** Un message à une session : il lance un tour, ou attend la fin du tour en cours. */
   @Post('sessions/:id/messages')
   async send(@Param('id') id: string, @Body() body: unknown): Promise<{ status: 'channel' | 'queued' | 'sent' }> {
     const input = parseBody(messageSchema, body);
@@ -238,7 +238,7 @@ export class PilotController {
     }
   }
 
-  /** « Annuler » le message en attente (CA-SESS-93). */
+  /** « Annuler » le message en attente. */
   @Delete('sessions/:id/messages/pending')
   @HttpCode(204)
   async cancelPending(@Param('id') id: string): Promise<void> {
@@ -249,7 +249,7 @@ export class PilotController {
     }
   }
 
-  /** « Arrêter » le tour (CA-SESS-93). */
+  /** « Arrêter » le tour. */
   @Post('sessions/:id/interrupt')
   @HttpCode(204)
   interrupt(@Param('id') id: string): void {
@@ -260,7 +260,7 @@ export class PilotController {
     }
   }
 
-  /** Réponse à une question de l'agent, ou « Passer » (CA-SESS-96). */
+  /** Réponse à une question de l'agent, ou « Passer ». */
   @Post('sessions/:id/answers')
   @HttpCode(204)
   async answer(@Param('id') id: string, @Body() body: unknown): Promise<void> {
@@ -272,7 +272,7 @@ export class PilotController {
     }
   }
 
-  /** Suggestions de l'éditeur (CA-SESS-99) : `@` les fichiers, `/` les commandes, pour une session ou un projet. */
+  /** Suggestions de l'éditeur : `@` les fichiers, `/` les commandes, pour une session ou un projet. */
   @Get('pilot/suggestions')
   async suggest(
     @Query('kind') kind: string,

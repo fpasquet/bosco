@@ -1,5 +1,5 @@
 // Flux en direct du service (GET /api/events) suivi par le processus principal : les sessions, pour la barre système,
-// et les notifications, montrées en natif (CA-APPS-02, CA-APPS-03). Repris s'il tombe.
+// et les notifications, montrées en natif. Repris s'il tombe.
 import type { NotificationDto, SessionDto } from '@bosco/domain';
 
 export interface LiveListener {

@@ -28,7 +28,7 @@ function Card({ children, id, title }: { children: React.ReactNode; id: string; 
 }
 
 /**
- * Isolation du bac à sable, sortie réseau (E11) : les domaines qu'un agent peut joindre. Un domaine autorisé vaut tout
+ * Isolation du bac à sable, sortie réseau : les domaines qu'un agent peut joindre. Un domaine autorisé vaut tout
  * de suite, sans relancer le bac à sable ; les refus se lisent dans chaque session.
  */
 export function IsolationEgress({ busy, domain = null, error, isolation, onAdd, onRemove }: IsolationEgressProps) {

@@ -21,7 +21,7 @@ function profileName({ account, label }: { account: null | string; label: null |
 }
 
 /**
- * Abonnement Claude par défaut (E11) : celui que propose une nouvelle session, choisi parmi les profils surveillés qui
+ * Abonnement Claude par défaut : celui que propose une nouvelle session, choisi parmi les profils surveillés qui
  * ont un accès. Un bac à sable en reçoit une copie de l'accès. Sur le téléphone, il se lit sans se changer.
  */
 export function SubscriptionPanel({ busy, error, onChange, profileHref = null, subscription }: SubscriptionPanelProps) {

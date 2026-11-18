@@ -7,7 +7,7 @@ import { SettingsHeader } from '@/shared/layouts/settings-tabs';
 import { changeProfileDefaults, profileSettingsQuery, sourcesQuery } from '../../api/sources';
 import { ProfileSettingsView } from '../profile-settings-view';
 
-/** Réglages › Sources › un profil (E4g), relié à Bosco : un enregistrement vaut pour les sessions suivantes. */
+/** Réglages › Sources › un profil, relié à Bosco : un enregistrement vaut pour les sessions suivantes. */
 export function ProfileSettingsScreen({ id }: { id: string }) {
   const client = useQueryClient();
   const push = useNotices((state) => state.push);

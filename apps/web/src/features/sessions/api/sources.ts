@@ -40,7 +40,7 @@ export async function addSource(path: string): Promise<SourceDto> {
   return (await response.json()) as SourceDto;
 }
 
-/** Interrupteur d'une source : la lecture s'arrête ou reprend, rien n'est effacé (CA-SESS-56). */
+/** Interrupteur d'une source : la lecture s'arrête ou reprend, rien n'est effacé. */
 export async function setSourceWatched(sourceId: string, watched: boolean): Promise<void> {
   const response = await fetch(`/api/sources/${encodeURIComponent(sourceId)}`, {
     method: 'PATCH',
@@ -50,7 +50,7 @@ export async function setSourceWatched(sourceId: string, watched: boolean): Prom
   if (!response.ok) throw new Error(`PATCH /api/sources/${sourceId} answered ${response.status}`);
 }
 
-/** Réglages d'un profil (E4g) : son compte, ses valeurs par défaut et celles du profil Claude Code, ce qui l'utilise. */
+/** Réglages d'un profil : son compte, ses valeurs par défaut et celles du profil Claude Code, ce qui l'utilise. */
 export const profileSettingsQuery = (sourceId: string) => ({
   queryKey: ['sources', 'settings', sourceId],
   queryFn: async (): Promise<ProfileSettingsDto> => {

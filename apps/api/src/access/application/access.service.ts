@@ -17,7 +17,7 @@ export interface Claim {
   token: null | string;
 }
 
-/** Cas d'usage de l'accès depuis le téléphone (E4c, RF-SESS-07) : activation, appairage par code, retrait. */
+/** Cas d'usage de l'accès depuis le téléphone : activation, appairage par code, retrait. */
 export class AccessService {
   private code: null | PairingCode = null;
 
@@ -38,7 +38,7 @@ export class AccessService {
     };
   }
 
-  /** Au démarrage : l'écoute du réseau local ne se rouvre que si l'accès était activé (NF-13). */
+  /** Au démarrage : l'écoute du réseau local ne se rouvre que si l'accès était activé. */
   async resume(): Promise<void> {
     if (await this.settings.load()) await this.listener.start();
   }
@@ -56,7 +56,7 @@ export class AccessService {
     return { enabled: false, fingerprint: null, urls: [] };
   }
 
-  /** Nouveau code : il invalide le précédent (CA-SESS-67). */
+  /** Nouveau code : il invalide le précédent. */
   issueCode(): { code: string; expiresAt: Date } {
     this.code = PairingCode.issue(this.secrets.code(), this.clock.now());
     return { code: this.code.value, expiresAt: this.code.expiresAt };
@@ -81,7 +81,7 @@ export class AccessService {
     return this.devices.list();
   }
 
-  /** Retirer un téléphone coupe son accès aussitôt (CA-SESS-68). */
+  /** Retirer un téléphone coupe son accès aussitôt. */
   revoke(id: string): Promise<void> {
     return this.devices.remove(id);
   }

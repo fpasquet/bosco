@@ -1,9 +1,9 @@
 import type { GroupDto, SessionDto, SessionStateDto, SourceDto } from '@bosco/domain';
 
-/** Ordre des états dans la vue d'ensemble : ce qui demande une action d'abord (RF-SESS-02). */
+/** Ordre des états dans la vue d'ensemble : ce qui demande une action d'abord. */
 export const STATE_ORDER: readonly SessionStateDto[] = ['waiting', 'running', 'inactive', 'ended'];
 
-/** Colonnes de la vue par état (E1d) : les sessions terminées vont dans l'historique. */
+/** Colonnes de la vue par état : les sessions terminées vont dans l'historique. */
 const BOARD_STATES: readonly SessionStateDto[] = ['waiting', 'running', 'inactive'];
 
 export const STATE_LABELS: Record<SessionStateDto, string> = {
@@ -23,7 +23,7 @@ export interface ProjectGroup {
   also?: Record<string, string>;
   /** Projet de chaque session (« api-tarifs +2 », « creneaux/packages/paiement »), par identifiant */
   labels?: Record<string, string>;
-  /** Groupe de l'intertitre, pour son lien « Réglages du groupe » (E1g) */
+  /** Groupe de l'intertitre, pour son lien « Réglages du groupe » */
   group?: { id: number; projects: number };
   /** Intertitre ; null : « Hors projet » */
   name: null | string;
@@ -50,7 +50,7 @@ function isToday(iso: string, now: Date): boolean {
 }
 
 /**
- * Sessions ouvertes : une session terminée passe dans l'historique (E3a). Quand Claude Code ne dit pas ce qui est
+ * Sessions ouvertes : une session terminée passe dans l'historique. Quand Claude Code ne dit pas ce qui est
  * ouvert, une session sans événement depuis aujourd'hui y passe aussi.
  */
 export function openSessions(sessions: readonly SessionDto[], now: Date): SessionDto[] {
@@ -59,7 +59,7 @@ export function openSessions(sessions: readonly SessionDto[], now: Date): Sessio
   });
 }
 
-/** Sessions terminées aujourd'hui, des plus récentes aux plus anciennes (E1c, E1d). */
+/** Sessions terminées aujourd'hui, des plus récentes aux plus anciennes. */
 export function endedToday(sessions: readonly SessionDto[], now: Date): SessionDto[] {
   return sessions
     .filter((session) => session.state === 'ended' && isToday(session.lastEventAt, now))
@@ -71,7 +71,7 @@ function byStateThenActivity(left: SessionDto, right: SessionDto): number {
   return state === 0 ? right.lastEventAt.localeCompare(left.lastEventAt) : state;
 }
 
-/** Tri d'un projet : par état, puis par activité la plus récente (CA-SESS-09). */
+/** Tri d'un projet : par état, puis par activité la plus récente. */
 export function sortSessions(sessions: readonly SessionDto[]): SessionDto[] {
   return sessions.toSorted(byStateThenActivity);
 }
@@ -120,8 +120,8 @@ export function groupByProject(sessions: readonly SessionDto[]): ProjectGroup[] 
 }
 
 /**
- * Colonnes par état (E1d) : une colonne par état, triée par activité la plus récente. La colonne T'attend n'existe
- * qu'avec le suivi en direct : elle remplace alors le bandeau (CA-SESS-14).
+ * Colonnes par état : une colonne par état, triée par activité la plus récente. La colonne T'attend n'existe
+ * qu'avec le suivi en direct : elle remplace alors le bandeau.
  */
 export function groupByState(
   sessions: readonly SessionDto[],
@@ -148,7 +148,7 @@ export function filterSessions(sessions: readonly SessionDto[], filters: Overvie
   );
 }
 
-/** Projets d'une session : le principal, puis ceux qu'elle voit en plus (règle 14). */
+/** Projets d'une session : le principal, puis ceux qu'elle voit en plus. */
 function projectIds(session: SessionDto): number[] {
   return [session.project?.id, ...session.addedProjects.map(({ id }) => id)].filter(
     (id): id is number => id !== null && id !== undefined,
@@ -157,7 +157,7 @@ function projectIds(session: SessionDto): number[] {
 
 /**
  * Sessions d'une page de projet ou de groupe : celles dont le projet principal est l'un des siens, une fois chacune ;
- * une session hors projet n'est dans aucune. Pour un groupe, aussi celles qui voient l'un de ses projets (CA-SESS-139).
+ * une session hors projet n'est dans aucune. Pour un groupe, aussi celles qui voient l'un de ses projets.
  */
 export function sessionsIn(
   sessions: readonly SessionDto[],
@@ -173,7 +173,7 @@ export function sessionsIn(
 }
 
 /**
- * « Aussi dans ce projet » (E21c, CA-CONT-158) : les sessions à plusieurs projets dont ce projet est un projet ajouté,
+ * « Aussi dans ce projet » : les sessions à plusieurs projets dont ce projet est un projet ajouté,
  * et non le principal ; elles comptent dans la page de leur projet principal.
  */
 export function alsoIn(sessions: readonly SessionDto[], project: number): SessionDto[] {
@@ -183,7 +183,7 @@ export function alsoIn(sessions: readonly SessionDto[], project: number): Sessio
 }
 
 /**
- * Vue regroupée par groupe (E1g) : un intertitre par groupe, dans l'ordre de la barre latérale, avec les sessions qui
+ * Vue regroupée par groupe : un intertitre par groupe, dans l'ordre de la barre latérale, avec les sessions qui
  * touchent l'un de ses projets ; une session de plusieurs groupes figure dans chacun, avec la mention des autres.
  * « Sans groupe » puis « Hors projet » ferment la liste s'ils ont des sessions ; « Tous les projets » n'en a pas.
  */
@@ -222,14 +222,14 @@ export function groupByGroup(sessions: readonly SessionDto[], groups: readonly G
   ];
 }
 
-/** Sessions qui t'attendent, la plus ancienne attente en premier (CA-SESS-05). */
+/** Sessions qui t'attendent, la plus ancienne attente en premier. */
 export function waitingSessions(sessions: readonly SessionDto[]): SessionDto[] {
   return sessions
     .filter((session) => session.state === 'waiting' && session.waiting)
     .toSorted((left, right) => (left.waiting?.since ?? '').localeCompare(right.waiting?.since ?? ''));
 }
 
-/** Indicateurs de la vue d'ensemble ; le coût du jour additionne les sessions commencées aujourd'hui (CA-SESS-10). */
+/** Indicateurs de la vue d'ensemble ; le coût du jour additionne les sessions commencées aujourd'hui. */
 export function indicatorsOf(open: readonly SessionDto[], all: readonly SessionDto[], now: Date): OverviewIndicators {
   const today = all.filter((session) => isToday(session.startedAt, now));
   const inactive = open.filter((session) => session.state === 'inactive');
@@ -275,7 +275,7 @@ export function projectsOf(open: readonly SessionDto[]): {
   };
 }
 
-/** « api-tarifs +2 » : le projet principal d'une session et le nombre des autres (règle 14). */
+/** « api-tarifs +2 » : le projet principal d'une session et le nombre des autres. */
 export function projectLabel(session: SessionDto): null | string {
   if (!session.project) return null;
   const others = session.addedProjects.length;

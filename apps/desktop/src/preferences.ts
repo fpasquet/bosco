@@ -1,4 +1,4 @@
-// Choix gardés par l'application du poste : se relier au service ou le remplacer (E17b).
+// Choix gardés par l'application du poste : se relier au service ou le remplacer.
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 

@@ -15,7 +15,7 @@ interface Routing {
   routing: (request: IncomingMessage, response: ServerResponse) => void;
 }
 
-/** Contexte de l'accès depuis le téléphone (E4c) : écoute du réseau local, appairage, téléphones appairés. */
+/** Contexte de l'accès depuis le téléphone : écoute du réseau local, appairage, téléphones appairés. */
 @Module({
   controllers: [AccessController],
   providers: [

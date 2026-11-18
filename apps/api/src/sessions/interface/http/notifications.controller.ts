@@ -18,7 +18,7 @@ export function presentNotification(notification: NotificationRecord): Notificat
   };
 }
 
-/** Centre de notifications (E15a) ; le téléphone le lit et le marque lu. */
+/** Centre de notifications ; le téléphone le lit et le marque lu. */
 @Controller('api')
 export class NotificationsController {
   constructor(
@@ -41,7 +41,7 @@ export class NotificationsController {
 
   /**
    * L'onglet Bosco du poste se dit au premier plan : une notification y arrive en message bref au lieu de la
-   * notification du bureau (E15b). Réservé au poste : le téléphone n'en dit rien.
+   * notification du bureau. Réservé au poste : le téléphone n'en dit rien.
    */
   @Post('presence')
   @HttpCode(204)

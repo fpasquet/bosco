@@ -1,4 +1,4 @@
-// Proxy de sortie d'un bac à sable (RF-CONT-07), lancé seul dans son conteneur : c'est le seul pont entre le réseau
+// Proxy de sortie d'un bac à sable, lancé seul dans son conteneur : c'est le seul pont entre le réseau
 // privé de l'agent et Internet. Il ne laisse passer que les domaines de la liste générale et ceux des projets du bac à
 // sable, relus à chaque connexion (un domaine autorisé depuis Bosco vaut tout de suite), et note chaque refus. Sans
 // dépendance ni import du projet : Node le lance tel quel dans l'image de l'agent.

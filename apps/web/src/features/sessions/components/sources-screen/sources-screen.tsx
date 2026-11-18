@@ -100,7 +100,7 @@ export function SourcesScreen() {
     onSuccess: (saved) => client.setQueryData(settingsQuery.queryKey, saved),
     onError: () => push('Le réglage n’a pas pu être enregistré.', 'warning'),
   });
-  // Canal de Bosco (E4f) : son installation par profil ; « ?canal=1 » (depuis la bande d'E2a) ouvre le panneau
+  // Canal de Bosco : son installation par profil ; « ?canal=1 » (depuis la bande d'une session du terminal) ouvre le panneau
   const { data: channelProfiles } = useQuery(channelProfilesQuery);
   const [channelPath, setChannelPath] = useState<null | string>(null);
   const [linkDismissed, setLinkDismissed] = useState(false);

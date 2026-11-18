@@ -9,7 +9,7 @@ import { SandboxMark } from '../sandbox-mark';
 import { SessionStateBadge } from '../session-state-badge';
 
 export interface SessionsTableProps {
-  /** Bosco injoignable : les données sont figées, « Vu à » remplace les durées (E1f, CA-SESS-23) */
+  /** Bosco injoignable : les données sont figées, « Vu à » remplace les durées */
   frozen?: boolean;
   groups: ProjectGroup[];
   /** Un intertitre par groupe de lignes ; par défaut, sans colonne « Dossier » ni « Projet » */
@@ -17,7 +17,7 @@ export interface SessionsTableProps {
   /** Marque du profil (« perso ») d'une session lancée avec un autre dossier de configuration que celui par défaut */
   markOf: (session: SessionDto) => null | string;
   now: Date;
-  /** Lignes animées à la suite des sessions arrivées, pendant le chargement (E1e) */
+  /** Lignes animées à la suite des sessions arrivées, pendant le chargement */
   pendingRows?: number;
   /**
    * Page d'un projet : la colonne « Dossier » remplace les intertitres ; page d'un groupe : la colonne
@@ -55,7 +55,7 @@ function groupLabel(group: ProjectGroup, pending: boolean): string {
   return pending ? `${projects}${count} pour l’instant` : `${projects}${count}`;
 }
 
-/** Intertitre d'un groupe de lignes : son nom et ce qu'il compte ; pour un groupe, « Réglages du groupe » (E1g). */
+/** Intertitre d'un groupe de lignes : son nom et ce qu'il compte ; pour un groupe, « Réglages du groupe ». */
 function GroupHeading({ group, pending }: { group: ProjectGroup; pending: boolean }) {
   const Icon = group.group ? Layers : FolderGit2;
   return (
@@ -98,7 +98,7 @@ function Row({
       </td>
       <td>
         <span className="flex items-center gap-2">
-          {/* Toute la ligne ouvre le détail de la session (E1b, annotation 5) */}
+          {/* Toute la ligne ouvre le détail de la session */}
           <Link
             href={`/sessions/${encodeURIComponent(session.id)}`}
             className={cn('truncate after:absolute after:inset-0', !inactive && 'font-medium')}

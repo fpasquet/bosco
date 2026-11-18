@@ -15,7 +15,7 @@ export interface HistoryListProps {
   profileOf: (session: SessionDto) => null | string;
 }
 
-/** Jours affichés d'abord, puis à chaque arrivée en bas de la liste (CA-SESS-49). */
+/** Jours affichés d'abord, puis à chaque arrivée en bas de la liste. */
 const DAYS_PER_PAGE = 7;
 
 function Row({ now, profile, session }: { now: Date; profile: null | string; session: SessionDto }) {
@@ -46,7 +46,7 @@ function Row({ now, profile, session }: { now: Date; profile: null | string; ses
   );
 }
 
-/** Historique jour par jour, du plus récent au plus ancien, chaque jour avec son total (E3a). */
+/** Historique jour par jour, du plus récent au plus ancien, chaque jour avec son total. */
 export function HistoryList({ days, now, profileOf }: HistoryListProps) {
   const [shown, setShown] = useState(DAYS_PER_PAGE);
   const sentinel = useRef<HTMLDivElement>(null);

@@ -1,4 +1,4 @@
-/** Tokens consommés par une session, cache compris : la base de l'estimation du coût (RF-SESS-05). */
+/** Tokens consommés par une session, cache compris : la base de l'estimation du coût. */
 export class TokenUsage {
   static readonly ZERO = new TokenUsage(0, 0, 0, 0);
 

@@ -18,7 +18,7 @@ export interface QuestionCardProps {
 const OTHER = '__other__';
 
 /**
- * Question de l'agent au bout du fil (E2f, CA-SESS-96) : ses choix en liste, « Autre » en texte libre, « Passer ». Une
+ * Question de l'agent au bout du fil : ses choix en liste, « Autre » en texte libre, « Passer ». Une
  * question à choix multiples se coche ; plusieurs questions se suivent dans la même carte.
  */
 export function QuestionCard({ busy, now, onAnswer, questions, since }: QuestionCardProps) {

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-/** Dernière réponse à une autorisation, par session : « Répondu ailleurs à 15:15 » sur la carte du détail (CA-SESS-33). */
+/** Dernière réponse à une autorisation, par session : « Répondu ailleurs à 15:15 » sur la carte du détail. */
 export interface Settlement {
   at: string;
   outcome: 'allowed' | 'denied' | 'elsewhere';

@@ -1,6 +1,6 @@
 import { DomainError } from '../../shared/domain/domain-error.ts';
 
-/** Proposée par un agent, acceptée par toi, refusée, remplacée par une autre, ou abandonnée (RF-CONT-02, RF-CONT-11). */
+/** Proposée par un agent, acceptée par toi, refusée, remplacée par une autre, ou abandonnée. */
 export type DecisionState = 'abandoned' | 'accepted' | 'proposed' | 'refused' | 'replaced';
 
 /** Une décision porte sur un projet : ce qui vaut pour plusieurs projets s'écrit en instructions d'un groupe. */
@@ -18,7 +18,7 @@ export interface DecisionText {
   title: string;
 }
 
-/** Version d'une décision : chaque changement garde son auteur, sa date et sa note (RF-CONT-10). */
+/** Version d'une décision : chaque changement garde son auteur, sa date et sa note. */
 /** Session dont l'agent a proposé une décision : son titre la nomme, son identifiant y mène. */
 export interface ProposingSession {
   id: string;
@@ -59,7 +59,7 @@ export class DecisionError extends DomainError {}
 
 export const PERSON = 'toi';
 
-/** Titre, contexte et décision sont obligatoires (CA-CONT-12) ; le reste, facultatif, devient null s'il est vide. */
+/** Titre, contexte et décision sont obligatoires ; le reste, facultatif, devient null s'il est vide. */
 export function checkText(text: DecisionText): DecisionText {
   const clean = (value: null | string) => (value?.trim() ? value.trim() : null);
   if (!text.title.trim() || !text.context.trim() || !text.decision.trim())
@@ -80,7 +80,7 @@ export class Decision {
     return new Decision(snapshot);
   }
 
-  /** Écrite par toi : acceptée tout de suite, ou gardée en proposition (CA-CONT-14). */
+  /** Écrite par toi : acceptée tout de suite, ou gardée en proposition. */
   static write(
     id: number,
     target: DecisionTarget,
@@ -131,7 +131,7 @@ export class Decision {
     return structuredClone(this.snapshot);
   }
 
-  /** Accepter, éventuellement après l'avoir relue et modifiée : la version acceptée est celle relue (CA-CONT-08). */
+  /** Accepter, éventuellement après l'avoir relue et modifiée : la version acceptée est celle relue. */
   accept(at: Date, edited: DecisionText | null): void {
     this.expect('proposed');
     if (edited) this.addVersion(edited, at, 'Modifiée avant d’être acceptée');
@@ -144,7 +144,7 @@ export class Decision {
     this.snapshot.reason = reason?.trim() || null;
   }
 
-  /** Nouvelle version, avec une note obligatoire ; les précédentes restent lisibles (RF-CONT-11). */
+  /** Nouvelle version, avec une note obligatoire ; les précédentes restent lisibles. */
   edit(text: DecisionText, note: string, at: Date): void {
     this.expect('accepted');
     if (!note.trim()) throw new DecisionError('noteMissing', 'Écris une note pour dire ce qui change.');

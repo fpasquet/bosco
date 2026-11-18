@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-  <!-- Rester connecté en arrière-plan (E18d) : un service au premier plan empêche Android de geler l'application -->
+  <!-- Rester connecté en arrière-plan : un service au premier plan empêche Android de geler l'application -->
   <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
   <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
   <application>

@@ -1,4 +1,4 @@
-// Notification du bureau envoyée par le service, même sans onglet ouvert (règle 8, E15b) : notify-send sous Linux.
+// Notification du bureau envoyée par le service, même sans onglet ouvert : notify-send sous Linux.
 // Un poste sans notify-send n'a pas de notification, sans autre effet ; le centre de notifications garde tout.
 import { type ChildProcess, spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';

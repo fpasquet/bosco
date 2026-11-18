@@ -1,5 +1,5 @@
 // Dossiers de configuration de Claude Code présents sur le poste (~/.claude, ~/.claude-perso…), avec un aperçu tiré des
-// seuls noms et dates des fichiers : aucune session n'est lue avant le choix des profils (CA-SESS-02).
+// seuls noms et dates des fichiers : aucune session n'est lue avant le choix des profils.
 import { readdir, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { ProfileFinder } from '../../application/ports.ts';

@@ -1,4 +1,4 @@
-/** Code d'appairage d'un téléphone (E4c) : 6 chiffres, valable 5 minutes, à usage unique, 5 essais au plus (NF-14). */
+/** Code d'appairage d'un téléphone : 6 chiffres, valable 5 minutes, à usage unique, 5 essais au plus. */
 export const PAIRING_CODE = { attempts: 5, lifetimeMs: 5 * 60 * 1000 } as const;
 
 export type ClaimResult = 'accepted' | 'exhausted' | 'expired' | 'wrong';
@@ -16,7 +16,7 @@ export class PairingCode {
     return new PairingCode(value, new Date(now.getTime() + PAIRING_CODE.lifetimeMs));
   }
 
-  /** Un essai : un code expiré, déjà servi ou dont les essais sont épuisés est refusé (CA-SESS-67). */
+  /** Un essai : un code expiré, déjà servi ou dont les essais sont épuisés est refusé. */
   claim(candidate: string, now: Date): ClaimResult {
     if (this.used || this.attemptsLeft <= 0) return 'exhausted';
     if (now >= this.expiresAt) return 'expired';

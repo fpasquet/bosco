@@ -5,15 +5,15 @@ import { estimateCostMicros } from './model-pricing.ts';
 import { TokenUsage } from './token-usage.ts';
 
 /**
- * États d'une session (RF-SESS-02). running et inactive se déduisent de l'activité, ended du registre des sessions
+ * États d'une session. running et inactive se déduisent de l'activité, ended du registre des sessions
  * ouvertes que tient Claude Code, waiting des signaux du suivi en direct (autorisation demandée, tour terminé).
  */
 export type SessionState = 'ended' | 'inactive' | 'running' | 'waiting';
 
-/** Ce qu'attend une session de la personne : une autorisation (RF-SESS-03) ou une réponse à la fin du tour (RF-SESS-04). */
+/** Ce qu'attend une session de la personne : une autorisation ou une réponse à la fin du tour. */
 export type Waiting =
   | { detail: null | string; kind: 'permission'; requestId: string; since: Date; tool: string }
-  /** Question de l'agent dans une session pilotée par Bosco, à répondre dans Bosco (E2f) */
+  /** Question de l'agent dans une session pilotée par Bosco, à répondre dans Bosco */
   | { kind: 'question'; questions: AgentQuestion[]; requestId: string; since: Date }
   | { kind: 'turn'; message: null | string; since: Date };
 
@@ -29,16 +29,16 @@ function isTitleWorthy(prompt: string): boolean {
 
 export interface SessionSnapshot {
   branch: null | string;
-  /** Fichiers modifiés par l'agent, d'après ses appels d'outils (E2a) */
+  /** Fichiers modifiés par l'agent, d'après ses appels d'outils */
   changedFiles: FileChange[];
-  /** Coût estimé en micro-dollars des tokens dont le modèle a un tarif connu (RF-SESS-05) */
+  /** Coût estimé en micro-dollars des tokens dont le modèle a un tarif connu */
   costMicros: number;
   /** Fin signalée par le suivi en direct ; une reprise de la session l'efface */
   endedAt: Date | null;
   id: string;
   /** Dernier outil appelé par l'agent (« Bash · npm test ») */
   lastAction: null | string;
-  /** Trois dernières actions de l'agent, la plus récente en premier (CA-SESS-15) */
+  /** Trois dernières actions de l'agent, la plus récente en premier */
   recentActions: string[];
   lastEventAt: Date;
   lastMessage: null | string;
@@ -116,13 +116,13 @@ export class Session {
     return this.snapshot.waiting;
   }
 
-  /** Le suivi en direct signale une autorisation demandée : la session t'attend jusqu'à la réponse (RF-SESS-03). */
+  /** Le suivi en direct signale une autorisation demandée : la session t'attend jusqu'à la réponse. */
   awaitPermission(requestId: string, tool: string, detail: null | string, at: Date): void {
     this.touch(at);
     this.snapshot = { ...this.snapshot, waiting: { kind: 'permission', requestId, tool, detail, since: at } };
   }
 
-  /** L'agent d'une session pilotée pose une question à choix : la session t'attend jusqu'à ta réponse (E2f). */
+  /** L'agent d'une session pilotée pose une question à choix : la session t'attend jusqu'à ta réponse. */
   awaitQuestion(requestId: string, questions: AgentQuestion[], at: Date): void {
     this.touch(at);
     this.snapshot = { ...this.snapshot, waiting: { kind: 'question', requestId, questions, since: at } };
@@ -241,14 +241,14 @@ export class Session {
 
   /**
    * État à un instant donné : Terminée dès que Claude Code ne la tient plus pour ouverte, sinon En cours tant qu'un
-   * événement est récent, puis Inactive (RF-SESS-02). `open` : null quand le profil ne dit pas ce qui est ouvert.
+   * événement est récent, puis Inactive. `open` : null quand le profil ne dit pas ce qui est ouvert.
    */
   stateAt(now: Date, open: boolean | null = null, inactivityDelayMs = DEFAULT_INACTIVITY_DELAY_MS): SessionState {
     const { endedAt, lastEventAt, waiting } = this.snapshot;
     if (open === false || (open === null && endedAt)) return 'ended';
     // Une autorisation attend sa réponse sans limite côté Bosco : Claude Code annule lui-même le hook après 10 min
     if (waiting?.kind === 'permission' || waiting?.kind === 'question') return 'waiting';
-    // Un tour terminé resté sans réponse devient lui aussi Inactive après le délai (RF-SESS-02)
+    // Un tour terminé resté sans réponse devient lui aussi Inactive après le délai
     if (now.getTime() - lastEventAt.getTime() >= inactivityDelayMs) return 'inactive';
     return waiting ? 'waiting' : 'running';
   }

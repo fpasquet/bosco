@@ -18,11 +18,11 @@ import { ScriptedSandboxes } from './sessions/infrastructure/sandbox/scripted-sa
 import { NOTIFICATION_SERVICE, PILOT_SERVICE, SESSION_DEFAULTS_SERVICE, SOURCE_SERVICE } from './sessions/tokens.ts';
 import { CONFIG } from './shared/tokens.ts';
 
-/** Entretien des bacs à sable : arrêt après 30 min sans message, notification de la veille, suppression (règle 12). */
+/** Entretien des bacs à sable : arrêt après 30 min sans message, notification de la veille, suppression. */
 const HOUSEKEEPING_MS = 60 * 1000;
 
 /**
- * Bacs à sable des sessions pilotées (DT-37) : ils croisent trois contextes. Les sessions les pilotent ; l'isolation
+ * Bacs à sable des sessions pilotées : ils croisent trois contextes. Les sessions les pilotent ; l'isolation
  * leur fournit leurs conteneurs (image, limites, proxy de sortie), l'accès à l'abonnement et son quota ; les projets,
  * leurs domaines propres.
  */
@@ -43,7 +43,7 @@ export class SandboxWiring implements OnApplicationBootstrap, OnApplicationShutd
   ) {}
 
   async onApplicationBootstrap(): Promise<void> {
-    // Les domaines propres à chaque projet rejoignent la liste générale, dans le proxy de ses bacs à sable (E21a)
+    // Les domaines propres à chaque projet rejoignent la liste générale, dans le proxy de ses bacs à sable
     const allowList = new AllowListFile(this.docker.options.allowDir);
     await this.projects.useDomains({ publish: (projects) => allowList.publishProjects(projects) });
     const root = join(this.config.dataDir, 'sandboxes');
@@ -71,7 +71,7 @@ export class SandboxWiring implements OnApplicationBootstrap, OnApplicationShutd
         );
       },
     });
-    // Une nouvelle session prend l'abonnement par défaut, réglé dans « Abonnement Claude » (E11), sauf si un groupe ou
+    // Une nouvelle session prend l'abonnement par défaut, réglé dans « Abonnement Claude », sauf si un groupe ou
     // son projet en règlent un autre
     const profiles = {
       subscriptions: async () => {
@@ -81,7 +81,7 @@ export class SandboxWiring implements OnApplicationBootstrap, OnApplicationShutd
     };
     this.pilot.useProfiles(profiles);
     this.defaults.useProfiles(profiles);
-    // Le quota de l'abonnement se lit dans chaque tour piloté ; ses seuils retiennent puis arrêtent les tours (DT-39)
+    // Le quota de l'abonnement se lit dans chaque tour piloté ; ses seuils retiennent puis arrêtent les tours
     this.pilot.useQuota({
       record: (profile, windows) => void this.quota.record(profile, windows).catch(() => undefined),
       holdReason: (profile, sandboxed) => this.quota.holdReason(profile, sandboxed),

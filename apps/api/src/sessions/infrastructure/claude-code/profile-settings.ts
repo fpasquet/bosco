@@ -1,6 +1,6 @@
 // Réglages d'un profil Claude Code (<profil>/settings.json) : Bosco ajoute ses hooks HTTP à ceux qui existent, sans
 // toucher aux autres. Un seul Bosco suit un profil : installer le suivi remplace les hooks d'un autre Bosco du poste
-// (le service de développement, l'application du poste…), qui échoueraient quand il est arrêté (CA-SESS-105).
+// (le service de développement, l'application du poste…), qui échoueraient quand il est arrêté.
 // Désinstaller ne retire que les siens. Un fichier illisible n'est jamais réécrit.
 import { copyFile, readFile, rename, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';

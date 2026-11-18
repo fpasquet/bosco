@@ -1,5 +1,5 @@
 /**
- * Usage de l'abonnement Claude (DT-39) : chaque tour de `claude -p` en flux JSON émet un `rate_limit_event` dont
+ * Usage de l'abonnement Claude : chaque tour de `claude -p` en flux JSON émet un `rate_limit_event` dont
  * `rate_limit_info.unifiedWindows` donne, par fenêtre, la part utilisée (0 à 1) et l'heure de remise à zéro (en
  * secondes). Champ non documenté, constaté sur Claude Code 2.1.325 et vérifié par `make claude-compat`.
  */

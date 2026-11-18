@@ -1,4 +1,4 @@
-/** État du suivi en direct d'un profil (E4b) : réglages écrits, dernier signal reçu d'une session. */
+/** État du suivi en direct d'un profil : réglages écrits, dernier signal reçu d'une session. */
 export interface LiveTrackingDto {
   backupPath?: null | string;
   installed: boolean;

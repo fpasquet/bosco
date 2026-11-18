@@ -35,14 +35,14 @@ export interface NotificationRepository {
   ): Promise<number>;
 }
 
-/** Notification du bureau (E15b) : une par session ou tâche, remplacée par la suivante ; un clic ouvre l'adresse. */
+/** Notification du bureau : une par session ou tâche, remplacée par la suivante ; un clic ouvre l'adresse. */
 export interface DesktopAlerts {
   show(notification: NotificationRecord, options: { url: string; urgent: boolean }): void;
 }
 
 /** L'onglet Bosco est-il au premier plan sur le poste ? */
 export interface Presence {
-  /** L'application du poste est là : elle montre les notifications en natif, le service ne les envoie pas (E17a) */
+  /** L'application du poste est là : elle montre les notifications en natif, le service ne les envoie pas */
   appAttached(): boolean;
   foreground(): boolean;
 }
@@ -56,7 +56,7 @@ export interface NotificationEvents {
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 /**
- * Notifications (E15, règle 8) : ce qui arrive est jugé selon les réglages, gardé dans le centre de notifications,
+ * Notifications : ce qui arrive est jugé selon les réglages, gardé dans le centre de notifications,
  * puis montré par une notification du bureau, ou par un message bref quand l'onglet Bosco est au premier plan.
  */
 export class NotificationService {
@@ -71,7 +71,7 @@ export class NotificationService {
     private readonly baseUrl: string,
   ) {}
 
-  /** Un événement arrive : null s'il ne mérite pas de notification selon les réglages (CA-SESS-83, CA-SESS-84). */
+  /** Un événement arrive : null s'il ne mérite pas de notification selon les réglages. */
   async notify(event: NotificationEvent, subject: NotificationSubject): Promise<NotificationRecord | null> {
     const kind = notificationOf(event, this.settings.notifications());
     if (!kind) return null;
@@ -105,7 +105,7 @@ export class NotificationService {
     if (count > 0) this.events.changed();
   }
 
-  /** Centre de notifications (E15a) : 7 jours, les plus récentes d'abord, et le nombre de non lues. */
+  /** Centre de notifications : 7 jours, les plus récentes d'abord, et le nombre de non lues. */
   async list(): Promise<{ notifications: NotificationRecord[]; unread: number }> {
     const since = new Date(this.clock.now().getTime() - NOTIFICATION_RETENTION_DAYS * DAY_MS);
     await this.repository.purge(since);

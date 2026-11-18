@@ -1,5 +1,5 @@
-// Conversation d'une session, lue dans son transcript à la demande du fil (E2a). Bosco ne modifie jamais le fichier
-// (RF-SESS-01). Une longue session n'est lue que par sa fin, et chaque lecture suivante ne lit que les lignes ajoutées.
+// Conversation d'une session, lue dans son transcript à la demande du fil. Bosco ne modifie jamais le fichier.
+// Une longue session n'est lue que par sa fin, et chaque lecture suivante ne lit que les lignes ajoutées.
 import { open, readdir, readFile, stat } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { StringDecoder } from 'node:string_decoder';

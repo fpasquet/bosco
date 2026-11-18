@@ -1,4 +1,4 @@
-// Bacs à sable des sessions (DT-37, DT-41) : un dossier par session, gardé hors du conteneur. repo/ est un clone
+// Bacs à sable des sessions : un dossier par session, gardé hors du conteneur. repo/ est un clone
 // autonome du dépôt du projet principal (sans liens physiques : aucun objet partagé avec le dépôt du poste), repo-1/,
 // repo-2/… ceux des autres projets de la session, home/ le dossier personnel de l'agent. Chaque clone se monte au même
 // chemin que son dépôt du poste, et les conversations du projet principal dans le profil des bacs à sable, une source
@@ -170,7 +170,7 @@ export class GitSandboxes implements Sandboxes {
   /**
    * Le travail en cours est commité dans le clone, puis la branche rejoint le dépôt du poste par un fetch, qui
    * n'exécute ni les hooks ni la configuration du clone. La branche courante du poste n'est jamais touchée, ni une
-   * branche du poste qui a avancé de son côté : la récupération prend alors un autre nom (CA-SESS-112).
+   * branche du poste qui a avancé de son côté : la récupération prend alors un autre nom.
    */
   async retrieve(input: { branch: string; copy: number; projectRoot: string; sessionId: string }): Promise<string> {
     const repo = this.repoOf(input.sessionId, input.copy);

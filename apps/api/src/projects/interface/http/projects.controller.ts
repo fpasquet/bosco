@@ -104,7 +104,7 @@ export class ProjectsController {
     return presentDetail(project);
   }
 
-  /** Un domaine propre au projet, pour ses bacs à sable (E21a). */
+  /** Un domaine propre au projet, pour ses bacs à sable. */
   @Post(':id/domains')
   @HttpCode(200)
   async addDomain(@Param('id', ParseIntPipe) id: number, @Body() body: unknown): Promise<ProjectDetailDto> {

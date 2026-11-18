@@ -2,7 +2,7 @@ import type { TokenUsage } from './token-usage.ts';
 
 /**
  * Tarifs publics des modèles, en dollars par million de tokens (référence Anthropic du 06/10/2026). Le coût d'une
- * session est une estimation à ces tarifs, même sous abonnement (RF-SESS-05). L'écriture du cache compte 1,25 fois
+ * session est une estimation à ces tarifs, même sous abonnement. L'écriture du cache compte 1,25 fois
  * l'entrée (durée de 5 minutes, celle de Claude Code) ; la lecture, une fraction de l'entrée propre à chaque modèle.
  */
 interface Price {

@@ -104,7 +104,7 @@ export class ContextService {
     return { project, ...context };
   }
 
-  /** Texte exact qu'une session lira par le serveur MCP de Bosco (E9f). */
+  /** Texte exact qu'une session lira par le serveur MCP de Bosco. */
   async preview(project: string): Promise<ContextPreview> {
     const context = await this.contextOf(project);
     const text = contextText(project, context);
@@ -118,7 +118,7 @@ export class ContextService {
 
   /**
    * Texte qu'une session lit par le serveur MCP de Bosco : le contexte de son projet principal, celui de son dossier de
-   * travail, puis de chacun des autres projets qu'elle voit (--add-dir), une fois chacun (CA-SESS-142) ; null hors des
+   * travail, puis de chacun des autres projets qu'elle voit (--add-dir), une fois chacun ; null hors des
    * projets connus.
    */
   async sessionContext(path: string, others: readonly string[]): Promise<null | string> {
@@ -155,7 +155,7 @@ export class ContextService {
     };
   }
 
-  /** Nouvelle décision, écrite par toi ; elle peut en remplacer une autre (CA-CONT-16). */
+  /** Nouvelle décision, écrite par toi ; elle peut en remplacer une autre. */
   async write(
     target: DecisionTarget,
     text: DecisionText,

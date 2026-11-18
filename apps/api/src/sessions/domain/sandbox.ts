@@ -1,7 +1,7 @@
 import { DomainError } from '../../shared/domain/domain-error.ts';
 
 /**
- * Bac à sable d'une session pilotée (règle 12, DT-37) : un conteneur isolé du poste, qui travaille sur une copie du
+ * Bac à sable d'une session pilotée : un conteneur isolé du poste, qui travaille sur une copie du
  * projet et sa propre branche. La copie et la conversation sont gardées hors du conteneur, qui reste démarré pendant
  * la session et s'arrête après un temps sans message.
  */
@@ -35,9 +35,9 @@ export interface SandboxCopy {
   root: string;
 }
 
-/** Arrêt du conteneur après ce délai sans message (règle 12). */
+/** Arrêt du conteneur après ce délai sans message. */
 export const SANDBOX_IDLE_MS = 30 * 60 * 1000;
-/** Suppression du bac à sable après ce délai sans message (règle 12). */
+/** Suppression du bac à sable après ce délai sans message. */
 export const SANDBOX_KEEP_MS = 7 * 24 * 60 * 60 * 1000;
 /** Notification de la veille, avant la suppression. */
 export const SANDBOX_WARN_MS = SANDBOX_KEEP_MS - 24 * 60 * 60 * 1000;
@@ -106,7 +106,7 @@ export interface SandboxBranch {
   root: string;
 }
 
-/** Copies d'un bac à sable, le projet principal d'abord : une ligne de la carte « Branches » chacune (E2k). */
+/** Copies d'un bac à sable, le projet principal d'abord : une ligne de la carte « Branches » chacune. */
 export function sandboxBranches(sandbox: SandboxInfo, principal: string): SandboxBranch[] {
   return [
     { base: sandbox.base, copy: 0, from: sandbox.from, retrievedAt: sandbox.retrievedAt, root: principal },

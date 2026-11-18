@@ -24,7 +24,7 @@ function listen(source: EventSource, client: QueryClient): void {
   on('sessions.snapshot', ({ sessions }) => client.setQueryData(sessionsQuery.queryKey, sessions));
   on('session.updated', ({ session }) => {
     client.setQueryData<SessionDto[]>(sessionsQuery.queryKey, (sessions) => upsert(sessions, session));
-    // Le détail ouvert de cette session relit son fil (E2a, CA-SESS-27)
+    // Le détail ouvert de cette session relit son fil
     void client.invalidateQueries({ queryKey: ['session', session.id] });
   });
   on('import.progress', ({ progress }) => client.setQueryData(importProgressQuery.queryKey, progress));
@@ -37,8 +37,8 @@ function listen(source: EventSource, client: QueryClient): void {
 
 /**
  * Abonne le cache des sessions au flux en direct : l'instantané le remplace, chaque changement y entre aussitôt
- * (CA-SESS-16). Une coupure est signalée aussitôt et une reconnexion tentée toutes les 5 s, ou tout de suite par
- * « Réessayer » (E1f) ; la reconnexion reçoit un nouvel instantané (CA-SESS-26).
+ *. Une coupure est signalée aussitôt et une reconnexion tentée toutes les 5 s, ou tout de suite par
+ * « Réessayer » ; la reconnexion reçoit un nouvel instantané.
  */
 export function useLiveEvents(enabled: boolean): void {
   const client = useQueryClient();

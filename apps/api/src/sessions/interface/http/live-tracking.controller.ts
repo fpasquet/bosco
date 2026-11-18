@@ -33,7 +33,7 @@ function present(status: LiveTrackingStatus & { backupPath?: null | string }): L
   return { ...status, lastSignalAt: status.lastSignalAt?.toISOString() ?? null };
 }
 
-/** Installation du suivi en direct d'un profil (E4b) : état, installation, désinstallation. */
+/** Installation du suivi en direct d'un profil : état, installation, désinstallation. */
 @Controller('api/sources/:sourceId/live-tracking')
 export class LiveTrackingController {
   constructor(@Inject(LIVE_TRACKING_SERVICE) private readonly liveTracking: LiveTrackingService) {}

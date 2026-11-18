@@ -1,7 +1,7 @@
 import type { ConversationPartDto, ConversationStepDto, ConversationTurnDto } from '@bosco/domain';
 
 /**
- * Lecture du fil complet d'une session (E2a) : ce que montre chaque étape de l'agent, son titre et son état. Les
+ * Lecture du fil complet d'une session : ce que montre chaque étape de l'agent, son titre et son état. Les
  * composants des patterns d'AI Elements (Terminal, Test Results, Stack Trace, Task, Tool, Reasoning) ne lisent que ces
  * vues, calculées ici sans React.
  */

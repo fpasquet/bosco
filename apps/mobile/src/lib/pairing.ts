@@ -1,4 +1,4 @@
-// Lien du QR code d'appairage (E4c, CA-APPS-05) : l'adresse du poste, le code et l'empreinte du certificat.
+// Lien du QR code d'appairage : l'adresse du poste, le code et l'empreinte du certificat.
 
 export interface Pairing {
   code: null | string;

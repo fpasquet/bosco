@@ -5,7 +5,7 @@ import { APP_NAME } from '@bosco/domain';
 import { sinceNow } from '../../lib/format';
 
 export interface SourceCardProps {
-  /** Canal de Bosco du profil (E4f) : installé ou non ; absent tant qu'il n'est pas connu */
+  /** Canal de Bosco du profil : installé ou non ; absent tant qu'il n'est pas connu */
   channel?: { installed: boolean; onOpen: () => void };
   label: string;
   /** Dernier signal reçu d'une session du profil ; null tant qu'aucune n'a parlé depuis le démarrage de Bosco */
@@ -13,7 +13,7 @@ export interface SourceCardProps {
   liveTracking: boolean;
   /** Suivi installé par une autre version de Bosco : la source passe « À mettre à jour » */
   liveTrackingOutdated?: boolean;
-  /** Réglages du profil (E4g) : ses valeurs par défaut des sessions ; absent : pas de lien */
+  /** Réglages du profil : ses valeurs par défaut des sessions ; absent : pas de lien */
   manageHref?: string;
   now: Date;
   onOpenLiveTracking: () => void;
@@ -22,7 +22,7 @@ export interface SourceCardProps {
   path: string;
   /** Sur le téléphone, les réglages se lisent seulement : l'interrupteur montre l'état sans le changer */
   readOnly?: boolean;
-  /** Interrupteur de la source : sa lecture s'arrête, rien n'est effacé (CA-SESS-56) */
+  /** Interrupteur de la source : sa lecture s'arrête, rien n'est effacé */
   watched: boolean;
 }
 
@@ -90,7 +90,7 @@ function liveTrackingAction(liveTracking: boolean, outdated: boolean): string {
   return liveTracking ? 'Vérifier le suivi en direct' : 'Installer';
 }
 
-/** Une source surveillée (E4a) : son suivi en direct et son dernier signal, pour voir d'un coup d'œil que tout est branché. */
+/** Une source surveillée : son suivi en direct et son dernier signal, pour voir d'un coup d'œil que tout est branché. */
 export function SourceCard(props: SourceCardProps) {
   const { label, lastSignalAt, liveTracking, now, onOpenLiveTracking, onWatchedChange, path, watched } = props;
   const outdated = props.liveTrackingOutdated ?? false;

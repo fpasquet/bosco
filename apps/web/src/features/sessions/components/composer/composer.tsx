@@ -43,7 +43,7 @@ export interface ComposerProps {
   /** Suggestions de « @ » (fichiers) et « / » (commandes et skills), appelées à chaque frappe après le déclencheur */
   suggest: (kind: 'command' | 'file', query: string) => Promise<SuggestionDto[]>;
   /**
-   * Texte seulement (canal de Bosco, E2i) : ni images ni réglages ; la note dit pourquoi, à la place de la barre d'outils
+   * Texte seulement (canal de Bosco) : ni images ni réglages ; la note dit pourquoi, à la place de la barre d'outils
    */
   textOnly?: string;
 }

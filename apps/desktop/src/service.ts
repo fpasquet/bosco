@@ -1,4 +1,4 @@
-// Le service Bosco que l'application du poste fait tourner, ou auquel elle se relie (E17b, CA-APPS-01, CA-APPS-04).
+// Le service Bosco que l'application du poste fait tourner, ou auquel elle se relie.
 // Lancée depuis le dépôt, elle le fait tourner avec le Node du poste, comme `bosco start`. Installée par le paquet .deb,
 // elle embarque le service construit, l'interface et Node 26 : elle ne dépend alors ni du dépôt ni du Node du poste.
 import { type ChildProcess, execFile, spawn } from 'node:child_process';
@@ -107,7 +107,7 @@ export function startService(options: { apiMain: string; node: string; port: num
   return { process: child, errors: () => errors, exited: () => exited };
 }
 
-/** Ce que dit l'application quand le service s'arrête au démarrage (CA-APPS-10). */
+/** Ce que dit l'application quand le service s'arrête au démarrage. */
 export function startFailure(errors: string): Readonly<{ detail: string; message: string; title: string }> {
   const text = stripVTControlCharacters(errors);
   if (text.includes('DatabaseTooNewError')) {

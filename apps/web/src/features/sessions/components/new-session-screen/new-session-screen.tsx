@@ -45,7 +45,7 @@ import { Composer, type ComposerValue } from '../composer';
 import { FullAccessDialog } from '../full-access-dialog';
 import { ProjectsField } from '../projects-field';
 
-/** Récapitulatif d'une session sur le poste (E16a, E16c) : le projet principal, et ceux qu'elle voit en plus. */
+/** Récapitulatif d'une session sur le poste : le projet principal, et ceux qu'elle voit en plus. */
 function WorkstationSummary({ others, principal }: { others: string[]; principal: string }) {
   return (
     <>
@@ -71,7 +71,7 @@ function WorkstationSummary({ others, principal }: { others: string[]; principal
 }
 
 /**
- * Récapitulatif d'une session en bac à sable (E16b, E16d, règle 12) : ce que voit l'agent, les domaines réunis, et
+ * Récapitulatif d'une session en bac à sable : ce que voit l'agent, les domaines réunis, et
  * comment le travail revient.
  */
 function SandboxSummary({ branch, domains, names }: { branch: string; domains: number; names: string[] }) {
@@ -166,7 +166,7 @@ function uncopied(changes: null | number): string {
 }
 
 /**
- * Copies d'une session à plusieurs projets en bac à sable (E16d) : pour chaque projet, d'où part sa copie et ce qui
+ * Copies d'une session à plusieurs projets en bac à sable : pour chaque projet, d'où part sa copie et ce qui
  * n'y entre pas.
  */
 function SandboxCopies({
@@ -242,7 +242,7 @@ function useStartSession(): (input: StartSessionDto) => Promise<void> {
 
 /**
  * Avertissement non bloquant, pour chaque projet où une session du terminal est encore ouverte, nommé quand la session
- * a plusieurs projets ; « Voir la session » ouvre l'autre session (CA-SESS-134).
+ * a plusieurs projets ; « Voir la session » ouvre l'autre session.
  */
 function BusyWarnings({ busy, named }: { busy: { project: OptionProject; session: SessionDto }[]; named: boolean }) {
   return busy.map(({ project, session }) => (
@@ -266,7 +266,7 @@ function BusyWarnings({ busy, named }: { busy: { project: OptionProject; session
 }
 
 /**
- * Branches d'une session en bac à sable (E16b, E16d) : d'où part la copie de chaque projet, et la branche de la
+ * Branches d'une session en bac à sable : d'où part la copie de chaque projet, et la branche de la
  * session, la même dans chacun.
  */
 function SandboxFields({
@@ -486,10 +486,10 @@ function WhereField({
 }
 
 /**
- * Nouvelle session (E16a à E16e, CA-SESS-128, CA-SESS-132) : les projets, un seul ou ceux d'un groupe, le principal
+ * Nouvelle session : les projets, un seul ou ceux d'un groupe, le principal
  * en tête, et l'abonnement Claude ; où elle tourne (sur le poste ou dans un bac à sable, une copie par projet sur sa
  * propre branche), puis le premier message, avec les réglages du tour dans la barre d'outils, chacun avec son origine
- * (règle 16). L'accès complet sur le poste se confirme à chaque session. Elle s'ouvre dans Bosco. Partie d'un projet
+ *. L'accès complet sur le poste se confirme à chaque session. Elle s'ouvre dans Bosco. Partie d'un projet
  * ou d'un groupe, elle le reprend, avec son fil d'Ariane.
  */
 export function NewSessionScreen({ origin }: { origin: NewSessionOrigin }) {
@@ -553,7 +553,7 @@ function NewSessionForm({
   };
   const changeSettings = (next: typeof settings) => {
     const apply = () => setChoices(choicesAfter(choices, settings, next));
-    // Sur le poste, choisir l'accès complet demande une confirmation, à chaque session (E16e)
+    // Sur le poste, choisir l'accès complet demande une confirmation, à chaque session
     if (next.permissionMode === 'bypassPermissions' && settings.permissionMode !== next.permissionMode && !sandboxed)
       fullAccess.ask(() => {
         apply();
@@ -660,7 +660,7 @@ function NewSessionForm({
           sandboxUnavailable
             ? undefined
             : () => {
-                // En bac à sable, l'accès complet ne demande rien : le formulaire passe en E16b en le gardant
+                // En bac à sable, l'accès complet ne demande rien : le formulaire passe au bac à sable en le gardant
                 setChoices({ ...choices, permissionMode: 'bypassPermissions' });
                 setWhere('sandbox');
                 fullAccess.cancel();

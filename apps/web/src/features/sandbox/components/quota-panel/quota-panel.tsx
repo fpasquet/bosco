@@ -60,7 +60,7 @@ function Threshold({ label, name, register }: { label: string; name: string; reg
 }
 
 /**
- * Quota de l'abonnement (E11, DT-39) : l'usage de la fenêtre de 5 h et de la semaine de chaque abonnement, lu à
+ * Quota de l'abonnement : l'usage de la fenêtre de 5 h et de la semaine de chaque abonnement, lu à
  * chaque tour, et les seuils : au-delà de l'attente, aucun tour ne part ; au-delà de l'arrêt, le tour en cours
  * s'arrête. Ils retiennent les sessions en bac à sable, et aussi, au choix, celles pilotées sur le poste.
  */

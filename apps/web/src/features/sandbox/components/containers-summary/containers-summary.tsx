@@ -6,8 +6,8 @@ import { useLiveContainers } from '../../hooks/use-live-containers';
 import { countsOf, memoryOf, somethingRuns } from '../../lib/containers';
 
 /**
- * « Conteneurs » en bas de la barre latérale (E19a, CA-CONT-70) : seulement si quelque chose tourne, avec le nombre
- * de bacs à sable et de tours, et la mémoire au total ; en orange quand Docker ne répond pas (CA-CONT-80). Un clic déplie le panneau.
+ * « Conteneurs » en bas de la barre latérale : seulement si quelque chose tourne, avec le nombre
+ * de bacs à sable et de tours, et la mémoire au total ; en orange quand Docker ne répond pas. Un clic déplie le panneau.
  */
 export function ContainersSummary() {
   const view = useLiveContainers();

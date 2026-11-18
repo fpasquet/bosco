@@ -15,7 +15,7 @@ function retrievedMessage(retrieved: RetrievedBranchesDto, names: Map<string, st
 }
 
 /**
- * Projets d'une session à plusieurs projets (E2k, CA-SESS-138, CA-SESS-141) : sur le poste, la branche courante et les
+ * Projets d'une session à plusieurs projets : sur le poste, la branche courante et les
  * fichiers modifiés de chacun ; en bac à sable, la branche de chaque copie, ce qu'elle a changé et sa récupération.
  */
 export function SessionProjects({ busy, session }: { busy: boolean; session: SessionDto }) {

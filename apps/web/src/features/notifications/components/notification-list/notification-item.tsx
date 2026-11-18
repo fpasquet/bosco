@@ -36,7 +36,7 @@ export interface NotificationItemProps {
 }
 
 /**
- * Une notification (E15a) : son type, la session ou la tâche, un extrait et l'heure ; une autorisation encore en
+ * Une notification : son type, la session ou la tâche, un extrait et l'heure ; une autorisation encore en
  * attente se répond ici, le reste s'ouvre d'un clic. Une notification traitée le dit.
  */
 export function NotificationItem({ busy, notification, now, onAnswer, onOpen }: NotificationItemProps) {

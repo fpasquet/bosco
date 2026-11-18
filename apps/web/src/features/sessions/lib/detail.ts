@@ -9,12 +9,12 @@ export function clockOf(iso: string): string {
 }
 
 /**
- * Commande qui reprend une session close (RF-SESS-09) : claude --resume avec l'identifiant complet, précédée du
- * dossier de configuration pour un autre profil que celui par défaut (CA-SESS-42). Une session ouverte n'en a pas.
- * Une session à plusieurs projets ajoute les autres projets, avec le réglage qui lit leurs instructions (CA-SESS-140).
+ * Commande qui reprend une session close : claude --resume avec l'identifiant complet, précédée du
+ * dossier de configuration pour un autre profil que celui par défaut. Une session ouverte n'en a pas.
+ * Une session à plusieurs projets ajoute les autres projets, avec le réglage qui lit leurs instructions.
  */
 export function resumeCommand(session: SessionDto, sources: readonly SourceDto[], home: string): null | string {
-  // Une session pilotée par Bosco se reprend aussi dans un terminal entre deux tours (règle 9)
+  // Une session pilotée par Bosco se reprend aussi dans un terminal entre deux tours
   const betweenTurns = !!session.pilot && !session.pilot.running;
   if (session.state !== 'ended' && !betweenTurns) return null;
   const source = sources.find((candidate) => candidate.id === session.sourceId);

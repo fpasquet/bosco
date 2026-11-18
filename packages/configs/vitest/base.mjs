@@ -5,7 +5,7 @@ export const base = defineConfig({
   test: { include: ['src/**/*.test.ts', 'test/**/*.test.ts'], passWithNoTests: false, restoreMocks: true },
 });
 
-// Paquets NestJS et MikroORM : décorateurs « legacy » et leurs métadonnées, réglés explicitement (DT-18).
+// Paquets NestJS et MikroORM : décorateurs « legacy » et leurs métadonnées, réglés explicitement.
 export const nest = defineConfig({
   ...base,
   oxc: { decorator: { legacy: true, emitDecoratorMetadata: true } },

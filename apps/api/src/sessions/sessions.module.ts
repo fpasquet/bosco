@@ -131,7 +131,7 @@ const conversations = new FileConversationReader();
       inject: [CONFIG],
       useFactory: (config: Config) => {
         if (config.testing) return new RecordingNotifier();
-        // L'icône de Bosco, servie par l'interface : la notification du bureau la montre (E15b)
+        // L'icône de Bosco, servie par l'interface : la notification du bureau la montre
         const icon = config.webDir ? join(config.webDir, 'public', 'logo.svg') : null;
         return new NotifySendAlerts(APP_NAME, icon);
       },

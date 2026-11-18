@@ -1,5 +1,5 @@
 'use client';
-// Interface ouverte dans l'application Android de Bosco (E18, DT-33) : la page lui transmet ses notifications et
+// Interface ouverte dans l'application Android de Bosco : la page lui transmet ses notifications et
 // ouvre ses réglages par des messages ; ailleurs (navigateur), rien ne change.
 import { useSyncExternalStore } from 'react';
 

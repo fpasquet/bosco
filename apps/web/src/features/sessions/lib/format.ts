@@ -20,7 +20,7 @@ export function elapsed(date: Date, now: Date): string {
 
 const DOLLARS = new Intl.NumberFormat('fr', { maximumFractionDigits: 2, minimumFractionDigits: 2 });
 
-/** Coût estimé : « 1,84 $ » ; « non chiffré » quand le tarif du modèle n'est pas connu (RF-SESS-05). */
+/** Coût estimé : « 1,84 $ » ; « non chiffré » quand le tarif du modèle n'est pas connu. */
 export function formatCost(cost: { unpriced: boolean; usd: number }): string {
   if (cost.unpriced && cost.usd === 0) return 'non chiffré';
   return `${DOLLARS.format(cost.usd)}${NBSP}$`;

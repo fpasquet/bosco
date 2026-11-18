@@ -88,7 +88,7 @@ function Author({ version }: { version: DecisionDto['versions'][number] }) {
 }
 
 /**
- * Une décision (E9b, E9d) : proposée par un agent, elle attend que tu l'acceptes, la modifies ou la refuses ; acceptée,
+ * Une décision : proposée par un agent, elle attend que tu l'acceptes, la modifies ou la refuses ; acceptée,
  * elle se lit avec ses versions et ses liens, et se modifie, se remplace ou s'abandonne sans rien perdre.
  */
 export function DecisionView({

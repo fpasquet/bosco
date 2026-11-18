@@ -1,4 +1,4 @@
-// Appairage par le QR code du poste (E18a, CA-APPS-05) : l'adresse, le code et l'empreinte du certificat ; la vue web
+// Appairage par le QR code du poste : l'adresse, le code et l'empreinte du certificat ; la vue web
 // ne fera confiance qu'à ce certificat, sans avertissement.
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useState } from 'react';

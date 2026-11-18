@@ -9,11 +9,11 @@ import { totalTokens } from '../../lib/overview';
 export interface SessionSideProps {
   now: Date;
   onCopy: (text: string, label: string) => void;
-  /** Projets d'une session à plusieurs projets (E2k), à la place de sa branche */
+  /** Projets d'une session à plusieurs projets, à la place de sa branche */
   projects?: ReactNode;
-  /** Commande de reprise d'une session close ; null tant qu'elle est ouverte (RF-SESS-09) */
+  /** Commande de reprise d'une session close ; null tant qu'elle est ouverte */
   resume: null | string;
-  /** Carte du bac à sable d'une session qui y tourne (E2j), en tête de la colonne */
+  /** Carte du bac à sable d'une session qui y tourne, en tête de la colonne */
   sandbox?: ReactNode;
   session: SessionDto;
 }
@@ -27,7 +27,7 @@ function Row({ label, value }: { label: string; value: string }) {
   );
 }
 
-/** Colonne du détail : usage estimé (RF-SESS-05), fichiers modifiés par l'agent, identifiant et reprise. */
+/** Colonne du détail : usage estimé, fichiers modifiés par l'agent, identifiant et reprise. */
 export function SessionSide({ now, onCopy, projects, resume, sandbox, session }: SessionSideProps) {
   const closed = session.state === 'ended' || session.state === 'inactive';
   const { usage } = session;

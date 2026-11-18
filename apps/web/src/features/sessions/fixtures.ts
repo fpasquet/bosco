@@ -147,7 +147,7 @@ export const STORY_WAITING: SessionDto[] = [
 
 const at = (minutesAgo: number) => new Date(Date.now() - minutesAgo * 60_000).toISOString();
 
-/** Fil de la session S3 du fil rouge (E2a). */
+/** Fil de la session S3 du fil rouge. */
 export const STORY_JOURNAL: JournalEntryDto[] = [
   {
     seq: 1,

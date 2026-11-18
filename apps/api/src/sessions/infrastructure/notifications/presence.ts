@@ -3,7 +3,7 @@ import type { Presence } from '../../application/notification.service.ts';
 /** Un onglet au premier plan le redit à cet intervalle ; au-delà, il ne l'est plus (fermé, en veille, caché). */
 export const PRESENCE_MS = 30_000;
 
-/** Onglet Bosco au premier plan sur le poste, d'après le dernier signal de l'interface (E15b). */
+/** Onglet Bosco au premier plan sur le poste, d'après le dernier signal de l'interface. */
 export class PresenceTracker implements Presence {
   private lastForegroundAt = 0;
   private lastAppAt = 0;
@@ -24,7 +24,7 @@ export class PresenceTracker implements Presence {
     return this.now().getTime() - this.lastForegroundAt < PRESENCE_MS;
   }
 
-  /** L'application du poste le redit au même rythme : elle montre alors elle-même les notifications (CA-APPS-03). */
+  /** L'application du poste le redit au même rythme : elle montre alors elle-même les notifications. */
   reportApp(): void {
     this.lastAppAt = this.now().getTime();
   }

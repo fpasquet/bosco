@@ -6,7 +6,7 @@ import { AppModule } from './app.module.ts';
 import { loadConfig } from './config.ts';
 import { hostWeb } from './shared/infrastructure/web/next-host.ts';
 
-/** Un message à une session pilotée peut joindre 5 images de 5 Mo, en base64 (E2e) */
+/** Un message à une session pilotée peut joindre 5 images de 5 Mo, en base64 */
 const BODY_LIMIT = 40 * 1024 * 1024;
 
 const config = loadConfig();

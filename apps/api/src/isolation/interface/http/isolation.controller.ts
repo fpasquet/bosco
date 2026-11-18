@@ -32,7 +32,7 @@ async function settle(change: Promise<IsolationSnapshot>): Promise<IsolationDto>
   }
 }
 
-/** Isolation des bacs à sable et abonnement Claude par défaut (E11), réservés au poste : le téléphone les lit. */
+/** Isolation des bacs à sable et abonnement Claude par défaut, réservés au poste : le téléphone les lit. */
 @Controller('api/isolation')
 export class IsolationController {
   constructor(@Inject(ISOLATION_SERVICE) private readonly isolation: IsolationService) {}
@@ -43,7 +43,7 @@ export class IsolationController {
     return present(snapshot);
   }
 
-  /** Ajout d'un domaine : vaut sans relancer les bacs à sable (RF-CONT-07). */
+  /** Ajout d'un domaine : vaut sans relancer les bacs à sable. */
   @Post('domains')
   addDomain(@Body() body: unknown): Promise<IsolationDto> {
     return settle(this.isolation.addDomain(parseBody(domainSchema, body).domain));

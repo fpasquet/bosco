@@ -7,7 +7,7 @@ import type { DecisionTextDto } from '@bosco/domain';
 import { Button } from '@/shared/ui/button';
 import { changedPart } from '../../lib/decisions';
 
-/** Nouvelle décision (E9c), nouvelle version d'une décision acceptée (E9e), ou relecture avant d'accepter (E9b). */
+/** Nouvelle décision, nouvelle version d'une décision acceptée, ou relecture avant d'accepter. */
 export type DecisionFormMode = 'edit' | 'new' | 'review';
 
 export interface DecisionFormValues {
@@ -21,7 +21,7 @@ export interface DecisionFormProps {
   busy: boolean;
   initial: DecisionTextDto | null;
   mode: DecisionFormMode;
-  /** Numéro de la version créée par l'enregistrement (E9e) */
+  /** Numéro de la version créée par l'enregistrement */
   nextVersion?: number;
   onCancel: () => void;
   onSubmit: (values: DecisionFormValues) => void;
@@ -75,7 +75,7 @@ const FIELDS: { label: string; name: keyof Values; optional?: boolean; rows: num
   { name: 'alternatives', label: 'Alternatives écartées', optional: true, rows: 2 },
 ];
 
-/** Formulaire d'une décision : titre, contexte et décision obligatoires, le reste facultatif (CA-CONT-12). */
+/** Formulaire d'une décision : titre, contexte et décision obligatoires, le reste facultatif. */
 export function DecisionForm({
   busy,
   initial,
@@ -99,7 +99,7 @@ export function DecisionForm({
       note: '',
     },
   });
-  // L'API refuse la note : le champ passe en erreur et reçoit le focus (CA-CONT-21)
+  // L'API refuse la note : le champ passe en erreur et reçoit le focus
   useEffect(() => {
     if (!serverError) return;
     setError('note', { type: 'server', message: serverError });

@@ -1,4 +1,4 @@
-// Conteneurs des bacs à sable vus par la commande docker (DT-35) : ceux étiquetés `bosco.session`, mesurés par une
+// Conteneurs des bacs à sable vus par la commande docker : ceux étiquetés `bosco.session`, mesurés par une
 // lecture ponctuelle de `docker stats` (mémoire sans le cache de fichiers inactif, comme la commande l'affiche).
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';

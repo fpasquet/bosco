@@ -1,4 +1,4 @@
-// Réglages de l'application (E18d, CA-APPS-08) : le poste appairé, rester connecté en arrière-plan, vibrer.
+// Réglages de l'application : le poste appairé, rester connecté en arrière-plan, vibrer.
 import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 import type { AppPreferences, Workstation } from '../lib/storage';
 import { colors } from '../lib/theme';

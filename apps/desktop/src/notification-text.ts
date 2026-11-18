@@ -1,4 +1,4 @@
-// Texte d'une notification native de l'application du poste (CA-APPS-03) : le même que celui de notify-send (E15b),
+// Texte d'une notification native de l'application du poste : le même que celui de notify-send,
 // en texte simple, le type et le projet en titre, la session en première ligne.
 import type { NotificationDto } from '@bosco/domain';
 

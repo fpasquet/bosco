@@ -1,4 +1,4 @@
-/** Fichier modifié par l'agent pendant la session, avec ses lignes ajoutées et retirées (E2a, colonne « Branche »). */
+/** Fichier modifié par l'agent pendant la session, avec ses lignes ajoutées et retirées (colonne « Branche »). */
 export interface FileChange {
   added: number;
   path: string;
@@ -35,7 +35,7 @@ function textOf(value: unknown): string {
 
 /**
  * Modification décrite par un appel d'outil de l'agent (Edit, MultiEdit, Write) ; null pour les autres outils. Les
- * changements faits par une commande shell n'y figurent pas (E2a, annotation 4).
+ * changements faits par une commande shell n'y figurent pas.
  */
 export function changeOf(tool: string, input: unknown): FileChange | null {
   if (typeof input !== 'object' || input === null) return null;

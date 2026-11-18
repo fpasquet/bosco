@@ -1,5 +1,5 @@
 /**
- * Canal de Bosco (E2i, E4f, règle 9) : un serveur de canal de Claude Code (« channels », aperçu de recherche) que
+ * Canal de Bosco : un serveur de canal de Claude Code (« channels », aperçu de recherche) que
  * Bosco installe dans un profil. Une session du terminal lancée avec lui reçoit les messages écrits dans Bosco ;
  * Claude Code les écrit dans le transcript comme une demande, marquée comme venue du canal. Vérifié sur 2.1.319.
  */

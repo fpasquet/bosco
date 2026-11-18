@@ -14,7 +14,7 @@ export interface SessionHeaderProps {
   now: Date;
   onCopy: (text: string, label: string) => void;
   profile: null | string;
-  /** Commande de reprise d'une session close (CA-SESS-42) ; null tant qu'elle est ouverte */
+  /** Commande de reprise d'une session close ; null tant qu'elle est ouverte */
   resume: null | string;
   session: SessionDto;
 }
@@ -27,7 +27,7 @@ function since(session: SessionDto, now: Date): string {
   return `dernier événement il y a ${elapsed(new Date(session.lastEventAt), now)}`;
 }
 
-/** En-tête du détail d'une session (E2a) : état, titre, projet, profil, durée, et ce qu'on peut copier. */
+/** En-tête du détail d'une session : état, titre, projet, profil, durée, et ce qu'on peut copier. */
 export function SessionHeader({ mark, now, onCopy, profile, resume, session }: SessionHeaderProps) {
   const folder = session.project ? session.projectPath : null;
   return (

@@ -31,7 +31,7 @@ function changes(files: null | number): string {
 }
 
 /**
- * Projets d'une session à plusieurs projets (E2k) : le principal, marqué de l'étoile, où elle tourne, puis ceux qu'elle
+ * Projets d'une session à plusieurs projets : le principal, marqué de l'étoile, où elle tourne, puis ceux qu'elle
  * voit, chacun avec sa branche et ses fichiers modifiés. En bac à sable, la carte devient « Branches » : chaque branche
  * se récupère seule, ou toutes celles qui ont du travail, les projets sans changement étant laissés.
  */

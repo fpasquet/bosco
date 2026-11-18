@@ -26,7 +26,7 @@ export class MikroOrmDeviceRepository implements DeviceRepository {
 
 const PHONE_ENABLED = 'access.phoneEnabled';
 
-/** Accès du téléphone activé ou non, dans la table des réglages du poste ; désactivé par défaut (CA-SESS-60). */
+/** Accès du téléphone activé ou non, dans la table des réglages du poste ; désactivé par défaut. */
 export class MikroOrmAccessSettings implements AccessSettings {
   constructor(private readonly orm: MikroORM) {}
 

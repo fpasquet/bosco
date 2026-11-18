@@ -31,7 +31,7 @@ export class InvalidIsolation extends DomainError {
   }
 }
 
-/** Abonnement par défaut tel que les réglages le montrent (E11) : celui choisi, son compte, et les choix possibles. */
+/** Abonnement par défaut tel que les réglages le montrent : celui choisi, son compte, et les choix possibles. */
 export interface SubscriptionView {
   account: null | string;
   /** Un accès à l'abonnement existe : sans lui, aucun bac à sable ne démarre */
@@ -48,7 +48,7 @@ export interface IsolationSnapshot {
 }
 
 /**
- * Isolation des bacs à sable (E11, DT-37) : la liste des domaines que joint le proxy de sortie, et l'abonnement Claude
+ * Isolation des bacs à sable : la liste des domaines que joint le proxy de sortie, et l'abonnement Claude
  * par défaut, dont l'accès est copié dans un bac à sable qui n'en choisit pas d'autre.
  */
 export class IsolationService {
@@ -67,7 +67,7 @@ export class IsolationService {
     await this.publish();
   }
 
-  /** Accès à l'abonnement d'un profil, copié dans un bac à sable ; celui par défaut sans profil (DT-28). */
+  /** Accès à l'abonnement d'un profil, copié dans un bac à sable ; celui par défaut sans profil. */
   async credentialsOf(profile: null | string = null): Promise<string> {
     const chosen = profile ?? this.chosen;
     const account = chosen ? await this.claude.profiles.account(chosen) : null;
@@ -106,7 +106,7 @@ export class IsolationService {
     return { locked: [...LOCKED_DOMAINS], added: [...this.added], subscription: await this.subscriptionView() };
   }
 
-  /** Un nom de domaine, ou « *. » et un nom ; ajouté sans relancer les bacs à sable (RF-CONT-07). */
+  /** Un nom de domaine, ou « *. » et un nom ; ajouté sans relancer les bacs à sable. */
   async addDomain(value: string): Promise<IsolationSnapshot> {
     const domain = value.trim().toLowerCase();
     if (!isDomain(domain))

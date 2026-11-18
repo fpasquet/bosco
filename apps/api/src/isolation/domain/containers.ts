@@ -1,4 +1,4 @@
-// Conteneurs en cours (RF-CONT-13, DT-35) : les bacs à sable que Bosco a lancés, reconnus à leur nom, et ce que
+// Conteneurs en cours : les bacs à sable que Bosco a lancés, reconnus à leur nom, et ce que
 // chacun consomme.
 
 /** Une mesure du conteneur d'un bac à sable : processeur en cœurs, mémoire en octets. */
@@ -10,7 +10,7 @@ export interface SandboxSample {
   name: string;
 }
 
-/** À partir de cette part de son plafond, une jauge passe en orange : « Proche du plafond » (CA-CONT-73). */
+/** À partir de cette part de son plafond, une jauge passe en orange : « Proche du plafond ». */
 export const NEAR_CEILING = 0.8;
 
 /** « bosco-s-7ad7871f65c1-agent » → « 7ad7871f65c1 » ; null pour un autre conteneur (le proxy compris). */
@@ -44,7 +44,7 @@ export function bytesOf(size: string): number {
   return Number.parseFloat(value ?? '0') * (UNITS[unit ?? ''] ?? 0);
 }
 
-/** Valeur proche de son plafond (CA-CONT-73) ; jamais pour une valeur sans plafond (tour piloté sur le poste). */
+/** Valeur proche de son plafond ; jamais pour une valeur sans plafond (tour piloté sur le poste). */
 export function nearCeiling(value: number, limit: null | number): boolean {
   return limit !== null && limit > 0 && value >= limit * NEAR_CEILING;
 }

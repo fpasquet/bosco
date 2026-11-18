@@ -16,7 +16,7 @@ export interface OverviewHeaderProps {
   query: string;
   /** Coût du jour, rappelé à côté du regroupement sur téléphone, sans la bande d'indicateurs */
   costToday?: string;
-  /** Sous-titre des colonnes par état, qui n'ont pas de bande d'indicateurs (E1d) */
+  /** Sous-titre des colonnes par état, qui n'ont pas de bande d'indicateurs */
   summary?: string;
   title: string;
 }
@@ -90,7 +90,7 @@ export function OverviewHeader(props: OverviewHeaderProps) {
           Masquer les inactives
         </button>
       )}
-      {/* Démarrer une session sans terminal (E16a) : un bouton sur le poste, un bouton rond sur le téléphone */}
+      {/* Démarrer une session sans terminal : un bouton sur le poste, un bouton rond sur le téléphone */}
       <Link href="/sessions/new" className="btn hidden h-control btn-primary md:inline-flex">
         <Plus aria-hidden className="size-4" />
         Nouvelle session

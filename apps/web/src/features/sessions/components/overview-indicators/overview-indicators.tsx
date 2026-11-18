@@ -30,7 +30,7 @@ function endedLabel(count: number): string | undefined {
   return `${count} ${count > 1 ? 'terminées' : 'terminée'}`;
 }
 
-/** Bande d'indicateurs de la vue d'ensemble ; le coût du jour est une estimation au tarif public (RF-SESS-05). */
+/** Bande d'indicateurs de la vue d'ensemble ; le coût du jour est une estimation au tarif public. */
 export function OverviewIndicators({ indicators, now }: { indicators: Indicators; now: Date }) {
   const { costToday, endedToday, inactive, inactiveSince, running, sessionsToday } = indicators;
   return (

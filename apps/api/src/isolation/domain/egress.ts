@@ -1,6 +1,6 @@
 import { isDomainName } from '../../shared/domain/domain-name.ts';
 
-/** Domaines toujours autorisés, nécessaires à Claude Code et aux installations : ils ne se retirent pas (E11b). */
+/** Domaines toujours autorisés, nécessaires à Claude Code et aux installations : ils ne se retirent pas. */
 export const LOCKED_DOMAINS = [
   'api.anthropic.com',
   'claude.ai',
@@ -9,7 +9,7 @@ export const LOCKED_DOMAINS = [
   'registry.yarnpkg.com',
 ] as const;
 
-/** « *.github.com » couvre les sous-domaines ; un nom simple, lui seul (RF-CONT-07). */
+/** « *.github.com » couvre les sous-domaines ; un nom simple, lui seul. */
 export function allows(domains: readonly string[], host: string): boolean {
   const name = host.toLowerCase().replace(/\.$/, '');
   return domains.some((domain) => {

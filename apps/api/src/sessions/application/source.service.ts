@@ -23,7 +23,7 @@ export class SourceAlreadyKnown extends DomainError {
   }
 }
 
-/** Profils lus au premier lancement : les 30 derniers jours (CA-SESS-03). */
+/** Profils lus au premier lancement : les 30 derniers jours. */
 export const HISTORY_DAYS = 30;
 
 export interface SourcesView {
@@ -72,7 +72,7 @@ export class SourceService {
     return source.toSnapshot();
   }
 
-  /** Interrupteur d'une source (E4a) : la lecture s'arrête, ou reprend là où elle en était (CA-SESS-56). */
+  /** Interrupteur d'une source : la lecture s'arrête, ou reprend là où elle en était. */
   async setWatched(sourceId: string, watched: boolean): Promise<null | SourceSnapshot> {
     const sources = await this.sourceRepository.list();
     const source = sources.find((candidate) => candidate.id === sourceId);

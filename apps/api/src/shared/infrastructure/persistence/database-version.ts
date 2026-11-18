@@ -1,4 +1,4 @@
-// Garde-fou des mises à jour (CA-APPS-10) : le service du dépôt et celui de l'application du poste partagent la base du
+// Garde-fou des mises à jour : le service du dépôt et celui de l'application du poste partagent la base du
 // poste. Un Bosco plus ancien ne démarre pas sur une base qu'un Bosco plus récent a migrée : il ne connaît pas son schéma.
 
 /** Les migrations passées sur la base que ce Bosco ne connaît pas, celles d'un Bosco plus récent. */

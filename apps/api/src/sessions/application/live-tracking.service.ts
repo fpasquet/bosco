@@ -2,7 +2,7 @@ import type { HookEndpoint, McpServerInstaller, ProfileSettings, SourceRepositor
 import { DomainError } from '../../shared/domain/domain-error.ts';
 import { ManagedSource, type Source } from '../domain/source.ts';
 
-/** Les six événements que suit Bosco : démarrage et fin, message, action, autorisation, fin de tour (E4b). */
+/** Les six événements que suit Bosco : démarrage et fin, message, action, autorisation, fin de tour. */
 export const LIVE_TRACKING_EVENTS = [
   'SessionStart',
   'SessionEnd',
@@ -16,7 +16,7 @@ export interface LiveTrackingStatus {
   installed: boolean;
   /** Installé par une autre version de Bosco : ses hooks ne sont plus ceux d'aujourd'hui, à réinstaller */
   outdated: boolean;
-  /** Dernier signal reçu d'une session de ce profil : la vérification repose sur un vrai signal (CA-SESS-64) */
+  /** Dernier signal reçu d'une session de ce profil : la vérification repose sur un vrai signal */
   lastSignalAt: Date | null;
   /** Serveur MCP de Bosco présent dans le profil : ajouté avec le suivi en direct */
   mcpServer: boolean;
@@ -29,7 +29,7 @@ export class UnknownSource extends DomainError {
   }
 }
 
-/** Cas d'usage de l'installation du suivi en direct, profil par profil, défaite en un clic (E4b). */
+/** Cas d'usage de l'installation du suivi en direct, profil par profil, défaite en un clic. */
 export class LiveTrackingService {
   constructor(
     private readonly sourceRepository: SourceRepository,

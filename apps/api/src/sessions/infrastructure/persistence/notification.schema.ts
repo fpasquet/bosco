@@ -15,7 +15,7 @@ export interface NotificationRow {
   turnMinutes: null | number;
 }
 
-/** Notifications du centre de notifications (E15a), gardées 7 jours. */
+/** Notifications du centre de notifications, gardées 7 jours. */
 export const NotificationSchema = new EntitySchema<NotificationRow>({
   name: 'Notification',
   tableName: 'notification',
