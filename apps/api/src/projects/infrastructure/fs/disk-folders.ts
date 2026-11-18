@@ -60,14 +60,19 @@ export class DiskFolders implements Folders {
 
   async list(path: string): Promise<FolderEntry[]> {
     const entries = await readdir(path, { withFileTypes: true }).catch(() => []);
-    // Les dossiers cachés se listent aussi : le domaine décide de les montrer (dossiers de configuration de Claude Code)
+    // Les dossiers cachés se listent aussi : le domaine décide de les montrer (dossiers de configuration de Claude Code).
+    // Des fichiers, seul le nom : pour choisir celui d'un jeton longue durée
     const folders = entries.filter((entry) => entry.isDirectory());
-    return Promise.all(
+    const files = entries
+      .filter((entry) => entry.isFile())
+      .map((entry) => ({ directory: false, git: false, name: entry.name }));
+    const listed = await Promise.all(
       folders.map(async (entry) => {
         const git = await hasGit(join(path, entry.name));
         return { directory: true, git, name: entry.name };
       }),
     );
+    return [...listed, ...files];
   }
 
   async realPath(path: string): Promise<null | string> {

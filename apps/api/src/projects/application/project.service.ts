@@ -12,7 +12,15 @@ import type {
   SessionFolders,
 } from './ports.ts';
 import { importDiscovered } from '../domain/discovered-import.ts';
-import { browsedFolder, crumbsOf, FolderNotFound, FolderPath, parentOf, visibleFolders } from '../domain/folder.ts';
+import {
+  browsedFolder,
+  crumbsOf,
+  FolderNotFound,
+  FolderPath,
+  parentOf,
+  visibleFiles,
+  visibleFolders,
+} from '../domain/folder.ts';
 import { type ProjectPlace, ProjectPlacement } from '../domain/placement.ts';
 import {
   Project,
@@ -49,6 +57,8 @@ export interface ProjectsOverview {
 /** Un dossier ouvert dans le navigateur, avec ses sous-dossiers. */
 export interface FolderListing {
   crumbs: { name: string; path: string }[];
+  /** Fichiers du dossier, leurs noms seulement, quand on choisit un fichier (celui d'un jeton longue durée) */
+  files?: { name: string; path: string }[];
   folders: { added: boolean; git: boolean; name: string; path: string; suggestion: boolean }[];
   home: string;
   parent: null | string;
@@ -253,9 +263,10 @@ export class ProjectService {
   /**
    * Sous-dossiers d'un dossier du dossier personnel : leurs noms seulement, dossiers cachés masqués (sauf `hidden`,
    * pour choisir un dossier de configuration de Claude Code), avec ce que la personne doit savoir pour choisir (dépôt
-   * git, déjà ajouté, une session y a tourné).
+   * git, déjà ajouté, une session y a tourné). `files` ajoute les noms des fichiers, pour choisir un fichier (le jeton
+   * longue durée d'un profil), sans jamais lire leur contenu.
    */
-  async browse(path: null | string, hidden = false): Promise<FolderListing> {
+  async browse(path: null | string, hidden = false, files = false): Promise<FolderListing> {
     const asked = browsedFolder(path, this.home, hidden);
     const [real, realHome] = await Promise.all([this.folders.realPath(asked.value), this.folders.realPath(this.home)]);
     if (!real || !realHome) throw new FolderNotFound(asked.value);
@@ -264,8 +275,10 @@ export class ProjectService {
     const [entries, overview] = await Promise.all([this.folders.list(asked.value), this.overview()]);
     const added = new Set(this.projects.map((project) => project.path));
     const suggested = new Set(overview.suggestions.map((suggestion) => suggestion.path));
+    const child = (name: string) => (asked.value === '/' ? `/${name}` : `${asked.value}/${name}`);
     return {
       crumbs: crumbsOf(asked, this.home),
+      ...(files ? { files: visibleFiles(entries, hidden).map((name) => ({ name, path: child(name) })) } : {}),
       folders: visibleFolders(entries, hidden).map(({ git, name }) => {
         const child = asked.value === '/' ? `/${name}` : `${asked.value}/${name}`;
         return { added: added.has(child), git, name, path: child, suggestion: suggested.has(child) };

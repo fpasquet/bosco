@@ -7,6 +7,7 @@ import { cn } from '@/lib/cn';
 import { Button } from '@/shared/ui/button';
 
 export type ListedFolder = FolderListingDto['folders'][number];
+export type ListedFile = NonNullable<FolderListingDto['files']>[number];
 
 export interface FolderDialogProps {
   /** Sous la barre du dossier ouvert, au-dessus de la liste */
@@ -22,6 +23,8 @@ export interface FolderDialogProps {
   open: boolean;
   /** Ce qu'une ligne montre avant son bouton « Ouvrir » : sa case ou son bouton radio, son nom, ses marques */
   renderFolder: (folder: ListedFolder) => ReactNode;
+  /** Ce qu'une ligne de fichier montre, quand on choisit un fichier (listing.files) ; sans elle, les fichiers ne s'affichent pas */
+  renderFile?: (file: ListedFile) => ReactNode;
   /** Ligne grisée (dossier déjà choisi ailleurs) */
   dimmed?: (folder: ListedFolder) => boolean;
   title: string;
@@ -41,9 +44,11 @@ export function FolderDialog({
   onCancel,
   onOpen,
   open,
+  renderFile,
   renderFolder,
   title,
 }: FolderDialogProps) {
+  const files = renderFile ? (listing?.files ?? []) : [];
   const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     const element = dialog.current;
@@ -84,7 +89,11 @@ export function FolderDialog({
                         {crumb.name}
                       </span>
                     ) : (
-                      <button type="button" className="link text-muted link-hover" onClick={() => onOpen(crumb.path)}>
+                      <button
+                        type="button"
+                        className="inline-flex min-h-6 link items-center text-muted link-hover"
+                        onClick={() => onOpen(crumb.path)}
+                      >
                         {crumb.name}
                       </button>
                     )}
@@ -97,7 +106,7 @@ export function FolderDialog({
         {above}
         <div className="mx-5 max-h-96 overflow-y-auto rounded-card border border-line">
           {listing ? (
-            <ul aria-label="Dossiers" className="divide-y divide-line">
+            <ul aria-label={renderFile ? 'Dossiers et fichiers' : 'Dossiers'} className="divide-y divide-line">
               {listing.folders.map((folder) => (
                 <li
                   key={folder.path}
@@ -115,7 +124,14 @@ export function FolderDialog({
                   </Button>
                 </li>
               ))}
-              {listing.folders.length === 0 && <li className="px-4 py-3 text-muted">Aucun dossier ici.</li>}
+              {files.map((file) => (
+                <li key={file.path} className="flex items-center gap-3 px-4 py-2">
+                  {renderFile?.(file)}
+                </li>
+              ))}
+              {listing.folders.length === 0 && files.length === 0 && (
+                <li className="px-4 py-3 text-muted">{renderFile ? 'Rien ici.' : 'Aucun dossier ici.'}</li>
+              )}
             </ul>
           ) : (
             <p role="status" className="px-4 py-3 text-muted">

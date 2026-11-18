@@ -9,9 +9,16 @@ import { settle } from './settle.ts';
 export class FoldersController {
   constructor(@Inject(PROJECT_SERVICE) private readonly projects: ProjectService) {}
 
-  /** `hidden=true` montre aussi les dossiers cachés : pour choisir un dossier de configuration de Claude Code. */
+  /**
+   * `hidden=true` montre aussi les dossiers cachés : pour choisir un dossier de configuration de Claude Code ;
+   * `files=true` ajoute les noms des fichiers : pour choisir celui d'un jeton longue durée.
+   */
   @Get()
-  async browse(@Query('path') path?: string, @Query('hidden') hidden?: string): Promise<FolderListingDto> {
-    return settle(() => this.projects.browse(path ?? null, hidden === 'true'));
+  async browse(
+    @Query('path') path?: string,
+    @Query('hidden') hidden?: string,
+    @Query('files') files?: string,
+  ): Promise<FolderListingDto> {
+    return settle(() => this.projects.browse(path ?? null, hidden === 'true', files === 'true'));
   }
 }
