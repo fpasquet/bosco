@@ -1,13 +1,16 @@
 import { cn } from '@/lib/cn';
 
-/** Onglet du détail sur le téléphone : le fil, les projets d'une session à plusieurs projets, l'usage. */
-export type PhoneTab = 'feed' | 'projects' | 'usage';
+/**
+ * Onglet du détail sur le téléphone : le fil, les projets d'une session à plusieurs projets, son bac à sable,
+ * l'usage.
+ */
+export type PhoneTab = 'feed' | 'projects' | 'sandbox' | 'usage';
 
-const LABELS: Record<PhoneTab, string> = { feed: 'Fil', projects: 'Projets', usage: 'Usage' };
+const LABELS: Record<PhoneTab, string> = { feed: 'Fil', projects: 'Projets', sandbox: 'Bac à sable', usage: 'Usage' };
 
-/** Onglets d'une session : « Projets » seulement quand elle en a plusieurs. */
-export function phoneTabsOf(several: boolean): PhoneTab[] {
-  return several ? ['feed', 'projects', 'usage'] : ['feed', 'usage'];
+/** Onglets d'une session : « Projets » quand elle en a plusieurs, « Bac à sable » quand elle tourne dans un bac à sable. */
+export function phoneTabsOf(several: boolean, sandboxed = false): PhoneTab[] {
+  return ['feed', ...(several ? (['projects'] as const) : []), ...(sandboxed ? (['sandbox'] as const) : []), 'usage'];
 }
 
 /** Onglet ouvert sur le téléphone, le fil si l'onglet choisi n'existe pas ; null sur le poste, sans onglets. */

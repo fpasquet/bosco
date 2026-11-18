@@ -97,7 +97,7 @@ export function SessionDetailScreen({ id }: { id: string }) {
   const several = session.addedProjects.length > 0;
   const untracked = missingLiveTracking(session, sources.sources);
   // Sur le téléphone, des onglets remplacent la colonne de droite ; « Projets » porte la carte et la reprise
-  const tabs = phoneTabsOf(several);
+  const tabs = phoneTabsOf(several, sandboxed);
   const shown = openTab(phone, tab, tabs);
   const panel = (name: PhoneTab) => tabPanel(shown, name);
   const sandboxCard = session.pilot?.sandbox && (
@@ -181,6 +181,7 @@ export function SessionDetailScreen({ id }: { id: string }) {
             {!session.pilot?.sandbox && <ResumeCard resume={resume} onCopy={copy} />}
           </div>
         )}
+        {shown === 'sandbox' && <div {...panel('sandbox')}>{sandboxCard}</div>}
         {/* Le fil reste monté sous les autres onglets, pour garder le message en cours ; l'usage se rend à la demande */}
         {(!shown || shown === 'usage') && (
           <div {...panel('usage')}>
@@ -191,7 +192,8 @@ export function SessionDetailScreen({ id }: { id: string }) {
               onCopy={copy}
               // Sur le téléphone, les projets ont leur onglet : l'usage ne montre pas non plus la branche du seul principal
               projects={shown && several ? false : projects}
-              sandbox={sandboxCard}
+              // Sur le téléphone, le bac à sable a son onglet
+              sandbox={shown ? undefined : sandboxCard}
             />
           </div>
         )}
