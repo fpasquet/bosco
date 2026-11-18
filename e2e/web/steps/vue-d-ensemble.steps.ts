@@ -134,5 +134,6 @@ When("je déplie l'étape {texte}", async ({ page }, title: string) => {
 });
 
 Then('le tableau des sessions montre {texte}', async ({ page }, text: string) => {
-  await expect(page.getByRole('table', { name: 'Sessions ouvertes' }).getByText(text)).toBeVisible();
+  // Une session de plusieurs groupes figure une fois dans chacun
+  await expect(page.getByRole('table', { name: 'Sessions ouvertes' }).getByText(text).first()).toBeVisible();
 });

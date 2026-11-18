@@ -21,6 +21,8 @@ export interface OverviewFilters {
 export interface ProjectGroup {
   /** Mention de chaque session qui figure aussi ailleurs (« aussi dans Node.js »), par identifiant */
   also?: Record<string, string>;
+  /** Projet de chaque session (« api-tarifs +2 », « creneaux/packages/paiement »), par identifiant */
+  labels?: Record<string, string>;
   /** Groupe de l'intertitre, pour son lien « Réglages du groupe » (E1g) */
   group?: { id: number; projects: number };
   /** Intertitre ; null : « Hors projet » */
@@ -74,6 +76,34 @@ export function sortSessions(sessions: readonly SessionDto[]): SessionDto[] {
   return sessions.toSorted(byStateThenActivity);
 }
 
+/** Une session à plusieurs projets se nomme d'après son principal et le nombre des autres (« api-tarifs +2 »). */
+function labelsOf(sessions: readonly SessionDto[]): Record<string, string> {
+  return Object.fromEntries(
+    sessions.flatMap((session) =>
+      session.addedProjects.length > 0 ? [[session.id, projectLabel(session) ?? '']] : [],
+    ),
+  );
+}
+
+/**
+ * Projet de chaque session d'un groupe, sous son titre : le principal et le nombre des autres (« api-tarifs +2 »), ou
+ * le projet et le dossier de la session (« creneaux/packages/paiement »).
+ */
+function placesOf(sessions: readonly SessionDto[]): Record<string, string> {
+  return Object.fromEntries(
+    sessions.flatMap((session) => {
+      if (!session.project) return [];
+      const { folder, name } = session.project;
+      return [
+        [
+          session.id,
+          session.addedProjects.length > 0 ? (projectLabel(session) ?? '') : [name, folder].filter(Boolean).join('/'),
+        ],
+      ];
+    }),
+  );
+}
+
 /** Projets dans l'ordre de leur session la plus urgente ; les sessions hors projet ferment la liste. */
 export function groupByProject(sessions: readonly SessionDto[]): ProjectGroup[] {
   const groups = new Map<null | string, SessionDto[]>();
@@ -81,15 +111,8 @@ export function groupByProject(sessions: readonly SessionDto[]): ProjectGroup[] 
     const name = session.project?.name ?? null;
     groups.set(name, [...(groups.get(name) ?? []), session]);
   }
-  // Une session à plusieurs projets se range sous son principal, nommée d'après lui et le nombre des autres
-  const named = (grouped: SessionDto[]) =>
-    Object.fromEntries(
-      grouped.flatMap((session) =>
-        session.addedProjects.length > 0 ? [[session.id, projectLabel(session) ?? '']] : [],
-      ),
-    );
   return [...groups.entries()]
-    .map(([name, grouped]) => ({ also: named(grouped), name, sessions: grouped }))
+    .map(([name, grouped]) => ({ labels: labelsOf(grouped), name, sessions: grouped }))
     .toSorted((left, right) => {
       if (left.name === null || right.name === null) return left.name === null ? 1 : -1;
       return byStateThenActivity(left.sessions[0] as SessionDto, right.sessions[0] as SessionDto);
@@ -180,7 +203,15 @@ export function groupByGroup(sessions: readonly SessionDto[], groups: readonly G
         return others.length > 0 ? [[session.id, `aussi dans ${others.map(({ name }) => name).join(', ')}`]] : [];
       }),
     );
-    return [{ also, group: { id: group.id, projects: group.projects.length }, name: group.name, sessions: inGroup }];
+    return [
+      {
+        also,
+        group: { id: group.id, projects: group.projects.length },
+        labels: placesOf(inGroup),
+        name: group.name,
+        sessions: inGroup,
+      },
+    ];
   });
   const ungrouped = sorted.filter((session) => session.project !== null && groupsOf(session).length === 0);
   const outside = sorted.filter((session) => session.project === null);

@@ -101,6 +101,7 @@ Fonctionnalité: Sessions à plusieurs projets
       | Médias      | Affiche les tarifs | T’attend |
       | Voix        | Affiche les tarifs | T’attend |
       | Sans groupe | Range les créneaux | T’attend |
+    Et le tableau des sessions montre « labo-ia +1 »
     Et le tableau des sessions montre « aussi dans Voix »
     Et le tableau des sessions montre « aussi dans Médias »
     Et je vois le lien « Réglages du groupe Médias »

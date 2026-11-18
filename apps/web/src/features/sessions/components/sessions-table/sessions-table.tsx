@@ -75,6 +75,7 @@ function Row({
   also,
   column,
   frozen,
+  label,
   markOf,
   now,
   session,
@@ -82,6 +83,7 @@ function Row({
   also: null | string;
   column: SessionsTableProps['column'];
   frozen: boolean;
+  label: null | string;
   markOf: SessionsTableProps['markOf'];
   now: Date;
   session: SessionDto;
@@ -105,6 +107,7 @@ function Row({
           {mark && (
             <span className="shrink-0 rounded-sm border border-line px-1 font-mono text-xs text-muted">{mark}</span>
           )}
+          {label && <span className="shrink-0 font-mono text-xs text-muted">{label}</span>}
           {also && <span className="shrink-0 text-xs text-muted">{also}</span>}
         </span>
       </td>
@@ -164,6 +167,7 @@ function MobileList({ column, groups, headings, now, pendingRows }: Omit<Session
                   </Link>
                   <span className="block truncate font-mono text-xs text-muted">
                     {column === 'project' && `${projectLabel(session) ?? 'Hors projet'} · `}
+                    {column !== 'project' && group.labels?.[session.id] && `${group.labels[session.id]} · `}
                     {group.also?.[session.id] && `${group.also[session.id]} · `}
                     {column === 'folder' && session.project?.folder && `${session.project.folder} · `}
                     {session.branch ?? '—'} · {lastActionOf(session, now)}
@@ -227,6 +231,7 @@ export function SessionsTable({
                   key={session.id}
                   also={group.also?.[session.id] ?? null}
                   frozen={frozen}
+                  label={group.labels?.[session.id] ?? null}
                   markOf={markOf}
                   now={now}
                   session={session}

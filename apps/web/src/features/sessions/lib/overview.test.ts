@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
 // Ce que les scénarios ne voient pas : chaque cas de tri, de regroupement et de filtre de la vue d'ensemble.
-import type { SessionDto, SourceDto } from '@bosco/domain';
+import type { GroupDto, SessionDto, SourceDto } from '@bosco/domain';
 import {
   endedToday,
   filterSessions,
+  groupByGroup,
   groupByProject,
   groupByState,
   indicatorsOf,
@@ -86,6 +87,36 @@ describe('groupByProject', () => {
       ['labo-ia', 1],
       ['outils-node', 1],
       [null, 1],
+    ]);
+  });
+});
+
+describe('groupByGroup', () => {
+  const group = (id: number, name: string, projects: number[]): GroupDto => ({
+    defaults: { effort: null, model: null, permissionMode: null, profile: null },
+    description: null,
+    id,
+    instructions: '',
+    name,
+    projects: projects.map((project) => ({ id: project, name: `project-${project}` })),
+    sidebar: true,
+    system: false,
+  });
+
+  it('names each session after its project and folder, or its principal and the count of the others', () => {
+    const tarifs = session('tarifs', {
+      addedProjects: [
+        { id: 2, name: 'outils-node', root: '/home/dev/www/outils-node' },
+        { id: 3, name: 'site-clubs', root: '/home/dev/www/site-clubs' },
+      ],
+    });
+    const groups = groupByGroup(
+      [tarifs, session('rag')],
+      [group(1, 'Club des Trois Lacs', [1, 3]), group(2, 'Node.js', [2])],
+    );
+    expect(groups.map(({ also, labels, name }) => [name, labels, also])).toEqual([
+      ['Club des Trois Lacs', { rag: 'labo-ia/packages/rag', tarifs: 'labo-ia +2' }, { tarifs: 'aussi dans Node.js' }],
+      ['Node.js', { tarifs: 'labo-ia +2' }, { tarifs: 'aussi dans Club des Trois Lacs' }],
     ]);
   });
 });
