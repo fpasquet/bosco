@@ -47,7 +47,7 @@ function ReleaseCard({ release }: { release: Release }) {
         </h3>
         <p className="text-sm text-fd-muted-foreground">
           publiée le {DATE.format(new Date(release.publishedAt))} ·{' '}
-          <a className="underline" href={release.url}>
+          <a className="text-fd-primary underline" href={release.url}>
             notes de version
           </a>
         </p>
@@ -69,7 +69,7 @@ function ReleaseCard({ release }: { release: Release }) {
                 Télécharger · {megabytes(file.size)}
               </a>
             ) : (
-              <a className="mt-auto text-sm underline" href={release.url}>
+              <a className="mt-auto text-sm text-fd-primary underline" href={release.url}>
                 Absent de cette version : voir la release
               </a>
             )}
@@ -79,11 +79,13 @@ function ReleaseCard({ release }: { release: Release }) {
       {release.files.checksums && (
         <p className="mt-4 text-sm text-fd-muted-foreground">
           Sommes de contrôle :{' '}
-          <a className="underline" href={release.files.checksums.url}>
+          <a className="text-fd-primary underline" href={release.files.checksums.url}>
             SHA256SUMS
+          </a>{' '}
+          ·{' '}
+          <a className="text-fd-primary underline" href="#vérifier-un-téléchargement">
+            vérifier un téléchargement
           </a>
-          . Dans le dossier du téléchargement, <code>sha256sum --check --ignore-missing SHA256SUMS</code> doit répondre
-          « OK » pour chaque fichier.
         </p>
       )}
     </section>
@@ -100,11 +102,11 @@ export async function Downloads() {
     return (
       <p className="not-prose my-6 rounded-xl border border-fd-border bg-fd-card p-5">
         Les fichiers de chaque version sont joints à sa release :{' '}
-        <a className="inline-flex items-center gap-1 underline" href={LATEST_RELEASE_URL}>
+        <a className="inline-flex items-center gap-1 text-fd-primary underline" href={LATEST_RELEASE_URL}>
           dernière version <ExternalLink aria-hidden="true" className="size-3.5" />
         </a>{' '}
         ·{' '}
-        <a className="underline" href={RELEASES_URL}>
+        <a className="text-fd-primary underline" href={RELEASES_URL}>
           toutes les releases
         </a>
         .

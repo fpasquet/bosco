@@ -90,7 +90,7 @@ Les captures de `apps/docs/public/screenshots` se reprennent avec `make docs-scr
 
 ### Publier le site
 
-Le workflow « Docs » (`.github/workflows/docs.yml`) publie le site sur Cloudflare Pages, à l'adresse `https://bosco.pages.dev` tant qu'aucun domaine n'est rattaché :
+Le workflow « Docs » (`.github/workflows/docs.yml`) publie le site sur Cloudflare Pages, à l'adresse [bosco-c5q.pages.dev](https://bosco-c5q.pages.dev) tant qu'aucun domaine n'est rattaché (le nom `bosco` était pris, Cloudflare l'a suffixé) :
 
 - à chaque push sur `main` qui touche `apps/docs`, le lockfile ou le workflow ;
 - après chaque exécution réussie du workflow « Release », pour que la page Télécharger donne la nouvelle version ;

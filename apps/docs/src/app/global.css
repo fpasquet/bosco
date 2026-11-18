@@ -46,8 +46,9 @@
   --color-fd-ring: #5cc2b7;
 }
 
-/* Les liens du texte prennent la couleur de la marque */
-.prose a:not([data-card]) {
+/* Les liens du texte prennent la couleur de la marque, sauf dans un bloc not-prose qui pose ses propres couleurs
+   (les boutons de la page Télécharger) */
+.prose a:not([data-card], :where(.not-prose *)) {
   color: var(--color-fd-primary);
   text-decoration-color: color-mix(in oklab, var(--color-fd-primary) 40%, transparent);
 }
