@@ -111,6 +111,9 @@ export class ClaudeTurnRunner implements TurnRunner {
     const child: ChildProcess = spawn(file, args, { cwd: request.cwd, env, stdio: ['pipe', 'pipe', 'pipe'] });
     let stderr = '';
     let exited = false;
+    // Un agent qui s'arrête avant de lire son entrée (accès refusé, binaire en échec) : l'écriture échoue sans arrêter
+    // Bosco, la fin du processus dit pourquoi
+    child.stdin?.on('error', () => undefined);
     child.stderr?.on('data', (chunk: Buffer) => {
       stderr = (stderr + chunk.toString()).slice(-2000);
     });
