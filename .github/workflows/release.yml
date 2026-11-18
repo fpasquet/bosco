@@ -139,6 +139,15 @@ jobs:
         with:
           # Le paquet « tools » par défaut n'existe plus dans les dépôts du SDK ; Gradle installe le reste
           packages: platform-tools
+      # Gradle, ses dépendances et le cache de construction des modules : ils ne changent qu'avec le lockfile
+      - name: Gradle cache
+        uses: actions/cache@v6
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: gradle-${{ runner.os }}-
       - run: pnpm install --frozen-lockfile
       # La clé de release vient des secrets du dépôt ; sans elle, seul un essai à blanc continue, signé en debug
       - name: Release key
@@ -165,6 +174,11 @@ jobs:
             echo "BOSCO_ANDROID_KEY_PASSWORD=$ANDROID_KEY_PASSWORD"
           } >> "$GITHUB_ENV"
       - run: make android JAVA_HOME="$JAVA_HOME" ANDROID_HOME="$ANDROID_HOME"
+      # Le démon de Gradle écrirait encore dans ~/.gradle pendant l'enregistrement du cache, qui échouerait
+      - name: Stop Gradle
+        if: always()
+        working-directory: apps/mobile/android
+        run: ./gradlew --stop
       # Gradle nomme toujours l'APK app-release.apk : il prend le nom de la version
       - name: Name the APK after the version
         env:
@@ -211,6 +225,8 @@ jobs:
         run: |
           mkdir files
           cp "$RUNNER_TEMP"/artifacts/desktop/* "$RUNNER_TEMP"/artifacts/android/* files/
+          # Le canal bêta d'electron-updater cherche beta-linux.yml, puis seulement latest-linux.yml : le même fichier
+          cp files/latest-linux.yml files/beta-linux.yml
           (cd files && sha256sum -- * > SHA256SUMS)
           prerelease=()
           if [ "$CHANNEL" = 'beta' ]; then prerelease=(--prerelease); fi

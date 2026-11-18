@@ -36,10 +36,23 @@ jobs:
         if: github.event_name == 'pull_request'
         run: pnpm exec commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }}
       - run: pnpm format:check
+      - name: Playwright version
+        id: playwright
+        run: echo "version=$(node -p "require('./e2e/node_modules/@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+      - name: Playwright browser cache
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+      # Sans --with-deps : l'image ubuntu-24.04 a déjà les bibliothèques de Chromium (Chrome y est installé), apt n'y
+      # ajoutait que des polices de secours, en 5 min. Les tests tournent sans fenêtre : le shell headless suffit
       - name: Install Chromium
-        run: pnpm --filter @bosco/e2e exec playwright install --with-deps chromium
+        run: pnpm --filter @bosco/e2e exec playwright install --only-shell chromium
       - run: pnpm check --cache-dir=.turbo/cache
       - name: End-to-end tests of the API
         run: pnpm e2e:api --cache-dir=.turbo/cache
       - name: End-to-end tests of the web
         run: pnpm e2e:web --cache-dir=.turbo/cache
+      # Le cache de Turborepo est repris d'une exécution à l'autre puis réenregistré : sans tri, il grossit à chaque fois
+      - name: Prune the Turborepo cache
+        run: find .turbo/cache -type f -mtime +7 -delete

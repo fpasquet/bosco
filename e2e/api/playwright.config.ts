@@ -12,5 +12,7 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 1 : 0,
+  // En CI, un worker par cœur : Playwright n'en prendrait que la moitié
+  workers: process.env.CI ? '100%' : undefined,
   reporter: [['list'], cucumberReporter('html', { outputFile: 'reports/cucumber.html' })],
 });

@@ -213,9 +213,9 @@ const artifacts = await build({
         cpSync(from, join(appOutDir, 'resources', to), { recursive: true, verbatimSymlinks: true });
       }
     },
-    // latest-linux.yml, et beta-linux.yml pour qui suit les betas : l'AppImage se met à jour depuis les releases GitHub
+    // latest-linux.yml : l'AppImage se met à jour depuis les releases GitHub. Avec GitHub, electron-builder n'écrit que
+    // ce fichier, même pour une beta ; le workflow Release en joint une copie beta-linux.yml, que cherche le canal bêta
     publish: [{ provider: 'github', owner: 'fpasquet', repo: 'bosco', releaseType: 'release' }],
-    generateUpdatesFilesForAllChannels: true,
     linux: {
       icon: join(app, 'assets', 'icon-256.png'),
       category: 'Development',

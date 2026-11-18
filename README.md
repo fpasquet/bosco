@@ -54,7 +54,7 @@ Une release se lance à la main, depuis l'onglet Actions, workflow « Release »
 
 Le workflow écrit la version dans les applications, régénère `CHANGELOG.md` (git-cliff, `cliff.toml`) et construit le `.deb`, l'AppImage, leurs fichiers de mise à jour (`latest-linux.yml`, `beta-linux.yml`) et l'APK sur ce commit. Une fois tout construit, il pousse le commit `chore(release): vX.Y.Z` et l'étiquette `vX.Y.Z` sur `main`, puis crée la release avec les notes de la version, les fichiers et `SHA256SUMS`.
 
-L'APK se signe avec la clé de release, rangée dans les secrets du dépôt : `ANDROID_KEYSTORE_BASE64` (le keystore en base64), `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS` et `ANDROID_KEY_PASSWORD`. Sans eux, une release s'arrête ; un essai à blanc signe avec la clé de debug.
+L'APK ne contient que le code natif arm64 (`buildArchs` de `apps/mobile/app.json`), celui de tous les téléphones récents : il est plus léger et se construit plus vite ; un émulateur x86_64 demande d'y ajouter `x86_64`. L'APK se signe avec la clé de release, rangée dans les secrets du dépôt : `ANDROID_KEYSTORE_BASE64` (le keystore en base64), `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS` et `ANDROID_KEY_PASSWORD`. Sans eux, une release s'arrête ; un essai à blanc signe avec la clé de debug.
 
 ```bash
 make changelog        # régénère CHANGELOG.md

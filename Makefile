@@ -66,7 +66,7 @@ changelog: ## Regenerate CHANGELOG.md from the conventional commits of main (git
 
 android: ## Build the Android application (APK in apps/mobile/android/app/build/outputs/apk/release)
 	cd apps/mobile && CI=1 npx expo prebuild --platform android --clean --no-install
-	cd apps/mobile/android && JAVA_HOME=$(JAVA_HOME) ANDROID_HOME=$(ANDROID_HOME) ./gradlew assembleRelease
+	cd apps/mobile/android && JAVA_HOME=$(JAVA_HOME) ANDROID_HOME=$(ANDROID_HOME) ./gradlew assembleRelease --build-cache
 
 build: ## Build every package
 	pnpm build
