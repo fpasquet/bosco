@@ -101,7 +101,7 @@ e2e-clean: ## Remove the recordings no scenario uses
 storybook: ## Start Storybook on http://localhost:6006
 	pnpm storybook
 
-claude-compat: build ## Check the permission hook against the installed Claude Code (NF-09; two short sessions on the Claude subscription)
+claude-compat: build ## Check the hooks and the piloted turns against the installed Claude Code (NF-09; six short Haiku sessions)
 	node e2e/compat/claude-code.ts
 
 db-migration: ## Write the migration that brings the database to the entity schemas
