@@ -18,6 +18,8 @@ export interface SourceCardProps {
   onWatchedChange: (watched: boolean) => void;
   /** Chemin écrit comme dans le terminal (~/.claude-perso) */
   path: string;
+  /** Sur le téléphone, les réglages se lisent seulement : l'interrupteur montre l'état sans le changer */
+  readOnly?: boolean;
   /** Interrupteur de la source : sa lecture s'arrête, rien n'est effacé (CA-SESS-56) */
   watched: boolean;
 }
@@ -114,6 +116,7 @@ export function SourceCard(props: SourceCardProps) {
         aria-label={`Lire le profil ${label}`}
         className="toggle shrink-0 toggle-primary"
         checked={watched}
+        disabled={props.readOnly}
         onChange={(event) => onWatchedChange(event.target.checked)}
       />
       <Button

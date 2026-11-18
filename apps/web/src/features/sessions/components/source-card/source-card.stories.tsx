@@ -43,3 +43,6 @@ export const Sandboxes: Story = {
     <ManagedSourceCard path="~/.local/share/bosco/sandboxes/profile" activity="1 bac à sable · dernier tour à 15:12" />
   ),
 };
+
+/** Sur le téléphone : l'interrupteur montre l'état sans le changer. */
+export const ReadOnly: Story = { args: { readOnly: true } };

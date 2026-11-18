@@ -25,3 +25,11 @@ Fonctionnalité: Sources et réglages
     Quand j'ouvre la page « /settings/sources »
     Et je bascule l’interrupteur « Lire le profil perso »
     Alors je vois le texte « En pause »
+
+  @mobile
+  @CA-REGL-06
+  Scénario: Sur le téléphone, les sources et le seuil d'inactivité se lisent sans se modifier
+    Quand j'ouvre la page « /settings/sources »
+    Alors l’interrupteur « Lire le profil perso » n’est pas modifiable
+    Et je vois le texte « 15 min »
+    Et je vois le texte « Le suivi en direct s’installe depuis le poste »

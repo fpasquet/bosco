@@ -42,3 +42,18 @@ Feature: Phone access
     Then the phone gets the code 201
     When the phone enters the code
     Then the phone gets the code 410
+
+  @CA-REGL-06
+  @RF-REGL-02
+  Scenario: A paired phone reads the sources and their settings but cannot change them
+    Given phone access is enabled
+    And a pairing code is shown on the workstation
+    When the phone enters the code
+    And the phone opens "/api/sources"
+    Then the phone gets the code 200
+    When the phone sends PATCH request to "/api/sources/any"
+    Then the phone gets the code 403
+    When the phone sends PUT request to "/api/sources/any/live-tracking"
+    Then the phone gets the code 403
+    When the phone sends PUT request to "/api/settings"
+    Then the phone gets the code 403

@@ -4,6 +4,7 @@ import { ChevronRight } from 'lucide-react';
 import { useState, useSyncExternalStore } from 'react';
 import { PageSkeleton } from '@/shared/components/page-skeleton';
 import { postToAndroidApp, useAndroidApp } from '@/shared/hooks/use-android-app';
+import { useIsPhone } from '@/shared/hooks/use-is-phone';
 import { useNotices } from '@/shared/hooks/use-notices';
 import { useNow } from '@/shared/hooks/use-now';
 import { SettingsHeader } from '@/shared/layouts/settings-tabs';
@@ -34,6 +35,8 @@ const CHECK_REFRESH_MS = 1500;
  */
 export function SourcesScreen() {
   const now = useNow(STATUS_REFRESH_MS);
+  // Sur le téléphone, les réglages se lisent seulement : ils se modifient depuis le poste
+  const phone = useIsPhone();
   const client = useQueryClient();
   const push = useNotices((state) => state.push);
   const { data } = useQuery(sourcesQuery);
@@ -148,6 +151,7 @@ export function SourcesScreen() {
                 path={displayPath(source.path, data.home)}
                 liveTracking={source.liveTracking}
                 watched={source.watched}
+                readOnly={phone}
                 onWatchedChange={(watched) => switchSource.mutate({ id: source.id, watched })}
                 lastSignalAt={signal ? new Date(signal) : null}
                 now={now}
@@ -163,6 +167,7 @@ export function SourcesScreen() {
       {settings && (
         <SettingsPanel
           settings={settings}
+          readOnly={phone}
           busy={saveSettings.isPending}
           onChange={(changes) => saveSettings.mutate(changes)}
         />

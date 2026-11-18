@@ -7,6 +7,8 @@ const THRESHOLDS = [5, 10, 15, 20, 30, 45, 60];
 export interface SettingsPanelProps {
   busy: boolean;
   onChange: (changes: Partial<SettingsDto>) => void;
+  /** Sur le téléphone, les réglages se lisent seulement : ils se modifient depuis le poste */
+  readOnly?: boolean;
   settings: SettingsDto;
 }
 
@@ -26,7 +28,7 @@ function Row({ children, hint, label }: { children: React.ReactNode; hint: strin
  * Réglages des sources : seuil d'inactivité et conservation de l'historique. L'accès du téléphone et les
  * notifications ont leur onglet.
  */
-export function SettingsPanel({ busy, onChange, settings }: SettingsPanelProps) {
+export function SettingsPanel({ busy, onChange, readOnly = false, settings }: SettingsPanelProps) {
   return (
     <section aria-labelledby="settings-title" className="rounded-card border border-line bg-surface shadow-card">
       <h2 id="settings-title" className="border-b border-line px-4 py-2.5 text-xs font-semibold text-muted">
@@ -34,19 +36,23 @@ export function SettingsPanel({ busy, onChange, settings }: SettingsPanelProps) 
       </h2>
       <div className="divide-y divide-line">
         <Row label="Seuil d’inactivité" hint="Une session sans événement depuis ce délai passe à « Inactive ».">
-          <select
-            aria-label="Seuil d’inactivité"
-            className="select w-32"
-            disabled={busy}
-            value={settings.inactivityMinutes}
-            onChange={(event) => onChange({ inactivityMinutes: Number(event.target.value) })}
-          >
-            {THRESHOLDS.map((minutes) => (
-              <option key={minutes} value={minutes}>
-                {minutes} min
-              </option>
-            ))}
-          </select>
+          {readOnly ? (
+            <span className="text-muted">{settings.inactivityMinutes} min</span>
+          ) : (
+            <select
+              aria-label="Seuil d’inactivité"
+              className="select w-32"
+              disabled={busy}
+              value={settings.inactivityMinutes}
+              onChange={(event) => onChange({ inactivityMinutes: Number(event.target.value) })}
+            >
+              {THRESHOLDS.map((minutes) => (
+                <option key={minutes} value={minutes}>
+                  {minutes} min
+                </option>
+              ))}
+            </select>
+          )}
         </Row>
         <Row
           label="Historique conservé"
