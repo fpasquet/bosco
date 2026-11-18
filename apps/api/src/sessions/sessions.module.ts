@@ -20,6 +20,7 @@ import { SettingsService } from './application/settings.service.ts';
 import { SourceService } from './application/source.service.ts';
 import { SuggestionService } from './application/suggestion.service.ts';
 import { UsageBackfillService } from './application/usage-backfill.service.ts';
+import { UsageService } from './application/usage.service.ts';
 import { ClaudeChannelInstaller } from './infrastructure/claude-code/channel-installer.ts';
 import { ClaudeTurnRunner } from './infrastructure/claude-code/claude-turn-runner.ts';
 import { FileConversationReader } from './infrastructure/claude-code/conversation-reader.ts';
@@ -50,6 +51,7 @@ import { PilotController } from './interface/http/pilot.controller.ts';
 import { SessionsController } from './interface/http/sessions.controller.ts';
 import { SettingsController } from './interface/http/settings.controller.ts';
 import { SourcesController } from './interface/http/sources.controller.ts';
+import { UsageController } from './interface/http/usage.controller.ts';
 import {
   CHANNEL_INSTALLER,
   CHANNEL_SERVICE,
@@ -69,6 +71,7 @@ import {
   SOURCE_SERVICE,
   SUGGESTION_SERVICE,
   TRANSCRIPT_WATCHER,
+  USAGE_SERVICE,
 } from './tokens.ts';
 
 const clock = { now: () => new Date() };
@@ -85,6 +88,7 @@ const conversations = new FileConversationReader();
     LiveTrackingController,
     SettingsController,
     HistoryController,
+    UsageController,
     NotificationsController,
     PilotController,
     ChannelController,
@@ -102,6 +106,18 @@ const conversations = new FileConversationReader();
       inject: [ORM, SESSION_SERVICE],
       useFactory: (orm: MikroORM, sessionService: SessionService) =>
         new HistoryService(sessionService, new MikroOrmSessionRepository(orm), () => clock.now()),
+    },
+    {
+      provide: USAGE_SERVICE,
+      inject: [ORM, SESSION_SERVICE],
+      useFactory: (orm: MikroORM, sessionService: SessionService) =>
+        new UsageService(
+          new MikroOrmSessionRepository(orm),
+          sessionService,
+          new MikroOrmSourceRepository(orm),
+          new MikroOrmPilotRepository(orm),
+          clock,
+        ),
     },
     {
       provide: SETTINGS_SERVICE,

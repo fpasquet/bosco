@@ -29,14 +29,33 @@ const PRICES: Record<string, Price> = {
   'claude-haiku-4-5': { input: 1, output: 5, cacheReadRatio: 0.1 },
 };
 
+/** Coût estimé de chaque sorte de tokens, en micro-dollars (non arrondi). */
+export interface CostBreakdown {
+  cacheCreation: number;
+  cacheRead: number;
+  input: number;
+  output: number;
+}
+
+/** Identifiant d'un modèle sans sa date de version (« claude-haiku-4-5-20251001 » → « claude-haiku-4-5 »). */
+export function modelFamily(model: string): string {
+  return model.replace(/-\d{8}$/, '');
+}
+
+/** Coût estimé de chaque sorte de tokens, ou null pour un modèle dont le tarif n'est pas connu (page Usage). */
+export function estimateCostBreakdown(model: null | string, usage: TokenUsage): CostBreakdown | null {
+  const price = model ? PRICES[modelFamily(model)] : undefined;
+  if (!price) return null;
+  return {
+    input: usage.input * price.input,
+    output: usage.output * price.output,
+    cacheCreation: usage.cacheCreation * price.input * CACHE_WRITE_RATIO,
+    cacheRead: usage.cacheRead * price.input * price.cacheReadRatio,
+  };
+}
+
 /** Coût estimé en micro-dollars, ou null pour un modèle dont le tarif n'est pas connu (« non chiffré »). */
 export function estimateCostMicros(model: null | string, usage: TokenUsage): null | number {
-  const price = model ? PRICES[model.replace(/-\d{8}$/, '')] : undefined;
-  if (!price) return null;
-  const dollarsPerMillion =
-    usage.input * price.input +
-    usage.output * price.output +
-    usage.cacheCreation * price.input * CACHE_WRITE_RATIO +
-    usage.cacheRead * price.input * price.cacheReadRatio;
-  return Math.round(dollarsPerMillion);
+  const cost = estimateCostBreakdown(model, usage);
+  return cost && Math.round(cost.input + cost.output + cost.cacheCreation + cost.cacheRead);
 }

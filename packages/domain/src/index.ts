@@ -71,3 +71,4 @@ export type {
   ProjectPlaceDto,
   ProjectsDto,
 } from './projects.ts';
+export type { UsageDayDto, UsageReportDto, UsageShareDto, UsageTokensDto } from './usage.ts';
