@@ -4,6 +4,7 @@ import { useState } from 'react';
 import type { AgentQuestionDto } from '@bosco/domain';
 import { Button } from '@/shared/ui/button';
 import { elapsed } from '../../lib/format';
+import { recommendedOf } from '../../lib/questions';
 
 export interface QuestionCardProps {
   busy: boolean;
@@ -21,7 +22,12 @@ const OTHER = '__other__';
  * question à choix multiples se coche ; plusieurs questions se suivent dans la même carte.
  */
 export function QuestionCard({ busy, now, onAnswer, questions, since }: QuestionCardProps) {
-  const [chosen, setChosen] = useState<string[][]>(() => questions.map(() => []));
+  // Le choix recommandé par l'agent est coché d'office
+  const [chosen, setChosen] = useState<string[][]>(() =>
+    questions.map((question) =>
+      question.options.filter((option) => recommendedOf(option.label).recommended).map(({ label }) => label),
+    ),
+  );
   const [others, setOthers] = useState<string[]>(() => questions.map(() => ''));
   const answers = questions.map((_, index) =>
     (chosen[index] ?? []).map((choice) => (choice === OTHER ? (others[index] ?? '').trim() : choice)).filter(Boolean),
@@ -50,25 +56,31 @@ export function QuestionCard({ busy, now, onAnswer, questions, since }: Question
           return (
             <fieldset key={question.question} className="flex flex-col gap-2">
               <legend className="mb-2 font-medium">{question.question}</legend>
-              {question.options.map((option) => (
-                <label
-                  key={option.label}
-                  className="flex cursor-pointer items-start gap-3 rounded-control border border-line px-3 py-2.5 has-checked:border-primary has-checked:bg-primary-soft"
-                >
-                  <input
-                    type={type}
-                    name={name}
-                    className={multiple ? 'checkbox mt-0.5 checkbox-sm' : 'radio mt-0.5 radio-sm'}
-                    checked={(chosen[index] ?? []).includes(option.label)}
-                    disabled={busy}
-                    onChange={() => toggle(index, option.label, multiple)}
-                  />
-                  <span className="flex flex-col">
-                    <span className="font-medium">{option.label}</span>
-                    {option.description && <span className="text-xs text-muted">{option.description}</span>}
-                  </span>
-                </label>
-              ))}
+              {question.options.map((option) => {
+                const { label: shown, recommended } = recommendedOf(option.label);
+                return (
+                  <label
+                    key={option.label}
+                    className="flex cursor-pointer items-start gap-3 rounded-control border border-line px-3 py-2.5 has-checked:border-primary has-checked:bg-primary-soft"
+                  >
+                    <input
+                      type={type}
+                      name={name}
+                      className={multiple ? 'checkbox mt-0.5 checkbox-sm' : 'radio mt-0.5 radio-sm'}
+                      checked={(chosen[index] ?? []).includes(option.label)}
+                      disabled={busy}
+                      onChange={() => toggle(index, option.label, multiple)}
+                    />
+                    <span className="flex flex-col">
+                      <span className="flex flex-wrap items-center gap-2 font-medium">
+                        {shown}
+                        {recommended && <span className="badge badge-soft badge-sm badge-primary">Recommandé</span>}
+                      </span>
+                      {option.description && <span className="text-xs text-muted">{option.description}</span>}
+                    </span>
+                  </label>
+                );
+              })}
               <label className="flex items-center gap-3 rounded-control border border-line px-3 py-2 has-checked:border-primary">
                 <input
                   type={type}

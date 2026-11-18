@@ -122,7 +122,10 @@ async function turn(content) {
           header: 'Correctif',
           multiSelect: false,
           options: [
-            { label: 'Normaliser la casse à la lecture', description: 'Les sigles gardent leur casse d’origine.' },
+            {
+              label: 'Normaliser la casse à la lecture (Recommended)',
+              description: 'Les sigles gardent leur casse d’origine.',
+            },
             { label: 'Corriger les entrées du lexique', description: '12 entrées à reprendre à la main.' },
           ],
         },
