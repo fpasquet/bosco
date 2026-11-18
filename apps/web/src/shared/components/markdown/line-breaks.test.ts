@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { withLineBreaks } from './line-breaks';
 
 describe('withLineBreaks', () => {
-  it('turns a single newline into a Markdown hard break', () => {
+  it('CA-SESS-194 · turns a single newline into a Markdown hard break', () => {
     expect(withLineBreaks('first `a`\nsecond')).toBe('first `a`  \nsecond');
   });
 
