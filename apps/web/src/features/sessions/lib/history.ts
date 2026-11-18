@@ -1,4 +1,4 @@
-import type { CostReportDto, SessionDto } from '@bosco/domain';
+import type { SessionDto } from '@bosco/domain';
 
 const WEEKDAY = new Intl.DateTimeFormat('fr', { day: 'numeric', month: 'short', weekday: 'long' });
 
@@ -16,30 +16,4 @@ export function dayTitle(date: string, now: Date): string {
 export function whereOf(session: SessionDto): string {
   if (!session.project) return session.projectPath ?? 'Hors projet';
   return `${session.project.name} · ${session.project.folder || 'racine du projet'}`;
-}
-
-/** Séries du graphique : les trois projets qui coûtent le plus, puis « autres projets » (E3b, annotation 2). */
-export function chartSeries(report: CostReportDto): { name: null | string; label: string }[] {
-  const top = report.byProject.slice(0, 3).map(({ name }) => ({ name, label: name ?? 'Hors projet' }));
-  return report.byProject.length > 3 ? [...top, { name: '*', label: 'autres projets' }] : top;
-}
-
-/** Coût d'un jour pour une série ; « * » cumule les projets hors des trois premiers. */
-export function seriesCost(
-  day: CostReportDto['days'][number],
-  series: { name: null | string },
-  top: readonly (null | string)[],
-): number {
-  return day.projects
-    .filter((entry) => (series.name === '*' ? !top.includes(entry.name) : entry.name === series.name))
-    .reduce((total, entry) => total + entry.usd, 0);
-}
-
-/** Graduation haute de l'axe : 2, 4, 8, 10, 20… au-dessus du jour le plus cher. */
-export function axisMax(values: readonly number[]): number {
-  const max = Math.max(0, ...values);
-  if (max === 0) return 1;
-  const magnitude = 10 ** Math.floor(Math.log10(max));
-  const step = [1, 2, 4, 5, 8, 10].find((candidate) => candidate * magnitude >= max) ?? 10;
-  return step * magnitude;
 }

@@ -1,1 +1,1 @@
-export { HistoryScreen, type HistoryTab } from './history-screen';
+export { HistoryScreen } from './history-screen';

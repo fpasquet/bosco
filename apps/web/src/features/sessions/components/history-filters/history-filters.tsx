@@ -7,6 +7,8 @@ import { STATE_LABELS } from '../../lib/overview';
 
 export interface HistoryFiltersProps {
   filters: Filters;
+  /** Groupes nommés : filtrer sur l'un garde les sessions de tous ses projets */
+  groups: { id: number; name: string }[];
   onChange: (filters: Filters) => void;
   profiles: { id: string; label: string }[];
   projects: string[];
@@ -35,6 +37,7 @@ function Chip({
     <label className="flex items-center gap-1.5 rounded-control border border-line bg-surface pl-3 text-xs text-muted">
       {label}
       <select
+        aria-label={`Filtrer par ${label.toLocaleLowerCase('fr')}`}
         className="select select-ghost font-medium text-ink select-sm"
         value={value}
         onChange={(event) => onChange(event.target.value)}
@@ -46,7 +49,7 @@ function Chip({
 }
 
 /** Recherche et filtres en puces de l'historique, qui se cumulent (CA-SESS-47, CA-SESS-48). */
-export function HistoryFilters({ filters, onChange, profiles, projects }: HistoryFiltersProps) {
+export function HistoryFilters({ filters, groups, onChange, profiles, projects }: HistoryFiltersProps) {
   const search = useRef<HTMLInputElement>(null);
   useEffect(() => {
     const focusSearch = (event: KeyboardEvent) => {
@@ -90,6 +93,18 @@ export function HistoryFilters({ filters, onChange, profiles, projects }: Histor
           {projects.map((name) => (
             <option key={name} value={name}>
               {name}
+            </option>
+          ))}
+        </Chip>
+        <Chip
+          label="Groupe"
+          value={String(filters.group ?? '')}
+          onChange={(value) => set({ group: value ? Number(value) : null })}
+        >
+          <option value="">tous</option>
+          {groups.map((group) => (
+            <option key={group.id} value={group.id}>
+              {group.name}
             </option>
           ))}
         </Chip>

@@ -4,7 +4,8 @@ import type { ProfileCandidate } from '../domain/profile-candidate.ts';
 import type { Session } from '../domain/session.ts';
 import type { SettingsChanges, SettingsSnapshot } from '../domain/settings.ts';
 import type { Source } from '../domain/source.ts';
-import type { JournalEntry } from '../domain/transcript-event.ts';
+import type { TokenUsage } from '../domain/token-usage.ts';
+import type { JournalEntry, TranscriptEvent } from '../domain/transcript-event.ts';
 import type { SessionView } from './session.service.ts';
 
 export interface SessionRepository {
@@ -141,4 +142,39 @@ export interface IdGenerator {
 /** Conversation complète d'une session, lue dans son transcript ; null quand le fichier n'existe plus. */
 export interface ConversationReader {
   read(profile: string, sessionId: string): Promise<Conversation | null>;
+}
+
+/** Usage d'un tour enregistré : la session, le modèle qui a répondu et ses tokens. */
+export interface RecordedTurn {
+  at: Date;
+  model: null | string;
+  sessionId: string;
+  usage: TokenUsage;
+}
+
+/** PR créée par l'agent d'une session, repérée dans son fil. */
+export interface RecordedPullRequest {
+  at: Date;
+  sessionId: string;
+  url: string;
+}
+
+/** Ce que la page Usage lit de la base : les tours, les PR et le journal (pour le temps de travail des agents). */
+export interface UsageRepository {
+  firstTurnAt(): Promise<Date | null>;
+  /** Entrées du journal depuis une date, dans l'ordre de chaque session */
+  listActivity(from: Date | null): Promise<{ at: Date; kind: string; sessionId: string }[]>;
+  listPullRequests(from: Date | null): Promise<RecordedPullRequest[]>;
+  listTurns(from: Date | null): Promise<RecordedTurn[]>;
+}
+
+/** Relit tout le transcript d'une session ; null quand il n'existe plus. */
+export interface TranscriptReplay {
+  read(profile: string, sessionId: string): Promise<null | TranscriptEvent[]>;
+}
+
+/** Sessions lues avant que l'usage de chaque tour soit gardé, et l'écriture de cet usage une fois relu. */
+export interface UsageBackfillRepository {
+  listIncompleteUsage(): Promise<Session[]>;
+  replaceUsage(session: Session): Promise<void>;
 }

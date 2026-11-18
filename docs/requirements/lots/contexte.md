@@ -103,7 +103,7 @@ Règles de l'écran :
 
 ## <a id="e21"></a>E21 · Page d'un projet
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e21.html` · implémentation : **En cours (En cours (feat/navigation-by-place, feat/multi-project-sessions) : page d'un projet (Sessions, Contexte, Réglages), « Aussi dans ce projet », domaines du projet, retrait refusé pendant une session pilotée. Reste : valeurs par défaut des sessions.)**
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e21.html` · implémentation : **Livré (Développé (feat/navigation-by-place, feat/multi-project-sessions, feat/session-defaults) : page d'un projet (Sessions, Contexte, Réglages), « Aussi dans ce projet », domaines du projet, valeurs par défaut des sessions. Accepté : les menus des valeurs par défaut n'ont pas d'icône, les modes en ont dans la zone de message et E4g.)**
 
 ### <a id="e21c"></a>E21c · Page d'un projet : sessions
 
@@ -157,7 +157,7 @@ Règles de l'écran :
 
 ## <a id="e22"></a>E22 · Page d'un groupe
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e22.html` · implémentation : **En cours (En cours (branches feat/project-groups, feat/navigation-by-place) : instructions, réglages, nouveau groupe, aperçu pour un projet choisi ; reste : valeurs par défaut des sessions au-delà du profil, choix du groupe dans le navigateur.)**
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e22.html` · implémentation : **En cours (En cours (feat/project-groups, feat/navigation-by-place, feat/session-defaults) : instructions, réglages avec valeurs par défaut des sessions, nouveau groupe, aperçu pour un projet choisi ; reste : choix du groupe dans le navigateur.)**
 
 ### <a id="e22d"></a>E22d · Page d'un groupe : sessions
 

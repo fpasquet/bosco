@@ -10,7 +10,7 @@
 
 ## <a id="e4"></a>E4 · Sources et téléphone
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `reglages/e4.html` · implémentation : **En cours (En cours (feat/navigation-by-place) : onglets Sources et Téléphone. Reste : E4g (réglages d'un profil).)**
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `reglages/e4.html` · implémentation : **Livré (Développé (feat/navigation-by-place, feat/session-defaults) : onglets Sources et Téléphone, « Gérer » d'un profil (E4g) avec ses valeurs par défaut.)**
 
 ### <a id="e4a"></a>E4a · Sources : profils surveillés et réglages
 
@@ -108,7 +108,7 @@ Règles de l'écran :
 
 ## <a id="e11"></a>E11 · Bac à sable et abonnement
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `reglages/e11.html` · implémentation : **Livré (Développé (feat/navigation-by-place, feat/multi-project-sessions) : barre à cinq onglets, domaines propres à chaque projet, réunis pour la sortie réseau d'un bac à sable. Écart, repris d'E2j : « Ajouter à la liste » ne remplit pas le domaine.)**
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `reglages/e11.html` · implémentation : **Écart (Développé (feat/navigation-by-place, feat/multi-project-sessions) : barre à cinq onglets, domaines propres à chaque projet, réunis pour la sortie réseau d'un bac à sable. Écart : la carte de l'abonnement (E11c) ne renvoie pas encore aux réglages du profil (E4g).)**
 
 ### <a id="e11a"></a>E11a · Isolation du bac à sable
 

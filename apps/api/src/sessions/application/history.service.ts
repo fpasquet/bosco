@@ -6,6 +6,8 @@ import type { SessionService, SessionView } from './session.service.ts';
 export interface HistoryFilters {
   /** Sessions commencées depuis cette date ; aucune : tout l'historique */
   from: Date | null;
+  /** Groupe : les sessions de tous ses projets, celles qui en voient un comme projet ajouté comprises */
+  groupId: null | number;
   query: string;
   project: null | string;
   sourceId: null | string;
@@ -19,55 +21,27 @@ export interface HistoryDay {
   sessions: SessionView[];
 }
 
-export interface CostReport {
-  /** Moyenne sur les seuls jours ouvrés de la période (CA-SESS-52) */
-  averagePerWorkingDayUsd: number;
-  byModel: { model: null | string; share: number; usd: number }[];
-  byProject: { name: null | string; sessions: number; share: number; usd: number }[];
-  /** Part des tokens lus depuis le cache plutôt que recalculés */
-  cacheShare: number;
-  /** Un coût par jour ouvré, empilé par projet (CA-SESS-53) */
-  days: { date: string; projects: { name: null | string; sessions: number; usd: number }[] }[];
-  sessions: number;
-  totalUsd: number;
-  workingDays: number;
-}
-
 /** Jour local d'une date, en AAAA-MM-JJ : les journées suivent l'heure du poste. */
 export function dayOf(date: Date): string {
   return date.toLocaleDateString('sv');
 }
 
-function isWorkingDay(date: Date): boolean {
-  const day = date.getDay();
-  return day !== 0 && day !== 6;
-}
-
-/** Jours ouvrés de la période, du plus ancien à aujourd'hui. */
-function workingDays(from: Date, to: Date): string[] {
-  const days: string[] = [];
-  const cursor = new Date(from.getFullYear(), from.getMonth(), from.getDate());
-  while (cursor <= to) {
-    if (isWorkingDay(cursor)) days.push(dayOf(cursor));
-    cursor.setDate(cursor.getDate() + 1);
-  }
-  return days;
+/** Projets d'une session : le principal, puis ceux qu'elle voit en plus (règle 14). */
+function projectsOf(session: SessionView): number[] {
+  return [session.project?.id, ...session.addedProjects.map(({ id }) => id)].filter(
+    (id): id is number => typeof id === 'number',
+  );
 }
 
 function sum<T>(items: readonly T[], value: (item: T) => number): number {
   return items.reduce((total, item) => total + value(item), 0);
 }
 
-function shareOf(part: number, total: number): number {
-  return total === 0 ? 0 : Math.round((part / total) * 100);
-}
-
-/** Cas d'usage de l'historique et des coûts (E3a, E3b) ; tous les montants sont des estimations (RF-SESS-05). */
+/** Cas d'usage de l'historique (E3a) ; les coûts sont des estimations (RF-SESS-05), l'usage a sa page. */
 export class HistoryService {
   constructor(
-    private readonly sessionService: Pick<SessionService, 'listSessions'>,
+    private readonly sessionService: Pick<SessionService, 'knownGroups' | 'listSessions'>,
     private readonly sessionRepository: Pick<SessionRepository, 'search'>,
-    private readonly now: () => Date,
   ) {}
 
   async history(filters: HistoryFilters): Promise<HistoryDay[]> {
@@ -84,61 +58,15 @@ export class HistoryService {
     }));
   }
 
-  async costs(filters: HistoryFilters): Promise<CostReport> {
-    const sessions = await this.filtered(filters);
-    const totalUsd = sum(sessions, (session) => session.cost.usd);
-    const oldest = sessions.reduce<Date | null>((min, s) => (!min || s.startedAt < min ? s.startedAt : min), null);
-    const days = workingDays(filters.from ?? oldest ?? this.now(), this.now());
-    const projectOf = (session: SessionView) => session.project?.name ?? null;
-    const projects = [...new Set(sessions.map(projectOf))];
-    const models = [...new Set(sessions.map((session) => session.model))];
-    const read = sum(sessions, ({ usage }) => usage.input + usage.cacheRead + usage.cacheCreation);
-    return {
-      totalUsd,
-      workingDays: days.length,
-      averagePerWorkingDayUsd: days.length === 0 ? 0 : totalUsd / days.length,
-      sessions: sessions.length,
-      cacheShare: shareOf(
-        sum(sessions, ({ usage }) => usage.cacheRead),
-        read,
-      ),
-      days: days.map((date) => {
-        const ofDay = sessions.filter((session) => dayOf(session.startedAt) === date);
-        return {
-          date,
-          projects: projects
-            .map((name) => {
-              const own = ofDay.filter((session) => projectOf(session) === name);
-              return { name, sessions: own.length, usd: sum(own, (session) => session.cost.usd) };
-            })
-            .filter((entry) => entry.sessions > 0),
-        };
-      }),
-      byProject: projects
-        .map((name) => {
-          const own = sessions.filter((session) => projectOf(session) === name);
-          const usd = sum(own, (session) => session.cost.usd);
-          return { name, sessions: own.length, usd, share: shareOf(usd, totalUsd) };
-        })
-        .toSorted((a, b) => b.usd - a.usd),
-      byModel: models
-        .map((model) => {
-          const usd = sum(
-            sessions.filter((session) => session.model === model),
-            (session) => session.cost.usd,
-          );
-          return { model, usd, share: shareOf(usd, totalUsd) };
-        })
-        .toSorted((a, b) => b.usd - a.usd),
-    };
-  }
-
   private async filtered(filters: HistoryFilters): Promise<SessionView[]> {
     const sessions = await this.sessionService.listSessions();
     const found = filters.query.trim() ? await this.sessionRepository.search(filters.query) : null;
+    const groups = filters.groupId === null ? [] : await this.sessionService.knownGroups();
+    const group = filters.groupId === null ? null : new Set(groups.find(({ id }) => id === filters.groupId)?.projects);
     return sessions.filter(
       (session) =>
         (!filters.from || session.startedAt >= filters.from) &&
+        (!group || projectsOf(session).some((id) => group.has(id))) &&
         (!filters.project || session.project?.name === filters.project) &&
         (!filters.sourceId || session.sourceId === filters.sourceId) &&
         (!filters.state || session.state === filters.state) &&

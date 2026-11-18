@@ -5,7 +5,6 @@ export type {
   ConversationPartDto,
   ConversationStepDto,
   ConversationTurnDto,
-  CostReportDto,
   DefaultOriginDto,
   EffortDto,
   HistoryDayDto,
@@ -71,3 +70,4 @@ export type {
   ProjectPlaceDto,
   ProjectsDto,
 } from './projects.ts';
+export type { UsageDayDto, UsageReportDto, UsageShareDto, UsageTokensDto } from './usage.ts';

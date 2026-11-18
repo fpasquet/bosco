@@ -68,4 +68,30 @@ describe('TranscriptParser', () => {
     const [parsed] = new TranscriptParser().parse(line);
     expect(parsed?.event).toMatchObject({ kind: 'prompt', text: 'Ajoute un test.' });
   });
+
+  it('finds the address of a pull request in the result of a gh pr create, and nothing in other commands', () => {
+    const parser = new TranscriptParser();
+    const call = (id: string, command: string) =>
+      JSON.stringify({
+        ...base,
+        type: 'assistant',
+        message: { id: `msg_${id}`, content: [{ type: 'tool_use', id, name: 'Bash', input: { command } }] },
+      });
+    const result = (id: string, content: unknown) =>
+      JSON.stringify({
+        ...base,
+        type: 'user',
+        message: { content: [{ type: 'tool_result', tool_use_id: id, content }] },
+      });
+    parser.parse(call('t1', 'git push -u origin feat/tarifs && gh pr create --fill'));
+    parser.parse(call('t2', 'gh pr view 27'));
+    const created = parser.parse(
+      result('t1', [{ type: 'text', text: 'Creating pull request\nhttps://github.com/clubs/api-tarifs/pull/27\n' }]),
+    );
+    const viewed = parser.parse(result('t2', 'https://github.com/clubs/api-tarifs/pull/27'));
+    expect(created.map(({ event }) => [event.kind, event.text])).toEqual([
+      ['pullRequest', 'https://github.com/clubs/api-tarifs/pull/27'],
+    ]);
+    expect(viewed).toEqual([]);
+  });
 });

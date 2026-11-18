@@ -1,4 +1,4 @@
-// Ce que les scénarios ne voient pas : les jours ouvrés de la moyenne et le cumul par projet et par modèle.
+// Ce que les scénarios ne voient pas : chaque cumul des filtres et le total de chaque jour.
 import { describe, expect, it } from 'vitest';
 import type { SessionView } from './session.service.ts';
 import { HistoryService } from './history.service.ts';
@@ -8,7 +8,10 @@ const view = (id: string, startedAt: string, usd: number, project: null | string
     id,
     startedAt: new Date(startedAt),
     cost: { usd, unpriced: false },
-    project: project ? { name: project, folder: '', root: `/home/dev/${project}` } : null,
+    project: project
+      ? { id: project === 'labo-ia' ? 1 : 2, name: project, folder: '', root: `/home/dev/${project}` }
+      : null,
+    addedProjects: [],
     model,
     sourceId: 'pro',
     state: 'ended',
@@ -19,17 +22,23 @@ const sessions = [
   view('a', '2026-11-06T10:00:00', 2, 'labo-ia'),
   view('b', '2026-11-06T15:00:00', 1, 'api-voix', 'claude-opus-5-5'),
   view('c', '2026-11-03T09:00:00', 1, 'labo-ia'),
+  {
+    ...view('d', '2026-11-02T09:00:00', 1, 'labo-ia'),
+    addedProjects: [{ id: 3, name: 'outils', root: '/home/dev/outils' }],
+  },
 ];
 
 function service(found: string[] = []) {
   return new HistoryService(
-    { listSessions: () => Promise.resolve(sessions) },
+    {
+      listSessions: () => Promise.resolve(sessions),
+      knownGroups: () => Promise.resolve([{ id: 2, name: 'Médias', projects: [2, 3], defaults: {} as never }]),
+    },
     { search: () => Promise.resolve(new Set(found)) },
-    () => new Date('2026-11-08T12:00:00'),
   );
 }
 
-const all = { from: null, query: '', project: null, sourceId: null, state: null } as const;
+const all = { from: null, groupId: null, query: '', project: null, sourceId: null, state: null } as const;
 
 describe('HistoryService', () => {
   it('groups the sessions by day, newest first, with the cost of each day (CA-SESS-49)', async () => {
@@ -37,6 +46,7 @@ describe('HistoryService', () => {
     expect(days.map(({ costUsd, date, sessions: ofDay }) => [date, ofDay.map(({ id }) => id), costUsd])).toEqual([
       ['2026-11-06', ['b', 'a'], 3],
       ['2026-11-03', ['c'], 1],
+      ['2026-11-02', ['d'], 1],
     ]);
   });
 
@@ -50,19 +60,8 @@ describe('HistoryService', () => {
     expect(days.flatMap((day) => day.sessions.map(({ id }) => id))).toEqual(['a']);
   });
 
-  it('averages the cost on the working days only, and splits it by project and by model (CA-SESS-52)', async () => {
-    const report = await service().costs({ ...all, from: new Date('2026-11-02T00:00:00') });
-    expect([report.totalUsd, report.workingDays, report.averagePerWorkingDayUsd, report.cacheShare]).toEqual([
-      4, 5, 0.8, 80,
-    ]);
-    expect(report.byProject.map(({ name, share }) => [name, share])).toEqual([
-      ['labo-ia', 75],
-      ['api-voix', 25],
-    ]);
-    expect(report.byModel.map(({ model, usd }) => [model, usd])).toEqual([
-      ['claude-sonnet-5-5', 3],
-      ['claude-opus-5-5', 1],
-    ]);
-    expect(report.days.find((day) => day.date === '2026-11-06')?.projects).toHaveLength(2);
+  it('keeps the sessions of every project of a group, those over several projects included (CA-SESS-127)', async () => {
+    const days = await service().history({ ...all, groupId: 2 });
+    expect(days.flatMap((day) => day.sessions.map(({ id }) => id))).toEqual(['b', 'd']);
   });
 });

@@ -13,7 +13,8 @@ export interface TranscriptEvent {
   /** Fichier modifié par l'outil appelé (Edit, MultiEdit, Write) */
   change?: FileChange | null;
   cwd: null | string;
-  kind: 'prompt' | 'reply' | 'title' | 'tool';
+  /** pullRequest : une PR créée par l'agent (`gh pr create`), dont `text` est l'adresse */
+  kind: 'prompt' | 'pullRequest' | 'reply' | 'title' | 'tool';
   /** Question posée par l'agent (outil AskUserQuestion) : elle attend ta réponse (E15) */
   question?: null | string;
   model: null | string;
@@ -31,3 +32,16 @@ export interface TranscriptEvent {
 export type JournalEntry =
   | { at: Date; count: number; kind: 'autoModeSuspended'; seq: number; total: boolean }
   | { at: Date; kind: 'prompt' | 'reply' | 'tool'; seq: number; text: string };
+
+/** Usage d'une réponse de l'agent (un tour du compte de la page Usage), avec son modèle et son heure. */
+export interface TurnUsage {
+  at: Date;
+  model: null | string;
+  usage: TokenUsage;
+}
+
+/** PR créée par l'agent dans une session, repérée dans son fil : la commande qui la crée et l'adresse rendue. */
+export interface CreatedPullRequest {
+  at: Date;
+  url: string;
+}
