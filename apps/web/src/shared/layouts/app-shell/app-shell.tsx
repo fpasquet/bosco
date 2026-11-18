@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { cn } from '@/lib/cn';
+import { AboutButton } from '@/shared/components/about-dialog';
 import { Notices } from '@/shared/components/notices';
-import { Logo } from '@/shared/ui/logo';
 import { APP_NAME } from '@bosco/domain';
 import { MOBILE_TABS, NAV_ITEMS, SETTINGS_ITEM, type ShellPlace } from './nav-items';
 import { NavLink } from './nav-link';
@@ -28,7 +28,7 @@ export function AppShell({ children, place, title }: AppShellProps) {
       <div className="flex h-dvh bg-canvas text-ink">
         <aside className="hidden w-60 shrink-0 flex-col border-r border-line bg-nav px-3 py-4 text-nav-muted md:flex">
           <div className="flex items-center gap-2 px-2 pb-4">
-            <Logo />
+            <AboutButton />
             <span className="font-display text-sm font-semibold text-nav-ink">{APP_NAME}</span>
             <span className="ml-auto badge badge-ghost font-mono badge-xs">local</span>
             <ShellBell />
@@ -61,7 +61,7 @@ export function AppShell({ children, place, title }: AppShellProps) {
         </aside>
         <div className="relative flex min-w-0 flex-1 flex-col">
           <header className="flex h-14 shrink-0 items-center gap-3 border-b border-line bg-nav px-4 text-nav-ink md:hidden">
-            <Logo labelled />
+            <AboutButton />
             <h1 className="truncate font-display text-base font-semibold">{title}</h1>
             <span className="ml-auto">
               <ShellBell />

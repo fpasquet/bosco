@@ -1,14 +1,8 @@
-import { BellRing, Box, ShieldCheck } from 'lucide-react';
+import { INTRO, USES } from '@/shared/components/about-dialog';
 import { Logo } from '@/shared/ui/logo';
 import { APP_NAME } from '@bosco/domain';
 
-const USES = [
-  { icon: BellRing, strong: 't’attendent', before: 'Repère les sessions qui ', after: '' },
-  { icon: ShieldCheck, strong: 'Autorise', before: '', after: ' depuis Bosco ou ton téléphone' },
-  { icon: Box, strong: 'Isole une session', before: '', after: ' dans un bac à sable, sur sa propre branche' },
-];
-
-/** Bienvenue du premier lancement : dans la page, sans fenêtre à fermer. */
+/** Bienvenue du premier lancement : dans la page, sans fenêtre à fermer ; « À propos » la reprend depuis le logo. */
 export function Welcome() {
   return (
     <section aria-labelledby="welcome-title" className="w-full">
@@ -19,10 +13,7 @@ export function Welcome() {
             <h1 id="welcome-title" className="font-display text-2xl font-semibold tracking-tight">
               Bienvenue dans {APP_NAME}
             </h1>
-            <p className="mt-0.5 text-muted">
-              Le maître d’équipage de tes sessions Claude Code : il les surveille pendant qu’elles travaillent et
-              t’appelle quand l’une a besoin de toi.
-            </p>
+            <p className="mt-0.5 text-muted">{INTRO}</p>
           </div>
         </div>
         <ul className="mt-4 grid grid-cols-3 gap-3 text-xs">
