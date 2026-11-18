@@ -9,6 +9,66 @@ const run = promisify(execFile);
 
 type State = 'missing' | 'running' | 'stopped';
 
+/**
+ * Lancement du conteneur de l'agent d'un bac à sable : les plafonds, l'utilisateur sans droits, le réseau privé et son
+ * proxy de sortie, et pour seuls dossiers le binaire de Claude Code et ceux que le bac à sable monte.
+ */
+export function agentRunArgs(
+  spec: {
+    key: string;
+    mounts: readonly { from: string; to: string }[];
+    name: string;
+    network: string;
+    workdir: string;
+  },
+  options: { claudeBinary: string; user: string },
+): string[] {
+  const proxyEnv = ['HTTPS_PROXY', 'HTTP_PROXY', 'https_proxy', 'http_proxy'].flatMap((key) => [
+    '--env',
+    `${key}=${PROXY}`,
+  ]);
+  return [
+    'run',
+    '--detach',
+    // Un init en tête : l'attente s'arrête au signal, sans les 5 s du délai de docker stop
+    '--init',
+    '--name',
+    spec.name,
+    '--label',
+    `bosco.session=${spec.key}`,
+    ...LIMITS,
+    '--network',
+    spec.network,
+    '--user',
+    options.user,
+    ...UNPRIVILEGED,
+    ...proxyEnv,
+    '--env',
+    'NO_PROXY=localhost,127.0.0.1',
+    '--env',
+    'no_proxy=localhost,127.0.0.1',
+    // Ni télémétrie, ni connecteurs de claude.ai, ni mise à jour : rien d'autre du profil n'entre
+    '--env',
+    'CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1',
+    '--env',
+    'ENABLE_CLAUDEAI_MCP_SERVERS=false',
+    '--env',
+    'DISABLE_AUTOUPDATER=1',
+    '--env',
+    'HOME=/home/agent',
+    '--env',
+    'CLAUDE_CONFIG_DIR=/home/agent/.claude',
+    '--volume',
+    `${options.claudeBinary}:/usr/local/bin/claude:ro`,
+    ...spec.mounts.flatMap(({ from, to }) => ['--volume', `${from}:${to}`]),
+    '--workdir',
+    spec.workdir,
+    AGENT_IMAGE,
+    'sleep',
+    'infinity',
+  ];
+}
+
 export class DockerSandboxContainers {
   constructor(private readonly isolation: DockerIsolation) {}
 
@@ -50,50 +110,7 @@ export class DockerSandboxContainers {
       dir: spec.dir,
       projects: spec.projects,
     });
-    const proxyEnv = ['HTTPS_PROXY', 'HTTP_PROXY', 'https_proxy', 'http_proxy'].flatMap((key) => [
-      '--env',
-      `${key}=${PROXY}`,
-    ]);
-    await run(DOCKER, [
-      'run',
-      '--detach',
-      // Un init en tête : l'attente s'arrête au signal, sans les 5 s du délai de docker stop
-      '--init',
-      '--name',
-      names.agent,
-      '--label',
-      `bosco.session=${spec.key}`,
-      ...LIMITS,
-      '--network',
-      isolation.network,
-      '--user',
-      this.isolation.options.user,
-      ...UNPRIVILEGED,
-      ...proxyEnv,
-      '--env',
-      'NO_PROXY=localhost,127.0.0.1',
-      '--env',
-      'no_proxy=localhost,127.0.0.1',
-      // Ni télémétrie, ni connecteurs de claude.ai, ni mise à jour : rien d'autre du profil n'entre
-      '--env',
-      'CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1',
-      '--env',
-      'ENABLE_CLAUDEAI_MCP_SERVERS=false',
-      '--env',
-      'DISABLE_AUTOUPDATER=1',
-      '--env',
-      'HOME=/home/agent',
-      '--env',
-      'CLAUDE_CONFIG_DIR=/home/agent/.claude',
-      '--volume',
-      `${this.isolation.options.claudeBinary}:/usr/local/bin/claude:ro`,
-      ...spec.mounts.flatMap(({ from, to }) => ['--volume', `${from}:${to}`]),
-      '--workdir',
-      spec.workdir,
-      AGENT_IMAGE,
-      'sleep',
-      'infinity',
-    ]);
+    await run(DOCKER, agentRunArgs({ ...spec, name: names.agent, network: isolation.network }, this.isolation.options));
   }
 
   exec(key: string): { args: string[]; file: string } {
