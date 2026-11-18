@@ -27,7 +27,7 @@ export function PairScreen({ onPair }: Readonly<{ onPair: (pairing: Pairing & { 
     <View style={styles.screen}>
       <Text style={styles.brand}>Bosco</Text>
       <Text style={styles.title}>Appairer Bosco</Text>
-      <Text style={styles.muted}>Sur le poste, ouvre Sources › Accès depuis le téléphone et scanne le QR code.</Text>
+      <Text style={styles.muted}>Sur le poste, ouvre Réglages › Téléphone et scanne le QR code.</Text>
       {!found && !manual && (
         <View style={styles.viewfinder}>
           {permission?.granted ? (
