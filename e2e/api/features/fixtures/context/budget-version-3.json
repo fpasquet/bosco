@@ -1,0 +1,10 @@
+{
+  "text": {
+    "title": "Ranger les catégories du budget avec leurs couleurs et leurs icônes",
+    "context": "Les catégories du budget du foyer vivent dans le navigateur.",
+    "decision": "Ranger les catégories, leurs couleurs et leurs icônes dans la base.",
+    "consequences": null,
+    "alternatives": null
+  },
+  "note": "Les icônes aussi"
+}

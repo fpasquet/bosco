@@ -1,0 +1,14 @@
+{
+  "target": {
+    "kind": "project",
+    "name": "maison"
+  },
+  "text": {
+    "title": "Ranger les catégories du budget en base",
+    "context": "Les catégories du budget du foyer vivent dans le navigateur.",
+    "decision": "Ranger les catégories dans la base, pas dans le navigateur.",
+    "consequences": null,
+    "alternatives": null
+  },
+  "accept": true
+}

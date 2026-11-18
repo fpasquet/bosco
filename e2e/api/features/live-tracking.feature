@@ -11,6 +11,7 @@ Feature: Live tracking
 
   @CA-SESS-62
   @CA-SESS-63
+  @CA-CONT-107
   Scenario: Live tracking is added to the settings of a profile, then removed
     When I install live tracking for the profile ".claude-perso"
     Then the response code should be 200

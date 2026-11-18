@@ -30,7 +30,7 @@ describe('context', () => {
   const proposed = Decision.propose(4, 'api-tarifs', text('Normaliser les fuseaux horaires'), null, at);
   const decisions = [jest, elsewhere, proposed].map((decision) => decision.toSnapshot());
 
-  it('sends the common instructions, then each group of the project, then its decisions, which prevail', () => {
+  it('CA-CONT-101 · sends every instruction, then the decisions of the project, announced as prevailing', () => {
     const context = contextOf('api-tarifs', decisions, GROUPS, { calls: ['Service de paiement'], calledBy: [] });
     expect(context.proposed.map(({ id }) => id)).toEqual([4]);
     expect(contextText('api-tarifs', context)).toBe(
@@ -90,6 +90,16 @@ describe('parseProposal', () => {
 });
 
 describe('sessionContextText', () => {
+  it('CA-CONT-107 · cuts the context read by a session at 10 000 characters, and says so', () => {
+    const sent = sessionContextText([
+      { project: 'api-tarifs', text: `# Contexte du projet api-tarifs\n${'x'.repeat(CONTEXT_LIMIT)}` },
+    ]);
+    expect(sent).toHaveLength(CONTEXT_LIMIT);
+    expect(sent.startsWith('# Contexte du projet api-tarifs')).toBe(true);
+    expect(sent.endsWith('[Contexte coupé : 10 000 caractères au plus.]')).toBe(true);
+    expect(sessionContextText([{ project: 'api-tarifs', text: 'court' }])).toBe('court');
+  });
+
   it('CA-CONT-105 · gives one block per project, the principal first, and stays under 10 000 characters', () => {
     const blocks = [
       { project: 'api-tarifs', text: '# Contexte du projet api-tarifs' },

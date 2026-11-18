@@ -43,7 +43,13 @@ function message(file: string, profilesRoot: string): Record<string, unknown> {
   return { ...body, images: (body.images ?? []).map(({ name }) => ({ name, mediaType: 'image/png', data: PIXEL })) };
 }
 
-const idOf = (session: string) => (session === 'the started session' ? started : session);
+/** Sessions démarrées nommées par le scénario (« the first session »), quand il en démarre plusieurs */
+const named = new Map<string, string>();
+const idOf = (session: string) => (session === 'the started session' ? started : (named.get(session) ?? session));
+
+Given('the started session is called {string}', ({}, name: string) => {
+  named.set(name, started);
+});
 
 async function detail(request: APIRequestContext, id: string): Promise<SessionDetailDto['session']> {
   const response = await request.get(`/api/sessions/${id}`);

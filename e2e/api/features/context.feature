@@ -89,6 +89,19 @@ Feature: Context of the agents
     And I write to "the started session" with the JSON "fixtures/pilot/context.json"
     Then "the started session" should end its turn with "Contexte reçu : # Contexte du projet maison · - DEC-1 Découper les tableaux par ligne"
 
+  @CA-CONT-23
+  Scenario: The agents launched after a new version receive it, those launched before keep the one they received
+    Given I send POST request to "/api/decisions" with the JSON "fixtures/context/budget-decision.json"
+    And I send POST request to "/api/decisions/1/versions" with the JSON "fixtures/context/budget-version-2.json"
+    When I start a session in the project "maison" with the JSON "fixtures/pilot/start-context.json"
+    Then "the started session" should end its turn with "Contexte reçu : # Contexte du projet maison · - DEC-1 Ranger les catégories du budget avec leurs couleurs"
+    Given the started session is called "the first session"
+    When I send POST request to "/api/decisions/1/versions" with the JSON "fixtures/context/budget-version-3.json"
+    And I start a session in the project "maison" with the JSON "fixtures/pilot/start-context.json"
+    Then "the started session" should end its turn with "Contexte reçu : # Contexte du projet maison · - DEC-1 Ranger les catégories du budget avec leurs couleurs et leurs icônes"
+    When I write to "the first session" with the JSON "fixtures/pilot/context.json"
+    Then "the first session" should end its turn with "Contexte reçu : # Contexte du projet maison · - DEC-1 Ranger les catégories du budget avec leurs couleurs"
+
   @CA-CONT-09
   Scenario: A refused decision keeps its reason and is never sent
     When the session calls the Bosco tool "bosco_propose_decision" with:
