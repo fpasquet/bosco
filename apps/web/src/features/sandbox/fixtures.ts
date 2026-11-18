@@ -10,7 +10,7 @@ export const STORY_ISOLATION: IsolationDto = {
     added: ['pypi.org', '*.github.com'],
     locked: ['api.anthropic.com', 'claude.ai', 'platform.claude.com', 'registry.npmjs.org', 'registry.yarnpkg.com'],
   },
-  image: 'bosco-agent:1',
+  image: 'bosco-agent:2',
   limits: { cpus: 2, memory: 4 * GB, processes: 512 },
   subscription: {
     access: 'login',

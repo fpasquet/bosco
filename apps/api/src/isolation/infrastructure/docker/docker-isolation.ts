@@ -13,11 +13,16 @@ import { projectAllowFile } from '../egress/allow-list-file.ts';
 export const DOCKER = '/usr/bin/docker';
 const run = promisify(execFile);
 
-/** Image de l'agent : git, ripgrep, Python et Node ; Claude Code vient du poste (même version que tes sessions). */
-export const AGENT_IMAGE = 'bosco-agent:1';
+/**
+ * Image de l'agent : git, ripgrep, Python, Node, make et curl, et Corepack pour pnpm et Yarn (Node 26 ne l'embarque
+ * plus) ; Claude Code vient du poste (même version que tes sessions). Le numéro change avec son contenu : l'image se
+ * reconstruit d'elle-même.
+ */
+export const AGENT_IMAGE = 'bosco-agent:2';
 const DOCKERFILE = `FROM node:26-bookworm-slim
-RUN apt-get update && apt-get install -y --no-install-recommends git ripgrep python3 ca-certificates \\
+RUN apt-get update && apt-get install -y --no-install-recommends git ripgrep python3 ca-certificates make curl \\
   && rm -rf /var/lib/apt/lists/*
+RUN npm install --global corepack@0.36.0 && corepack enable pnpm yarn
 `;
 
 /** Limites de chaque bac à sable : mémoire, processeurs et processus. */

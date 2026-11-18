@@ -47,6 +47,19 @@ export function agentRunArgs(
     'NO_PROXY=localhost,127.0.0.1',
     '--env',
     'no_proxy=localhost,127.0.0.1',
+    // fetch de Node ignore HTTP(S)_PROXY sans ce réglage : sans lui, il ne résout aucun nom (EAI_AGAIN)
+    '--env',
+    'NODE_USE_ENV_PROXY=1',
+    // Corepack télécharge pnpm ou Yarn sans demander de confirmation, qu'aucun tour ne pourrait donner
+    '--env',
+    'COREPACK_ENABLE_DOWNLOAD_PROMPT=0',
+    // La télémétrie des outils (Next.js, Turborepo…) serait refusée par le proxy à chaque commande
+    '--env',
+    'DO_NOT_TRACK=1',
+    '--env',
+    'NEXT_TELEMETRY_DISABLED=1',
+    '--env',
+    'TURBO_TELEMETRY_DISABLED=1',
     // Ni télémétrie, ni connecteurs de claude.ai, ni mise à jour : rien d'autre du profil n'entre
     '--env',
     'CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1',
