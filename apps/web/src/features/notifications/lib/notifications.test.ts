@@ -3,7 +3,7 @@ import { STORY_NOTIFICATIONS, STORY_NOW } from '../fixtures';
 import { byDay, hrefOf, kindLabel, timeOf, toHandle } from './notifications';
 
 describe('notifications', () => {
-  it('keeps to handle what waits for an answer or a review (E15a)', () => {
+  it('keeps to handle what waits for an answer or a review', () => {
     expect(toHandle(STORY_NOTIFICATIONS).map(({ id }) => id)).toEqual([7, 6, 5, 4, 1]);
   });
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-// Ce que l'application ne montre pas à l'œil : le menu de la barre système suit les sessions qui t'attendent (E17a).
+// Ce que l'application ne montre pas à l'œil : le menu de la barre système suit les sessions qui t'attendent.
 import type { SessionDto } from '@bosco/domain';
 import { trayMenu, trayTooltip, waitingSessions } from './tray-menu.ts';
 

@@ -18,7 +18,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Les trois sens d'un message (E15c) : réussi, information avec action, question qui reste affichée. */
+/** Les trois sens d'un message : réussi, information avec action, question qui reste affichée. */
 export const ThreeKinds: Story = {
   decorators: [
     (Story) => {

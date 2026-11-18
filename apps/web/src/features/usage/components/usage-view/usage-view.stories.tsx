@@ -33,10 +33,10 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** E23a : 30 derniers jours. */
+/** 30 derniers jours. */
 export const Default: Story = {};
 
-/** E23b : filtrée sur le groupe Club des Trois Lacs, 7 jours. */
+/** Filtrée sur le groupe Club des Trois Lacs, 7 jours. */
 export const Group: Story = {
   args: { report: STORY_USAGE_GROUP, filters: { ...DEFAULT_FILTERS, period: '7', scope: { kind: 'group', id: 2 } } },
 };

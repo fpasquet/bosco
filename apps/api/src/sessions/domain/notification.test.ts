@@ -1,4 +1,4 @@
-// Ce que les scénarios ne voient pas : chaque règle qui décide d'une notification (E15b).
+// Ce que les scénarios ne voient pas : chaque règle qui décide d'une notification.
 import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_NOTIFICATIONS,

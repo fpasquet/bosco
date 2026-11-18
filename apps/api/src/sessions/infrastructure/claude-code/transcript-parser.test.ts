@@ -57,7 +57,7 @@ describe('TranscriptParser', () => {
     expect(parsed?.event.text).not.toContain('\n');
   });
 
-  it('reads a message of the Bosco channel as a prompt, though a meta line (E2i)', () => {
+  it('reads a message of the Bosco channel as a prompt, though a meta line', () => {
     const line = JSON.stringify({
       ...base,
       type: 'user',

@@ -30,8 +30,8 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** E19a : un bac à sable près de son plafond, un autre, et un tour piloté sur le poste. */
+/** Un bac à sable près de son plafond, un autre, et un tour piloté sur le poste. */
 export const Running: Story = {};
 
-/** E19c : Docker ne répond plus, la dernière mesure reste, datée, actions désactivées. */
+/** Docker ne répond plus, la dernière mesure reste, datée, actions désactivées. */
 export const DockerDown: Story = { parameters: { containers: STORY_DOCKER_DOWN } };

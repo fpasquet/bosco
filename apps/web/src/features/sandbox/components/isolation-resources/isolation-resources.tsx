@@ -6,7 +6,7 @@ export interface IsolationResourcesProps {
   isolation: IsolationDto;
 }
 
-/** Ce que voit l'agent : fichiers, secrets, réseau (CA-CONT). */
+/** Ce que voit l'agent : fichiers, secrets, réseau. */
 const VISIBILITY = [
   {
     kind: 'Fichiers',
