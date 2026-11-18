@@ -25,7 +25,7 @@
 
 ## <a id="e1"></a>E1 · Vue d'ensemble
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `sessions/e1.html` · implémentation : **Livré (Développé (feat/navigation-by-place, feat/multi-project-sessions) : barre latérale par lieu, clic sur un projet ou un groupe qui ouvre sa page, E1c retiré, vue d'ensemble par groupe (E1g), sessions à plusieurs projets rangées sous leur projet principal. Accepté (feat/session-defaults) : dans la vue par groupe, « api-tarifs +2 » suit le titre de la session, sur sa ligne.)**
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `sessions/e1.html` · implémentation : **Livré (Développé (feat/navigation-by-place, feat/multi-project-sessions) : barre latérale par lieu, clic sur un projet ou un groupe qui ouvre sa page, E1c retiré, vue d'ensemble par groupe (E1g), sessions à plusieurs projets rangées sous leur projet principal. Accepté (feat/session-defaults) : dans la vue par groupe, « api-tarifs +2 » suit le titre de la session, sur sa ligne. « À propos de Bosco » depuis le logo (règle 11), ajouté dans feat/finish-sandbox-and-sources.)**
 
 ### <a id="e1a"></a>E1a · Vue d'ensemble : premier lancement
 
@@ -134,7 +134,7 @@ Règles de l'écran :
 
 ## <a id="e2"></a>E2 · Détail d'une session
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `sessions/e2.html` · implémentation : **Écart (Développé (jusqu'à feat/close-remaining-gaps) : fil d'Ariane, cinq modes, sessions à plusieurs projets, suivi en direct proposé depuis le détail, choix recommandé coché d'office, session effacée refusée, marque « Bac à sable » dans la vue d'ensemble et l'historique. Accepté : « Arrêter » en bouton contour ; serveur du canal `bosco-channel` (`bosco` est le serveur MCP) ; sur le téléphone, les fichiers sont dans l'onglet Usage et la carte d'autorisation n'est pas une feuille du bas. Écarts E2j : les sorties refusées s'affichent en fin de fil, pas de consommation du conteneur, pas d'onglet « Bac à sable » sur le téléphone, aide sous la zone de message masquée sur le téléphone.)**
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `sessions/e2.html` · implémentation : **Livré (Développé (jusqu'à feat/finish-sandbox-and-sources) : fil d'Ariane, cinq modes, sessions à plusieurs projets, suivi en direct proposé depuis le détail, choix recommandé coché d'office, session effacée refusée, marque « Bac à sable », refus réseau à leur heure (une ligne par domaine et par tour, avec le nombre de tentatives), consommation du conteneur, onglet « Bac à sable » et aide sous la zone de message sur le téléphone. Acceptés : « Arrêter » en bouton contour ; serveur du canal `bosco-channel` ; sur le téléphone, fichiers dans l'onglet Usage, carte d'autorisation sans feuille du bas, pas de barre de branche au-dessus de la zone de message (« Récupérer » est dans l'onglet Bac à sable) ; la carte du bac à sable ne montre ni disque ni réseau.)**
 
 ### <a id="e2a"></a>E2a · Détail d'une session : en cours
 
@@ -292,7 +292,7 @@ Règles de l'écran :
 
 ## <a id="e3"></a>E3 · Historique
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `sessions/e3.html` · implémentation : **Livré (Développé (feat/usage-page) : onglet « Coûts » retiré, l'usage a sa page (E23) ; filtre par groupe. Écart : « Tout afficher » d'un jour chargé n'existe pas, toutes ses sessions sont montrées.)**
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `sessions/e3.html` · implémentation : **Livré (Développé (feat/usage-page) : onglet « Coûts » retiré, l'usage a sa page (E23) ; filtre par groupe. Écart : « Tout afficher » d'un jour chargé n'existe pas, toutes ses sessions sont montrées. CA-SESS-50 sans objet tant qu'une session n'a pas d'état « En échec » (parti avec E2d).)**
 
 ### <a id="e3a"></a>E3a · Historique : recherche et liste
 

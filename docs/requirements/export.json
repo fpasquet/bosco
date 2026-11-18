@@ -5,7 +5,7 @@
   "source": {
     "repository": "fpasquet/specs",
     "path": "bosco/requirements",
-    "commit": "0e8a1a7"
+    "commit": "234c708"
   },
   "artifacts": {
     "specs": "https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1",
@@ -13,7 +13,7 @@
   },
   "screens": {
     "e1": "done",
-    "e2": "gap",
+    "e2": "done",
     "e3": "done",
     "e15": "done",
     "e16": "done",
@@ -29,7 +29,7 @@
     "e2g": "done",
     "e2h": "done",
     "e2i": "done",
-    "e2j": "gap",
+    "e2j": "done",
     "e2k": "done",
     "e3a": "done",
     "e3b": "done",
@@ -55,10 +55,10 @@
     "e14a": "done",
     "e17": "done",
     "e18": "done",
-    "e4": "gap",
+    "e4": "done",
     "e11": "done",
     "e19": "done",
-    "e4a": "gap",
+    "e4a": "done",
     "e4g": "done",
     "e4c": "done",
     "e4d": "done",
@@ -70,13 +70,13 @@
     "e19c": "done"
   },
   "files": {
-    "README.md": "f931f0bcc84ba2fd",
+    "README.md": "1ffad56fb4a19307",
     "presentation.md": "c4421a387d83d832",
     "utilisateurs.md": "8167d5f123d1def1",
-    "lots/sessions.md": "6eafe32f17697e91",
+    "lots/sessions.md": "2fdb085bb80240f3",
     "lots/contexte.md": "30b0d6fa8af412fc",
     "lots/apps.md": "2943f38d19226fc7",
-    "lots/reglages.md": "94d50e2c0668d14b",
+    "lots/reglages.md": "adddc3829fbeedbb",
     "interface.md": "172dfeaee6d306a1",
     "exigences-non-fonctionnelles.md": "6e4c857f70af90b6",
     "architecture.md": "797daf60f910252b",

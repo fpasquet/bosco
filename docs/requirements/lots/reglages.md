@@ -10,7 +10,7 @@
 
 ## <a id="e4"></a>E4 · Sources et téléphone
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `reglages/e4.html` · implémentation : **Écart (Développé (jusqu'à feat/close-remaining-gaps) : onglets Sources et Téléphone, « Gérer » d'un profil (E4g), source « Bacs à sable » à part, lecture seule sur le téléphone (garde de l'API comprise), « Ajouter un dossier », « À mettre à jour » quand le suivi en direct vient d'une autre version de Bosco (CA-SESS-186), serveur MCP installé et retiré avec le suivi en direct. Écarts : « Ajouter un dossier » est un champ de chemin, sans navigateur de dossiers ; un format de session illisible ne fait pas encore passer la source « À mettre à jour » (CA-SESS-57).)**
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `reglages/e4.html` · implémentation : **Livré (Développé (jusqu'à feat/finish-sandbox-and-sources) : onglets Sources et Téléphone, « Gérer » d'un profil (E4g), source « Bacs à sable » à part, lecture seule sur le téléphone (garde de l'API comprise), « Ajouter un dossier » par le navigateur de dossiers (dossiers cachés visibles), « À mettre à jour » quand le suivi en direct vient d'une autre version de Bosco ou que 3 transcripts de suite sont illisibles (état gardé jusqu'au redémarrage), serveur MCP installé et retiré avec le suivi en direct.)**
 
 ### <a id="e4a"></a>E4a · Sources : profils surveillés et réglages
 
