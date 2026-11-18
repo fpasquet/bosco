@@ -110,7 +110,7 @@ db-migration: ## Write the migration that brings the database to the entity sche
 service-install: build ## Install Bosco as a systemd user service
 	node apps/api/dist/cli/main.js service install
 
-mcp-install: build ## Add the MCP server of Bosco (Ma session) to a Claude Code profile (PROFILE=~/.claude by default)
+mcp-install: build ## Add the MCP server of Bosco (project context, proposed decisions) to a Claude Code profile (PROFILE=~/.claude by default)
 	node apps/api/dist/cli/main.js mcp install --profile $(PROFILE)
 
 mcp-install-dev: ## Same, pointed at the development service (make dev: port 4880, data in .data/)

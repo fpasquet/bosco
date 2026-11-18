@@ -4,7 +4,7 @@
  * Claude Code les écrit dans le transcript comme une demande, marquée comme venue du canal. Vérifié sur 2.1.319.
  */
 
-/** Nom du serveur dans la configuration du profil : « bosco » est déjà celui du serveur MCP de Ma session */
+/** Nom du serveur dans la configuration du profil : « bosco » est déjà celui du serveur MCP du contexte */
 export const CHANNEL_SERVER = 'bosco-channel';
 
 /** Commande qui lance une session avec le canal ; le dossier de configuration en tête pour un autre profil que ~/.claude */

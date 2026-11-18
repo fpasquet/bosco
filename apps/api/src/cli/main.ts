@@ -94,7 +94,11 @@ mcp
   .description('Add the MCP server of Bosco to a Claude Code profile, for every project')
   .option('--profile <dir>', 'Claude Code profile', join(homedir(), '.claude'))
   .action(async (options: { profile: string }) => {
-    await run(mcpServerOf().install(options.profile), `in Claude Code, ask: « prends la prochaine tâche ${APP_NAME} »`);
+    await run(
+      mcpServerOf().install(options.profile),
+      `added to ${options.profile}: its sessions read the context of their project (instructions of its groups, ` +
+        `accepted decisions) and propose decisions, to accept in ${APP_NAME}`,
+    );
   });
 
 mcp
