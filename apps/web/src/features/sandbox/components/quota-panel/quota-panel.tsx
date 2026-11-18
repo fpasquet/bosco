@@ -18,6 +18,8 @@ export interface QuotaPanelProps {
   onScope: (scope: QuotaScopeDto) => void;
   onThresholds: (thresholds: QuotaThresholdsDto) => void;
   quota: QuotaDto;
+  /** Sur le téléphone, jauges, seuils et portée se lisent sans champ ni bouton : ils se modifient depuis le poste */
+  readOnly?: boolean;
 }
 
 const SCOPES: { label: string; value: QuotaScopeDto }[] = [
@@ -59,12 +61,37 @@ function Threshold({ label, name, register }: { label: string; name: string; reg
   );
 }
 
+/** Seuils et portée tels qu'on les lit sur le téléphone. */
+function ReadOnlyThresholds({ quota }: { quota: QuotaDto }) {
+  const { fiveHour, sevenDay } = quota.thresholds;
+  return (
+    <dl className="flex flex-col gap-2 text-sm">
+      <div>
+        <dt className="font-medium">Ne plus lancer de tour au-delà de</dt>
+        <dd className="text-muted">
+          5 h : {fiveHour.wait} % · semaine : {sevenDay.wait} %
+        </dd>
+      </div>
+      <div>
+        <dt className="font-medium">Arrêter le tour au-delà de</dt>
+        <dd className="text-muted">
+          5 h : {fiveHour.stop} % · semaine : {sevenDay.stop} %
+        </dd>
+      </div>
+      <div>
+        <dt className="font-medium">Les seuils retiennent</dt>
+        <dd className="text-muted">{SCOPES.find(({ value }) => value === quota.scope)?.label}</dd>
+      </div>
+    </dl>
+  );
+}
+
 /**
  * Quota de l'abonnement : l'usage de la fenêtre de 5 h et de la semaine de chaque abonnement, lu à
  * chaque tour, et les seuils : au-delà de l'attente, aucun tour ne part ; au-delà de l'arrêt, le tour en cours
  * s'arrête. Ils retiennent les sessions en bac à sable, et aussi, au choix, celles pilotées sur le poste.
  */
-export function QuotaPanel({ busy, error, onScope, onThresholds, quota }: QuotaPanelProps) {
+export function QuotaPanel({ busy, error, onScope, onThresholds, quota, readOnly = false }: QuotaPanelProps) {
   const { formState, handleSubmit, register } = useForm<QuotaThresholdsDto>({
     resolver: zodResolver(schema),
     values: quota.thresholds,
@@ -83,58 +110,62 @@ export function QuotaPanel({ busy, error, onScope, onThresholds, quota }: QuotaP
             <Gauge label="Semaine" week window={subscription.sevenDay} />
           </div>
         ))}
-        <form noValidate className="flex flex-col gap-3" onSubmit={(event) => void handleSubmit(onThresholds)(event)}>
-          <fieldset className="flex flex-col gap-2">
-            <legend className="text-sm font-medium">Ne plus lancer de tour au-delà de</legend>
-            <Threshold
-              label="5 h"
-              name="Attente, fenêtre de 5 h"
-              register={() => register('fiveHour.wait', { valueAsNumber: true })}
-            />
-            <Threshold
-              label="semaine"
-              name="Attente, semaine"
-              register={() => register('sevenDay.wait', { valueAsNumber: true })}
-            />
-          </fieldset>
-          <fieldset className="flex flex-col gap-2">
-            <legend className="text-sm font-medium">Arrêter le tour au-delà de</legend>
-            <Threshold
-              label="5 h"
-              name="Arrêt, fenêtre de 5 h"
-              register={() => register('fiveHour.stop', { valueAsNumber: true })}
-            />
-            <Threshold
-              label="semaine"
-              name="Arrêt, semaine"
-              register={() => register('sevenDay.stop', { valueAsNumber: true })}
-            />
-          </fieldset>
-          {(error || invalid) && (
-            <p role="alert" className="text-xs text-danger">
-              {error ?? 'Des pourcentages entiers, de 1 à 100.'}
-            </p>
-          )}
-          <Button type="submit" size="sm" variant="outline" className="self-start" disabled={busy}>
-            Enregistrer les seuils
-          </Button>
-          <fieldset className="flex flex-col gap-2">
-            <legend className="text-sm font-medium">Les seuils retiennent</legend>
-            {SCOPES.map(({ label, value }) => (
-              <label key={value} className="flex items-center gap-2 text-sm">
-                <input
-                  type="radio"
-                  name="quota-scope"
-                  className="radio radio-sm"
-                  checked={quota.scope === value}
-                  disabled={busy}
-                  onChange={() => onScope(value)}
-                />
-                {label}
-              </label>
-            ))}
-          </fieldset>
-        </form>
+        {readOnly ? (
+          <ReadOnlyThresholds quota={quota} />
+        ) : (
+          <form noValidate className="flex flex-col gap-3" onSubmit={(event) => void handleSubmit(onThresholds)(event)}>
+            <fieldset className="flex flex-col gap-2">
+              <legend className="text-sm font-medium">Ne plus lancer de tour au-delà de</legend>
+              <Threshold
+                label="5 h"
+                name="Attente, fenêtre de 5 h"
+                register={() => register('fiveHour.wait', { valueAsNumber: true })}
+              />
+              <Threshold
+                label="semaine"
+                name="Attente, semaine"
+                register={() => register('sevenDay.wait', { valueAsNumber: true })}
+              />
+            </fieldset>
+            <fieldset className="flex flex-col gap-2">
+              <legend className="text-sm font-medium">Arrêter le tour au-delà de</legend>
+              <Threshold
+                label="5 h"
+                name="Arrêt, fenêtre de 5 h"
+                register={() => register('fiveHour.stop', { valueAsNumber: true })}
+              />
+              <Threshold
+                label="semaine"
+                name="Arrêt, semaine"
+                register={() => register('sevenDay.stop', { valueAsNumber: true })}
+              />
+            </fieldset>
+            {(error || invalid) && (
+              <p role="alert" className="text-xs text-danger">
+                {error ?? 'Des pourcentages entiers, de 1 à 100.'}
+              </p>
+            )}
+            <Button type="submit" size="sm" variant="outline" className="self-start" disabled={busy}>
+              Enregistrer les seuils
+            </Button>
+            <fieldset className="flex flex-col gap-2">
+              <legend className="text-sm font-medium">Les seuils retiennent</legend>
+              {SCOPES.map(({ label, value }) => (
+                <label key={value} className="flex items-center gap-2 text-sm">
+                  <input
+                    type="radio"
+                    name="quota-scope"
+                    className="radio radio-sm"
+                    checked={quota.scope === value}
+                    disabled={busy}
+                    onChange={() => onScope(value)}
+                  />
+                  {label}
+                </label>
+              ))}
+            </fieldset>
+          </form>
+        )}
       </div>
       <p className="mt-3 text-xs text-muted">
         Lu à chaque tour d’une session pilotée de l’abonnement. Les sessions lancées dans un terminal ne sont jamais

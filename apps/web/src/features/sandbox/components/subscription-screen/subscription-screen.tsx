@@ -2,6 +2,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { SectionSkeleton } from '@/shared/components/section-skeleton';
+import { useIsPhone } from '@/shared/hooks/use-is-phone';
 import { SettingsHeader } from '@/shared/layouts/settings-tabs';
 import {
   isolationQuery,
@@ -22,6 +23,7 @@ import { SubscriptionPanel } from '../subscription-panel';
  */
 export function SubscriptionScreen() {
   const client = useQueryClient();
+  const phone = useIsPhone();
   const { data: isolation } = useQuery(isolationQuery);
   const { data: quota } = useQuery(quotaQuery);
   const { data: profiles } = useQuery(profilesQuery);
@@ -66,6 +68,7 @@ export function SubscriptionScreen() {
           />
           <QuotaPanel
             quota={quota}
+            readOnly={phone}
             busy={busy}
             error={quotaError}
             onThresholds={(next) => thresholds.mutate(next)}

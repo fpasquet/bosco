@@ -34,3 +34,12 @@ Fonctionnalité: Abonnement Claude
     Quand je clique sur le lien « Autorisations, modèle et effort par défaut »
     Alors je vois le titre « perso »
     Et je vois le texte « Profil par défaut de Bosco : proposé à chaque nouvelle session. »
+
+  @mobile
+  @CA-REGL-14
+  Scénario: Sur le téléphone, l'abonnement et son quota se lisent sans champ ni bouton
+    Quand j'ouvre la page « /settings/subscription »
+    Alors je vois le texte « Ne plus lancer de tour au-delà de »
+    Et je vois le texte « Modifiable depuis le poste. »
+    Et je ne vois pas le bouton « Enregistrer les seuils »
+    Et je ne vois pas le bouton « Modifier »
