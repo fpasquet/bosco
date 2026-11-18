@@ -6,7 +6,7 @@ Fonctionnalité: Navigation par lieux
   et de mes groupes, afin de savoir où je suis quelle que soit la façon d'y arriver.
 
   Contexte:
-    Étant donné le profil Claude Code « .claude » contient le transcript « session-maison-rag.jsonl » de la session « 5e0a91c3 »
+    Étant donné le profil Claude Code « .claude » contient le transcript « session-maison-recettes.jsonl » de la session « 5e0a91c3 »
     Et le profil Claude Code « .claude » contient le transcript « session-home-notes.jsonl » de la session « e7d2b410 »
     Et Bosco surveille les profils « .claude » et « .claude-perso »
     Et les dossiers « maison » et « site-perso » sont des projets
@@ -33,6 +33,14 @@ Fonctionnalité: Navigation par lieux
     Quand j’ouvre au clavier le menu « Actions de maison »
     Et je clique sur l’élément de menu « Réglages »
     Alors je suis sur la page « /projects/1/settings »
+
+  @CA-CONT-175
+  Scénario: Un projet ni épinglé ni actif apparaît dans la barre latérale le temps de la visite de sa page
+    Quand j'ouvre la page « /projects/1/sessions »
+    Alors la barre latérale montre le projet « maison »
+    Et l’entrée « maison » de la barre latérale est active
+    Quand j'ouvre la page « /history »
+    Alors la barre latérale ne montre pas le projet « maison »
 
   @CA-CONT-153
   Scénario: Un projet épinglé reste dans la barre latérale, et la quitte désépinglé sans être retiré

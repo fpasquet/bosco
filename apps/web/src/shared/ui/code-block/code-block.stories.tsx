@@ -11,7 +11,7 @@ import {
 } from './index';
 
 const CODE =
-  'export function chunkPdf(pages: Page[]): Chunk[] {\n  return pages.flatMap((page) => splitBlocks(page.blocks));\n}';
+  'export function parseIngredients(lines: string[]): Ingredient[] {\n  return joinQuantities(lines).flatMap((line) => splitLine(line));\n}';
 
 const meta = {
   title: 'UI/CodeBlock',
@@ -35,7 +35,7 @@ export const WithHeader: Story = {
       <CodeBlockHeader>
         <CodeBlockTitle>
           <FileCodeIcon />
-          src/indexer/pdf.ts
+          src/import/ingredients.ts
         </CodeBlockTitle>
         <CodeBlockActions>
           <CodeBlockCopyButton value={CODE} />
@@ -51,12 +51,12 @@ export const Diff: Story = {
     <CodeBlock size="sm" className="max-w-lg">
       <CodeBlockContent>
         <CodeBlockLine variant="removed">
-          {'  for (const page of pages) chunks.push(...splitBlocks(page.blocks));'}
+          {'  for (const line of lines) ingredients.push(...splitLine(line));'}
         </CodeBlockLine>
         <CodeBlockLine variant="added">
-          {'  for (const page of pages) chunks.push(...splitBlocks(groupTables(page.blocks)));'}
+          {'  for (const line of joinQuantities(lines)) ingredients.push(...splitLine(line));'}
         </CodeBlockLine>
-        <CodeBlockLine>{'  return chunks;'}</CodeBlockLine>
+        <CodeBlockLine>{'  return ingredients;'}</CodeBlockLine>
       </CodeBlockContent>
     </CodeBlock>
   ),

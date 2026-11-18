@@ -37,7 +37,7 @@ const session = {
   place: null,
   sessionId: 'c41e9a07',
   taskId: null,
-  title: 'Specs du tableau de bord Bosco',
+  title: 'Ajouter les catégories au budget du foyer',
   excerpt: null,
 };
 

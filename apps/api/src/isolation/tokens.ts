@@ -4,3 +4,4 @@ export const DOCKER_ISOLATION = Symbol('DockerIsolation');
 export const CONTAINERS_SERVICE = Symbol('ContainersService');
 export const CONTAINER_EVENTS = Symbol('ContainerEvents');
 export const QUOTA_SERVICE = Symbol('QuotaService');
+export const SANDBOX_PROBE = Symbol('SandboxProbe');

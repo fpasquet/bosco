@@ -182,19 +182,19 @@ export function NotificationSettings({ busy, desktop, onChange, settings }: Noti
         <Preview
           kind="Question"
           tone="text-warning"
-          title="Digest quotidien de la veille média"
-          excerpt="« Le digest est généré. Veux-tu que je lance les tests ? »"
+          title="Récapitulatif quotidien de l’agenda"
+          excerpt="« Le récapitulatif est généré. Veux-tu que je lance les tests ? »"
         />
         <Preview
           kind="Autorisation"
           tone="text-warning"
-          title="Specs du tableau de bord Bosco"
+          title="Ajouter les catégories au budget du foyer"
           excerpt="Bash · npm run db:migrate"
         />
         <Preview
           kind="À relire"
           tone="text-primary"
-          title="T-12 · Ajouter la prononciation de « SNCF » au lexique"
+          title="T-12 · Ajouter la page des recettes au site"
           excerpt="2 fichiers +38 −4 · 0,41 $"
         />
         <p className="text-xs text-muted">

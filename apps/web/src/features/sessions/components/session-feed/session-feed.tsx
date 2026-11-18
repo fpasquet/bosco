@@ -9,7 +9,8 @@ import { Skeleton } from '@/shared/ui/skeleton';
 import { clockOf } from '../../lib/detail';
 import { actionLabel, elapsed } from '../../lib/format';
 import { AutoModeSuspended } from '../auto-mode-suspended';
-import { ConversationView } from '../conversation-view';
+import { ConversationView, type ConversationViewProps } from '../conversation-view';
+import { SandboxRefusals } from '../sandbox-refusals';
 
 export interface SessionFeedProps {
   /** Fil complet lu dans le transcript ; sans lui (transcript effacé, encore en chargement), le journal */
@@ -19,6 +20,8 @@ export interface SessionFeedProps {
   loading?: boolean;
   now: Date;
   session: SessionDto;
+  /** Sorties réseau refusées d'un bac à sable : à leur heure dans le fil complet, à la fin du journal */
+  refusals?: NonNullable<ConversationViewProps['refusals']>;
   /** Carte affichée à la fin du fil, quand l'agent attend une autorisation */
   tail?: ReactNode;
   /** Sous le fil, hors du défilement : la zone de message d'une session pilotée */
@@ -73,7 +76,8 @@ function FeedContent({
   journal,
   live,
   loading,
-}: Pick<SessionFeedProps, 'conversation' | 'journal' | 'loading'> & { live: boolean }) {
+  refusals,
+}: Pick<SessionFeedProps, 'conversation' | 'journal' | 'loading' | 'refusals'> & { live: boolean }) {
   if (loading)
     return (
       <div role="status" aria-busy className="flex flex-col gap-3">
@@ -86,16 +90,26 @@ function FeedContent({
     );
   if (conversation && conversation.turns.length > 0) {
     const notices = journal.filter((entry) => entry.kind === 'autoModeSuspended');
-    return <ConversationView conversation={conversation} live={live} notices={notices} />;
+    return <ConversationView conversation={conversation} live={live} notices={notices} refusals={refusals} />;
   }
-  if (journal.length === 0) return <p className="text-muted">Rien à montrer pour l’instant.</p>;
+  const refused = refusals && <SandboxRefusals refusals={[...refusals.list]} project={refusals.project} />;
+  if (journal.length === 0)
+    return (
+      <>
+        <p className="text-muted">Rien à montrer pour l’instant.</p>
+        {refused}
+      </>
+    );
   const last = journal.at(-1);
   return (
-    <ol className="flex flex-col gap-3">
-      {journal.map((entry) => (
-        <Entry key={entry.seq} entry={entry} current={live && entry === last && entry.kind === 'tool'} />
-      ))}
-    </ol>
+    <>
+      <ol className="flex flex-col gap-3">
+        {journal.map((entry) => (
+          <Entry key={entry.seq} entry={entry} current={live && entry === last && entry.kind === 'tool'} />
+        ))}
+      </ol>
+      {refused}
+    </>
   );
 }
 
@@ -103,7 +117,16 @@ function FeedContent({
  * Fil d'une session : le plus récent en bas, mis à jour sans recharger. Il suit les nouveaux événements tant
  * qu'on est en bas ; si on remonte, « Revenir au direct » ramène au dernier.
  */
-export function SessionFeed({ conversation, footer, journal, loading = false, now, session, tail }: SessionFeedProps) {
+export function SessionFeed({
+  conversation,
+  footer,
+  journal,
+  loading = false,
+  now,
+  refusals,
+  session,
+  tail,
+}: SessionFeedProps) {
   const scroller = useRef<HTMLDivElement>(null);
   const [following, setFollowing] = useState(true);
   const last = journal.at(-1);
@@ -111,7 +134,7 @@ export function SessionFeed({ conversation, footer, journal, loading = false, no
   useEffect(() => {
     const element = scroller.current;
     if (element && following) element.scrollTop = element.scrollHeight;
-  }, [following, size, tail, journal.length]);
+  }, [following, size, tail, journal.length, refusals?.list.length]);
   const live = session.state === 'running';
   const open = session.state !== 'ended';
   const status =
@@ -142,7 +165,7 @@ export function SessionFeed({ conversation, footer, journal, loading = false, no
           setFollowing(element.scrollHeight - element.scrollTop - element.clientHeight < BOTTOM_SLACK_PX);
         }}
       >
-        <FeedContent conversation={conversation} journal={journal} live={live} loading={loading} />
+        <FeedContent conversation={conversation} journal={journal} live={live} loading={loading} refusals={refusals} />
         {tail}
       </div>
       {!following && (

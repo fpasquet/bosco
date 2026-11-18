@@ -21,7 +21,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Toutes les notifications de la journée et de la veille (E15a). */
+/** Toutes les notifications de la journée et de la veille. */
 export const All: Story = {};
 
 /** « À traiter » : ce qui attend encore une réponse ou une relecture. */

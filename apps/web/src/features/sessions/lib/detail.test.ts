@@ -5,8 +5,24 @@ import type { SessionDto, SourceDto } from '@bosco/domain';
 import { cacheShare, durationEnd, filesIn, resumeCommand } from './detail';
 
 const sources: SourceDto[] = [
-  { id: 'pro', label: 'pro', liveTracking: true, managed: false, path: '/home/dev/.claude', watched: true },
-  { id: 'perso', label: 'perso', liveTracking: true, managed: false, path: '/home/dev/.claude-perso', watched: true },
+  {
+    id: 'pro',
+    label: 'pro',
+    liveTracking: true,
+    managed: false,
+    path: '/home/dev/.claude',
+    unreadable: false,
+    watched: true,
+  },
+  {
+    id: 'perso',
+    label: 'perso',
+    liveTracking: true,
+    managed: false,
+    path: '/home/dev/.claude-perso',
+    unreadable: false,
+    watched: true,
+  },
 ];
 
 const session = (overrides: Partial<SessionDto>) =>

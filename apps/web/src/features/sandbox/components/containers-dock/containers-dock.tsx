@@ -75,11 +75,17 @@ function DockBody({ actions, view }: { actions: ReturnType<typeof useContainerAc
                   <span className="min-w-0 flex-1 truncate font-medium">{sandbox.title}</span>
                   <UsageCells frozen={frozen} usage={sandbox} />
                   <span className="flex w-52 justify-end">
-                    {sandbox.sessionId && (
-                      <Button variant="ghost" size="xs" asChild>
-                        <Link href={`/sessions/${sandbox.sessionId}`}>Voir la session</Link>
-                      </Button>
-                    )}
+                    {/* Dernières mesures d'un Docker muet : leurs actions sont désactivées */}
+                    {sandbox.sessionId &&
+                      (frozen ? (
+                        <Button variant="ghost" size="xs" disabled>
+                          Voir la session
+                        </Button>
+                      ) : (
+                        <Button variant="ghost" size="xs" asChild>
+                          <Link href={`/sessions/${sandbox.sessionId}`}>Voir la session</Link>
+                        </Button>
+                      ))}
                   </span>
                 </li>
               ))}

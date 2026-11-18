@@ -25,7 +25,7 @@
 
 ## <a id="e1"></a>E1 · Vue d'ensemble
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `sessions/e1.html` · implémentation : **Livré (Développé (feat/navigation-by-place, feat/multi-project-sessions) : barre latérale par lieu, clic sur un projet ou un groupe qui ouvre sa page, E1c retiré, vue d'ensemble par groupe (E1g), sessions à plusieurs projets rangées sous leur projet principal. Écart : la vue par groupe (E1g) ne montre pas « api-tarifs +2 » avant « aussi dans… ».)**
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `sessions/e1.html` · implémentation : **Livré (Développé (feat/navigation-by-place, feat/multi-project-sessions) : barre latérale par lieu, clic sur un projet ou un groupe qui ouvre sa page, E1c retiré, vue d'ensemble par groupe (E1g), sessions à plusieurs projets rangées sous leur projet principal. Accepté (feat/session-defaults) : dans la vue par groupe, « api-tarifs +2 » suit le titre de la session, sur sa ligne. « À propos de Bosco » depuis le logo (règle 11), ajouté dans feat/finish-sandbox-and-sources.)**
 
 ### <a id="e1a"></a>E1a · Vue d'ensemble : premier lancement
 
@@ -134,7 +134,7 @@ Règles de l'écran :
 
 ## <a id="e2"></a>E2 · Détail d'une session
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `sessions/e2.html` · implémentation : **Écart (E2e : cinq modes avec icônes développés (feat/session-defaults) ; écart : la ligne « Approuver pour moi suspendu » est gardée en mémoire jusqu'au redémarrage et s'affiche en fin de fil, pas à son heure. Tous les états : fil d'Ariane « Projets › projet ». E2c, E2d retirés avec les tâches (DT-43). E2k développé (feat/multi-project-sessions) et son onglet « Projets » sur le téléphone. Écarts : les sorties refusées d'un bac à sable s'affichent en fin de fil ; pas de consommation du conteneur dans la carte du bac à sable ; sur le téléphone, le détail a les onglets Fil, Projets et Usage, sans Fichiers (E2a, E2e) ni Bac à sable (E2j) et l'aide sous la zone de message est masquée ; la vue d'ensemble n'a pas la marque « Bac à sable » ; « Arrêter » est un bouton contour ; le serveur du canal s'appelle `bosco-channel`, `bosco` étant celui du serveur MCP.)**
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `sessions/e2.html` · implémentation : **Livré (Développé (jusqu'à feat/finish-sandbox-and-sources) : fil d'Ariane, cinq modes, sessions à plusieurs projets, suivi en direct proposé depuis le détail, choix recommandé coché d'office, session effacée refusée, marque « Bac à sable », refus réseau à leur heure (une ligne par domaine et par tour, avec le nombre de tentatives), consommation du conteneur, onglet « Bac à sable » et aide sous la zone de message sur le téléphone. Acceptés : « Arrêter » en bouton contour ; serveur du canal `bosco-channel` ; sur le téléphone, fichiers dans l'onglet Usage, carte d'autorisation sans feuille du bas, pas de barre de branche au-dessus de la zone de message (« Récupérer » est dans l'onglet Bac à sable) ; la carte du bac à sable ne montre ni disque ni réseau.)**
 
 ### <a id="e2a"></a>E2a · Détail d'une session : en cours
 
@@ -184,7 +184,7 @@ Règles de l'écran :
 1. L'éditeur est un vrai champ de texte : plusieurs lignes, qui grandit avec le texte jusqu'à 10 lignes, puis défile. Entrée envoie, Maj+Entrée ajoute une ligne. @ mentionne un fichier du projet et / en tête de message choisit une commande : les deux deviennent des puces non modifiables, le reste est du texte simple (un bloc de code s'affiche en police à chasse fixe). Voir [E2h](#e2h). Si l'agent travaille, le message ne part pas tout de suite : il part au tour suivant.
 2. Un message écrit pendant que l'agent travaille attend la fin du tour : « partira à la fin du tour ». « Annuler » le retire tant qu'il n'est pas parti. Il n'y a qu'un message en attente : un second s'ajoute au même.
 3. Le bouton rond envoie le message (flèche). Pendant un tour, avec le champ vide, il devient un carré « Arrêter » : il interrompt le tour, comme Échap dans le terminal ; le message en attente reste et part aussitôt après. Champ rempli pendant un tour, c'est la flèche : le message part en attente.
-4. La barre d'outils montre le mode d'autorisations avec son icône et propose les cinq (Demander, Accepter les modifications, Plan, Approuver pour moi, Accès complet ; règle 17), puis le modèle et l'effort. Comme l'agent est lancé à chaque tour, changer de mode vaut dès le tour suivant, ainsi que le modèle et l'effort. Passer à Accès complet sur le poste ouvre la confirmation d'[E16e](#e16e) ; le mode passe alors en orange. Quand Claude Code suspend Approuver pour moi après 3 refus de suite ou 20 au total, une ligne du fil le dit : « Approuver pour moi suspendu après 3 refus : les demandes reviennent dans Bosco ». Avec « Demander », chaque autorisation arrive dans Bosco sous la forme de la carte [E2b](#e2b). Le bouton « + » ajoute une image.
+4. La barre d'outils montre le mode d'autorisations avec son icône et propose les cinq (Demander, Accepter les modifications, Plan, Approuver pour moi, Accès complet ; règle 17), puis le modèle et l'effort. Comme l'agent est lancé à chaque tour, changer de mode vaut dès le tour suivant, ainsi que le modèle et l'effort. Passer à Accès complet sur le poste ouvre la confirmation d'[E16e](#e16e) ; le mode passe alors en orange. Quand Claude Code suspend Approuver pour moi après 3 refus de suite ou 20 au total, une ligne du fil le dit, à la fin du tour où c'est arrivé : « Approuver pour moi suspendu après 3 refus : les demandes reviennent dans Bosco ». Avec « Demander », chaque autorisation arrive dans Bosco sous la forme de la carte [E2b](#e2b). Le bouton « + » ajoute une image.
 5. Pièces jointes : des images seulement (capture collée, glissée dans l'éditeur ou ajoutée par « + »), cinq au plus. Chaque puce se retire avec sa croix.
 6. Entre deux tours, la session est close : elle se reprend dans un terminal avec la commande affichée, ou ici en écrivant. Tant qu'un terminal l'a rouverte, Bosco ne lui écrit plus (règle 9) : elle se lit alors comme une session ouverte dans un terminal ([E2a](#e2a)).
 
@@ -292,7 +292,7 @@ Règles de l'écran :
 
 ## <a id="e3"></a>E3 · Historique
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `sessions/e3.html` · implémentation : **À faire évoluer (E3a : onglet Coûts retiré, l'usage a sa page (E23) ; E3b retiré. Écart : « Tout afficher » d'un jour chargé n'existe pas, toutes ses sessions sont montrées. Reste : le filtre par groupe (CA-SESS-127).)**
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `sessions/e3.html` · implémentation : **Livré (Développé (feat/usage-page) : onglet « Coûts » retiré, l'usage a sa page (E23) ; filtre par groupe. Écart : « Tout afficher » d'un jour chargé n'existe pas, toutes ses sessions sont montrées. CA-SESS-50 sans objet tant qu'une session n'a pas d'état « En échec » (parti avec E2d).)**
 
 ### <a id="e3a"></a>E3a · Historique : recherche et liste
 
@@ -318,7 +318,7 @@ Ancien onglet « Coûts » de l'historique : un total, un coût par jour empilé
 
 ## <a id="e23"></a>E23 · Usage
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `sessions/e23.html` · implémentation : **À développer**
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `sessions/e23.html` · implémentation : **Livré (Développé (feat/usage-page) : filtres dans l'adresse, graphique quotidien en SVG (jours au clavier, vue en tableau), quota, répartition (cinq lignes puis « N autres »), PR créées ; sur le téléphone, le graphique montre les 7 derniers jours de la période.)**
 
 ### <a id="e23a"></a>E23a · Usage : 30 derniers jours
 
@@ -358,7 +358,7 @@ Règles de l'écran :
 
 ## <a id="e15"></a>E15 · Notifications
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `sessions/e15.html` · implémentation : **À faire évoluer (E15b : onglet Notifications des Réglages, barre à cinq onglets, fil « Réglages › Notifications ». Écart : le titre d'une session sans titre donné par Claude Code est sa première demande, coupée à 60 caractères dans la notification du bureau.)**
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `sessions/e15.html` · implémentation : **Livré (Développé : onglet Notifications, fil « Réglages › Notifications », lecture seule sur le téléphone. Accepté : le titre d'une session sans titre est sa première demande, coupée à la fin d'un mot.)**
 
 ### <a id="e15a"></a>E15a · Notifications : centre de notifications
 
@@ -652,6 +652,7 @@ Règles de l'écran :
 - **CA-SESS-131** · [E16b](#e16b) · Étant donné un projet de la session qui n'est pas un dépôt git, quand la personne regarde le choix « Bac à sable », alors il est grisé avec sa raison (« notes-clubs n'est pas un dépôt git ») et la session tourne sur le poste (RF-SESS-14).
 - **CA-SESS-161** · [E16b](#e16b) · Étant donné « Bac à sable » choisi, quand ni le profil, ni le groupe, ni le projet ne règlent les autorisations, alors le mode passe à « Accepter les modifications », signalé « défaut en bac à sable » (RF-SESS-12, RF-SESS-16).
 - **CA-SESS-162** · [E16b](#e16b) · Étant donné « Bac à sable » choisi et un niveau (profil, groupe ou projet) qui règle les autorisations, quand la personne regarde la puce, alors ce mode l'emporte, y compris « Approuver pour moi » ou « Accès complet », sans confirmation puisque le bac à sable est isolé du poste, et les cinq modes restent possibles (RF-SESS-12, RF-SESS-17).
+- **CA-SESS-185** · [E16b](#e16b) · Étant donné « Bac à sable » choisi, quand la personne démarre la session avec un nom de branche hors du préfixe `bosco/s-`, alors le démarrage est refusé et le formulaire le dit (RF-SESS-12).
 
 ### <a id="e2k-e16c-e16d-sessions-a-plusieurs-projets"></a>E2k, E16c, E16d · Sessions à plusieurs projets
 

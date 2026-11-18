@@ -6,7 +6,7 @@ Fonctionnalité: Suivi en direct
 
   Contexte:
     Étant donné le profil Claude Code « .claude-perso » contient le transcript « session-maison-budget.jsonl » de la session « c41e9a07 »
-    Et le profil Claude Code « .claude » contient le transcript « session-maison-rag.jsonl » de la session « 5e0a91c3 »
+    Et le profil Claude Code « .claude » contient le transcript « session-maison-recettes.jsonl » de la session « 5e0a91c3 »
     Et Bosco surveille les profils « .claude » et « .claude-perso »
 
   @CA-SESS-62
@@ -49,7 +49,7 @@ Fonctionnalité: Suivi en direct
     Quand j'ouvre la page « / »
     Et je clique sur le bouton « Autoriser »
     Alors Claude Code reçoit la décision « allow »
-    Et je vois le texte « Autorisé · Specs du tableau de bord Bosco »
+    Et je vois le texte « Autorisé · Ajouter les catégories au budget du foyer »
     Et je ne vois plus le bandeau des sessions qui t’attendent
 
   @CA-SESS-07
@@ -59,7 +59,7 @@ Fonctionnalité: Suivi en direct
     Quand j'ouvre la page « / »
     Alors je vois le texte « 1 session attend ta réponse »
     Quand la personne répond dans le terminal
-    Alors je vois le texte « Répondu dans le terminal · Specs du tableau de bord Bosco »
+    Alors je vois le texte « Répondu dans le terminal · Ajouter les catégories au budget du foyer »
     Et je ne vois plus le bandeau des sessions qui t’attendent
 
   @mobile

@@ -20,6 +20,7 @@ import { isAutostart, setAutostart } from './autostart.ts';
 import { LiveEvents } from './events.ts';
 import { nativeText, pathOf } from './notification-text.ts';
 import { loadPreferences, savePreferences } from './preferences.ts';
+import { choiceOf, type ServiceChoice, serviceChoiceDialog } from './service-choice.ts';
 import {
   findNode,
   healthy,
@@ -173,24 +174,11 @@ function checkUpdate(): void {
 }
 
 /** Un service répond déjà : s'y relier (par défaut) ou le remplacer ; le choix est gardé. */
-async function serviceChoice(): Promise<'attach' | 'own' | 'quit'> {
+async function serviceChoice(): Promise<ServiceChoice> {
   const preferences = loadPreferences(app.getPath('userData'));
   if (preferences.service) return preferences.service;
-  const { response } = await dialog.showMessageBox({
-    type: 'question',
-    title: 'Bosco tourne déjà sur ce poste',
-    message: 'Bosco tourne déjà sur ce poste',
-    detail:
-      `Un service Bosco répond sur ${BASE}. L'application peut s'en servir, ou le remplacer : ` +
-      'ses sessions, ses tâches et ses réglages sont gardés.\n\n' +
-      '• Se relier au service : l’application n’est qu’une fenêtre sur le service, qui continue de tourner sans elle, ' +
-      'comme avant dans le navigateur.\n' +
-      '• Remplacer le service : il s’arrête et ne démarre plus seul ; l’application fait tourner Bosco.',
-    buttons: ['Se relier au service', 'Remplacer le service par l’application', 'Quitter'],
-    defaultId: 0,
-    cancelId: 2,
-  });
-  const choice = (['attach', 'own', 'quit'] as const)[response] ?? 'quit';
+  const { response } = await dialog.showMessageBox(serviceChoiceDialog(BASE));
+  const choice = choiceOf(response);
   if (choice !== 'quit') savePreferences(app.getPath('userData'), { service: choice });
   return choice;
 }

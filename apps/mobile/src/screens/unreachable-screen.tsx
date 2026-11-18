@@ -2,8 +2,7 @@
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors } from '../lib/theme';
-
-const RETRY_S = 5;
+import { countdown, RETRY_S, unreachableText } from '../lib/unreachable';
 
 export function UnreachableScreen(
   props: Readonly<{
@@ -18,26 +17,24 @@ export function UnreachableScreen(
   useEffect(() => {
     const timer = setInterval(() => {
       setLeft((current) => {
-        if (current > 1) return current - 1;
-        onRetry();
-        return RETRY_S;
+        const next = countdown(current);
+        if (next.retry) onRetry();
+        return next.left;
       });
     }, 1000);
     return () => clearInterval(timer);
   }, [onRetry]);
+  const text = unreachableText(url, lastUpdate);
   return (
     <View style={styles.screen}>
       <Text style={styles.icon}>⌁</Text>
-      <Text style={styles.title}>Bosco n’est pas joignable</Text>
-      <Text style={styles.muted}>
-        Le téléphone doit être sur le même réseau que le poste ({url}).
-        {lastUpdate ? ` Dernière mise à jour à ${lastUpdate}.` : ''}
-      </Text>
+      <Text style={styles.title}>{text.title}</Text>
+      <Text style={styles.muted}>{text.hint}</Text>
       <Pressable style={styles.button} onPress={onRetry}>
-        <Text style={styles.buttonText}>Réessayer</Text>
+        <Text style={styles.buttonText}>{text.retry}</Text>
       </Pressable>
       <Pressable onPress={onChange}>
-        <Text style={styles.link}>Changer de poste</Text>
+        <Text style={styles.link}>{text.change}</Text>
       </Pressable>
       <Text style={styles.small}>Nouvelle tentative dans {left} s</Text>
     </View>

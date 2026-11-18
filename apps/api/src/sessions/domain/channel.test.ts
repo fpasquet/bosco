@@ -1,4 +1,4 @@
-// Ce que les scénarios ne voient pas : la ligne de transcript d'un message du canal, et la commande de lancement (E2i).
+// Ce que les scénarios ne voient pas : la ligne de transcript d'un message du canal, et la commande de lancement.
 import { describe, expect, it } from 'vitest';
 import { channelLaunchCommand, channelMessageOf } from './channel.ts';
 

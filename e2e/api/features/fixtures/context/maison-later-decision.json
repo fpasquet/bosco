@@ -1,9 +1,9 @@
 {
   "target": { "kind": "project", "name": "maison" },
   "text": {
-    "title": "Indexer les PDF scannés",
-    "context": "Les PDF scannés n'ont pas de texte.",
-    "decision": "Passer les PDF scannés par la reconnaissance de caractères avant l'indexation.",
+    "title": "Importer les relevés bancaires scannés",
+    "context": "Les relevés scannés n'ont pas de texte.",
+    "decision": "Passer les relevés scannés par la reconnaissance de caractères avant l'import.",
     "consequences": null,
     "alternatives": null
   },

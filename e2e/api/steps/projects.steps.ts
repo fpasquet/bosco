@@ -36,6 +36,11 @@ When('I browse the home folder', async ({ last, request }) => {
   last.response = { status: response.status(), body: (await response.json()) as unknown };
 });
 
+When('I browse the home folder with the hidden folders', async ({ last, request }) => {
+  const response = await request.get('/api/folders?hidden=true');
+  last.response = { status: response.status(), body: (await response.json()) as unknown };
+});
+
 When('I browse the folder {string}', async ({ bosco, last, request }, folder: string) => {
   const path = folder.startsWith('/') ? folder : join(bosco.profilesRoot, folder);
   const response = await request.get(`/api/folders?path=${encodeURIComponent(path)}`);

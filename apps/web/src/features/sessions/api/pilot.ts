@@ -1,4 +1,5 @@
 import type {
+  ContainersDto,
   IsolationDto,
   PilotMessageDto,
   PilotOptionsDto,
@@ -9,6 +10,7 @@ import type {
   SessionDefaultsResolvedDto,
   StartSessionDto,
   SuggestionDto,
+  UsageDto,
 } from '@bosco/domain';
 
 /** Erreur de l'API de pilotage, avec le message à montrer (« La session … est ouverte dans un terminal »). */
@@ -180,6 +182,28 @@ export const sandboxRefusalsQuery = (sessionId: string) => ({
     const response = await call(`/api/sessions/${encodeURIComponent(sessionId)}/sandbox/refusals`);
     return (await response.json()) as SandboxRefusalsDto;
   },
+});
+
+/** Mesure toutes les 5 s des conteneurs en cours, que la carte du bac à sable relit. */
+const USAGE_REFRESH_MS = 5000;
+
+/**
+ * Consommation du conteneur d'un bac à sable démarré, lue dans les conteneurs en cours (même cache que leur panneau) ;
+ * null s'il n'y figure pas.
+ */
+export const sandboxUsageQuery = (sessionId: string) => ({
+  queryKey: ['containers'],
+  queryFn: async (): Promise<ContainersDto> => {
+    const response = await call('/api/containers');
+    return (await response.json()) as ContainersDto;
+  },
+  select: (view: ContainersDto): null | UsageDto => {
+    const sandbox = view.sandboxes.find((running) => running.sessionId === sessionId);
+    return sandbox
+      ? { cpu: sandbox.cpu, cpuLimit: sandbox.cpuLimit, memory: sandbox.memory, memoryLimit: sandbox.memoryLimit }
+      : null;
+  },
+  refetchInterval: USAGE_REFRESH_MS,
 });
 
 /** Un projet, pour la branche courante de son dossier (carte « Projets » d'une session à plusieurs projets). */

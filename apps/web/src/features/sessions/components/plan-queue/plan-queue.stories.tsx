@@ -7,9 +7,9 @@ const meta = {
   args: {
     live: true,
     todos: [
-      { content: 'Relire le découpage des PDF', status: 'completed' },
-      { content: 'Regrouper les lignes d’un tableau', status: 'completed' },
-      { content: 'Corriger le tableau sur deux pages', status: 'in_progress' },
+      { content: 'Relire l’import des ingrédients', status: 'completed' },
+      { content: 'Recoller les quantités sur deux lignes', status: 'completed' },
+      { content: 'Corriger la recette sans quantité', status: 'in_progress' },
       { content: 'Relancer toute la suite', status: 'pending' },
     ],
   },
@@ -21,5 +21,5 @@ type Story = StoryObj<typeof meta>;
 export const Running: Story = {};
 
 export const AllDone: Story = {
-  args: { live: false, todos: [{ content: 'Relire le découpage des PDF', status: 'completed' }] },
+  args: { live: false, todos: [{ content: 'Relire l’import des ingrédients', status: 'completed' }] },
 };

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-// Ce que l'application ne montre pas à l'œil : le menu de la barre système suit les sessions qui t'attendent (E17a).
+// Ce que l'application ne montre pas à l'œil : le menu de la barre système suit les sessions qui t'attendent.
 import type { SessionDto } from '@bosco/domain';
 import { trayMenu, trayTooltip, waitingSessions } from './tray-menu.ts';
 
@@ -11,15 +11,15 @@ const permission = session(
   'c41e9a07',
   'waiting',
   { kind: 'permission', tool: 'Bash', detail: 'npm run db:migrate', requestId: 'r1', since: '2026-11-06T15:13:00Z' },
-  'Specs du tableau de bord Bosco',
+  'Ajouter les catégories au budget du foyer',
 );
 const turn = session(
   'a3f2c901',
   'waiting',
   { kind: 'turn', message: 'Veux-tu que je lance les tests ?', since: '2026-11-06T15:08:00Z' },
-  'Digest quotidien de la veille média',
+  'Récapitulatif quotidien de l’agenda',
 );
-const running = session('5b2d81e4', 'running', null, 'Corriger l’indexation des PDF');
+const running = session('5b2d81e4', 'running', null, 'Corriger l’arrondi des remboursements');
 
 describe('trayMenu', () => {
   it('lists the sessions that wait, the oldest first, each opening its session (CA-APPS-02)', () => {
@@ -29,12 +29,12 @@ describe('trayMenu', () => {
       { type: 'header', label: 'Bosco · 2 sessions t’attendent' },
       {
         type: 'normal',
-        label: 'Digest quotidien de la veille média · tour terminé',
+        label: 'Récapitulatif quotidien de l’agenda · tour terminé',
         action: { kind: 'open', path: '/sessions/a3f2c901' },
       },
       {
         type: 'normal',
-        label: 'Specs du tableau de bord Bosco · Bash npm run db:migrate',
+        label: 'Ajouter les catégories au budget du foyer · Bash npm run db:migrate',
         action: { kind: 'open', path: '/sessions/c41e9a07' },
       },
     ]);

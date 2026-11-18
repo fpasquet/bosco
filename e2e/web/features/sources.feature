@@ -7,7 +7,7 @@ Fonctionnalité: Sources et réglages
 
   Contexte:
     Étant donné le profil Claude Code « .claude-perso » contient le transcript « session-maison-budget.jsonl » de la session « c41e9a07 »
-    Et le profil Claude Code « .claude » contient le transcript « session-maison-rag.jsonl » de la session « 5e0a91c3 »
+    Et le profil Claude Code « .claude » contient le transcript « session-maison-recettes.jsonl » de la session « 5e0a91c3 »
     Et Bosco surveille les profils « .claude » et « .claude-perso »
 
   @CA-SESS-59
@@ -39,16 +39,16 @@ Fonctionnalité: Sources et réglages
   @RF-SESS-01
   @NF-18
   Scénario: « Ajouter un dossier » surveille un autre dossier de configuration de Claude Code
-    Étant donné le profil Claude Code « .claude-pro » contient le transcript « session-site-perso-fastify.jsonl » de la session « a41f07c2 »
+    Étant donné le profil Claude Code « .claude-pro » contient le transcript « session-site-perso-dependances.jsonl » de la session « a41f07c2 »
     Quand j'ouvre la page « /settings/sources »
     Et je clique sur le bouton « Ajouter un dossier »
-    Et je saisis le dossier du profil « .claude-pro » dans le champ « Dossier de configuration »
+    Et je clique sur le bouton radio « .claude-pro »
     Alors la page est accessible
     Quand je clique sur le bouton « Ajouter » de la fenêtre
     Alors je vois le texte « Dossier ajouté : pro est surveillé. »
     Et l’interrupteur « Lire le profil pro » est « activé »
 
-  @CA-SESS-57
+  @CA-SESS-186
   Scénario: Un suivi en direct installé par une autre version de Bosco est à mettre à jour
     Étant donné le suivi en direct est installé dans le profil « .claude-perso »
     Et le suivi en direct du profil « .claude-perso » vient d’une autre version de Bosco
@@ -58,6 +58,13 @@ Fonctionnalité: Sources et réglages
     Et je clique sur le bouton « Mettre à jour » de la fenêtre
     Alors je vois le texte « Suivi en direct · perso »
     Et je ne vois plus le texte « À mettre à jour »
+
+  @CA-SESS-57
+  Scénario: Un profil dont Bosco ne sait plus lire les nouvelles sessions est à mettre à jour
+    Étant donné une nouvelle version de Claude Code écrit les sessions du profil « .claude-perso » dans un format inconnu
+    Quand j'ouvre la page « /settings/sources »
+    Alors je vois l’étiquette « À mettre à jour »
+    Et je vois le texte « ses nouvelles sessions ne sont plus lues »
 
   @CA-SESS-58
   Scénario: « Installer » ouvre le suivi en direct d'un profil, « Vérifier le suivi en direct » sa vérification

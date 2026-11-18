@@ -9,9 +9,8 @@ Fonctionnalité: Isolation du bac à sable
     Étant donné Bosco surveille les profils « .claude » et « .claude-perso »
 
   @CA-CONT-41
-  @CA-CONT-43
-  @CA-CONT-44
   @CA-REGL-08
+  @CA-REGL-10
   @NF-18
   Scénario: Les limites d'un bac à sable, et un domaine qui s'ajoute par son nom puis se retire d'un clic
     Quand j'ouvre la page « /settings »
@@ -30,6 +29,15 @@ Fonctionnalité: Isolation du bac à sable
     Et je ne vois pas le bouton « Retirer claude.ai »
     Quand je clique sur le bouton « Retirer *.github.com »
     Alors la liste « Domaines ajoutés » ne contient plus « *.github.com »
+
+  @CA-REGL-09
+  Scénario: Ce que voit l'agent se résume en fichiers, secrets et réseau, seul l'accès à l'abonnement étant transmis
+    Quand j'ouvre la page « /settings/sandbox »
+    Alors la ligne « Fichiers » du tableau montre « Sa copie du projet, son dossier personnel, ses conversations »
+    Et la ligne « Secrets » du tableau montre « L’accès à l’abonnement Claude de la session »
+    Et la ligne « Secrets » du tableau montre « Accès GitHub, .npmrc, tes connecteurs et accès »
+    Et la ligne « Réseau » du tableau montre « Le reste d’Internet »
+    Et je vois le texte « (Claude Code, git, Node, Python, ripgrep) »
 
   @mobile
   @CA-CONT-42

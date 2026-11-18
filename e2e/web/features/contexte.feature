@@ -6,7 +6,7 @@ Fonctionnalité: Contexte des agents
   été décidé, et qu'un agent ne fasse que proposer.
 
   Contexte:
-    Étant donné le profil Claude Code « .claude » contient le transcript « session-maison-rag.jsonl » de la session « 5e0a91c3 »
+    Étant donné le profil Claude Code « .claude » contient le transcript « session-maison-recettes.jsonl » de la session « 5e0a91c3 »
     Et Bosco surveille les profils « .claude » et « .claude-perso »
     Et les dossiers « maison » et « site-perso » sont des projets
 
@@ -16,7 +16,7 @@ Fonctionnalité: Contexte des agents
   @CA-CONT-165
   @NF-18
   Scénario: Une décision proposée par une session attend dans l'onglet Contexte du projet, puis le rejoint une fois acceptée
-    Étant donné une session a proposé la décision « Normaliser les sigles » dans le projet « maison »
+    Étant donné une session a proposé la décision « Normaliser les unités des ingrédients » dans le projet « maison »
     Quand j'ouvre la page « /projects/1/context »
     Alors le fil d’Ariane est « Projets › maison › Contexte »
     Et l’entrée « maison » de la barre latérale est active
@@ -28,7 +28,7 @@ Fonctionnalité: Contexte des agents
     Et la page est accessible
     Quand je clique sur le bouton « Accepter »
     Alors je suis sur la page « /projects/1/context »
-    Et je vois le lien « DEC-1 Normaliser les sigles »
+    Et je vois le lien « DEC-1 Normaliser les unités des ingrédients »
     Et je ne vois plus le texte « 1 décision proposée par un agent attend ta validation »
 
   @CA-CONT-12
@@ -39,11 +39,11 @@ Fonctionnalité: Contexte des agents
     Et je clique sur le bouton « Accepter la décision »
     Alors je vois le texte « Donne un titre à la décision. »
     Et la page est accessible
-    Quand je saisis « Découper les tableaux par ligne » dans le champ « Titre »
-    Et je saisis « Les tableaux des PDF arrivent fusionnés. » dans le champ « Contexte »
-    Et je saisis « Découper chaque tableau par ligne. » dans le champ « Décision »
+    Quand je saisis « Ranger chaque dépense dans une catégorie » dans le champ « Titre »
+    Et je saisis « Les dépenses du mois arrivent sans catégorie. » dans le champ « Contexte »
+    Et je saisis « Ranger chaque dépense dans une catégorie. » dans le champ « Décision »
     Et je clique sur le bouton « Accepter la décision »
-    Alors je vois le lien « DEC-1 Découper les tableaux par ligne »
+    Alors je vois le lien « DEC-1 Ranger chaque dépense dans une catégorie »
 
   @CA-CONT-20
   @CA-CONT-21
@@ -61,6 +61,41 @@ Fonctionnalité: Contexte des agents
     Alors je suis sur la page « /projects/1/context/decisions/1 »
     Et je vois le texte « Les nouveaux tests aussi »
     Et je vois le texte « Version 1 »
+
+  @CA-CONT-08
+  Scénario: « Modifier avant d'accepter » rouvre une décision proposée, et la version acceptée est celle relue
+    Étant donné une session a proposé la décision « Ranger les catégories du budget en base » dans le projet « maison »
+    Quand j'ouvre la page « /projects/1/context/decisions/1 »
+    Et je clique sur le bouton « Modifier avant d’accepter »
+    Alors le champ « Titre » vaut « Ranger les catégories du budget en base »
+    Quand je saisis « Ranger les catégories du budget dans la base » dans le champ « Titre »
+    Et je clique sur le bouton « Accepter »
+    Alors je suis sur la page « /projects/1/context »
+    Et je vois le lien « DEC-1 Ranger les catégories du budget dans la base »
+
+  @CA-CONT-15
+  Scénario: Chaque version d'une décision garde sa date, son auteur et sa note, et se lit en la choisissant
+    Étant donné le projet « maison » a la décision acceptée « Ranger les catégories du budget en base »
+    Et la décision 1 a une nouvelle version « Ranger les catégories du budget avec leurs couleurs » avec la note « Les couleurs aussi »
+    Quand j'ouvre la page « /projects/1/context/decisions/1 »
+    Alors je vois le texte « Les couleurs aussi »
+    Et je vois le texte « Ranger les catégories du budget avec leurs couleurs. »
+    Quand je choisis la « Version 1 » dans l’historique
+    Alors je vois le texte « Ranger les catégories du budget en base. »
+    Et je ne vois plus le texte « Ranger les catégories du budget avec leurs couleurs. »
+
+  @CA-CONT-16
+  Scénario: « Remplacer » écrit une nouvelle décision, et la décision remplacée renvoie vers elle
+    Étant donné le projet « maison » a la décision acceptée « Ranger les catégories du budget en base »
+    Quand j'ouvre la page « /projects/1/context/decisions/1 »
+    Et je clique sur le lien « Remplacer »
+    Et je saisis « Ranger les catégories du budget dans un fichier » dans le champ « Titre »
+    Et je saisis « La base est trop lourde pour un budget. » dans le champ « Contexte »
+    Et je saisis « Ranger les catégories dans un fichier JSON. » dans le champ « Décision »
+    Et je clique sur le bouton « Accepter la décision »
+    Et j'ouvre la page « /projects/1/context/decisions/1 »
+    Alors je vois l’étiquette « Remplacée »
+    Et je vois le lien « DEC-2 · Ranger les catégories du budget dans un fichier »
 
   @CA-CONT-01
   @CA-CONT-05
@@ -97,18 +132,18 @@ Fonctionnalité: Contexte des agents
     Quand je choisis « maison » dans la liste « Porte sur »
     Alors je suis sur la page « /projects/1/context/decisions/new »
     Et la liste « Porte sur » vaut « maison »
-    Quand je saisis « Garder les fichiers audio 30 jours en cache » dans le champ « Titre »
-    Et je saisis « Générer un même article plusieurs fois coûte cher. » dans le champ « Contexte »
-    Et je saisis « Garder chaque fichier audio 30 jours. » dans le champ « Décision »
+    Quand je saisis « Garder les relevés bancaires douze mois » dans le champ « Titre »
+    Et je saisis « Un remboursement se vérifie parfois des mois après. » dans le champ « Contexte »
+    Et je saisis « Garder chaque relevé bancaire douze mois. » dans le champ « Décision »
     Et je clique sur le bouton « Accepter la décision »
     Alors je suis sur la page « /projects/1/context »
-    Et je vois le lien « DEC-1 Garder les fichiers audio 30 jours en cache »
+    Et je vois le lien « DEC-1 Garder les relevés bancaires douze mois »
 
   @mobile
   @CA-CONT-19
   @NF-18
   Scénario: Sur le téléphone, une décision proposée s'accepte, une décision acceptée se lit seulement
-    Étant donné une session a proposé la décision « Normaliser les sigles » dans le projet « maison »
+    Étant donné une session a proposé la décision « Normaliser les unités des ingrédients » dans le projet « maison »
     Quand j'ouvre la page « /projects/1/context/decisions/1 »
     Et je clique sur le bouton « Accepter »
     Alors je suis sur la page « /projects/1/context »
@@ -119,12 +154,12 @@ Fonctionnalité: Contexte des agents
   @CA-CONT-10
   Scénario: Une décision proposée arrive en notification et nomme la session de son agent, avec un lien vers elle
     Quand j'ouvre la page « / »
-    Et la session du dossier « maison/packages/recettes » propose la décision « Normaliser les sigles »
+    Et la session du dossier « maison/packages/recettes » propose la décision « Normaliser les unités des ingrédients »
     Et je clique sur le bouton « Notifications : 1 non lues »
     Alors le tiroir des notifications montre « Décision proposée »
-    Quand je clique sur le bouton « Normaliser les sigles » du tiroir
+    Quand je clique sur le bouton « Normaliser les unités des ingrédients » du tiroir
     Alors je vois le texte « Proposée par l’agent de la session »
-    Quand je clique sur le lien « Corriger l’indexation des PDF dans Elasticsearch » de la page
+    Quand je clique sur le lien « Corriger la recherche des recettes par ingrédient » de la page
     Alors je suis sur la page « /sessions/5e0a91c3 »
 
   @CA-CONT-04

@@ -1,12 +1,12 @@
 // Ce que les scénarios ne voient pas : les lignes rares ou inconnues du format interne de Claude Code (NF-08), et
 // l'usage d'un message écrit bloc par bloc, compté une seule fois.
 import { describe, expect, it } from 'vitest';
-import { TranscriptParser } from './transcript-parser.ts';
+import { isSilentLine, TranscriptParser } from './transcript-parser.ts';
 
 const base = {
   sessionId: 'c41e9a07',
   cwd: '/home/dev/maison/packages/budget',
-  gitBranch: 'feat/specs',
+  gitBranch: 'feat/categories',
   timestamp: '2026-11-06T14:02:00Z',
 };
 const usage = { input_tokens: 10, output_tokens: 20, cache_creation_input_tokens: 30, cache_read_input_tokens: 40 };
@@ -57,7 +57,7 @@ describe('TranscriptParser', () => {
     expect(parsed?.event.text).not.toContain('\n');
   });
 
-  it('reads a message of the Bosco channel as a prompt, though a meta line (E2i)', () => {
+  it('reads a message of the Bosco channel as a prompt, though a meta line', () => {
     const line = JSON.stringify({
       ...base,
       type: 'user',
@@ -93,5 +93,15 @@ describe('TranscriptParser', () => {
       ['pullRequest', 'https://github.com/clubs/api-tarifs/pull/27'],
     ]);
     expect(viewed).toEqual([]);
+  });
+});
+
+describe('isSilentLine', () => {
+  it('tells the known lines without facts from the lines of an unknown format', () => {
+    expect(isSilentLine(JSON.stringify({ type: 'summary', summary: 'Budget', leafUuid: 'u1' }))).toBe(true);
+    expect(isSilentLine(JSON.stringify({ ...base, type: 'user', isMeta: true, message: { content: 'x' } }))).toBe(true);
+    expect(isSilentLine('')).toBe(true);
+    expect(isSilentLine(JSON.stringify({ format: 3, entry: { kind: 'prompt', body: 'x' } }))).toBe(false);
+    expect(isSilentLine('not json')).toBe(false);
   });
 });

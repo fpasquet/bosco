@@ -1,4 +1,4 @@
-import type { ProfileSettingsDto, SourceDto, SourcesDto } from '@bosco/domain';
+import type { FolderListingDto, ProfileSettingsDto, SourceDto, SourcesDto } from '@bosco/domain';
 
 export const sourcesQuery = {
   queryKey: ['sources'],
@@ -17,6 +17,17 @@ export async function watchProfiles(paths: string[]): Promise<void> {
   });
   if (!response.ok) throw new Error(`POST /api/sources answered ${response.status}`);
 }
+
+/** Navigateur de « Ajouter un dossier » : un dossier du dossier personnel, dossiers cachés compris. */
+export const profileFoldersQuery = (path: null | string) => ({
+  queryKey: ['folders', 'hidden', path],
+  queryFn: async (): Promise<FolderListingDto> => {
+    const params = new URLSearchParams({ hidden: 'true', ...(path ? { path } : {}) });
+    const response = await fetch(`/api/folders?${params.toString()}`);
+    if (!response.ok) throw new Error(`GET /api/folders answered ${response.status}`);
+    return (await response.json()) as FolderListingDto;
+  },
+});
 
 /** Refus de l'ajout d'un dossier, traduit pour l'interface. */
 export class FolderRefused extends Error {}

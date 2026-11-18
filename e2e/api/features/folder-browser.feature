@@ -4,7 +4,7 @@ Feature: Folder browser
   I choose them from the workstation while Bosco never shows me a file nor a hidden folder.
 
   Background:
-    Given the Claude Code profile ".claude" has the transcript "session-site-perso-fastify.jsonl" for the session "a41f07c2"
+    Given the Claude Code profile ".claude" has the transcript "session-site-perso-dependances.jsonl" for the session "a41f07c2"
     And the home folder has the folders:
       | folder            | git |
       | www/site-clubs    | yes |
@@ -35,6 +35,14 @@ Feature: Folder browser
     Then the response code should be 400
     When I browse the folder "www/nowhere"
     Then the response code should be 404
+
+  @RF-SESS-01
+  Scenario: To add a configuration folder of Claude Code, the browser shows the hidden folders too
+    When I browse the home folder with the hidden folders
+    Then the response code should be 200
+    And the response property "folders.0.name" should equal ".claude"
+    When I browse the folder ".claude"
+    Then the response code should be 400
 
   @NF-13
   @RF-CONT-24

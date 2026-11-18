@@ -35,6 +35,11 @@ type Story = StoryObj<typeof meta>;
 
 export const Running: Story = {};
 
+/** Démarré et mesuré : le processeur et la mémoire du conteneur, rapportés à ses plafonds. */
+export const Measured: Story = {
+  args: { usage: { cpu: 0, cpuLimit: 2, memory: 1.3 * 1024 ** 3, memoryLimit: 4 * 1024 ** 3 } },
+};
+
 export const Stopped: Story = {
   args: { sandbox: { ...meta.args.sandbox, state: 'stopped', retrievedAt: '2026-11-06T15:16:00.000Z' } },
 };

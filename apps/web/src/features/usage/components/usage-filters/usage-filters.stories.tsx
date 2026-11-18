@@ -37,7 +37,7 @@ type Story = StoryObj<typeof meta>;
 /** 30 derniers jours, tous les profils, projets et modèles. */
 export const Default: Story = {};
 
-/** Filtrée sur un groupe : la puce se retire d'un clic, « Réinitialiser » remet tout par défaut (E23b). */
+/** Filtrée sur un groupe : la puce se retire d'un clic, « Réinitialiser » remet tout par défaut. */
 export const Group: Story = { args: { filters: { ...DEFAULT_FILTERS, period: '7', scope: { kind: 'group', id: 2 } } } };
 
 export const Mobile: Story = { globals: { viewport: { value: 'mobile1' } } };

@@ -29,10 +29,10 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Réglages d'un projet (E21a). */
+/** Réglages d'un projet. */
 export const Default: Story = {};
 
-/** Réglages d'un groupe (E22a) : profil et mode réglés ici, modèle et effort hérités du projet principal. */
+/** Réglages d'un groupe : profil et mode réglés ici, modèle et effort hérités du projet principal. */
 export const Group: Story = {
   args: {
     principal: true,

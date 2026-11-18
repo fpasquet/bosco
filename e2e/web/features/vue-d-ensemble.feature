@@ -6,9 +6,9 @@ Fonctionnalité: Vue d'ensemble
   savoir où en sont mes agents et ce que coûte la journée.
 
   Contexte:
-    Étant donné le profil Claude Code « .claude » contient le transcript « session-maison-rag.jsonl » de la session « 5e0a91c3 »
+    Étant donné le profil Claude Code « .claude » contient le transcript « session-maison-recettes.jsonl » de la session « 5e0a91c3 »
     Et le profil Claude Code « .claude-perso » contient le transcript « session-maison-budget.jsonl » de la session « c41e9a07 »
-    Et le profil Claude Code « .claude » contient le transcript « session-site-perso-fastify.jsonl » de la session « a41f07c2 »
+    Et le profil Claude Code « .claude » contient le transcript « session-site-perso-dependances.jsonl » de la session « a41f07c2 »
     Et les dossiers « maison » et « site-perso » sont des projets
 
   @CA-SESS-08
@@ -27,9 +27,9 @@ Fonctionnalité: Vue d'ensemble
     Et Bosco surveille les profils « .claude » et « .claude-perso »
     Quand j'ouvre la page « / »
     Alors la vue d’ensemble montre, dans l’ordre :
-      | projet | session                                          | état     |
-      | maison | Specs du tableau de bord Bosco                   | Inactive |
-      | maison | Corriger l’indexation des PDF dans Elasticsearch | Inactive |
+      | projet | session                                           | état     |
+      | maison | Ajouter les catégories au budget du foyer         | Inactive |
+      | maison | Corriger la recherche des recettes par ingrédient | Inactive |
 
   @CA-SESS-10
   Scénario: Le coût du jour additionne les sessions commencées aujourd'hui
@@ -69,8 +69,8 @@ Fonctionnalité: Vue d'ensemble
     Et Bosco surveille les profils « .claude » et « .claude-perso »
     Quand j'ouvre la page « / »
     Et je clique sur le bouton « État »
-    Alors la colonne « En cours » montre la session « Corriger l’indexation des PDF dans Elasticsearch »
-    Et la carte de la session « Corriger l’indexation des PDF dans Elasticsearch » montre les actions :
+    Alors la colonne « En cours » montre la session « Corriger la recherche des recettes par ingrédient »
+    Et la carte de la session « Corriger la recherche des recettes par ingrédient » montre les actions :
       | Bash · yarn test --forceExit |
     Et la page est accessible
     Quand je recharge la page
@@ -84,11 +84,11 @@ Fonctionnalité: Vue d'ensemble
     Quand j'ouvre la page « / »
     Et je clique sur le bouton « État »
     Alors le bouton « En cours · 1 » est enfoncé
-    Et la colonne « En cours » montre la session « Corriger l’indexation des PDF dans Elasticsearch »
+    Et la colonne « En cours » montre la session « Corriger la recherche des recettes par ingrédient »
     Et la page est accessible
     Quand je clique sur le bouton « Inactives · 0 »
     Alors je vois le texte « Aucune session »
-    Et je ne vois plus le texte « Corriger l’indexation des PDF dans Elasticsearch »
+    Et je ne vois plus le texte « Corriger la recherche des recettes par ingrédient »
 
   @CA-SESS-16
   Scénario: Une session qui reprend change de colonne d'elle-même
@@ -96,10 +96,10 @@ Fonctionnalité: Vue d'ensemble
     Et Bosco surveille les profils « .claude » et « .claude-perso »
     Quand j'ouvre la page « / »
     Et je clique sur le bouton « État »
-    Alors la colonne « Inactives » montre la session « Corriger l’indexation des PDF dans Elasticsearch »
+    Alors la colonne « Inactives » montre la session « Corriger la recherche des recettes par ingrédient »
     Quand la session « 5e0a91c3 » lance la commande « yarn lint »
-    Alors la colonne « En cours » montre la session « Corriger l’indexation des PDF dans Elasticsearch »
-    Et la carte de la session « Corriger l’indexation des PDF dans Elasticsearch » montre les actions :
+    Alors la colonne « En cours » montre la session « Corriger la recherche des recettes par ingrédient »
+    Et la carte de la session « Corriger la recherche des recettes par ingrédient » montre les actions :
       | Bash · yarn lint             |
       | Bash · yarn test --forceExit |
 
@@ -109,9 +109,9 @@ Fonctionnalité: Vue d'ensemble
     Et la session « 5e0a91c3 » est ouverte dans Claude Code
     Et Bosco surveille les profils « .claude » et « .claude-perso »
     Quand j'ouvre la page « / »
-    Alors la vue d’ensemble montre la session « Corriger l’indexation des PDF dans Elasticsearch »
+    Alors la vue d’ensemble montre la session « Corriger la recherche des recettes par ingrédient »
     Quand la session « 5e0a91c3 » est arrêtée dans Claude Code
-    Alors la vue d’ensemble ne montre plus la session « Corriger l’indexation des PDF dans Elasticsearch »
+    Alors la vue d’ensemble ne montre plus la session « Corriger la recherche des recettes par ingrédient »
 
   @CA-SESS-118
   Scénario: « Regrouper par » propose le projet, le groupe et l'état, et garde le dernier choix

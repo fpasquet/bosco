@@ -62,12 +62,12 @@ describe('FileConversationReader subagents', () => {
   it('gives the Agent call its subagent: prompt, model, steps and result once finished', async () => {
     const stamp = (second: number) => new Date(Date.UTC(2026, 10, 8, 9, 0, second)).toISOString();
     const main = [
-      { type: 'user', timestamp: stamp(0), message: { content: 'Cherche les PDF de test.' } },
+      { type: 'user', timestamp: stamp(0), message: { content: 'Cherche les recettes de test.' } },
       {
         type: 'assistant',
         timestamp: stamp(1),
         message: {
-          content: [{ type: 'tool_use', id: 'toolu_agent', name: 'Agent', input: { description: 'PDF de test' } }],
+          content: [{ type: 'tool_use', id: 'toolu_agent', name: 'Agent', input: { description: 'Recettes de test' } }],
         },
       },
     ];
@@ -76,31 +76,36 @@ describe('FileConversationReader subagents', () => {
     mkdirSync(folder, { recursive: true });
     const sidechain = { isSidechain: true, agentId: 'a1' };
     const agent = [
-      { ...sidechain, type: 'user', timestamp: stamp(2), message: { content: 'Trouve les PDF avec un tableau.' } },
+      {
+        ...sidechain,
+        type: 'user',
+        timestamp: stamp(2),
+        message: { content: 'Trouve les recettes avec une quantité sur deux lignes.' },
+      },
       {
         ...sidechain,
         type: 'assistant',
         timestamp: stamp(3),
         message: {
           model: 'claude-sonnet-5-5',
-          content: [{ type: 'tool_use', id: 'toolu_grep', name: 'Grep', input: { pattern: 'table' } }],
+          content: [{ type: 'tool_use', id: 'toolu_grep', name: 'Grep', input: { pattern: 'quantité' } }],
         },
       },
       {
         ...sidechain,
         type: 'user',
         timestamp: stamp(5),
-        message: { content: [{ type: 'tool_result', tool_use_id: 'toolu_grep', content: 'devis.pdf' }] },
+        message: { content: [{ type: 'tool_result', tool_use_id: 'toolu_grep', content: 'gratin.md' }] },
       },
       {
         ...sidechain,
         type: 'assistant',
         timestamp: stamp(6),
-        message: { model: 'claude-sonnet-5-5', content: [{ type: 'text', text: 'Un PDF : `devis.pdf`.' }] },
+        message: { model: 'claude-sonnet-5-5', content: [{ type: 'text', text: 'Une recette : `gratin.md`.' }] },
       },
     ];
     writeFileSync(join(folder, 'agent-a1.jsonl'), agent.map((record) => `${JSON.stringify(record)}\n`).join(''));
-    const meta = { agentType: 'Explore', description: 'PDF de test', toolUseId: 'toolu_agent', finished: true };
+    const meta = { agentType: 'Explore', description: 'Recettes de test', toolUseId: 'toolu_agent', finished: true };
     writeFileSync(join(folder, 'agent-a1.meta.json'), JSON.stringify(meta));
     const conversation = await new FileConversationReader().read(profile, 'c41e9a07');
     const call = conversation?.turns[1]?.parts[0];
@@ -108,9 +113,9 @@ describe('FileConversationReader subagents', () => {
       agentType: 'Explore',
       finished: true,
       model: 'claude-sonnet-5-5',
-      prompt: 'Trouve les PDF avec un tableau.',
-      parts: [{ kind: 'tool', name: 'Grep', output: 'devis.pdf' }, { kind: 'text' }],
-      result: 'Un PDF : `devis.pdf`.',
+      prompt: 'Trouve les recettes avec une quantité sur deux lignes.',
+      parts: [{ kind: 'tool', name: 'Grep', output: 'gratin.md' }, { kind: 'text' }],
+      result: 'Une recette : `gratin.md`.',
     });
   });
 });

@@ -25,5 +25,5 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Le tiroir ouvert depuis la cloche (E15a). */
+/** Le tiroir ouvert depuis la cloche. */
 export const Open: Story = {};

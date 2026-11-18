@@ -33,6 +33,8 @@ export interface ProfileFinder {
 
 /** Lit les transcripts d'un profil depuis une date, puis suit leurs ajouts, sans jamais les modifier. */
 export interface TranscriptWatcher {
+  /** Bosco ne sait plus lire le format des nouvelles sessions du profil : il est « À mettre à jour » */
+  isOutdated(sourceId: string): boolean;
   /** Arrête la lecture d'un profil ; rien n'est effacé */
   unwatch(sourceId: string): Promise<void>;
   watch(source: Source, since: Date): Promise<void>;

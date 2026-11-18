@@ -61,12 +61,14 @@ export interface FolderEntry {
 
 /**
  * Dossier que le navigateur peut ouvrir : le dossier personnel (par défaut) ou un dossier visible à l'intérieur. Les
- * dossiers cachés (« .ssh », « .config ») ne s'ouvrent pas, même par leur chemin.
+ * dossiers cachés (« .ssh », « .config ») ne s'ouvrent pas, même par leur chemin, sauf pour choisir un dossier de
+ * configuration de Claude Code (`hidden`), souvent caché (« ~/.claude-perso »).
  */
-export function browsedFolder(raw: null | string, home: string): FolderPath {
+export function browsedFolder(raw: null | string, home: string, hidden = false): FolderPath {
   const folder = FolderPath.of(raw ?? home);
   if (!isInside(folder.value, home)) throw new FolderRefused(folder.value);
   if (
+    !hidden &&
     relativePath(folder.value, home)
       .split('/')
       .some((part) => part.startsWith('.'))
@@ -75,10 +77,13 @@ export function browsedFolder(raw: null | string, home: string): FolderPath {
   return folder;
 }
 
-/** Sous-dossiers montrés : des dossiers seulement, jamais de fichiers ni de dossiers cachés, dans l'ordre des noms. */
-export function visibleFolders(entries: readonly FolderEntry[]): { git: boolean; name: string }[] {
+/**
+ * Sous-dossiers montrés : des dossiers seulement, jamais de fichiers, ni de dossiers cachés sauf `hidden`, dans
+ * l'ordre des noms.
+ */
+export function visibleFolders(entries: readonly FolderEntry[], hidden = false): { git: boolean; name: string }[] {
   return entries
-    .filter(({ directory, name }) => directory && !name.startsWith('.'))
+    .filter(({ directory, name }) => directory && (hidden || !name.startsWith('.')))
     .map(({ git, name }) => ({ git, name }))
     .toSorted((a, b) => a.name.localeCompare(b.name, 'fr', { sensitivity: 'base' }) || a.name.localeCompare(b.name));
 }

@@ -10,7 +10,10 @@ const request: TurnRequest = {
   launch: null,
   configDir: '/home/dev/.claude-perso',
   cwd: '/home/dev/site-perso',
-  message: { images: [{ data: 'AAAA', mediaType: 'image/png', name: 'capture.png' }], text: 'Regarde @src/lexique.ts' },
+  message: {
+    images: [{ data: 'AAAA', mediaType: 'image/png', name: 'capture.png' }],
+    text: 'Regarde @src/categories.ts',
+  },
   resume: true,
   sessionId: 'c7e04a19',
   settings: { effort: 'high', model: 'claude-opus-5-5', permissionMode: 'plan' },
@@ -46,7 +49,7 @@ describe('userMessage', () => {
       message: {
         role: 'user',
         content: [
-          { type: 'text', text: 'Regarde @src/lexique.ts' },
+          { type: 'text', text: 'Regarde @src/categories.ts' },
           { type: 'image', source: { type: 'base64', media_type: 'image/png', data: 'AAAA' } },
         ],
       },

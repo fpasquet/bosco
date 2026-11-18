@@ -53,7 +53,7 @@ describe('HistoryService', () => {
   it('keeps only the sessions found by the search, and adds up the filters (CA-SESS-47, CA-SESS-48)', async () => {
     const days = await service(['a', 'c']).history({
       ...all,
-      query: 'pdf',
+      query: 'recettes',
       project: 'maison',
       from: new Date('2026-11-05'),
     });

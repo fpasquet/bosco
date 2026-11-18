@@ -113,11 +113,11 @@ describe('UsageService', () => {
 
   it('CA-SESS-184 · counts a session for each project of the group it touches, but once in the totals', async () => {
     const report = await service({
-      views: [view('tarifs', 1, [3]), view('recap', 2), view('lexique', 9)],
+      views: [view('tarifs', 1, [3]), view('recap', 2), view('logger', 9)],
       turns: [
         turn('tarifs', '2026-11-16T10:00:00', 'claude-sonnet-5-5', [1_000_000, 0, 0, 0]),
         turn('recap', '2026-11-16T11:00:00', 'claude-sonnet-5-5', [500_000, 0, 0, 0]),
-        turn('lexique', '2026-11-16T12:00:00', 'claude-sonnet-5-5', [500_000, 0, 0, 0]),
+        turn('logger', '2026-11-16T12:00:00', 'claude-sonnet-5-5', [500_000, 0, 0, 0]),
       ],
     }).usageReport({ ...all, groupId: 1 });
     expect([report.tokens.costUsd, report.tokens.sessions]).toEqual([3, 2]);

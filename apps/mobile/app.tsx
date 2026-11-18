@@ -6,9 +6,10 @@ import { useEffect, useRef, useState } from 'react';
 import { AppState, BackHandler, StyleSheet, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { boscoTrust } from './modules/bosco-trust';
+import { notificationPath } from './src/lib/bridge';
 import { notify, setupNotifications } from './src/lib/notifications';
+import { type AppPreferences, DEFAULT_PREFERENCES, keepsAlive } from './src/lib/preferences';
 import {
-  type AppPreferences,
   loadPreferences,
   loadWorkstation,
   savePreferences,
@@ -25,7 +26,7 @@ type Screen = { kind: 'bosco'; path: string } | { kind: 'loading' } | { kind: 'p
 export default function App() {
   const [screen, setScreen] = useState<Screen>({ kind: 'loading' });
   const [workstation, setWorkstation] = useState<null | Workstation>(null);
-  const [preferences, setPreferences] = useState<AppPreferences>({ background: false, vibrate: true });
+  const [preferences, setPreferences] = useState<AppPreferences>(DEFAULT_PREFERENCES);
   const bosco = useRef<BoscoHandle>(null);
 
   useEffect(() => {
@@ -44,7 +45,7 @@ export default function App() {
   useEffect(() => {
     const openFrom = (response: Notifications.NotificationResponse | null) => {
       const identifier = response?.notification.request.identifier ?? null;
-      const path = (response?.notification.request.content.data as undefined | { path?: string })?.path;
+      const path = notificationPath(response?.notification.request.content.data);
       if (!identifier || !path || handled.current === identifier) return;
       handled.current = identifier;
       // Les réglages de l'application se ferment : la session s'ouvre dans la vue web
@@ -64,7 +65,7 @@ export default function App() {
   // Connecté en arrière-plan (désactivé par défaut) : un service au premier plan, avec sa notification permanente,
   // empêche Android de geler l'application ; sans lui, les notifications n'arrivent qu'application ouverte
   useEffect(() => {
-    boscoTrust.setKeepAlive(preferences.background && workstation !== null);
+    boscoTrust.setKeepAlive(keepsAlive(preferences, workstation !== null));
   }, [preferences.background, workstation]);
 
   // Retour Android depuis les réglages : revenir à Bosco

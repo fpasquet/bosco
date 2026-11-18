@@ -13,7 +13,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Réglages par défaut (E15b) : les questions et les tâches, les fins de tour après 2 min. */
+/** Réglages par défaut : les questions et les tâches, les fins de tour après 2 min. */
 export const Defaults: Story = {};
 
 export const EveryTurn: Story = { args: { settings: { ...STORY_NOTIFICATION_SETTINGS, turn: 'always', ended: true } } };

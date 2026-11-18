@@ -4,9 +4,9 @@ Feature: Profiles at first launch
   so that nothing is read without my consent.
 
   Background:
-    Given the Claude Code profile ".claude" has the transcript "session-maison-rag.jsonl" for the session "5e0a91c3"
+    Given the Claude Code profile ".claude" has the transcript "session-maison-recettes.jsonl" for the session "5e0a91c3"
     And the Claude Code profile ".claude-perso" has the transcript "session-maison-budget.jsonl" for the session "c41e9a07"
-    And the Claude Code profile ".claude-perso" has the transcript "session-site-perso-fastify.jsonl" for the session "a41f07c2"
+    And the Claude Code profile ".claude-perso" has the transcript "session-site-perso-dependances.jsonl" for the session "a41f07c2"
     And the transcript of the session "a41f07c2" was last modified 40 days ago
     And the folders "maison,site-perso" are projects
 

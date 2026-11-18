@@ -4,11 +4,11 @@ import type { PilotSettingsDto, SuggestionDto } from '@bosco/domain';
 import { Composer } from './composer';
 
 const FILES = [
-  'src/lexique/lexique.ts',
-  'src/lexique/sigles.ts',
-  'src/lexique/lexique.test.ts',
-  'data/lexique.json',
-  'docs/lexique.md',
+  'src/categories/categories.ts',
+  'src/categories/depenses.ts',
+  'src/categories/categories.test.ts',
+  'data/categories.json',
+  'docs/categories.md',
 ];
 
 const COMMANDS: SuggestionDto[] = [
@@ -71,23 +71,23 @@ export const WithTextAndImage: Story = {
     const canvas = within(canvasElement);
     const field = await canvas.findByRole('combobox', { name: 'Message à l’agent' });
     await userEvent.click(field);
-    await userEvent.keyboard('Regarde aussi le lexique avant de corriger.');
+    await userEvent.keyboard('Regarde aussi les catégories avant de corriger.');
     await userEvent.upload(canvasElement.querySelector('input[type="file"]') as HTMLInputElement, CAPTURE);
     await expect(await canvas.findByRole('button', { name: 'Retirer capture-test.png' })).toBeVisible();
     await expect(canvas.getByRole('button', { name: 'Envoyer' })).toBeEnabled();
   },
 };
 
-/** « @lexi » ouvre les fichiers du projet, le premier choisi, la partie tapée en gras. */
+/** « @categ » ouvre les fichiers du projet, le premier choisi, la partie tapée en gras. */
 export const FileSuggestions: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     const page = within(canvasElement.ownerDocument.body);
     const field = await canvas.findByRole('combobox', { name: 'Message à l’agent' });
     await userEvent.click(field);
-    await userEvent.keyboard('Corrige aussi @lexi');
+    await userEvent.keyboard('Corrige aussi @categ');
     const list = await page.findByRole('listbox', { name: 'Fichiers du projet' });
-    const first = within(list).getByRole('option', { name: 'src/lexique/lexique.ts' });
+    const first = within(list).getByRole('option', { name: 'src/categories/categories.ts' });
     await expect(first).toHaveAttribute('aria-selected', 'true');
     await expect(field).toHaveAttribute('aria-expanded', 'true');
     await expect(field).toHaveAttribute('aria-activedescendant', first.id);
@@ -113,7 +113,7 @@ export const SendWithMention: Story = {
     const canvas = within(canvasElement);
     const field = await canvas.findByRole('combobox', { name: 'Message à l’agent' });
     await userEvent.click(field);
-    await userEvent.keyboard('Corrige aussi @lexi');
+    await userEvent.keyboard('Corrige aussi @categ');
     await within(canvasElement.ownerDocument.body).findByRole('listbox', { name: 'Fichiers du projet' });
     await userEvent.keyboard('{ArrowDown}{Enter}');
     await waitFor(() => expect(field).toHaveAttribute('aria-expanded', 'false'));
@@ -121,7 +121,7 @@ export const SendWithMention: Story = {
     await waitFor(() =>
       expect(args.onSubmit).toHaveBeenCalledWith({
         images: [],
-        text: 'Corrige aussi @src/lexique/sigles.ts \navant de corriger.',
+        text: 'Corrige aussi @src/categories/depenses.ts \navant de corriger.',
       }),
     );
     await waitFor(() => expect(field.textContent).toBe(''));
@@ -134,7 +134,7 @@ export const Disabled: Story = {
   args: { disabled: true, placeholder: 'Réponds d’abord à la question' },
 };
 
-/** Session du terminal lancée avec le canal de Bosco (E2i) : texte seulement, sans images ni réglages */
+/** Session du terminal lancée avec le canal de Bosco : texte seulement, sans images ni réglages */
 export const TextOnly: Story = {
   args: {
     placeholder: 'Écris à la session…',

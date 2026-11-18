@@ -7,7 +7,7 @@ Fonctionnalité: Tous les projets
 
   Contexte:
     Étant donné le profil Claude Code « .claude » contient le transcript « session-maison-budget.jsonl » de la session « c41e9a07 »
-    Et le profil Claude Code « .claude » contient le transcript « session-site-perso-fastify.jsonl » de la session « a41f07c2 »
+    Et le profil Claude Code « .claude » contient le transcript « session-site-perso-dependances.jsonl » de la session « a41f07c2 »
     Et le profil Claude Code « .claude » contient le transcript « session-home-notes.jsonl » de la session « e7d2b410 »
     Et Bosco surveille les profils « .claude » et « .claude-perso »
 

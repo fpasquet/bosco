@@ -26,11 +26,14 @@ const GROUPS: GroupInstructions[] = [
 
 describe('context', () => {
   const jest = Decision.write(3, { kind: 'project', name: 'api-tarifs' }, text('Garder Jest'), { accept: true, at });
-  const elsewhere = Decision.write(5, { kind: 'project', name: 'creneaux' }, text('Fastify'), { accept: true, at });
+  const elsewhere = Decision.write(5, { kind: 'project', name: 'creneaux' }, text('Arrondir au centime supérieur'), {
+    accept: true,
+    at,
+  });
   const proposed = Decision.propose(4, 'api-tarifs', text('Normaliser les fuseaux horaires'), null, at);
   const decisions = [jest, elsewhere, proposed].map((decision) => decision.toSnapshot());
 
-  it('sends the common instructions, then each group of the project, then its decisions, which prevail', () => {
+  it('CA-CONT-101 · sends every instruction, then the decisions of the project, announced as prevailing', () => {
     const context = contextOf('api-tarifs', decisions, GROUPS, { calls: ['Service de paiement'], calledBy: [] });
     expect(context.proposed.map(({ id }) => id)).toEqual([4]);
     expect(contextText('api-tarifs', context)).toBe(
@@ -60,18 +63,21 @@ describe('context', () => {
       calledBy: [],
     });
     expect(contextText('creneaux', context)).toBe(
-      '# Contexte du projet creneaux\n\n## Décisions du projet\n- DEC-5 Fastify\n  Fastify.',
+      '# Contexte du projet creneaux\n\n## Décisions du projet\n- DEC-5 Arrondir au centime supérieur\n  Arrondir au centime supérieur.',
     );
   });
 
   it('keeps every version, and asks for a note to change an accepted decision', () => {
-    const decision = Decision.write(5, { kind: 'project', name: 'site-perso' }, text('Cache audio'), {
+    const decision = Decision.write(5, { kind: 'project', name: 'site-perso' }, text('Relevés gardés un an'), {
       accept: true,
       at,
     });
-    expect(() => decision.edit(text('Cache audio 30 jours'), ' ', at)).toThrow('Écris une note');
-    decision.edit(text('Cache audio 30 jours'), 'Durée précisée', at);
-    expect(decision.toSnapshot().versions.map(({ title }) => title)).toEqual(['Cache audio', 'Cache audio 30 jours']);
+    expect(() => decision.edit(text('Relevés bancaires gardés douze mois'), ' ', at)).toThrow('Écris une note');
+    decision.edit(text('Relevés bancaires gardés douze mois'), 'Durée précisée', at);
+    expect(decision.toSnapshot().versions.map(({ title }) => title)).toEqual([
+      'Relevés gardés un an',
+      'Relevés bancaires gardés douze mois',
+    ]);
   });
 });
 
@@ -79,17 +85,27 @@ describe('parseProposal', () => {
   it('reads a decision proposed in a file by an agent, or nothing when a section is missing', async () => {
     const { parseProposal } = await import('./proposal.ts');
     const proposal = parseProposal(
-      '# Normaliser les sigles\n\n## Contexte\nLes sigles arrivent avec des points.\n\n## Décision\nRetirer les points avant la recherche.\n',
+      '# Normaliser les unités des ingrédients\n\n## Contexte\nLes quantités arrivent en grammes ou en cuillères.\n\n## Décision\nConvertir chaque quantité en grammes avant la recherche.\n',
     );
     expect(proposal).toMatchObject({
-      title: 'Normaliser les sigles',
-      decision: 'Retirer les points avant la recherche.',
+      title: 'Normaliser les unités des ingrédients',
+      decision: 'Convertir chaque quantité en grammes avant la recherche.',
     });
     expect(parseProposal('# Sans décision\n\n## Contexte\nRien.')).toBeNull();
   });
 });
 
 describe('sessionContextText', () => {
+  it('CA-CONT-107 · cuts the context read by a session at 10 000 characters, and says so', () => {
+    const sent = sessionContextText([
+      { project: 'api-tarifs', text: `# Contexte du projet api-tarifs\n${'x'.repeat(CONTEXT_LIMIT)}` },
+    ]);
+    expect(sent).toHaveLength(CONTEXT_LIMIT);
+    expect(sent.startsWith('# Contexte du projet api-tarifs')).toBe(true);
+    expect(sent.endsWith('[Contexte coupé : 10 000 caractères au plus.]')).toBe(true);
+    expect(sessionContextText([{ project: 'api-tarifs', text: 'court' }])).toBe('court');
+  });
+
   it('CA-CONT-105 · gives one block per project, the principal first, and stays under 10 000 characters', () => {
     const blocks = [
       { project: 'api-tarifs', text: '# Contexte du projet api-tarifs' },

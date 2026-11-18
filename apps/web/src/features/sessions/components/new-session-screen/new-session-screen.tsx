@@ -17,6 +17,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import type { GroupDto, PilotOptionsDto, SessionDefaultsResolvedDto, SessionDto, StartSessionDto } from '@bosco/domain';
+import { displayPath } from '@/lib/format';
 import { PageSkeleton } from '@/shared/components/page-skeleton';
 import { useNotices } from '@/shared/hooks/use-notices';
 import { originLabel } from '@/shared/lib/session-settings';
@@ -24,6 +25,7 @@ import { Breadcrumbs } from '@/shared/ui/breadcrumbs';
 import { groupQuery, groupsQuery } from '../../api/groups';
 import { isolationQuery, pilotDefaultsQuery, pilotOptionsQuery, startSession, suggestions } from '../../api/pilot';
 import { sessionsQuery } from '../../api/sessions';
+import { sourcesQuery } from '../../api/sources';
 import { useFullAccess } from '../../hooks/use-full-access';
 import {
   groupProjects,
@@ -513,6 +515,8 @@ function NewSessionForm({
   const { data: sessions } = useQuery(sessionsQuery);
   const { data: groups } = useQuery(groupsQuery);
   const { data: isolation } = useQuery(isolationQuery);
+  // Le dossier du projet s'écrit comme dans le terminal, depuis ~
+  const { data: sources } = useQuery(sourcesQuery);
   const [chosenRoots, setChosenRoots] = useState<null | string[]>(null);
   const [chosenGroup, setGroup] = useState<null | { id: number; name: string }>(null);
   const [chosenProfile, setProfile] = useState<null | string>(null);
@@ -608,7 +612,7 @@ function NewSessionForm({
                     onRemove={(root) => changeProjects(roots.filter((candidate) => candidate !== root))}
                   />
                   <span className="truncate font-mono text-xs text-muted">
-                    {project.root}
+                    {displayPath(project.root, sources?.home ?? '')}
                     {project.branch && ` · ${project.branch}`}
                     {project.changes ? ` · ${project.changes} modifiés` : ''}
                   </span>

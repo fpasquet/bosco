@@ -15,6 +15,10 @@ When('je clique sur le bouton {texte}', async ({ page }, name: string) => {
   await page.getByRole('button', { name, exact: true }).click();
 });
 
+When('je clique sur l’onglet {texte}', async ({ page }, name: string) => {
+  await page.getByRole('tab', { name, exact: true }).click();
+});
+
 When('je clique sur le lien {texte}', async ({ page }, name: string) => {
   await page.getByRole('link', { name }).click();
 });
@@ -74,6 +78,10 @@ Then('je vois le lien {texte}', async ({ page }, name: string) => {
 
 Then('je vois le titre {texte}', async ({ page }, name: string) => {
   await expect(page.getByRole('heading', { name })).toBeVisible();
+});
+
+Then('le titre de la page porte {texte}', async ({ page }, text: string) => {
+  await expect(page.getByRole('heading', { level: 1 })).toContainText(text);
 });
 
 When('je choisis {texte} dans la liste {texte}', async ({ page }, option: string, label: string) => {

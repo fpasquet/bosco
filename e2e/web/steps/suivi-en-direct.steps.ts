@@ -116,13 +116,6 @@ When('je saisis {texte} dans le champ {texte}', async ({ page }, text: string, l
   await page.getByLabel(label).fill(text);
 });
 
-When(
-  'je saisis le dossier du profil {texte} dans le champ {texte}',
-  async ({ bosco, page }, profile: string, label: string) => {
-    await page.getByLabel(label).fill(join(bosco.profilesRoot, profile));
-  },
-);
-
 Then('le bandeau des sessions qui t’attendent montre {texte}', async ({ page }, text: string) => {
   await expect(page.getByRole('region', { name: 'Sessions qui t’attendent' })).toContainText(text);
 });

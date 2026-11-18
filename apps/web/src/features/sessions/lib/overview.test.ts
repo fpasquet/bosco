@@ -81,7 +81,7 @@ describe('groupByProject', () => {
     const groups = groupByProject([
       session('loose', { project: null }),
       session('idle', { project: outilsNode, state: 'inactive' }),
-      session('rag'),
+      session('recettes'),
     ]);
     expect(groups.map(({ name, sessions }) => [name, sessions.length])).toEqual([
       ['maison', 1],
@@ -111,13 +111,13 @@ describe('groupByGroup', () => {
       ],
     });
     const groups = groupByGroup(
-      [tarifs, session('rag')],
+      [tarifs, session('recettes')],
       [group(1, 'Club des Trois Lacs', [1, 3]), group(2, 'Node.js', [2])],
     );
     expect(groups.map(({ also, labels, name }) => [name, labels, also])).toEqual([
       [
         'Club des Trois Lacs',
-        { rag: 'maison/packages/recettes', tarifs: 'maison +2' },
+        { recettes: 'maison/packages/recettes', tarifs: 'maison +2' },
         { tarifs: 'aussi dans Node.js' },
       ],
       ['Node.js', { tarifs: 'maison +2' }, { tarifs: 'aussi dans Club des Trois Lacs' }],
@@ -147,24 +147,31 @@ describe('waitingSessions', () => {
 
 describe('filterSessions', () => {
   const sessions = [
-    session('rag', { title: 'Corriger l’indexation des PDF' }),
+    session('recettes', { title: 'Corriger la recherche des recettes par ingrédient' }),
     session('logger', { project: outilsNode, branch: 'feat/logger-otel' }),
     session('idle', { project: outilsNode, state: 'inactive' }),
   ];
   const all = { hideInactive: false, query: '' };
 
   it('searches titles, branches and folders without case, and hides inactive sessions on demand', () => {
-    expect(filterSessions(sessions, { ...all, query: 'PDF' }).map(({ id }) => id)).toEqual(['rag']);
+    expect(filterSessions(sessions, { ...all, query: 'Ingrédient' }).map(({ id }) => id)).toEqual(['recettes']);
     expect(filterSessions(sessions, { ...all, query: 'otel' }).map(({ id }) => id)).toEqual(['logger']);
-    expect(filterSessions(sessions, { ...all, hideInactive: true }).map(({ id }) => id)).toEqual(['rag', 'logger']);
+    expect(filterSessions(sessions, { ...all, hideInactive: true }).map(({ id }) => id)).toEqual([
+      'recettes',
+      'logger',
+    ]);
   });
 });
 
 describe('sessionsIn', () => {
   it('keeps the sessions of the projects of a place, once each, outside ones never', () => {
-    const sessions = [session('rag'), session('logger', { project: outilsNode }), session('notes', { project: null })];
+    const sessions = [
+      session('recettes'),
+      session('logger', { project: outilsNode }),
+      session('notes', { project: null }),
+    ];
     expect(sessionsIn(sessions, [outilsNode.id]).map(({ id }) => id)).toEqual(['logger']);
-    expect(sessionsIn(sessions, [1, outilsNode.id, 1]).map(({ id }) => id)).toEqual(['rag', 'logger']);
+    expect(sessionsIn(sessions, [1, outilsNode.id, 1]).map(({ id }) => id)).toEqual(['recettes', 'logger']);
   });
 });
 
@@ -176,7 +183,7 @@ describe('indicatorsOf', () => {
       cost: { unpriced: false, usd: 0.74 },
     });
     const yesterday = session('yesterday', { startedAt: new Date('2026-11-05T22:00:00').toISOString() });
-    const open = [session('rag', { cost: { unpriced: false, usd: 0.62 } }), yesterday];
+    const open = [session('recettes', { cost: { unpriced: false, usd: 0.62 } }), yesterday];
     const indicators = indicatorsOf(open, [...open, closed], now);
     expect([indicators.sessionsToday, indicators.endedToday]).toEqual([2, 0]);
     expect(indicators.costToday.usd).toBeCloseTo(1.36);
@@ -201,7 +208,7 @@ describe('projectsOf', () => {
     expect(
       projectsOf([
         session('idle', { project: outilsNode, state: 'inactive' }),
-        session('rag', { state: 'waiting' }),
+        session('recettes', { state: 'waiting' }),
         session('bosco'),
         session('notes', { project: null }),
       ]),
@@ -217,19 +224,28 @@ describe('projectsOf', () => {
 
 describe('profileMark', () => {
   const sources: SourceDto[] = [
-    { id: 'pro', label: 'pro', liveTracking: false, managed: false, path: '/home/dev/.claude', watched: true },
+    {
+      id: 'pro',
+      label: 'pro',
+      liveTracking: false,
+      managed: false,
+      path: '/home/dev/.claude',
+      unreadable: false,
+      watched: true,
+    },
     {
       id: 'perso',
       label: 'perso',
       liveTracking: false,
       managed: false,
+      unreadable: false,
       path: '/home/dev/.claude-perso',
       watched: true,
     },
   ];
 
   it('marks only the sessions of another profile than the default one', () => {
-    expect(profileMark(session('rag'), sources)).toBeNull();
+    expect(profileMark(session('recettes'), sources)).toBeNull();
     expect(profileMark(session('bosco', { sourceId: 'perso' }), sources)).toBe('perso');
   });
 });

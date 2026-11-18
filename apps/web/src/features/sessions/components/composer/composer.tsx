@@ -297,7 +297,7 @@ export function Composer({
       <p aria-live="polite" className="px-1 text-xs text-danger empty:hidden">
         {error}
       </p>
-      {!disabled && <ComposerHelp id={helpId} className="px-1 text-xs text-muted max-md:hidden" />}
+      {!disabled && <ComposerHelp id={helpId} className="px-1 text-xs text-muted" />}
     </div>
   );
 }

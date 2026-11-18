@@ -6,7 +6,7 @@ Feature: Notifications
   Background:
     Given the Claude Code profile ".claude-perso" has the settings "fixtures/settings-perso.json"
     And the Claude Code profile ".claude-perso" has the transcript "session-maison-budget.jsonl" for the session "c41e9a07"
-    And the Claude Code profile ".claude" has the transcript "session-maison-rag.jsonl" for the session "5e0a91c3"
+    And the Claude Code profile ".claude" has the transcript "session-maison-recettes.jsonl" for the session "5e0a91c3"
     And Bosco watches the profiles ".claude" and ".claude-perso"
     And I install live tracking for the profile ".claude-perso"
 
@@ -20,8 +20,8 @@ Feature: Notifications
     And Claude Code sends the hook "fixtures/hooks/user-prompt-submit.json" of the profile ".claude-perso"
     And Claude Code sends the hook "fixtures/hooks/stop-done.json" of the profile ".claude-perso"
     Then the desktop notifications should be:
-      | title                        | body                                                                             |
-      | Fin de tour · 0 min · maison | <b>Specs du tableau de bord Bosco</b>\nLe digest est généré et les tests passent. |
+      | title                        | body                                                                                                      |
+      | Fin de tour · 0 min · maison | <b>Ajouter les catégories au budget du foyer</b>\nLes catégories sont ajoutées et la migration est passée. |
 
   @CA-SESS-83
   @CA-SESS-87

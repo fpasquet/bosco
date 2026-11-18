@@ -114,6 +114,10 @@ Then('l’indicateur {texte} vaut {texte}', async ({ page }, label: string, valu
   await expect(tile.getByRole('definition')).toContainText(value);
 });
 
+Then('la ligne {texte} du tableau montre {texte}', async ({ page }, row: string, text: string) => {
+  await expect(page.getByRole('row', { name: new RegExp(`^${row}`) })).toContainText(text);
+});
+
 Then('le tableau a la colonne {texte}', async ({ page }, name: string) => {
   await expect(page.getByRole('columnheader', { name })).toBeVisible();
 });

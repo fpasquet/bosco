@@ -29,10 +29,10 @@ describe('checkPilotMessage', () => {
 
 describe('joinMessages', () => {
   it('joins a second message to the pending one, within 5 images (CA-SESS-93)', () => {
-    const first = { images: [image('a.png')], text: 'Pense aux sigles' };
-    expect(joinMessages(first, { images: [], text: 'Et les points' })).toEqual({
+    const first = { images: [image('a.png')], text: 'Pense aux dépenses récurrentes' };
+    expect(joinMessages(first, { images: [], text: 'Et aux abonnements' })).toEqual({
       images: [image('a.png')],
-      text: 'Pense aux sigles\n\nEt les points',
+      text: 'Pense aux dépenses récurrentes\n\nEt aux abonnements',
     });
     const five = { images: Array.from({ length: 5 }, (_, index) => image(`${index}.png`)), text: '' };
     expect(() => joinMessages(five, { images: [image('6.png')], text: '' })).toThrow(InvalidPilotMessage);

@@ -1,8 +1,8 @@
 {
   "text": {
-    "title": "Découper les tableaux par ligne",
-    "context": "Les tableaux des PDF arrivent fusionnés.",
-    "decision": "Découper chaque tableau par ligne et par colonne."
+    "title": "Ranger chaque dépense dans une catégorie",
+    "context": "Les dépenses du mois arrivent sans catégorie.",
+    "decision": "Ranger chaque dépense dans une catégorie et une sous-catégorie."
   },
-  "note": "Les colonnes aussi"
+  "note": "Les sous-catégories aussi"
 }

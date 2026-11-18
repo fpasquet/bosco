@@ -1,30 +1,9 @@
 // Notifications locales du téléphone : l'interface de Bosco, dans la vue web, les transmet à
 // l'application ; rien ne passe par un service de push.
 import * as Notifications from 'expo-notifications';
+import type { BridgeMessage } from './bridge';
 
 export const CHANNEL = 'bosco';
-
-/** Message de la vue web : une notification de Bosco, ou l'ouverture des réglages de l'application. */
-export type BridgeMessage =
-  { body: string; path: string; title: string; type: 'notification'; urgent: boolean } | { type: 'app-settings' };
-
-export function parseBridgeMessage(data: string): BridgeMessage | null {
-  try {
-    const message = JSON.parse(data) as Partial<BridgeMessage>;
-    if (message.type === 'app-settings') return { type: 'app-settings' };
-    if (message.type === 'notification' && typeof message.title === 'string' && typeof message.path === 'string')
-      return {
-        type: 'notification',
-        title: message.title,
-        body: typeof message.body === 'string' ? message.body : '',
-        path: message.path,
-        urgent: message.urgent === true,
-      };
-  } catch {
-    // message d'une autre origine
-  }
-  return null;
-}
 
 export async function setupNotifications(vibrate: boolean): Promise<void> {
   Notifications.setNotificationHandler({

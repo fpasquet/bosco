@@ -35,7 +35,7 @@ export const Lines: Story = {
         <TraceIcon>
           <FileTextIcon />
         </TraceIcon>
-        <TraceTitle>A lu src/indexer/pdf.ts</TraceTitle>
+        <TraceTitle>A lu src/import/ingredients.ts</TraceTitle>
         <TraceDescription>1 s</TraceDescription>
       </TraceLine>
       <TraceLine status="running">
@@ -74,7 +74,7 @@ export const Open: Story = {
           </TraceLine>
         </TraceCollapsibleTrigger>
         <TraceCollapsibleContent>
-          Le découpage travaille bloc par bloc : un tableau est coupé entre deux blocs.
+          L’import lit ligne par ligne : une quantité est séparée de son ingrédient.
         </TraceCollapsibleContent>
       </TraceCollapsible>
       <TraceCollapsible defaultOpen>

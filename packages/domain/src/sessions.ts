@@ -13,6 +13,8 @@ export interface SourceDto {
   /** Tenue par Bosco (« Bacs à sable ») : toujours lue, sans interrupteur, suivi en direct ni canal */
   managed: boolean;
   path: string;
+  /** Bosco ne sait plus lire le format de ses nouvelles sessions : « À mettre à jour », elles ne se lisent plus */
+  unreadable: boolean;
   watched: boolean;
 }
 
@@ -37,7 +39,7 @@ export interface ProfileSettingsDto {
   defaults: Omit<SessionDefaultsDto, 'profile'>;
   /** Profil par défaut de Bosco, proposé à chaque nouvelle session */
   isDefault: boolean;
-  source: SourceDto;
+  source: Omit<SourceDto, 'unreadable'>;
   /** Groupes dont il est le profil par défaut, et sessions ouvertes avec lui */
   usedBy: { groups: { id: number; name: string }[]; openSessions: number };
 }

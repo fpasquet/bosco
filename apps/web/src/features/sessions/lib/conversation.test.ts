@@ -141,47 +141,55 @@ describe('groupParts', () => {
 describe('subagents', () => {
   const subagent = {
     agentType: 'Explore',
-    description: 'PDF de test',
+    description: 'Recettes de test',
     endedAt: '2026-11-08T09:00:48Z',
     finished: true,
     model: 'claude-sonnet-5-5',
     parts: [],
     partial: false,
-    prompt: 'Trouve les PDF avec un tableau.',
-    result: 'Un PDF : `devis.pdf`.',
+    prompt: 'Trouve les recettes avec une quantité sur deux lignes.',
+    result: 'Une recette : `gratin.md`.',
     startedAt: '2026-11-08T09:00:00Z',
   };
 
   it('shows a finished subagent with its model, prompt, result and run time', () => {
-    const view = stepView(tool('Agent', { description: 'PDF de test' }, { subagent }), true);
+    const view = stepView(tool('Agent', { description: 'Recettes de test' }, { subagent }), true);
     expect(view).toMatchObject({
-      body: { agentType: 'Explore', kind: 'subagent', model: 'claude-sonnet-5-5', result: 'Un PDF : `devis.pdf`.' },
+      body: {
+        agentType: 'Explore',
+        kind: 'subagent',
+        model: 'claude-sonnet-5-5',
+        result: 'Une recette : `gratin.md`.',
+      },
       duration: '48 s',
       status: 'done',
-      title: 'Sous-agent · PDF de test',
+      title: 'Sous-agent · Recettes de test',
     });
   });
 
   it('keeps a background subagent running until it finishes, interrupted once the session stopped', () => {
     const running = { ...subagent, endedAt: null, finished: false, result: null };
-    const step = tool('Agent', { description: 'PDF de test' }, { subagent: running });
-    expect(stepView(step, true)).toMatchObject({ status: 'running', title: 'Sous-agent en cours · PDF de test' });
+    const step = tool('Agent', { description: 'Recettes de test' }, { subagent: running });
+    expect(stepView(step, true)).toMatchObject({ status: 'running', title: 'Sous-agent en cours · Recettes de test' });
     expect(stepView(step, false).status).toBe('interrupted');
   });
 
   it('falls back on the call result without the subagent transcript', () => {
-    const view = stepView(tool('Task', { description: 'PDF de test', prompt: 'Cherche.' }, { output: 'Rien.' }), false);
+    const view = stepView(
+      tool('Task', { description: 'Recettes de test', prompt: 'Cherche.' }, { output: 'Rien.' }),
+      false,
+    );
     expect(view.body).toMatchObject({ kind: 'subagent', parts: [], prompt: 'Cherche.', result: 'Rien.' });
   });
 });
 
 describe('sources', () => {
   const output =
-    'Web search results for query: "pdf.js tables"\n\nLinks: [{"title":"pdf.js [docs]","url":"https://mozilla.github.io/pdf.js/"},{"title":"Tables","url":"https://example.com/tables"}]\n\nRésumé.';
+    'Web search results for query: "recipe parser"\n\nLinks: [{"title":"schema.org [Recipe]","url":"https://schema.org/Recipe"},{"title":"Tables","url":"https://example.com/tables"}]\n\nRésumé.';
 
   it('reads the links of a web search, even with a bracket in a title', () => {
     expect(searchLinks(output)).toEqual([
-      { title: 'pdf.js [docs]', url: 'https://mozilla.github.io/pdf.js/' },
+      { title: 'schema.org [Recipe]', url: 'https://schema.org/Recipe' },
       { title: 'Tables', url: 'https://example.com/tables' },
     ]);
     expect(searchLinks('No links here')).toEqual([]);
@@ -189,15 +197,12 @@ describe('sources', () => {
 
   it('gathers the pages read and found in a turn, once each', () => {
     const sources = sourcesOf([
-      tool('WebSearch', { query: 'pdf.js tables' }, { output }),
-      tool('WebFetch', { url: 'https://mozilla.github.io/pdf.js/' }),
+      tool('WebSearch', { query: 'recipe parser' }, { output }),
+      tool('WebFetch', { url: 'https://schema.org/Recipe' }),
       tool('WebFetch', { url: 'https://broken.example' }, { error: true }),
     ]);
-    expect(sources.map((source) => source.url)).toEqual([
-      'https://mozilla.github.io/pdf.js/',
-      'https://example.com/tables',
-    ]);
-    expect(stepView(tool('WebSearch', { query: 'pdf.js tables' }, { output }), false).body).toMatchObject({
+    expect(sources.map((source) => source.url)).toEqual(['https://schema.org/Recipe', 'https://example.com/tables']);
+    expect(stepView(tool('WebSearch', { query: 'recipe parser' }, { output }), false).body).toMatchObject({
       kind: 'search',
     });
   });

@@ -11,6 +11,31 @@ export interface ParsedLine {
   sessionId: string;
 }
 
+/** Lignes connues qui ne portent aucun fait lu par Bosco : elles ne disent rien de la lisibilité du format. */
+const SILENT_TYPES = new Set([
+  'attachment',
+  'file-history-snapshot',
+  'progress',
+  'queue-operation',
+  'summary',
+  'system',
+]);
+
+/**
+ * La ligne est d'un genre connu sans fait à lire (résumé, instantané des fichiers, ligne méta ou de sous-agent) :
+ * qu'elle ne donne rien ne dit pas que le format a changé.
+ */
+export function isSilentLine(line: string): boolean {
+  if (!line.trim()) return true;
+  const record = parseJson(line);
+  if (!record) return false;
+  return (
+    record.isMeta === true ||
+    record.isSidechain === true ||
+    (typeof record.type === 'string' && SILENT_TYPES.has(record.type))
+  );
+}
+
 /** Une session lue en plusieurs fois garde ce suivi : un message de l'assistant écrit bloc par bloc répète son usage. */
 export class TranscriptParser {
   private readonly countedMessages = new Set<string>();

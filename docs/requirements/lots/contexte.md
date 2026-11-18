@@ -31,7 +31,7 @@
 
 ## <a id="e20"></a>E20 · Projets
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e20.html` · implémentation : **En cours (En cours (feat/chosen-projects, feat/navigation-by-place) : E20a à E20d. Reste : puce « monodépôt », choix du groupe dans le navigateur, entrée « Usage » du menu ⋯.)**
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e20.html` · implémentation : **Livré (Développé (jusqu'à feat/close-remaining-gaps) : E20a à E20d, puce « monodépôt » (pnpm-workspace.yaml, workspaces, turbo.json ou nx.json), choix du groupe dans le navigateur de dossiers, menu ⋯ avec Usage.)**
 
 ### <a id="e20a"></a>E20a · Projets : liste, suggestions et groupes
 
@@ -157,7 +157,7 @@ Règles de l'écran :
 
 ## <a id="e22"></a>E22 · Page d'un groupe
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e22.html` · implémentation : **En cours (En cours (feat/project-groups, feat/navigation-by-place, feat/session-defaults) : instructions, réglages avec valeurs par défaut des sessions, nouveau groupe, aperçu pour un projet choisi ; reste : choix du groupe dans le navigateur.)**
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e22.html` · implémentation : **Livré (Développé (jusqu'à feat/close-remaining-gaps) : instructions, réglages avec valeurs par défaut des sessions, nouveau groupe, aperçu, « Parcourir les dossiers… » qui ajoute au groupe.)**
 
 ### <a id="e22d"></a>E22d · Page d'un groupe : sessions
 
@@ -228,7 +228,7 @@ Règles de l'écran :
 
 ## <a id="e9"></a>E9 · Contexte d'un projet
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e9.html` · implémentation : **En cours (En cours (feat/project-groups) : instructions des groupes à la place des socles, plus d'exception ; onglet Contexte de la page d'un projet avec la navigation. Le contexte d'une session à plusieurs projets réunit celui de chaque projet, le principal d'abord (feat/multi-project-sessions).)**
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `contexte/e9.html` · implémentation : **Livré (Développé (jusqu'à feat/close-remaining-gaps) : instructions des groupes à la place des socles ; contexte transmis au lancement d'une session pilotée, sur le poste comme en bac à sable, celui de chaque projet, le principal d'abord ; auteur d'une décision proposée nommé avec un lien vers sa session, retrouvée comme la plus récemment active dans le dossier de l'appel ; notification « Décision proposée », sans réglage par type ; partie changée surlignée sous le champ. Accepté : sur le téléphone, les blocs ne se replient pas.)**
 
 ### <a id="e9a"></a>E9a · Contexte d'un projet
 
@@ -240,7 +240,7 @@ Tout ce que reçoit un agent au lancement dans un projet : les instructions de �
 Règles de l'écran :
 
 1. Les décisions acceptées d'api-tarifs sont transmises à chaque agent au lancement, après les instructions des groupes, et la place du projet dans l'architecture suit (règle 1). Une décision ne nomme pas l'instruction qu'elle remplace : toutes les décisions du projet l'emportent sur les instructions des groupes, et le texte transmis le dit. Ouvrir une ligne affiche la décision, ses versions et ses liens ([E9d](#e9d)).
-2. Les instructions viennent des groupes du projet : d'abord « Tous les projets », qui contient toujours tous les projets, puis chacun de ses groupes (règles 1 et 15). Elles se lisent ici et s'écrivent dans le groupe : « Modifier » ouvre ses instructions ([E22b](#e22b)). Une décision acceptée du projet l'emporte : elle reste transmise, avec la mention de l'instruction qu'elle remplace, et le texte transmis le dit.
+2. Les instructions viennent des groupes du projet : d'abord « Tous les projets », qui contient toujours tous les projets, puis chacun de ses groupes (règles 1 et 15). Elles se lisent ici et s'écrivent dans le groupe : « Modifier » ouvre ses instructions ([E22b](#e22b)). Une décision acceptée du projet l'emporte sur les instructions des groupes, sans nommer celle qu'elle remplace, et le texte transmis le dit.
 3. Une décision seulement proposée n'est pas transmise : un agent propose, un humain décide (règle 2). Le bandeau n'apparaît que s'il y a des décisions à valider ; son compteur est repris sur l'onglet « Contexte » de la page du projet ; une décision proposée par un agent arrive aussi en notification. « Examiner » ouvre la décision ([E9b](#e9b)).
 4. L'architecture dit ce que le projet appelle et qui l'appelle, pour que l'agent mesure l'effet de ses changements sur les autres projets.
 5. « Aperçu du texte transmis » montre exactement le texte que lira l'agent au prochain lancement, décisions écartées et proposées exclues ([E9f](#e9f)).

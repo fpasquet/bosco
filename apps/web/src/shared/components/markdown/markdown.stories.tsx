@@ -6,13 +6,13 @@ const meta = {
   component: Markdown,
   args: {
     children: [
-      '## Découpage des PDF',
-      'Le découpage coupe au milieu des **tableaux**. Je regroupe les lignes d’un même tableau avec `groupTables` :',
-      '```ts\nchunks.push(...splitBlocks(groupTables(page.blocks)));\n```',
-      '- `devis.pdf` : 2 tableaux\n- `facture.pdf` : 1 tableau',
-      '| Fichier | Tableaux |\n| --- | --- |\n| `devis.pdf` | 2 |\n| `facture.pdf` | 1 |',
-      '> Le test du tableau sur deux pages échoue encore.',
-      'Voir la [documentation de pdf.js](https://mozilla.github.io/pdf.js/).',
+      '## Import des ingrédients',
+      'L’import sépare une **quantité** de son ingrédient. Je recolle les lignes avec `joinQuantities` :',
+      '```ts\nfor (const line of joinQuantities(lines)) ingredients.push(...splitLine(line));\n```',
+      '- `tarte-aux-pommes.md` : 2 quantités coupées\n- `gratin.md` : 1 quantité coupée',
+      '| Recette | Quantités coupées |\n| --- | --- |\n| `tarte-aux-pommes.md` | 2 |\n| `gratin.md` | 1 |',
+      '> Le test de la quantité sur deux lignes échoue encore.',
+      'Voir la [description d’une recette](https://schema.org/Recipe).',
     ].join('\n\n'),
   },
   decorators: [

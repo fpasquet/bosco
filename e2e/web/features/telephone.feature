@@ -5,7 +5,7 @@ Fonctionnalité: Accès depuis le téléphone
   depuis le téléphone à une session qui m'attend, sans que personne d'autre ne le puisse.
 
   Contexte:
-    Étant donné le profil Claude Code « .claude » contient le transcript « session-maison-rag.jsonl » de la session « 5e0a91c3 »
+    Étant donné le profil Claude Code « .claude » contient le transcript « session-maison-recettes.jsonl » de la session « 5e0a91c3 »
     Et Bosco surveille les profils « .claude » et « .claude-perso »
 
   @CA-SESS-60

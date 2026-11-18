@@ -9,13 +9,17 @@ import type { Source } from '../../domain/source.ts';
 import type { TranscriptEvent } from '../../domain/transcript-event.ts';
 import type { ImportProgress } from '../events/session-events.bus.ts';
 import type { TranscriptCursorStore } from '../persistence/transcript-cursor.store.ts';
-import { TranscriptParser } from './transcript-parser.ts';
+import { judgeTranscript, TranscriptFormats, type TranscriptReading } from '../../domain/transcript-format.ts';
+import { isSilentLine, TranscriptParser } from './transcript-parser.ts';
 
 export class FileTranscriptWatcher implements TranscriptWatcher {
   private readonly gitRoots = new Map<string, Promise<null | string>>();
   private readonly parsers = new Map<string, TranscriptParser>();
   private readonly queues = new Map<string, Promise<void>>();
   private readonly watchers = new Map<string, FSWatcher>();
+  /** Ce qu'a donné chaque transcript pas encore jugé ; null une fois jugé */
+  private readonly readings = new Map<string, null | TranscriptReading>();
+  private readonly formats = new TranscriptFormats();
 
   constructor(
     private readonly sessionService: SessionService,
@@ -45,6 +49,11 @@ export class FileTranscriptWatcher implements TranscriptWatcher {
     this.reportProgress(null);
   }
 
+  /** Bosco ne sait plus lire le format des nouvelles sessions de la source : elle est « À mettre à jour ». */
+  isOutdated(sourceId: string): boolean {
+    return this.formats.isOutdated(sourceId);
+  }
+
   async unwatch(sourceId: string): Promise<void> {
     const watcher = this.watchers.get(sourceId);
     this.watchers.delete(sourceId);
@@ -58,6 +67,8 @@ export class FileTranscriptWatcher implements TranscriptWatcher {
     await Promise.all(this.queues.values());
     this.queues.clear();
     this.parsers.clear();
+    this.readings.clear();
+    this.formats.forget();
   }
 
   /** Une lecture à la fois par fichier, dans l'ordre des modifications. */
@@ -82,8 +93,10 @@ export class FileTranscriptWatcher implements TranscriptWatcher {
   }
 
   private async readNewLines(source: Source, file: string): Promise<void> {
-    const info = await stat(file);
     const stored = await this.cursors.offsetOf(file);
+    // Format illisible : les nouvelles sessions de la source ne se lisent plus, celles déjà commencées si
+    if (stored === 0 && this.formats.isOutdated(source.id)) return;
+    const info = await stat(file);
     // Un fichier plus court qu'avant a été réécrit : on le relit depuis le début
     const offset = info.size < stored ? 0 : stored;
     if (info.size === offset) return;
@@ -98,16 +111,48 @@ export class FileTranscriptWatcher implements TranscriptWatcher {
     if (end < 0) return;
     const parser = this.parsers.get(file) ?? new TranscriptParser();
     this.parsers.set(file, parser);
+    const { bySession, reading } = await this.parseLines(parser, buffer.subarray(0, end).toString('utf8'));
+    this.judge(source, file, reading);
+    for (const [sessionId, events] of bySession)
+      await this.sessionService.recordTranscript(source.id, sessionId, events);
+    await this.cursors.moveTo(file, offset + end + 1);
+  }
+
+  /** Les faits des lignes lues, session par session, et ce que la lecture en a tiré. */
+  private async parseLines(
+    parser: TranscriptParser,
+    text: string,
+  ): Promise<{ bySession: Map<string, TranscriptEvent[]>; reading: TranscriptReading }> {
     const bySession = new Map<string, TranscriptEvent[]>();
-    for (const line of buffer.subarray(0, end).toString('utf8').split('\n')) {
-      for (const { sessionId, event } of parser.parse(line)) {
+    const reading = { lines: 0, read: 0 };
+    for (const line of text.split('\n')) {
+      const parsed = parser.parse(line);
+      // Une ligne connue sans fait à lire ne compte pas pour juger le format
+      reading.lines += parsed.length > 0 || !isSilentLine(line) ? 1 : 0;
+      reading.read += parsed.length > 0 ? 1 : 0;
+      for (const { sessionId, event } of parsed) {
         const projectRoot = event.cwd ? await this.gitRootOf(event.cwd) : null;
         bySession.set(sessionId, [...(bySession.get(sessionId) ?? []), { ...event, projectRoot }]);
       }
     }
-    for (const [sessionId, events] of bySession)
-      await this.sessionService.recordTranscript(source.id, sessionId, events);
-    await this.cursors.moveTo(file, offset + end + 1);
+    return { bySession, reading };
+  }
+
+  /**
+   * Juge un nouveau transcript sur ses premières lignes, lues en une ou plusieurs fois : une fois lisible ou illisible,
+   * il compte pour sa source, puis n'est plus jugé.
+   */
+  private judge(source: Source, file: string, reading: TranscriptReading): void {
+    const known = this.readings.get(file);
+    if (known === null) return;
+    const total = { lines: (known?.lines ?? 0) + reading.lines, read: (known?.read ?? 0) + reading.read };
+    const judgement = judgeTranscript(total);
+    if (judgement === 'unknown') {
+      this.readings.set(file, total);
+      return;
+    }
+    this.readings.set(file, null);
+    this.formats.note(source.id, judgement);
   }
 }
 

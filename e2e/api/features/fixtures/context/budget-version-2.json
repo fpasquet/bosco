@@ -1,0 +1,10 @@
+{
+  "text": {
+    "title": "Ranger les catégories du budget avec leurs couleurs",
+    "context": "Les catégories du budget du foyer vivent dans le navigateur.",
+    "decision": "Ranger les catégories et leurs couleurs dans la base.",
+    "consequences": null,
+    "alternatives": null
+  },
+  "note": "Les couleurs aussi"
+}

@@ -6,9 +6,9 @@ const meta = {
   component: SearchResults,
   args: {
     links: [
-      { title: 'PDF.js', url: 'https://mozilla.github.io/pdf.js/' },
-      { title: 'Extracting tables from PDFs', url: 'https://github.com/mozilla/pdf.js/discussions/17000' },
-      { title: 'pdfplumber tables', url: 'https://pypi.org/project/pdfplumber/' },
+      { title: 'Schema.org Recipe', url: 'https://schema.org/Recipe' },
+      { title: 'Ingredient phrase tagger', url: 'https://github.com/nytimes/ingredient-phrase-tagger' },
+      { title: 'recipe-ingredient-parser', url: 'https://www.npmjs.com/package/recipe-ingredient-parser-v3' },
     ],
   },
 } satisfies Meta<typeof SearchResults>;

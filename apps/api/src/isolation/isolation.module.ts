@@ -18,21 +18,29 @@ import { FileClaudeProfiles } from './infrastructure/docker/claude-profiles.ts';
 import { DockerSandboxProbe } from './infrastructure/docker/docker-containers.ts';
 import { AGENT_LIMITS, DockerIsolation } from './infrastructure/docker/docker-isolation.ts';
 import { ProcessTreeProbe } from './infrastructure/docker/process-tree.ts';
+import { ScriptedSandboxProbe } from './infrastructure/docker/scripted-sandbox-probe.ts';
 import { AllowListFile } from './infrastructure/egress/allow-list-file.ts';
 import { MikroOrmIsolationStore } from './infrastructure/persistence/isolation.store.ts';
 import { MikroOrmQuotaStore } from './infrastructure/persistence/quota.store.ts';
 import { ContainersController } from './interface/http/containers.controller.ts';
 import { IsolationController } from './interface/http/isolation.controller.ts';
 import { QuotaController } from './interface/http/quota.controller.ts';
-import { CONTAINER_EVENTS, CONTAINERS_SERVICE, DOCKER_ISOLATION, ISOLATION_SERVICE, QUOTA_SERVICE } from './tokens.ts';
+import {
+  CONTAINER_EVENTS,
+  CONTAINERS_SERVICE,
+  DOCKER_ISOLATION,
+  ISOLATION_SERVICE,
+  QUOTA_SERVICE,
+  SANDBOX_PROBE,
+} from './tokens.ts';
 
 const clock = { now: () => new Date() };
 
 /** Liste des domaines autorisés : à la place qu'elle avait avant les bacs à sable, montée par les proxies existants */
 const egressDir = (config: Config) => join(config.dataDir, 'worker', 'egress');
 
-/** Dans les scénarios, pas de Docker : aucun conteneur */
-const NO_SANDBOXES: SandboxProbe = { list: () => Promise.resolve([]) };
+/** Mesure des conteneurs dans les scénarios : chaque seconde, pour ne pas attendre 5 s un bac à sable démarré */
+const SCRIPTED_MEASURE_MS = 1000;
 
 /**
  * Isolation des bacs à sable : l'image et les limites de l'agent, la liste des domaines de son proxy de sortie,
@@ -81,9 +89,23 @@ const NO_SANDBOXES: SandboxProbe = { list: () => Promise.resolve([]) };
     },
     { provide: CONTAINER_EVENTS, useValue: new ContainerEventsBus() },
     {
+      provide: SANDBOX_PROBE,
+      inject: [CONFIG, PILOT_SERVICE],
+      useFactory: (config: Config, pilot: PilotService): SandboxProbe =>
+        // Dans les scénarios, pas de Docker : chaque bac à sable démarré d'une session donne la même mesure
+        config.testing
+          ? new ScriptedSandboxProbe(() =>
+              pilot
+                .sandboxedSessions()
+                .filter((sessionId) => pilot.pilotOf(sessionId)?.sandbox?.state === 'running')
+                .map((sessionId) => sandboxKeyOf(sessionId)),
+            )
+          : new DockerSandboxProbe(),
+    },
+    {
       provide: CONTAINERS_SERVICE,
-      inject: [CONFIG, CONTAINER_EVENTS, PILOT_SERVICE, SESSION_SERVICE],
-      useFactory: (config: Config, events: ContainerEventsBus, pilot: PilotService, sessions: SessionService) => {
+      inject: [CONTAINER_EVENTS, PILOT_SERVICE, SESSION_SERVICE, SANDBOX_PROBE],
+      useFactory: (events: ContainerEventsBus, pilot: PilotService, sessions: SessionService, probe: SandboxProbe) => {
         const processes = new ProcessTreeProbe();
         const titles = async () => {
           const views = await sessions.listSessions();
@@ -113,7 +135,7 @@ const NO_SANDBOXES: SandboxProbe = { list: () => Promise.resolve([]) };
               });
             },
           },
-          probe: config.testing ? NO_SANDBOXES : new DockerSandboxProbe(),
+          probe,
           sandboxedSessions: async () => {
             const named = await titles();
             return pilot.sandboxedSessions().map((sessionId) => ({
@@ -126,12 +148,13 @@ const NO_SANDBOXES: SandboxProbe = { list: () => Promise.resolve([]) };
       },
     },
   ],
-  exports: [ISOLATION_SERVICE, QUOTA_SERVICE, DOCKER_ISOLATION],
+  exports: [ISOLATION_SERVICE, QUOTA_SERVICE, DOCKER_ISOLATION, SANDBOX_PROBE, CONTAINERS_SERVICE],
 })
 export class IsolationModule implements OnApplicationBootstrap, OnApplicationShutdown {
   private timer: ReturnType<typeof setInterval> | undefined;
 
   constructor(
+    @Inject(CONFIG) private readonly config: Config,
     @Inject(ISOLATION_SERVICE) private readonly isolation: IsolationService,
     @Inject(QUOTA_SERVICE) private readonly quota: QuotaService,
     @Inject(CONTAINERS_SERVICE) private readonly containers: ContainersService,
@@ -140,8 +163,9 @@ export class IsolationModule implements OnApplicationBootstrap, OnApplicationShu
   async onApplicationBootstrap(): Promise<void> {
     await this.isolation.load();
     await this.quota.load();
-    // Conteneurs en cours : mesurés toutes les 5 s
-    this.timer = setInterval(() => void this.containers.tick().catch(() => undefined), MEASURE_MS);
+    // Conteneurs en cours : mesurés toutes les 5 s, chaque seconde dans les scénarios
+    const every = this.config.testing ? SCRIPTED_MEASURE_MS : MEASURE_MS;
+    this.timer = setInterval(() => void this.containers.tick().catch(() => undefined), every);
     this.timer.unref();
   }
 

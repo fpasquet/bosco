@@ -23,7 +23,7 @@ export const Variants: Story = {
     <BubbleGroup className="max-w-md">
       {VARIANTS.map((variant) => (
         <Bubble key={variant} variant={variant}>
-          <BubbleContent>{variant} · Je relis le découpage des PDF.</BubbleContent>
+          <BubbleContent>{variant} · Je relis l’import des ingrédients.</BubbleContent>
         </Bubble>
       ))}
       <Bubble variant="tinted" align="end">

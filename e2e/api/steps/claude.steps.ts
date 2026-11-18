@@ -1,11 +1,12 @@
 // Phrases Claude Code : des profils et des transcripts écrits comme le fait Claude Code, dans le dossier du scénario.
+import { expect } from '@playwright/test';
 import { copyFileSync, mkdirSync, rmSync, utimesSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { TRANSCRIPTS } from '../../shared/transcripts.ts';
 
 /** Fichiers des services de test des projets des scénarios (E12a). */
 const COMPOSE = join(import.meta.dirname, '../../shared/compose');
-import { Given } from './fixtures.ts';
+import { Given, Then } from './fixtures.ts';
 
 const written = new Map<string, string>();
 
@@ -48,4 +49,22 @@ Given(
 
 Given('the workstation has the npm settings {string}', ({ bosco }, fixture: string) => {
   copyFileSync(join(import.meta.dirname, '../../shared/npm', fixture), join(bosco.profilesRoot, '.npmrc'));
+});
+
+/** Temps laissé à Bosco pour lire un transcript qu'il ne doit pas lire : il le lit d'ordinaire en moins d'une seconde. */
+const NOT_READ_MS = 1500;
+
+Then('Bosco should mark the profile {string} to update', async ({ bosco }, profile: string) => {
+  const unreadable = async () => {
+    const response = await fetch(`${bosco.url}/api/sources`);
+    const body = (await response.json()) as { sources: { path: string; unreadable: boolean }[] };
+    return body.sources.find(({ path }) => path.endsWith(`/${profile}`))?.unreadable;
+  };
+  await expect.poll(unreadable).toBe(true);
+});
+
+Then('Bosco should not read the session {string}', async ({ bosco }, sessionId: string) => {
+  await new Promise((resolve) => setTimeout(resolve, NOT_READ_MS));
+  const response = await fetch(`${bosco.url}/api/sessions/${sessionId}`);
+  expect(response.status).toBe(404);
 });

@@ -29,11 +29,11 @@ describe('desktopText', () => {
       ...base,
       kind: 'long-turn',
       place: null,
-      title: 'Corriger l’indexation',
+      title: 'Corriger la recherche',
       turnMinutes: 12,
     });
     expect(turn).toEqual({
-      title: 'Fin de tour · 12 min · Corriger l’indexation',
+      title: 'Fin de tour · 12 min · Corriger la recherche',
       body: 'Veux-tu que je lance les tests ?',
     });
   });

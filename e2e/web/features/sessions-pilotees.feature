@@ -17,9 +17,9 @@ Fonctionnalité: Sessions pilotées par Bosco
     Et je clique sur le lien « Nouvelle session »
     Alors je vois le titre « Nouvelle session »
     Et la page est accessible
-    Quand je saisis « Lis le lexique » dans le champ « Premier message »
+    Quand je saisis « Lis les catégories du budget » dans le champ « Premier message »
     Et je clique sur le bouton « Démarrer »
-    Alors je vois le texte « Reçu : Lis le lexique · mode default · modèle défaut · effort défaut · images 0 »
+    Alors je vois le texte « Reçu : Lis les catégories du budget · mode default · modèle défaut · effort défaut · images 0 »
     Et je vois le texte « Pilotée dans Bosco depuis »
     Et la page est accessible
     Quand je saisis « Et les tests » dans le champ « Message à l’agent »
@@ -32,13 +32,13 @@ Fonctionnalité: Sessions pilotées par Bosco
     Et je saisis « Pose une question » dans le champ « Premier message »
     Et je clique sur le bouton « Démarrer »
     Alors je vois le texte « L’agent te pose une question »
-    Et le bouton radio « Normaliser la casse à la lecture Recommandé » est coché
+    Et le bouton radio « Arrondir à la minute à la lecture Recommandé » est coché
     Et je vois l’étiquette « Recommandé »
     Et je ne vois plus le texte « (Recommended) »
     Et la page est accessible
-    Quand je clique sur le bouton radio « Corriger les entrées du lexique »
+    Quand je clique sur le bouton radio « Corriger les grilles de tarifs »
     Et je clique sur le bouton « Répondre »
-    Alors je vois le texte « Réponse reçue : Corriger les entrées du lexique »
+    Alors je vois le texte « Réponse reçue : Corriger les grilles de tarifs »
 
   @CA-SESS-97
   Scénario: Une session close reprend dans Bosco quand on lui écrit
