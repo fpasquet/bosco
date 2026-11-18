@@ -377,3 +377,56 @@ export interface ChannelProfileDto {
   label: string;
   path: string;
 }
+
+/** Période des sessions importées dans l'historique : les 30 derniers jours, ou tout l'historique des profils. */
+export type HistoryPeriodDto = '30-days' | 'all';
+
+/** Ce que retirer une source changerait, pour la fenêtre de confirmation. */
+export interface SourceRemovalDto {
+  /** Canal de Bosco installé dans le profil : il est retiré */
+  channel: boolean;
+  /** Abonnement par défaut de Bosco : il revient à celui de Claude Code */
+  defaultSubscription: boolean;
+  /** Groupes et projets dont c'est le profil par défaut : ils reprennent l'abonnement par défaut */
+  groups: string[];
+  label: string;
+  /** Suivi en direct (et serveur MCP de Bosco) installé dans le profil : il est retiré, réglages d'avant remis */
+  liveTracking: boolean;
+  path: string;
+  projects: string[];
+  /** Sessions du profil dont un tour tourne : le retrait attend qu'ils finissent */
+  running: number;
+  /** Sessions que Bosco oublie ; les transcripts restent dans le profil */
+  sessions: number;
+  /** Abonnement par défaut après le retrait (le profil surveillé suivant s'il l'était) ; null sans abonnement */
+  subscription: null | string;
+}
+
+/** Réglages › Données : l'historique importé, la base de Bosco et ce que la réinitialisation effacerait. */
+export interface DataDto {
+  /** Dossier des données de Bosco et sa taille en octets, copies des bacs à sable comprises */
+  database: { bytes: number; dataDir: string };
+  /** Dossier personnel, pour écrire les chemins comme le terminal (~/.local/share/bosco) */
+  home: string;
+  history: {
+    /** Lecture en cours des transcripts plus anciens, après le passage à tout l'historique */
+    importing: boolean;
+    /** Date de début de la plus ancienne session gardée ; null sans session */
+    oldestSessionAt: null | string;
+    /** Sessions plus anciennes que la période, encore dans les profils surveillés, et les profils qui les gardent */
+    older: { profiles: string[]; sessions: number };
+    period: HistoryPeriodDto;
+    sessions: number;
+  };
+  /** Ce que la réinitialisation effacerait, retirerait des profils et perdrait */
+  reset: {
+    /** Branches de bac à sable pas encore récupérées : elles seraient perdues */
+    branches: string[];
+    groups: number;
+    /** Profils dont le suivi en direct, le canal ou le serveur de Bosco seraient retirés */
+    profiles: string[];
+    projects: number;
+    sessions: number;
+    sources: number;
+  };
+}

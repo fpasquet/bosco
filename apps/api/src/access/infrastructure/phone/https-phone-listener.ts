@@ -30,6 +30,9 @@ const SETTINGS = [
   /^\/api\/sources/,
   /^\/api\/channel\/profiles/,
   /^\/api\/settings/,
+  // Les données de Bosco se lisent sur le téléphone ; l'historique et la réinitialisation se règlent sur le poste
+  /^\/api\/data/,
+  /^\/api\/reset/,
   /^\/api\/isolation/,
   /^\/api\/rights/,
   // Les projets et les groupes se lisent sur le téléphone ; ils se règlent sur le poste

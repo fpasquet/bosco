@@ -725,6 +725,37 @@ export class PilotService {
     turn.process.interrupt();
   }
 
+  /**
+   * Profil retiré : les sessions en bac à sable qui tournaient sur son abonnement prennent l'abonnement par défaut
+   * pour leurs prochains tours.
+   */
+  async replaceProfile(path: string): Promise<void> {
+    const { effective } = await this.profiles.subscriptions();
+    if (!effective || effective === path) return;
+    for (const record of [...this.records.values()])
+      if (record.sandbox?.profile === path)
+        await this.keep({ ...record, sandbox: { ...record.sandbox, profile: effective } });
+  }
+
+  /** Branches de bac à sable qui ont du travail pas encore récupéré, que la réinitialisation perdrait. */
+  unretrievedBranches(): string[] {
+    const branches: string[] = [];
+    for (const { sandbox } of this.records.values())
+      if (sandbox && !sandbox.removedAt && unretrieved(sandbox)) branches.push(sandbox.branch);
+    return branches;
+  }
+
+  /** Réinitialisation : les tours s'arrêtent, chaque bac à sable est supprimé (conteneur et copies). */
+  async removeAllSandboxes(): Promise<void> {
+    this.stopAll();
+    const deps = this.sandbox;
+    if (!deps) return;
+    for (const record of this.records.values())
+      if (record.sandbox && !record.sandbox.removedAt)
+        await deps.sandboxes.remove(record.sessionId).catch(() => undefined);
+    this.sandboxStates.clear();
+  }
+
   /** Arrête tous les tours (arrêt de Bosco, remise à zéro des scénarios). */
   stopAll(): void {
     for (const turn of this.turns.values()) turn.process.finish();

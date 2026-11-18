@@ -3,6 +3,8 @@ import type { Config } from './config.ts';
 import { AccessModule } from './access/access.module.ts';
 import { ContextModule } from './context/context.module.ts';
 import { IsolationModule } from './isolation/isolation.module.ts';
+import { MaintenanceWiring } from './maintenance-wiring.ts';
+import { MaintenanceModule } from './maintenance/maintenance.module.ts';
 import { PersistenceModule } from './persistence.module.ts';
 import { ProjectsWiring } from './projects-wiring.ts';
 import { ProjectsModule } from './projects/projects.module.ts';
@@ -19,9 +21,17 @@ export class AppModule {
     return {
       module: AppModule,
       global: true,
-      imports: [PersistenceModule, SessionsModule, ProjectsModule, AccessModule, ContextModule, IsolationModule],
+      imports: [
+        PersistenceModule,
+        SessionsModule,
+        ProjectsModule,
+        AccessModule,
+        ContextModule,
+        IsolationModule,
+        MaintenanceModule,
+      ],
       controllers: [HealthController, ...(config.testing ? [TestController] : [])],
-      providers: [{ provide: CONFIG, useValue: config }, SandboxWiring, ProjectsWiring],
+      providers: [{ provide: CONFIG, useValue: config }, SandboxWiring, ProjectsWiring, MaintenanceWiring],
       exports: [CONFIG],
     };
   }

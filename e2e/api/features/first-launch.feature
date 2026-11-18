@@ -44,3 +44,11 @@ Feature: Profiles at first launch
     And the response should match snapshot
     When I send GET request to "/api/sessions/unknown/conversation"
     Then the response code should be 404
+
+  @CA-SESS-187
+  Scenario: The whole history chosen at first launch reads the older sessions too, and becomes the imported period
+    When I send POST request to "/api/sources" with the JSON "fixtures/watch-perso-all-history.json"
+    Then the response code should be 201
+    And Bosco should read the session "a41f07c2"
+    When I send GET request to "/api/data"
+    Then the response property "history.period" should equal "all"

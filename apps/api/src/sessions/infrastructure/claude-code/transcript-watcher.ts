@@ -39,7 +39,15 @@ export class FileTranscriptWatcher implements TranscriptWatcher {
     watcher.on('add', (file) => void this.enqueue(source, file));
     watcher.on('change', (file) => void this.enqueue(source, file));
     this.watchers.set(source.id, watcher);
-    const files = await recentTranscripts(projects, since);
+    await this.readSince(source, since);
+  }
+
+  /**
+   * Lit les transcripts du profil modifiés depuis cette date. Chaque fichier reprend à sa dernière position : un
+   * transcript déjà lu n'est pas relu, seuls les plus anciens s'ajoutent quand la période s'allonge.
+   */
+  async readSince(source: Source, since: Date): Promise<void> {
+    const files = await recentTranscripts(join(source.path, 'projects'), since);
     // Les sessions récentes d'abord : les sessions ouvertes s'affichent avant l'historique
     files.sort((a, b) => b.mtime - a.mtime);
     for (const [index, file] of files.entries()) {
@@ -47,6 +55,17 @@ export class FileTranscriptWatcher implements TranscriptWatcher {
       await this.enqueue(source, file.path);
     }
     this.reportProgress(null);
+  }
+
+  /** Transcripts du profil modifiés avant cette date et jamais lus : ce que « Tout l'historique » ajouterait. */
+  async countUnread(source: Source, before: Date): Promise<number> {
+    const files = await listTranscripts(join(source.path, 'projects'));
+    let count = 0;
+    for (const file of files.filter(({ mtime }) => mtime < before.getTime())) {
+      const offset = await this.cursors.offsetOf(file.path);
+      if (offset === 0) count += 1;
+    }
+    return count;
   }
 
   /** Bosco ne sait plus lire le format des nouvelles sessions de la source : elle est « À mettre à jour ». */
@@ -58,6 +77,18 @@ export class FileTranscriptWatcher implements TranscriptWatcher {
     const watcher = this.watchers.get(sourceId);
     this.watchers.delete(sourceId);
     await watcher?.close();
+  }
+
+  /** Source retirée : sa lecture s'arrête et ce qui en était gardé en mémoire s'oublie ; ses fichiers restent. */
+  async forget(source: Source): Promise<void> {
+    await this.unwatch(source.id);
+    const prefix = `${join(source.path, 'projects')}/`;
+    const pending = [...this.queues.entries()].filter(([file]) => file.startsWith(prefix));
+    await Promise.all(pending.map(([, queue]) => queue));
+    for (const [file] of pending) this.queues.delete(file);
+    for (const file of [...this.parsers.keys()]) if (file.startsWith(prefix)) this.parsers.delete(file);
+    for (const file of [...this.readings.keys()]) if (file.startsWith(prefix)) this.readings.delete(file);
+    this.formats.forget(source.id);
   }
 
   async close(): Promise<void> {
@@ -164,16 +195,22 @@ async function findGitRoot(cwd: string): Promise<null | string> {
   return null;
 }
 
-async function recentTranscripts(projects: string, since: Date): Promise<{ mtime: number; path: string }[]> {
+/** Transcripts d'un profil, un par session, avec leur date de modification. */
+async function listTranscripts(projects: string): Promise<{ mtime: number; path: string }[]> {
   const folders = await readdir(projects, { withFileTypes: true }).catch(() => []);
   const files: { mtime: number; path: string }[] = [];
   for (const folder of folders.filter((entry) => entry.isDirectory())) {
     const names = await readdir(join(projects, folder.name)).catch(() => []);
     for (const name of names.filter((candidate) => candidate.endsWith('.jsonl'))) {
       const file = join(projects, folder.name, name);
-      const info = await stat(file);
-      if (info.mtime >= since) files.push({ path: file, mtime: info.mtimeMs });
+      const info = await stat(file).catch(() => null);
+      if (info) files.push({ path: file, mtime: info.mtimeMs });
     }
   }
   return files;
+}
+
+async function recentTranscripts(projects: string, since: Date): Promise<{ mtime: number; path: string }[]> {
+  const files = await listTranscripts(projects);
+  return files.filter(({ mtime }) => mtime >= since.getTime());
 }
