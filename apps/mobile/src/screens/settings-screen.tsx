@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 import type { AppPreferences } from '../lib/preferences';
 import type { Workstation } from '../lib/storage';
 import { colors } from '../lib/theme';
+import { APP_VERSION } from '../lib/version';
 
 export interface SettingsScreenProps {
   onBack: () => void;
@@ -57,6 +58,7 @@ export function SettingsScreen(props: Readonly<SettingsScreenProps>) {
           <Text style={styles.link}>Choisir ce qui notifie →</Text>
         </Pressable>
       </View>
+      <Text style={styles.small}>Application Android {APP_VERSION}</Text>
     </View>
   );
 }
