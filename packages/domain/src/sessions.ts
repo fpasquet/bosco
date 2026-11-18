@@ -238,6 +238,8 @@ export interface SessionDto {
   sourceId: string;
   startedAt: string;
   state: SessionStateDto;
+  /** Part des sous-agents de la session, comprise dans usage et cost (tokens, dollars) ; null quand elle n'en a pas eu */
+  subagents: null | { tokens: number; usd: number };
   title: null | string;
   /** Ouverte dans un terminal : Bosco ne lui écrit pas, on y répond dans le terminal */
   openInTerminal: boolean;

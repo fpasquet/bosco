@@ -13,8 +13,11 @@ export interface TranscriptEvent {
   /** Fichier modifié par l'outil appelé (Edit, MultiEdit, Write) */
   change?: FileChange | null;
   cwd: null | string;
-  /** pullRequest : une PR créée par l'agent (`gh pr create`), dont `text` est l'adresse */
-  kind: 'prompt' | 'pullRequest' | 'reply' | 'title' | 'tool';
+  /**
+   * pullRequest : une PR créée par l'agent (`gh pr create`), dont `text` est l'adresse. subagentUsage : l'usage d'une
+   * réponse d'un sous-agent de la session, sans autre fait (son fil reste le sien)
+   */
+  kind: 'prompt' | 'pullRequest' | 'reply' | 'subagentUsage' | 'title' | 'tool';
   /** Question posée par l'agent (outil AskUserQuestion) : elle attend ta réponse */
   question?: null | string;
   model: null | string;
@@ -37,6 +40,8 @@ export type JournalEntry =
 export interface TurnUsage {
   at: Date;
   model: null | string;
+  /** Réponse d'un sous-agent de la session, comptée dans son usage */
+  subagent: boolean;
   usage: TokenUsage;
 }
 

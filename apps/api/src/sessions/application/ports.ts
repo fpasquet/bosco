@@ -191,6 +191,8 @@ export interface RecordedTurn {
   at: Date;
   model: null | string;
   sessionId: string;
+  /** Réponse d'un sous-agent de la session */
+  subagent: boolean;
   usage: TokenUsage;
 }
 

@@ -31,6 +31,11 @@ export interface SessionRow {
   projectPath: null | string;
   sourceId: string;
   startedAt: Date;
+  subagentCacheCreationTokens: number;
+  subagentCacheReadTokens: number;
+  subagentCostMicros: number;
+  subagentInputTokens: number;
+  subagentOutputTokens: number;
   title: null | string;
   usageComplete: boolean;
   /** Attente de la session, en JSON (dates en ISO 8601) */
@@ -47,6 +52,8 @@ export interface SessionTurnRow {
   model: null | string;
   outputTokens: number;
   sessionId: string;
+  /** Réponse d'un sous-agent de la session */
+  subagent: boolean;
 }
 
 /** PR créée par l'agent d'une session, repérée dans son fil ; une adresse ne compte qu'une fois. */
@@ -112,6 +119,11 @@ export const SessionSchema = new EntitySchema<SessionRow>({
     turns: { type: 'integer', default: 0 },
     changedFiles: { type: 'json', fieldName: 'changed_files', default: '[]' },
     usageComplete: { type: 'boolean', fieldName: 'usage_complete', default: false },
+    subagentInputTokens: { type: 'integer', fieldName: 'subagent_input_tokens', default: 0 },
+    subagentOutputTokens: { type: 'integer', fieldName: 'subagent_output_tokens', default: 0 },
+    subagentCacheCreationTokens: { type: 'integer', fieldName: 'subagent_cache_creation_tokens', default: 0 },
+    subagentCacheReadTokens: { type: 'integer', fieldName: 'subagent_cache_read_tokens', default: 0 },
+    subagentCostMicros: { type: 'integer', fieldName: 'subagent_cost_micros', default: 0 },
   },
 });
 
@@ -127,6 +139,7 @@ export const SessionTurnSchema = new EntitySchema<SessionTurnRow>({
     outputTokens: { type: 'integer', fieldName: 'output_tokens' },
     cacheCreationTokens: { type: 'integer', fieldName: 'cache_creation_tokens' },
     cacheReadTokens: { type: 'integer', fieldName: 'cache_read_tokens' },
+    subagent: { type: 'boolean', default: false },
   },
 });
 

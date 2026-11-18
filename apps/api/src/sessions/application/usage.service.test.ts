@@ -19,8 +19,14 @@ function view(id: string, project: null | number, added: number[] = [], sourceId
   } as unknown as SessionView;
 }
 
-function turn(sessionId: string, at: string, model: string, usage: [number, number, number, number]): RecordedTurn {
-  return { sessionId, at: new Date(at), model, usage: new TokenUsage(...usage) };
+function turn(
+  sessionId: string,
+  at: string,
+  model: string,
+  usage: [number, number, number, number],
+  subagent = false,
+): RecordedTurn {
+  return { sessionId, at: new Date(at), model, subagent, usage: new TokenUsage(...usage) };
 }
 
 function pilot(sessionId: string, since: string, sandbox: null | { retrievedAt: null | string } = null): PilotRecord {
@@ -90,6 +96,30 @@ describe('UsageService', () => {
       unpricedModels: [],
     });
     expect(report.tokens.costUsd).toBeCloseTo(2 + 2 + 2.5 + 1.8);
+  });
+
+  it('CA-SESS-188 · counts the subagents in the tokens and the cost, at their own price, and shows their share', async () => {
+    const report = await service({
+      views: [view('a', 1)],
+      turns: [
+        // Session sur Opus 5.5 (sortie 20 $ le million), sous-agent sur Sonnet 5.5 (sortie 10 $ le million)
+        turn('a', '2026-11-16T10:00:00', 'claude-opus-5-5', [0, 100_000, 0, 1_000_000]),
+        turn('a', '2026-11-16T10:01:00', 'claude-sonnet-5-5', [0, 300_000, 0, 0], true),
+        turn('a', '2026-11-16T10:02:00', 'claude-sonnet-5-5', [0, 100_000, 0, 0], true),
+      ],
+    }).usageReport(all);
+    // Opus : 100 000 en sortie (2 $) et 1 M de cache lu à 0,2 $ ; Sonnet : 400 000 en sortie (4 $)
+    expect(report.tokens.costUsd).toBeCloseTo(6.2);
+    expect(report.tokens.subagents).toEqual({ costUsd: 4, tokens: 400_000 });
+    expect(report.tokens).toMatchObject({ output: 500_000, turns: 1, turnsWithoutCacheRead: 0, sessions: 1 });
+    expect(report.byOrigin.map(({ key, share, usd }) => [key, usd, share])).toEqual([
+      ['origin:sessions', 2.2, 35.5],
+      ['origin:subagents', 4, 64.5],
+    ]);
+    expect(report.byModel.map(({ label, usd }) => [label, usd])).toEqual([
+      ['claude-sonnet-5-5', 4],
+      ['claude-opus-5-5', 2.2],
+    ]);
   });
 
   it('CA-SESS-178 · leaves a model without a known price out of the cost, and names it', async () => {

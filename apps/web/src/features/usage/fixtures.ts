@@ -55,6 +55,7 @@ export const STORY_USAGE: UsageReportDto = {
     cacheReuse: 99.8,
     turnsWithoutCacheRead: 1,
     sessions: 214,
+    subagents: { costUsd: 96.4, tokens: 208_500_000 },
     turns: 4669,
     costUsd: 283.01,
     unpricedModels: [],
@@ -72,6 +73,10 @@ export const STORY_USAGE: UsageReportDto = {
     { key: 'model:claude-opus-5-5', label: 'claude-opus-5-5', share: 58, usd: 164.2 },
     { key: 'model:claude-sonnet-5-5', label: 'claude-sonnet-5-5', share: 39, usd: 110.3 },
     { key: 'model:claude-haiku-5-5', label: 'claude-haiku-5-5', share: 3, usd: 8.51 },
+  ],
+  byOrigin: [
+    { key: 'origin:sessions', label: 'Sessions', share: 65.9, usd: 186.61 },
+    { key: 'origin:subagents', label: 'Sous-agents', share: 34.1, usd: 96.4 },
   ],
   byProfile: [
     { key: 'profile:pro', label: 'pro', share: 71, usd: 200.94 },
@@ -98,6 +103,7 @@ export const STORY_USAGE_GROUP: UsageReportDto = {
     cacheRead: 113_600_000,
     cacheCreation: 4_200_000,
     sessions: 41,
+    subagents: { costUsd: 15.3, tokens: 33_800_000 },
     turns: 902,
     costUsd: 52.8,
   },
@@ -114,6 +120,10 @@ export const STORY_USAGE_GROUP: UsageReportDto = {
     { key: 'project:2', label: 'creneaux', projectId: 2, share: 58, usd: 30.6 },
     { key: 'project:1', label: 'api-tarifs', projectId: 1, share: 39, usd: 20.6 },
     { key: 'project:3', label: 'site-clubs', projectId: 3, share: 12, usd: 6.3 },
+  ],
+  byOrigin: [
+    { key: 'origin:sessions', label: 'Sessions', share: 71, usd: 37.5 },
+    { key: 'origin:subagents', label: 'Sous-agents', share: 29, usd: 15.3 },
   ],
 };
 
@@ -136,6 +146,7 @@ export const STORY_USAGE_EMPTY: UsageReportDto = {
     cacheReuse: 0,
     turnsWithoutCacheRead: 0,
     sessions: 0,
+    subagents: { costUsd: 0, tokens: 0 },
     turns: 0,
     costUsd: 0,
     unpricedModels: [],
@@ -147,6 +158,7 @@ export const STORY_USAGE_EMPTY: UsageReportDto = {
   })),
   byProject: [],
   byModel: [],
+  byOrigin: [],
   byProfile: [],
 };
 

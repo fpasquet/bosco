@@ -31,7 +31,7 @@ export interface SessionSnapshot {
   branch: null | string;
   /** Fichiers modifiés par l'agent, d'après ses appels d'outils */
   changedFiles: FileChange[];
-  /** Coût estimé en micro-dollars des tokens dont le modèle a un tarif connu */
+  /** Coût estimé en micro-dollars des tokens dont le modèle a un tarif connu, sous-agents compris */
   costMicros: number;
   /** Fin signalée par le suivi en direct ; une reprise de la session l'efface */
   endedAt: Date | null;
@@ -48,11 +48,16 @@ export interface SessionSnapshot {
   projectRoot: null | string;
   sourceId: string;
   startedAt: Date;
+  /** Part du coût estimé (micro-dollars) qui vient des sous-agents de la session */
+  subagentCostMicros: number;
+  /** Part de l'usage qui vient des sous-agents de la session, comprise dans usage */
+  subagentUsage: TokenUsage;
   title: null | string;
   /** Réponses de l'agent, chacune comptée une fois (un message peut s'étaler sur plusieurs lignes) */
   turns: number;
   /** Tokens d'un modèle sans tarif connu : la session est alors « non chiffrée » pour cette part */
   unpricedTokens: number;
+  /** Usage de la session, sous-agents compris */
   usage: TokenUsage;
   /** L'usage de chacun de ses tours est gardé depuis le début ; faux pour une session lue avant qu'il le soit */
   usageComplete: boolean;
@@ -89,6 +94,8 @@ export class Session {
       title: null,
       model: null,
       startedAt: at,
+      subagentCostMicros: 0,
+      subagentUsage: TokenUsage.ZERO,
       lastEventAt: at,
       lastMessage: null,
       usage: TokenUsage.ZERO,
@@ -109,6 +116,8 @@ export class Session {
       endedAt: snapshot.endedAt ?? null,
       changedFiles: [...(snapshot.changedFiles ?? [])],
       turns: snapshot.turns ?? 0,
+      subagentCostMicros: snapshot.subagentCostMicros ?? 0,
+      subagentUsage: snapshot.subagentUsage ?? TokenUsage.ZERO,
     });
   }
 
@@ -190,7 +199,12 @@ export class Session {
       this.pendingPullRequests.push({ at, url: event.text });
       return;
     }
-    if (event.usage) this.pendingTurns.push({ at, model: event.model ?? this.snapshot.model, usage: event.usage });
+    if (event.kind === 'subagentUsage') {
+      this.recordSubagentUsage(event, at);
+      return;
+    }
+    if (event.usage)
+      this.pendingTurns.push({ at, model: event.model ?? this.snapshot.model, subagent: false, usage: event.usage });
     // Une action plus récente que la fin du tour montre que la session est repartie, même si un signal a été manqué
     const { waiting } = this.snapshot;
     if (waiting?.kind === 'turn' && event.kind !== 'title' && event.at && event.at > waiting.since)
@@ -227,6 +241,25 @@ export class Session {
         : { ...this.snapshot, lastMessage: event.text };
     this.pending.push({ seq: this.snapshot.nextSeq, at, kind: event.kind, text: event.text });
     this.snapshot = { ...this.snapshot, nextSeq: this.snapshot.nextSeq + 1 };
+  }
+
+  /**
+   * Une réponse d'un sous-agent : son usage et son coût, au tarif de son propre modèle, s'ajoutent à ceux de la
+   * session. Le modèle, les tours, l'état et le journal de la session ne changent pas : le sous-agent travaille pour elle.
+   */
+  private recordSubagentUsage(event: TranscriptEvent, at: Date): void {
+    if (!event.usage) return;
+    this.pendingTurns.push({ at, model: event.model, subagent: true, usage: event.usage });
+    const current = this.snapshot;
+    const cost = estimateCostMicros(event.model, event.usage);
+    this.snapshot = {
+      ...current,
+      usage: current.usage.add(event.usage),
+      subagentUsage: current.subagentUsage.add(event.usage),
+      ...(cost === null
+        ? { unpricedTokens: current.unpricedTokens + event.usage.total }
+        : { costMicros: current.costMicros + cost, subagentCostMicros: current.subagentCostMicros + cost }),
+    };
   }
 
   /** Coût de l'usage d'un événement, au tarif du modèle qui l'a produit (une session peut changer de modèle). */
@@ -271,14 +304,17 @@ export class Session {
   replayUsage(events: null | TranscriptEvent[]): void {
     this.pendingTurns.splice(0);
     this.pendingPullRequests.splice(0);
-    const { model, startedAt, usage } = this.snapshot;
+    const { model, startedAt, subagentUsage, usage } = this.snapshot;
+    // Seuls les tours de la session elle-même sont relus : ceux des sous-agents ont leurs propres fichiers, lus à part
+    const own = usage.minus(subagentUsage);
     if (events === null) {
-      if (usage.total > 0) this.pendingTurns.push({ at: startedAt, model, usage });
+      if (own.total > 0) this.pendingTurns.push({ at: startedAt, model, subagent: false, usage: own });
     } else
       for (const event of events) {
         const at = event.at ?? startedAt;
         if (event.kind === 'pullRequest') this.pendingPullRequests.push({ at, url: event.text });
-        else if (event.usage) this.pendingTurns.push({ at, model: event.model ?? model, usage: event.usage });
+        else if (event.usage && event.kind !== 'subagentUsage')
+          this.pendingTurns.push({ at, model: event.model ?? model, subagent: false, usage: event.usage });
       }
     this.snapshot = { ...this.snapshot, usageComplete: true };
   }

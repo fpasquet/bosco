@@ -121,6 +121,53 @@ describe('Session cost', () => {
   });
 });
 
+describe('Session subagents', () => {
+  const subagent = (time: string, usage: TokenUsage): TranscriptEvent => ({
+    at: at(time),
+    kind: 'subagentUsage',
+    text: '',
+    cwd: null,
+    branch: null,
+    model: 'claude-sonnet-5-5',
+    projectRoot: null,
+    usage,
+  });
+
+  it('CA-SESS-188 · adds their usage and cost at their own price, without touching model, turns, state or journal', () => {
+    const session = Session.discover('c41e9a07', 'pro', at('14:02:00'));
+    session.record(reply('14:02:00', new TokenUsage(1_000_000, 0, 0, 0)));
+    session.endTurn('Veux-tu que je lance les tests ?', at('14:02:10'));
+    session.pullJournal();
+    session.pullUsage();
+    // Un sous-agent en arrière-plan répond après la fin du tour : Sonnet 5.5, 2 $ le million en entrée
+    session.record(subagent('14:05:00', new TokenUsage(1_000_000, 0, 0, 0)));
+    const snapshot = session.toSnapshot();
+    expect(snapshot.usage.input).toBe(2_000_000);
+    expect(snapshot.subagentUsage.input).toBe(1_000_000);
+    expect([snapshot.costMicros, snapshot.subagentCostMicros]).toEqual([6_000_000, 2_000_000]);
+    expect([snapshot.model, snapshot.turns, snapshot.lastEventAt]).toEqual(['claude-opus-5-5', 1, at('14:02:10')]);
+    expect(session.waiting?.kind).toBe('turn');
+    expect(session.pullJournal()).toEqual([]);
+    expect(session.pullUsage().turns).toEqual([
+      { at: at('14:05:00'), model: 'claude-sonnet-5-5', subagent: true, usage: new TokenUsage(1_000_000, 0, 0, 0) },
+    ]);
+  });
+
+  it('replays only the turns of the session itself, those of its subagents coming from their own files', () => {
+    const session = Session.discover('c41e9a07', 'pro', at('14:02:00'));
+    session.record(reply('14:02:00', new TokenUsage(10, 0, 0, 0)));
+    session.record(subagent('14:03:00', new TokenUsage(5, 0, 0, 0)));
+    session.pullUsage();
+    session.replayUsage(null);
+    expect(session.pullUsage().turns.map(({ subagent, usage }) => [subagent, usage.total])).toEqual([[false, 10]]);
+    session.replayUsage([
+      reply('14:02:00', new TokenUsage(10, 0, 0, 0)),
+      subagent('14:03:00', new TokenUsage(5, 0, 0, 0)),
+    ]);
+    expect(session.pullUsage().turns.map(({ subagent, usage }) => [subagent, usage.total])).toEqual([[false, 10]]);
+  });
+});
+
 describe('Session recent actions', () => {
   it('keeps the last three actions, the most recent first', () => {
     const session = Session.discover('c41e9a07', 'pro', at('14:02:00'));

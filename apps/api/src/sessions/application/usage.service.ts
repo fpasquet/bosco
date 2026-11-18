@@ -44,6 +44,8 @@ export interface UsageReport {
     sandboxes: number;
   };
   byModel: UsageShare[];
+  /** Ce que coûtent les sessions elles-mêmes et leurs sous-agents */
+  byOrigin: UsageShare[];
   byProfile: UsageShare[];
   byProject: UsageShare[];
   days: UsageDay[];
@@ -62,6 +64,9 @@ export interface UsageReport {
     input: number;
     output: number;
     sessions: number;
+    /** Part des sous-agents, comprise dans les totaux */
+    subagents: { costUsd: number; tokens: number };
+    /** Réponses de l'agent des sessions, sans celles de leurs sous-agents */
     turns: number;
     /** Part des tours qui n'ont rien relu du cache, en % */
     turnsWithoutCacheRead: number;
@@ -179,6 +184,9 @@ export class UsageService {
     const sum = (pick: (usage: TokenUsage) => number) => turns.reduce((total, turn) => total + pick(turn.usage), 0);
     const input = sum((usage) => usage.input);
     const cacheRead = sum((usage) => usage.cacheRead);
+    // Les tours sont ceux des sessions ; leurs sous-agents comptent dans les tokens et le coût
+    const ownTurns = turns.filter((turn) => !turn.subagent);
+    const subagentUsd = priced.reduce((total, { cost, turn }) => total + (turn.subagent ? costOf(cost) : 0), 0);
     return {
       from: dayOf(start),
       since: first ? dayOf(first) : null,
@@ -196,9 +204,13 @@ export class UsageService {
         cacheRead,
         cacheCreation: sum((usage) => usage.cacheCreation),
         cacheReuse: percent(cacheRead, input + cacheRead),
-        turnsWithoutCacheRead: percent(turns.filter((turn) => turn.usage.cacheRead === 0).length, turns.length),
+        turnsWithoutCacheRead: percent(ownTurns.filter((turn) => turn.usage.cacheRead === 0).length, ownTurns.length),
         sessions: modelSessions.size,
-        turns: turns.length,
+        subagents: {
+          costUsd: dollars(subagentUsd),
+          tokens: turns.reduce((total, turn) => total + (turn.subagent ? turn.usage.total : 0), 0),
+        },
+        turns: ownTurns.length,
         costUsd: dollars(totalUsd),
         unpricedModels: [
           ...new Set(
@@ -228,6 +240,7 @@ export class UsageService {
       }),
       byProject: this.byProject(priced, byId, scope, projects, totalUsd, costOf),
       byModel: this.byModel(priced, totalUsd, costOf),
+      byOrigin: byOrigin(totalUsd, subagentUsd),
       byProfile: this.byProfile(priced, byId, sources, totalUsd, costOf),
     };
   }
@@ -333,6 +346,16 @@ export class UsageService {
       total,
     );
   }
+}
+
+/** Les sessions elles-mêmes, puis leurs sous-agents ; vide sans aucun coût. */
+function byOrigin(total: number, subagents: number): UsageShare[] {
+  if (total === 0) return [];
+  const own = total - subagents;
+  return [
+    { key: 'origin:sessions', label: 'Sessions', usd: dollars(own), share: percent(own, total) },
+    { key: 'origin:subagents', label: 'Sous-agents', usd: dollars(subagents), share: percent(subagents, total) },
+  ];
 }
 
 /**
