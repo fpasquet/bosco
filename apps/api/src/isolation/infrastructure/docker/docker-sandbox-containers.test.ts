@@ -32,6 +32,12 @@ describe('agent container of a sandbox', () => {
     expect(args).toContain('ENABLE_CLAUDEAI_MCP_SERVERS=false');
     expect(args.join(' ')).toContain('--network bosco-s-c41e9a0712ab');
   });
+
+  it('CA-SESS-193 · makes fetch of Node go through the proxy and keeps the telemetry of the tools quiet', () => {
+    expect(args).toEqual(
+      expect.arrayContaining(['NODE_USE_ENV_PROXY=1', 'DO_NOT_TRACK=1', 'NEXT_TELEMETRY_DISABLED=1']),
+    );
+  });
 });
 
 describe('turn of a sandbox', () => {

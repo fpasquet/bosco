@@ -132,9 +132,19 @@ export interface PilotSandboxDto {
   /** Supprimé : la session reste lisible, mais ne se reprend plus */
   removed: boolean;
   retrievedAt: null | string;
+  /** Services de données du projet (base, cache…), démarrés avec le bac à sable ; error : fichier Compose illisible */
+  services: { error: null | string; services: SandboxServiceDto[] };
   state: 'missing' | 'running' | 'stopped';
   /** Arrêt du conteneur sans nouveau message */
   stopsAt: string;
+}
+
+/** Un service de données du bac à sable, joint par l'agent sous son nom (« db ») */
+export interface SandboxServiceDto {
+  error: null | string;
+  image: string;
+  name: string;
+  state: 'failed' | 'ready' | 'starting';
 }
 
 /** Branches d'un bac à sable, une par projet, le principal d'abord, avec les fichiers qu'elles ont changés. */

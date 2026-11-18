@@ -2,7 +2,7 @@
 // Faux Claude Code des scénarios (sessions pilotées, DT-31) : `claude -p` en flux JSON, réduit à ce que Bosco lit.
 // Il écrit le transcript dans le profil comme Claude Code, rappelle les dossiers ajoutés (--add-dir) et s'il lit leurs
 // instructions, demande une autorisation si le message parle
-// d'« autorisation », pose une question s'il parle de « question », attend « Arrêter » s'il parle d'un « long » travail,
+// d'« autorisation » (deux de suite pour « deux autorisations », la seconde sautée si le mode passe à l'accès complet), pose une question s'il parle de « question », attend « Arrêter » s'il parle d'un « long » travail,
 // rend la main à Bosco comme après 3 refus du vérificateur s'il parle de « refus » en « Approuver pour moi », redit le contexte reçu au lancement s'il parle de « contexte », et répond en rappelant ce qu'il a reçu (réglages du tour, images, fin du jeton longue durée) pour que les scénarios le vérifient.
 import { randomUUID } from 'node:crypto';
 import { appendFileSync, mkdirSync } from 'node:fs';
@@ -71,6 +71,8 @@ const reply = (text) =>
     usage: { input_tokens: 10, output_tokens: 5, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 },
   });
 
+// Mode d'autorisations du tour : celui du lancement, puis celui que Bosco règle en cours de tour (set_permission_mode)
+let mode = option('--permission-mode');
 const waiting = new Map();
 let interrupted = () => undefined;
 function ask(request) {
@@ -81,6 +83,17 @@ function ask(request) {
 function finish(text, subtype = 'success') {
   reply(text);
   out({ type: 'result', subtype, is_error: subtype !== 'success', result: text, session_id: sessionId });
+}
+
+/** Deux commandes de suite : la seconde n'est plus demandée si Bosco est passé à l'accès complet entre-temps. */
+async function twoCommands() {
+  const first = await ask({ tool_name: 'Bash', input: { command: 'npm run db:migrate' }, tool_use_id: 'toolu_1' });
+  if (first.behavior !== 'allow') return finish(`Refusé : ${first.message}`);
+  if (mode !== 'bypassPermissions') {
+    const second = await ask({ tool_name: 'Bash', input: { command: 'npm run db:seed' }, tool_use_id: 'toolu_2' });
+    if (second.behavior !== 'allow') return finish(`Refusé : ${second.message}`);
+  }
+  return finish(`Deux commandes lancées · mode ${mode}`);
 }
 
 /** Le contexte des projets reçu au lancement (--append-system-prompt) : ses titres, pour que les scénarios le lisent. */
@@ -98,6 +111,7 @@ async function turn(content) {
   const images = content.filter((block) => block.type === 'image').length;
   record('user', { role: 'user', content: text });
   out({ type: 'system', subtype: 'init', session_id: sessionId });
+  if (/deux autorisations/i.test(text)) return twoCommands();
   if (/autorisation/i.test(text)) {
     record('assistant', {
       id: `msg_${randomUUID()}`,
@@ -173,7 +187,13 @@ createInterface({ input: process.stdin }).on('line', (raw) => {
   const line = JSON.parse(raw);
   if (line.type === 'control_request' && line.request.subtype === 'initialize')
     out({ type: 'control_response', response: { subtype: 'success', request_id: line.request_id, response: {} } });
-  else if (line.type === 'control_request' && line.request.subtype === 'interrupt') {
+  else if (line.type === 'control_request' && line.request.subtype === 'set_permission_mode') {
+    mode = line.request.mode;
+    out({
+      type: 'control_response',
+      response: { subtype: 'success', request_id: line.request_id, response: { mode } },
+    });
+  } else if (line.type === 'control_request' && line.request.subtype === 'interrupt') {
     for (const [requestId, resolve] of waiting) {
       out({ type: 'control_cancel_request', request_id: requestId });
       resolve({ behavior: 'deny', message: 'Interrompu' });

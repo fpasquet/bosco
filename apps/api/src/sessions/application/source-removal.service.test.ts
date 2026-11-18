@@ -40,7 +40,7 @@ function removal(running: string[] = []) {
     {
       load: () => Promise.resolve(void steps.push('reload pilots')),
       replaceProfile: () => Promise.resolve(),
-      runningTurns: () => running.map((sessionId) => ({ pid: null, sessionId, since: new Date(0) })),
+      runningTurns: () => running.map((sessionId) => ({ pid: null, sandboxed: false, sessionId, since: new Date(0) })),
     },
     { forgetSessions: () => undefined },
   );

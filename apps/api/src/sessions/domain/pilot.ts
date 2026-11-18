@@ -8,7 +8,10 @@ export { type Effort, EFFORTS, PERMISSION_MODES, type PermissionMode } from '../
  * par lancement de l'agent ; entre deux tours, la session est close et se reprend aussi dans un terminal.
  */
 
-/** Réglages d'un tour : ils valent dès le message envoyé et pour les suivants. */
+/**
+ * Réglages d'un tour : ils valent dès le message envoyé et pour les suivants. Le mode d'autorisations change aussi le tour
+ * en cours ; le modèle et l'effort attendent le tour suivant.
+ */
 export interface PilotSettings {
   effort: Effort | null;
   /** null : le modèle par défaut du profil */
@@ -17,6 +20,18 @@ export interface PilotSettings {
 }
 
 export const DEFAULT_PILOT_SETTINGS: PilotSettings = { effort: null, model: null, permissionMode: 'ask' };
+
+/** Outils de modification de fichiers : « Accepter les modifications » les laisse passer sans demander. */
+const EDIT_TOOLS = new Set(['Edit', 'MultiEdit', 'NotebookEdit', 'Write']);
+
+/**
+ * Le mode d'autorisations choisi pendant un tour règle-t-il la demande en attente ? Accès complet les autorise toutes,
+ * Accepter les modifications celles qui modifient un fichier ; les autres modes laissent la demande à la personne.
+ */
+export function allowedByMode(mode: PermissionMode, tool: string): boolean {
+  if (mode === 'bypassPermissions') return true;
+  return mode === 'acceptEdits' && EDIT_TOOLS.has(tool);
+}
 
 /** Une image jointe, en base64, comme l'agent la reçoit. */
 export interface PilotImage {

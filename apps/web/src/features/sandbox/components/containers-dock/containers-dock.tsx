@@ -1,46 +1,68 @@
 'use client';
-import { Box, ChevronDown, Container, SquareTerminal, TriangleAlert } from 'lucide-react';
+import { Box, ChevronDown, Database, SquareTerminal, TriangleAlert } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
-import type { ContainersDto, UsageDto } from '@bosco/domain';
+import { Fragment, useEffect, useState } from 'react';
+import type { ContainersDto, RunningServiceDto, UsageDto } from '@bosco/domain';
 import { cn } from '@/lib/cn';
 import { Button } from '@/shared/ui/button';
 import { useContainerActions } from '../../hooks/use-container-actions';
 import { useContainersPanel } from '../../hooks/use-containers-panel';
 import { useLiveContainers } from '../../hooks/use-live-containers';
-import {
-  agoOf,
-  coresOf,
-  countsOf,
-  memoryOf,
-  memoryUsageOf,
-  nearCeiling,
-  somethingRuns,
-  timeOf,
-} from '../../lib/containers';
+import { agoOf, coresOf, countsOf, memoryOf, nearCeiling, somethingRuns, timeOf } from '../../lib/containers';
+import { UsageGauge } from './usage-gauge';
 
-/** Processeur et mémoire d'un élément ; en orange avec « Proche du plafond » à partir de 80 %. */
-export function UsageCells({ frozen = false, usage }: { frozen?: boolean; usage: UsageDto }) {
-  // Dernières mesures d'un Docker muet : grisées, sans alerte
-  const near = frozen ? { cpu: false, memory: false } : nearCeiling(usage);
+/** « Proche du plafond » sous un élément à 80 % ou plus de son processeur ou de sa mémoire */
+function NearCeiling({ frozen, usage }: { frozen: boolean; usage: UsageDto }) {
+  const near = nearCeiling(usage);
+  if (frozen || (!near.cpu && !near.memory)) return null;
+  return <span className="text-warning"> · Proche du plafond</span>;
+}
+
+function GroupRow({ children }: { children: string }) {
   return (
-    <>
-      <span className={cn('w-28 text-right font-mono text-xs tabular-nums', near.cpu && 'text-warning')}>
-        {coresOf(usage)}
-      </span>
-      <span className={cn('w-28 text-right font-mono text-xs tabular-nums', near.memory && 'text-warning')}>
-        {memoryUsageOf(usage)}
-      </span>
-      <span className="w-32 text-xs text-warning">{(near.cpu || near.memory) && 'Proche du plafond'}</span>
-    </>
+    <tr>
+      <th colSpan={5} scope="colgroup" className="pt-3 pb-1 text-left">
+        <h3 className="text-xs font-semibold tracking-wider text-muted uppercase">{children}</h3>
+      </th>
+    </tr>
   );
 }
 
-function GroupTitle({ children }: { children: string }) {
-  return <h3 className="pt-4 pb-1 text-xs font-semibold tracking-wider text-muted uppercase">{children}</h3>;
+const SERVICE_STATES = {
+  ready: { badge: 'badge-success', label: 'Prêt' },
+  starting: { badge: 'badge-info', label: 'Démarre' },
+  failed: { badge: 'badge-error', label: 'En échec' },
+} as const;
+
+/** Un service de données sous son bac à sable : son nom (celui que l'agent joint), son image et son état. */
+function ServiceRow({ frozen, service }: { frozen: boolean; service: RunningServiceDto }) {
+  const state = SERVICE_STATES[service.state];
+  return (
+    <tr className="border-b border-line">
+      <td className="py-2 pl-6">
+        <p className="flex items-center gap-2 truncate">
+          <Database aria-hidden className="size-4 shrink-0 text-muted" />
+          <span className="font-mono text-xs">{service.name}</span>
+          <span className={`badge badge-soft badge-sm ${state.badge}`}>{state.label}</span>
+        </p>
+        <p className="mt-0.5 truncate pl-6 font-mono text-xs text-muted">
+          {service.image} · service de données
+          <NearCeiling frozen={frozen} usage={service} />
+        </p>
+      </td>
+      <td className="py-2 font-mono text-xs">{service.since ? timeOf(service.since) : ''}</td>
+      <td className="py-2">
+        {service.state === 'failed' ? null : <UsageGauge frozen={frozen} kind="cpu" usage={service} />}
+      </td>
+      <td className="py-2">
+        {service.state === 'failed' ? null : <UsageGauge frozen={frozen} kind="memory" usage={service} />}
+      </td>
+      <td className="py-2 pr-0" />
+    </tr>
+  );
 }
 
-/** Le corps du panneau : panne de Docker, puis bacs à sable et tours pilotés sur le poste. */
+/** Le corps du panneau : panne de Docker, puis bacs à sable (et leurs services) et tours pilotés sur le poste. */
 function DockBody({ actions, view }: { actions: ReturnType<typeof useContainerActions>; view: ContainersDto }) {
   const frozen = view.unreachableSince !== null;
   return (
@@ -63,57 +85,96 @@ function DockBody({ actions, view }: { actions: ReturnType<typeof useContainerAc
           </Button>
         </div>
       )}
-      <div className={cn(frozen && 'text-muted')}>
-        {frozen && view.measuredAt && <GroupTitle>{`Dernières mesures · ${timeOf(view.measuredAt)}`}</GroupTitle>}
+      <table className={cn('table w-full table-fixed border-collapse text-left', frozen && 'text-muted')}>
+        <thead className="text-xs text-muted">
+          <tr className="h-8 border-b border-line">
+            <th className="font-medium">Élément</th>
+            <th className="w-24 font-medium">Depuis</th>
+            <th className="w-48 font-medium">CPU</th>
+            <th className="w-48 font-medium">Mémoire</th>
+            <th className="w-56 pr-0 text-right font-medium">Actions</th>
+          </tr>
+        </thead>
         {view.sandboxes.length > 0 && (
-          <>
-            {!frozen && <GroupTitle>Bacs à sable</GroupTitle>}
-            <ul>
-              {view.sandboxes.map((sandbox) => (
-                <li key={sandbox.name} className="flex h-11 items-center gap-3 border-t border-line">
-                  <Container aria-hidden className="size-4 shrink-0 text-muted" />
-                  <span className="min-w-0 flex-1 truncate font-medium">{sandbox.title}</span>
-                  <UsageCells frozen={frozen} usage={sandbox} />
-                  <span className="flex w-52 justify-end">
+          <tbody>
+            <GroupRow>
+              {frozen && view.measuredAt ? `Dernières mesures · ${timeOf(view.measuredAt)}` : 'Bacs à sable'}
+            </GroupRow>
+            {view.sandboxes.map((sandbox) => (
+              <Fragment key={sandbox.name}>
+                <tr className="border-b border-line">
+                  <td className="py-2">
+                    <p className="flex items-center gap-2 truncate font-medium">
+                      <Box aria-hidden className="size-4 shrink-0 text-muted" />
+                      <span className="truncate">{sandbox.title}</span>
+                    </p>
+                    <p className="mt-0.5 truncate pl-6 font-mono text-xs text-muted">
+                      {[sandbox.project, 'bac à sable'].filter(Boolean).join(' · ')}
+                      <NearCeiling frozen={frozen} usage={sandbox} />
+                    </p>
+                  </td>
+                  <td className="py-2 font-mono text-xs">{sandbox.since ? timeOf(sandbox.since) : ''}</td>
+                  <td className="py-2">
+                    <UsageGauge frozen={frozen} kind="cpu" usage={sandbox} />
+                  </td>
+                  <td className="py-2">
+                    <UsageGauge frozen={frozen} kind="memory" usage={sandbox} />
+                  </td>
+                  <td className="py-2 pr-0 text-right">
                     {/* Dernières mesures d'un Docker muet : leurs actions sont désactivées */}
                     {sandbox.sessionId &&
                       (frozen ? (
-                        <Button variant="ghost" size="xs" disabled>
+                        <Button variant="outline" size="xs" disabled>
                           Voir la session
                         </Button>
                       ) : (
-                        <Button variant="ghost" size="xs" asChild>
+                        <Button variant="outline" size="xs" asChild>
                           <Link href={`/sessions/${sandbox.sessionId}`}>Voir la session</Link>
                         </Button>
                       ))}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </>
+                  </td>
+                </tr>
+                {sandbox.services.map((service) => (
+                  <ServiceRow key={service.name} frozen={frozen} service={service} />
+                ))}
+              </Fragment>
+            ))}
+          </tbody>
         )}
         {view.piloted.length > 0 && (
-          <>
-            <GroupTitle>Tours sur le poste</GroupTitle>
-            <ul>
-              {view.piloted.map((turn) => (
-                <li key={turn.sessionId} className="flex h-11 items-center gap-3 border-t border-line">
-                  <SquareTerminal aria-hidden className="size-4 shrink-0 text-muted" />
-                  <span className="min-w-0 flex-1 truncate">
-                    {turn.title} <span className="text-xs text-muted">· tour depuis {timeOf(turn.since)}</span>
-                  </span>
-                  <UsageCells usage={turn} />
-                  <span className="flex w-52 justify-end">
+          <tbody>
+            <GroupRow>Tours sur le poste</GroupRow>
+            {view.piloted.map((turn) => (
+              <tr key={turn.sessionId} className="border-b border-line">
+                <td className="py-2">
+                  <p className="flex items-center gap-2 truncate font-medium">
+                    <SquareTerminal aria-hidden className="size-4 shrink-0 text-muted" />
+                    <span className="truncate">{turn.title}</span>
+                  </p>
+                  <p className="mt-0.5 pl-6 font-mono text-xs text-muted">tour depuis {timeOf(turn.since)}</p>
+                </td>
+                <td className="py-2 font-mono text-xs">{timeOf(turn.since)}</td>
+                <td className="py-2">
+                  <UsageGauge kind="cpu" usage={turn} />
+                </td>
+                <td className="py-2">
+                  <UsageGauge kind="memory" usage={turn} />
+                </td>
+                <td className="py-2 pr-0 text-right">
+                  <span className="inline-flex gap-1">
+                    <Button variant="ghost" size="xs" className="text-muted" asChild>
+                      <Link href={`/sessions/${turn.sessionId}`}>Voir la session</Link>
+                    </Button>
                     <Button variant="outline" size="xs" onClick={() => actions.interrupt(turn.sessionId)}>
                       Arrêter le tour
                     </Button>
                   </span>
-                </li>
-              ))}
-            </ul>
-          </>
+                </td>
+              </tr>
+            ))}
+          </tbody>
         )}
-      </div>
+      </table>
       {frozen && (
         <p className="mt-3 text-xs text-muted">
           Les mesures reprennent seules dès que Docker répond ; Bosco réessaie toutes les 30 s.
@@ -135,7 +196,7 @@ function useNow(): number {
 
 /**
  * Panneau des conteneurs en cours, par-dessus le bas de la page, qui reste utilisable : les bacs à sable
- * démarrés et les tours pilotés sur le poste. Il s'ouvre depuis le résumé de la barre latérale, et reste déplié d'une
+ * démarrés avec leurs services de données, et les tours pilotés sur le poste. Il s'ouvre depuis le résumé de la barre latérale, et reste déplié d'une
  * page à l'autre ; un bac à sable s'arrête depuis sa session.
  */
 export function ContainersDock() {

@@ -10,6 +10,7 @@ import {
   NotFoundException,
   Param,
   Post,
+  Put,
   Query,
 } from '@nestjs/common';
 import { z } from 'zod';
@@ -233,6 +234,18 @@ export class PilotController {
     try {
       const status = await this.pilot.send(id, pilotMessage(input));
       return { status };
+    } catch (error) {
+      translate(error);
+    }
+  }
+
+  /** Réglages changés dans la barre d'outils : le mode d'autorisations vaut aussi pour le tour en cours. */
+  @Put('sessions/:id/settings')
+  @HttpCode(204)
+  async changeSettings(@Param('id') id: string, @Body() body: unknown): Promise<void> {
+    const settings = parseBody(settingsSchema, body);
+    try {
+      await this.pilot.changeSettings(id, settings as Parameters<PilotService['changeSettings']>[1]);
     } catch (error) {
       translate(error);
     }

@@ -71,6 +71,9 @@ export function turnArguments(request: TurnRequest): string[] {
     'stdio',
     '--permission-mode',
     CLI_MODES[permissionMode],
+    // Sans lui, Claude Code refuse de passer à l'accès complet pendant le tour (« bypass_not_launched ») : il ne donne
+    // pas l'accès complet, il permet seulement de le choisir en cours de route (vérifié sur Claude Code 2.1.327)
+    '--allow-dangerously-skip-permissions',
     ...(model ? ['--model', model] : []),
     ...(effort ? ['--effort', effort] : []),
     ...request.addDirs.flatMap((dir) => ['--add-dir', dir]),
@@ -102,7 +105,7 @@ export const UNREADABLE_TOKEN =
 function notStarted(listener: TurnListener, error: string): RunningTurn {
   queueMicrotask(() => listener.exited(error));
   const nothing = () => undefined;
-  return { allow: nothing, deny: nothing, finish: nothing, interrupt: nothing, pid: null };
+  return { allow: nothing, deny: nothing, finish: nothing, interrupt: nothing, pid: null, setPermissionMode: nothing };
 }
 
 export class ClaudeTurnRunner implements TurnRunner {
@@ -175,6 +178,14 @@ export class ClaudeTurnRunner implements TurnRunner {
       allow: (requestId, input) => respond(requestId, { behavior: 'allow', updatedInput: input }),
       deny: (requestId, message) => respond(requestId, { behavior: 'deny', message }),
       interrupt: () => send({ type: 'control_request', request_id: randomUUID(), request: { subtype: 'interrupt' } }),
+      // Le mode change dans le tour en cours ; une erreur de Claude Code est sans suite, Bosco règle lui-même la demande
+      // en attente
+      setPermissionMode: (mode) =>
+        send({
+          type: 'control_request',
+          request_id: randomUUID(),
+          request: { subtype: 'set_permission_mode', mode: CLI_MODES[mode] },
+        }),
       pid: child.pid ?? null,
       finish: () => {
         if (!exited) child.stdin?.end();

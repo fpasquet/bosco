@@ -27,6 +27,7 @@ export type {
   RetrievedBranchesDto,
   SandboxBranchesDto,
   SandboxRefusalsDto,
+  SandboxServiceDto,
   SessionConversationDto,
   SessionDefaultsDto,
   SessionDefaultsResolvedDto,
@@ -62,7 +63,7 @@ export type {
   DecisionVersionDto,
   GroupInstructionsDto,
 } from './context.ts';
-export type { ContainersDto, PilotedTurnDto, RunningSandboxDto, UsageDto } from './containers.ts';
+export type { ContainersDto, PilotedTurnDto, RunningSandboxDto, RunningServiceDto, UsageDto } from './containers.ts';
 export type {
   FolderListingDto,
   FolderSuggestionDto,

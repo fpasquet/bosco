@@ -1,6 +1,7 @@
 import { RadioTower } from 'lucide-react';
 import { Fragment } from 'react';
 import type { ConversationTurnDto, SessionConversationDto } from '@bosco/domain';
+import { Markdown } from '@/shared/components/markdown';
 import { Bubble, BubbleContent } from '@/shared/ui/bubble';
 import { Message, MessageContent, MessageHeader } from '@/shared/ui/message';
 import type { Todo } from '../../lib/conversation';
@@ -31,7 +32,7 @@ function Time({ at }: { at: string }) {
   );
 }
 
-/** Ta demande : une bulle à droite, le texte tel que tu l'as écrit. */
+/** Ta demande : une bulle à droite, en Markdown comme les réponses, chaque retour à la ligne gardé. */
 function UserTurn({ turn }: { turn: ConversationTurnDto }) {
   const text = turn.parts.map((part) => (part.kind === 'text' ? part.text : '')).join('\n');
   return (
@@ -46,7 +47,9 @@ function UserTurn({ turn }: { turn: ConversationTurnDto }) {
           )}
         </MessageHeader>
         <Bubble variant="tinted">
-          <BubbleContent className="whitespace-pre-line">{text}</BubbleContent>
+          <BubbleContent>
+            <Markdown breaks>{text}</Markdown>
+          </BubbleContent>
         </Bubble>
       </MessageContent>
     </Message>

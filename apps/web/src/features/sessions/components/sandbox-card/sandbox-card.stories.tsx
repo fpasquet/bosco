@@ -17,6 +17,7 @@ const meta = {
       from: 'develop',
       removed: false,
       retrievedAt: null,
+      services: { error: null, services: [] },
       state: 'running',
       stopsAt: '2026-11-06T15:42:00.000Z',
     },
@@ -38,6 +39,22 @@ export const Running: Story = {};
 /** Démarré et mesuré : le processeur et la mémoire du conteneur, rapportés à ses plafonds. */
 export const Measured: Story = {
   args: { usage: { cpu: 0, cpuLimit: 2, memory: 1.3 * 1024 ** 3, memoryLimit: 4 * 1024 ** 3 } },
+};
+
+/** Les services de données du projet démarrés avec le bac à sable : la base prête, le cache en échec. */
+export const WithServices: Story = {
+  args: {
+    sandbox: {
+      ...meta.args.sandbox,
+      services: {
+        error: null,
+        services: [
+          { error: null, image: 'postgres:16.13-alpine', name: 'db', state: 'ready' },
+          { error: 'Contrôle de santé en échec', image: 'redis:8.2-alpine', name: 'cache', state: 'failed' },
+        ],
+      },
+    },
+  },
 };
 
 export const Stopped: Story = {

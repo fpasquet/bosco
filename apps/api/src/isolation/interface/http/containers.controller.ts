@@ -11,6 +11,11 @@ export function presentContainers(view: ContainersView): ContainersDto {
     ...view,
     measuredAt: view.measuredAt?.toISOString() ?? null,
     piloted: view.piloted.map((turn) => ({ ...turn, since: turn.since.toISOString() })),
+    sandboxes: view.sandboxes.map((sandbox) => ({
+      ...sandbox,
+      services: sandbox.services.map((service) => ({ ...service, since: service.since?.toISOString() ?? null })),
+      since: sandbox.since?.toISOString() ?? null,
+    })),
     unreachableSince: view.unreachableSince?.toISOString() ?? null,
   };
 }

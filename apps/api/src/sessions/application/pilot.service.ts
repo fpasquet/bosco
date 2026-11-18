@@ -17,6 +17,7 @@ import type { SessionService } from './session.service.ts';
 import { TOKEN_VARIABLE } from '../../shared/domain/profile-access.ts';
 import {
   type AgentQuestion,
+  allowedByMode,
   answersOf,
   checkPilotMessage,
   DEFAULT_PILOT_SETTINGS,
@@ -35,12 +36,15 @@ import {
 import {
   checkSandboxBranch,
   housekeepingOf,
+  NO_SANDBOX_SERVICES,
   retrievedCopy,
   type SandboxBranch,
   sandboxBranches,
   sandboxBranchOf,
   SandboxError,
   type SandboxInfo,
+  type SandboxServices,
+  servicesNote,
   stopsAt,
   unretrieved,
 } from '../domain/sandbox.ts';
@@ -70,6 +74,12 @@ export interface TurnRequest {
 }
 
 /** Exécution d'un tour ailleurs que sur le poste : le programme et ses premiers arguments, avant ceux du tour. */
+/** Un bac à sable prêt pour un tour : la commande du tour (null : sur le poste, scénarios) et ses services de données */
+export interface StartedSandbox {
+  launch: null | TurnLaunch;
+  services: SandboxServices;
+}
+
 export interface TurnLaunch {
   args: string[];
   file: string;
@@ -91,7 +101,7 @@ export interface Sandboxes {
    * principal d'abord) ; la commande d'un tour, null : sur le poste (scénarios)
    */
   /** env : variables du tour à transmettre au conteneur (le jeton longue durée de l'abonnement) */
-  ensure(sessionId: string, projectRoots: readonly string[], env?: readonly string[]): Promise<null | TurnLaunch>;
+  ensure(sessionId: string, projectRoots: readonly string[], env?: readonly string[]): Promise<StartedSandbox>;
   /** Une copie par projet, le principal d'abord, toutes sur la même branche ; refusée si un projet a déjà la branche */
   prepare(input: {
     branch: string;
@@ -141,6 +151,8 @@ export interface RunningTurn {
   interrupt(): void;
   /** Processus de l'agent sur le poste, pour mesurer ce qu'il consomme ; null s'il n'a pas démarré */
   pid: null | number;
+  /** Change le mode d'autorisations du tour en cours */
+  setPermissionMode(mode: PilotSettings['permissionMode']): void;
 }
 
 export interface TurnRunner {
@@ -217,6 +229,8 @@ export interface PilotView {
     from: string;
     removed: boolean;
     retrievedAt: Date | null;
+    /** Services de données du projet, démarrés avec le bac à sable */
+    services: SandboxServices;
     state: SandboxState;
     stopsAt: Date;
   };
@@ -227,6 +241,8 @@ export interface PilotView {
 interface Turn {
   /** Demandes en cours (autorisation, question) et ce qui les abandonne si le tour s'arrête */
   abandons: Map<string, () => void>;
+  /** Outil de l'autorisation qui attend la personne : un changement de mode peut la régler */
+  asking: null | string;
   /** Écriture en cours d'une suspension dans le journal : la demande qui la suit attend qu'elle soit enregistrée */
   noting: Promise<void>;
   process: RunningTurn;
@@ -236,7 +252,7 @@ interface Turn {
   stopped: null | string;
 }
 
-type Signals = Pick<LiveSignalService, 'receive' | 'requestAnswers' | 'requestPermission'>;
+type Signals = Pick<LiveSignalService, 'allowPending' | 'receive' | 'requestAnswers' | 'requestPermission'>;
 
 const NO_PROFILES: PilotProfiles = { subscriptions: () => Promise.resolve({ choices: [], effective: null }) };
 
@@ -275,6 +291,8 @@ export class PilotService {
   private quota: PilotQuota = NO_QUOTA;
   /** État de chaque conteneur, relu par l'entretien : la vue de la session le montre sans attendre Docker */
   private readonly sandboxStates = new Map<string, SandboxState>();
+  /** Services de données de chaque bac à sable, tels que son dernier démarrage les a laissés */
+  private readonly sandboxServices = new Map<string, SandboxServices>();
   private channel: Pick<ChannelService, 'isConnected' | 'send'> = { isConnected: () => false, send: () => false };
 
   constructor(
@@ -336,9 +354,17 @@ export class PilotService {
       .map(({ sessionId }) => sessionId);
   }
 
-  /** Tours en cours, avec le processus de leur agent : le panneau des conteneurs les mesure. */
-  runningTurns(): { pid: null | number; sessionId: string; since: Date }[] {
-    return [...this.turns].map(([sessionId, turn]) => ({ pid: turn.process.pid, sessionId, since: turn.startedAt }));
+  /**
+   * Tours en cours, avec le processus de leur agent : le panneau des conteneurs mesure ceux du poste. Celui d'un bac à
+   * sable tourne dans son conteneur : son processus sur le poste n'est que `docker exec`.
+   */
+  runningTurns(): { pid: null | number; sandboxed: boolean; sessionId: string; since: Date }[] {
+    return [...this.turns].map(([sessionId, turn]) => ({
+      pid: turn.process.pid,
+      sandboxed: Boolean(this.records.get(sessionId)?.sandbox),
+      sessionId,
+      since: turn.startedAt,
+    }));
   }
 
   pilotOf(sessionId: string): null | PilotView {
@@ -356,6 +382,9 @@ export class PilotService {
         from: sandbox.from,
         removed: sandbox.removedAt !== null,
         retrievedAt: sandbox.retrievedAt,
+        services: sandbox.removedAt
+          ? NO_SANDBOX_SERVICES
+          : (this.sandboxServices.get(sessionId) ?? NO_SANDBOX_SERVICES),
         state: sandbox.removedAt ? 'missing' : (this.sandboxStates.get(sessionId) ?? 'stopped'),
         stopsAt: stopsAt(sandbox),
       },
@@ -645,6 +674,7 @@ export class PilotService {
     const { deps, record, sandbox } = this.idleSandbox(sessionId);
     await deps.sandboxes.remove(sessionId);
     this.sandboxStates.set(sessionId, 'missing');
+    this.sandboxServices.delete(sessionId);
     await this.keep({ ...record, sandbox: { ...sandbox, removedAt: this.clock.now() } });
     await this.publish(sessionId);
   }
@@ -743,6 +773,23 @@ export class PilotService {
     await this.publish(sessionId);
   }
 
+  /**
+   * Réglages changés dans la barre d'outils : ils valent pour les tours suivants, et le mode d'autorisations aussi pour
+   * le tour en cours. La demande qui attend passe d'elle-même si le nouveau mode l'autorise (Accès complet, ou une
+   * modification de fichier en Accepter les modifications).
+   */
+  async changeSettings(sessionId: string, settings: PilotSettings): Promise<void> {
+    const record = await this.recordOf(sessionId);
+    await this.keep({ ...record, settings });
+    const turn = this.turns.get(sessionId);
+    if (turn && settings.permissionMode !== record.settings.permissionMode) {
+      turn.process.setPermissionMode(settings.permissionMode);
+      if (turn.asking && allowedByMode(settings.permissionMode, turn.asking))
+        await this.signals.allowPending(sessionId, 'Autorisé par le changement de mode');
+    }
+    await this.publish(sessionId);
+  }
+
   /** « Arrêter » : le tour s'interrompt, le message en attente reste. */
   interrupt(sessionId: string): void {
     const turn = this.turns.get(sessionId);
@@ -779,6 +826,7 @@ export class PilotService {
       if (record.sandbox && !record.sandbox.removedAt)
         await deps.sandboxes.remove(record.sessionId).catch(() => undefined);
     this.sandboxStates.clear();
+    this.sandboxServices.clear();
   }
 
   /** Arrête tous les tours (arrêt de Bosco, remise à zéro des scénarios). */
@@ -873,16 +921,19 @@ export class PilotService {
     const profile = record.sandbox?.profile ?? source.path;
     const tokenFile = await this.tokenFileOf(profile);
     const env = tokenFile ? [TOKEN_VARIABLE] : [];
-    const launch =
+    const started =
       record.sandbox && this.sandbox
         ? await this.sandbox.sandboxes.ensure(record.sessionId, [record.cwd, ...record.projects], env)
         : null;
+    const launch = started?.launch ?? null;
     if (record.sandbox) this.sandboxStates.set(record.sessionId, 'running');
+    if (started) this.sandboxServices.set(record.sessionId, started.services);
     const liveTracking = source.liveTracking && !record.sandbox;
     // Le tour commence : la session apparaît (ou reprend) tout de suite, sans attendre les hooks ni le transcript
     await this.signals.receive(origin, { kind: 'prompt' }, 'pilot');
     const turn: Turn = {
       abandons: new Map(),
+      asking: null,
       noting: Promise.resolve(),
       process: undefined as unknown as RunningTurn,
       result: false,
@@ -890,7 +941,11 @@ export class PilotService {
       stopped: null,
     };
     const sandboxed = record.sandbox !== null;
-    const context = await this.launchContext(record);
+    // En bac à sable, l'agent apprend où il travaille : sans Docker, avec les services de données du projet à côté
+    const context =
+      [await this.launchContext(record), started ? servicesNote(started.services) : null]
+        .filter(Boolean)
+        .join('\n\n') || null;
     const request: TurnRequest = {
       // Les autres projets sont rejoués à chaque tour : une reprise ne les garde pas d'elle-même
       addDirs: [...record.projects],
@@ -944,16 +999,24 @@ export class PilotService {
     tool: string,
     input: Record<string, unknown>,
   ): void {
+    // Passée à l'accès complet pendant le tour : si Claude Code demande encore, Bosco autorise sans te solliciter
+    const mode = this.records.get(origin.sessionId)?.settings.permissionMode;
+    if (mode === 'bypassPermissions') {
+      turn.process.allow(requestId, input);
+      return;
+    }
     void turn.noting
-      .then(() =>
-        this.signals.requestPermission(
+      .then(() => {
+        turn.asking = tool;
+        return this.signals.requestPermission(
           origin,
           { tool, detail: detailOf(input) },
           (onAbandon) => turn.abandons.set(requestId, () => onAbandon('Tour arrêté')),
           'pilot',
-        ),
-      )
+        );
+      })
       .then((answer: null | PermissionAnswer) => {
+        turn.asking = null;
         turn.abandons.delete(requestId);
         if (answer?.behavior === 'allow') turn.process.allow(requestId, input);
         else if (answer) turn.process.deny(requestId, answer.reason ?? 'Refusé dans Bosco.');

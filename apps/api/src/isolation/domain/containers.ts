@@ -1,13 +1,33 @@
 // Conteneurs en cours : les bacs à sable que Bosco a lancés, reconnus à leur nom, et ce que
 // chacun consomme.
 
-/** Une mesure du conteneur d'un bac à sable : processeur en cœurs, mémoire en octets. */
+/** Une mesure d'un conteneur d'un bac à sable : processeur en cœurs, mémoire en octets. */
 export interface SandboxSample {
   cpu: number;
   /** Clé du bac à sable, tirée de sa session (« bosco-s-<clé>-agent ») */
   key: string;
   memory: number;
   name: string;
+  /** Service de données du projet ; null pour le conteneur de l'agent */
+  service: null | { image: string; name: string; state: 'failed' | 'ready' | 'starting' };
+  /** Création du conteneur ; null si Docker ne la donne pas */
+  since: Date | null;
+}
+
+/** « 2026-11-18 15:43:54 +0100 CET » de `docker ps` → la date ; null si illisible. */
+export function dockerDateOf(text: string): Date | null {
+  const match = /^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) ([+-]\d{2})(\d{2})/.exec(text.trim());
+  if (!match) return null;
+  const [, day, time, hours, minutes] = match;
+  const date = new Date(`${day}T${time}${hours}:${minutes}`);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+/** « Up 3 minutes (healthy) » de `docker ps` → l'état d'un service de données. */
+export function serviceStateOf(status: string): 'failed' | 'ready' | 'starting' {
+  if (!status.startsWith('Up')) return 'failed';
+  if (status.includes('(unhealthy)')) return 'failed';
+  return status.includes('(health: starting)') ? 'starting' : 'ready';
 }
 
 /** À partir de cette part de son plafond, une jauge passe en orange : « Proche du plafond ». */

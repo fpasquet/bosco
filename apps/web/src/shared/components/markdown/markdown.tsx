@@ -1,11 +1,14 @@
 'use client';
 import { Streamdown } from 'streamdown';
 import { cn } from '@/lib/cn';
+import { withLineBreaks } from './line-breaks';
 import { MarkdownCode } from './markdown-code';
 import { plainElement } from './markdown-element';
 import { MarkdownLink } from './markdown-link';
 
 export interface MarkdownProps {
+  /** Chaque retour à la ligne compte, comme dans la zone de message : ta demande s'affiche telle que tu l'as écrite */
+  breaks?: boolean;
   children: string;
   className?: string;
 }
@@ -40,10 +43,10 @@ const COMPONENTS = {
 const NO_LINK_CHECK = { enabled: false };
 
 /**
- * Texte en Markdown d'un agent (réponses, réflexions), rendu par Streamdown : titres, listes, tableaux, citations, et
+ * Texte en Markdown d'un agent (réponses, réflexions) ou de ta demande, rendu par Streamdown : titres, listes, tableaux, citations, et
  * blocs de code colorés (CodeBlock). La mise en forme vient de la classe markdown, pas des classes de Streamdown.
  */
-export function Markdown({ children, className }: MarkdownProps) {
+export function Markdown({ breaks = false, children, className }: MarkdownProps) {
   return (
     <Streamdown
       mode="static"
@@ -52,7 +55,7 @@ export function Markdown({ children, className }: MarkdownProps) {
       components={COMPONENTS}
       className={cn('markdown', className)}
     >
-      {children}
+      {breaks ? withLineBreaks(children) : children}
     </Streamdown>
   );
 }

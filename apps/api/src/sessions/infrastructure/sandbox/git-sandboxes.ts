@@ -9,8 +9,8 @@ import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { basename, join } from 'node:path';
 import { promisify } from 'node:util';
 import type { SandboxAccess } from '../../../shared/domain/profile-access.ts';
-import type { Sandboxes, SandboxState, TurnLaunch } from '../../application/pilot.service.ts';
-import { SandboxError, sandboxKeyOf } from '../../domain/sandbox.ts';
+import type { Sandboxes, SandboxState, StartedSandbox, TurnLaunch } from '../../application/pilot.service.ts';
+import { SandboxError, sandboxKeyOf, type SandboxServices } from '../../domain/sandbox.ts';
 
 const GIT = '/usr/bin/git';
 const run = promisify(execFile);
@@ -35,13 +35,15 @@ export interface SandboxContainers {
     mounts: { from: string; to: string }[];
     /** Chemins des projets du bac à sable : leurs domaines propres s'ajoutent à la liste générale */
     projects: readonly string[];
+    /** Copie du projet principal, dont le fichier Compose donne les services de données */
+    servicesFrom: string;
     workdir: string;
-  }): Promise<void>;
+  }): Promise<SandboxServices>;
   /** env : noms des variables du tour transmises au conteneur, leur valeur venant de l'environnement de la commande */
   exec(key: string, env?: readonly string[]): TurnLaunch;
-  remove(key: string): Promise<void>;
+  remove(key: string, dir: string): Promise<void>;
   state(key: string): Promise<SandboxState>;
-  stop(key: string): Promise<void>;
+  stop(key: string, dir: string): Promise<void>;
   unavailable(): Promise<null | string>;
 }
 
@@ -134,7 +136,11 @@ export class GitSandboxes implements Sandboxes {
     return copies;
   }
 
-  async ensure(sessionId: string, projectRoots: readonly string[], env: readonly string[] = []): Promise<TurnLaunch> {
+  async ensure(
+    sessionId: string,
+    projectRoots: readonly string[],
+    env: readonly string[] = [],
+  ): Promise<StartedSandbox> {
     const dir = this.dirOf(sessionId);
     // Sans ses copies, le conteneur monterait des dossiers vides que Docker créerait en root : la session ne se reprend
     // plus
@@ -146,10 +152,11 @@ export class GitSandboxes implements Sandboxes {
     const projectRoot = projectRoots[0] ?? '';
     const project = projectDir(projectRoot);
     const key = this.keyOf(sessionId);
-    await this.containers.ensure({
+    const services = await this.containers.ensure({
       dir,
       key,
       projects: projectRoots,
+      servicesFrom: this.repoOf(sessionId, 0),
       workdir: projectRoot,
       mounts: [
         ...projectRoots.map((root, copy) => ({ from: this.repoOf(sessionId, copy), to: root })),
@@ -157,7 +164,7 @@ export class GitSandboxes implements Sandboxes {
         { from: join(this.profile, 'projects', project), to: `/home/agent/.claude/projects/${project}` },
       ],
     });
-    return this.containers.exec(key, env);
+    return { launch: this.containers.exec(key, env), services };
   }
 
   state(sessionId: string): Promise<SandboxState> {
@@ -165,11 +172,11 @@ export class GitSandboxes implements Sandboxes {
   }
 
   stop(sessionId: string): Promise<void> {
-    return this.containers.stop(this.keyOf(sessionId));
+    return this.containers.stop(this.keyOf(sessionId), this.dirOf(sessionId));
   }
 
   async remove(sessionId: string): Promise<void> {
-    await this.containers.remove(this.keyOf(sessionId));
+    await this.containers.remove(this.keyOf(sessionId), this.dirOf(sessionId));
     await rm(this.dirOf(sessionId), { recursive: true, force: true });
   }
 

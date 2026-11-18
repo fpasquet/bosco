@@ -51,6 +51,13 @@ Feature: Piloted sessions
     When I allow the permission of "the started session"
     Then "the started session" should end its turn with "Migration lancée."
 
+  @CA-SESS-191
+  Scenario: Switching to full access during a turn allows the waiting permission and the next ones
+    When I start a session in the project "maison" with the JSON "fixtures/pilot/start-two-permissions.json"
+    Then "the started session" should wait for the permission "npm run db:migrate"
+    When I switch "the started session" to the permission mode "bypassPermissions"
+    Then "the started session" should end its turn with "Deux commandes lancées · mode bypassPermissions"
+
   @CA-SESS-96
   Scenario: A question of the agent is answered in Bosco, or skipped
     When I start a session in the project "maison" with the JSON "fixtures/pilot/start-question.json"

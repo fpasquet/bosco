@@ -203,8 +203,23 @@ export class LiveSignalService {
     await this.notifications.settle({ sessionId, kinds: ['question'] }, answers ? 'Répondu dans Bosco' : 'Passée');
   }
 
+  /**
+   * La demande en attente d'une session pilotée, autorisée sans clic : le mode choisi pendant le tour la couvre. Sans
+   * demande en attente, rien.
+   */
+  async allowPending(sessionId: string, note: string): Promise<void> {
+    const entry = this.pending.get(sessionId);
+    if (!entry) return;
+    await this.answerPermission(sessionId, entry.requestId, { behavior: 'allow' }, note);
+  }
+
   /** Réponse donnée dans Bosco ; refusée si le terminal a répondu le premier. */
-  async answerPermission(sessionId: string, requestId: string, answer: PermissionAnswer): Promise<void> {
+  async answerPermission(
+    sessionId: string,
+    requestId: string,
+    answer: PermissionAnswer,
+    note = answer.behavior === 'allow' ? 'Autorisé dans Bosco' : 'Refusé dans Bosco',
+  ): Promise<void> {
     const entry = this.pending.get(sessionId);
     const session = await this.sessionRepository.find(sessionId);
     if (entry?.requestId !== requestId || !session?.settlePermission(requestId, this.clock.now()))
@@ -217,10 +232,7 @@ export class LiveSignalService {
       outcome: answer.behavior === 'allow' ? 'allowed' : 'denied',
     });
     entry.resolve(answer);
-    await this.notifications.settle(
-      { sessionId, kinds: ['permission'] },
-      answer.behavior === 'allow' ? 'Autorisé dans Bosco' : 'Refusé dans Bosco',
-    );
+    await this.notifications.settle({ sessionId, kinds: ['permission'] }, note);
   }
 
   /** Oublie les demandes en cours et les derniers signaux (remise à zéro des scénarios). */
