@@ -50,6 +50,20 @@ Fonctionnalité: Conteneurs en cours
     Alors je vois le titre « Bacs à sable »
     Et je ne vois plus le texte « Tours sur le poste »
 
+  @CA-CONT-182
+  @CA-SESS-192
+  Scénario: Les services de données du projet démarrent avec son bac à sable, et se voient dans le panneau et la session
+    Étant donné le projet « maison » décrit une base Postgres et son API dans son fichier Compose
+    Et une session tourne dans un bac à sable
+    Quand j'ouvre la page « / »
+    Et je clique sur le résumé « Conteneurs » de la barre latérale
+    Alors je vois le texte « postgres:16.13-alpine · service de données »
+    Et la page est accessible
+    Quand je clique sur le lien « Voir la session »
+    Et je clique sur le bouton « Replier »
+    Alors je vois le titre « Services de données »
+    Et je vois le texte « postgres:16.13-alpine »
+
   @CA-CONT-81
   Scénario: Quand Docker ne répond plus, les dernières mesures restent, grisées et datées, sans action
     Étant donné une session tourne dans un bac à sable
@@ -71,6 +85,7 @@ Fonctionnalité: Conteneurs en cours
     Quand j'ouvre la page « /settings »
     Et je clique sur le lien « Conteneurs en cours »
     Alors je vois le texte « CPU 0,0 / 2 cœurs · 1,3 / 4 Go »
-    Et je vois le lien « Voir la session »
+    Et je vois le titre « Bacs à sable »
+    Et je vois le titre « Tours sur le poste »
     Et je vois le bouton « Arrêter le tour »
     Et la page est accessible

@@ -1,1 +1,2 @@
-export { ContainersDock, UsageCells } from './containers-dock';
+export { ContainersDock } from './containers-dock';
+export { UsageGauge } from './usage-gauge';

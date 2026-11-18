@@ -1,6 +1,7 @@
 // Phrases des conteneurs en cours : un bac à sable démarré et un tour piloté en cours, lancés par l'API, puis
 // attendus dans la mesure des conteneurs.
 import { expect } from '@playwright/test';
+import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Bosco } from '../../shared/bosco.ts';
 import { Given, When } from './fixtures.ts';
@@ -44,6 +45,26 @@ Given('une session pilotée a un long tour en cours sur le poste', async ({ bosc
 Given('une session a un long tour en cours dans un bac à sable', async ({ bosco }) => {
   await start(bosco, 'Lance un long travail dans le bac à sable', true);
   await expect.poll(async () => (await containers(bosco)).sandboxes.length).toBe(1);
+});
+
+Given('le projet « maison » décrit une base Postgres et son API dans son fichier Compose', ({ bosco }) => {
+  // La base tourne sur une image toute faite ; l'API se construit depuis le dépôt et monte ses sources
+  writeFileSync(
+    join(bosco.profilesRoot, 'maison', 'docker-compose.yml'),
+    [
+      'services:',
+      '  db:',
+      '    image: postgres:16.13-alpine',
+      '    ports: ["127.0.0.1:5435:5432"]',
+      '    volumes: [postgres-data:/var/lib/postgresql/data]',
+      '  api:',
+      '    build: .',
+      '    volumes: [".:/repo"]',
+      'volumes:',
+      '  postgres-data:',
+      '',
+    ].join('\n'),
+  );
 });
 
 Given('Docker ne répond plus', async ({ bosco }) => {
