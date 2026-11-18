@@ -140,6 +140,29 @@ Fonctionnalité: Valeurs par défaut des sessions et modes d'autorisation
     Et je clique sur le bouton « Enregistrer »
     Alors je vois le message « Réglages du profil enregistrés : ils valent pour les sessions suivantes. »
 
+  @CA-REGL-18
+  Scénario: Les autorisations d'un profil proposent les cinq modes, et l'accès complet s'y confirme à chaque session
+    Quand j'ouvre la page « /settings/sources »
+    Et je clique sur le lien « Gérer le profil perso »
+    Et je choisis « Haiku 4.5 » dans la liste « Modèle »
+    Et j’ouvre le menu des réglages « Autorisations »
+    Alors le menu propose les modes, dans l’ordre :
+      | Celui du profil Claude Code |
+      | Demander                    |
+      | Accepter les modifications  |
+      | Plan                        |
+      | Approuver pour moi          |
+      | Accès complet               |
+    Et le choix « Approuver pour moi » du menu est grisé, avec sa raison « Pas disponible avec ce modèle »
+    Quand j’appuie sur Échap
+    Et je choisis « Accès complet » dans le menu des réglages « Autorisations »
+    Et je clique sur le bouton « Enregistrer »
+    Et j'ouvre la page « /sessions/new »
+    Et je choisis « perso · camille@exemple.dev » dans la liste « Abonnement Claude »
+    Et je saisis « Lance les tests » dans le champ « Premier message »
+    Et je clique sur le bouton « Démarrer »
+    Alors je vois le titre « Donner l’accès complet sur le poste ? »
+
   @mobile
   @CA-REGL-22
   Scénario: Sur le téléphone, les réglages d'un profil se lisent seulement

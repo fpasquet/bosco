@@ -19,6 +19,7 @@ interface SessionView {
     suspended?: null | { count: number; total: boolean };
   };
   project: null | { name: string };
+  sourceId: string;
   waiting:
     | null
     | { kind: 'permission'; detail: null | string; requestId: string }
@@ -126,12 +127,19 @@ Then('{string} should have no pending message', async ({ request }, session: str
 Then('{string} should be piloted with:', async ({ request }, session: string, table: DataTable) => {
   const view = await detail(request, idOf(session));
   const expected = table.rowsHash();
-  expect({
+  const actual: Record<string, string | undefined> = {
     permissionMode: view.pilot?.settings.permissionMode,
     model: view.pilot?.settings.model ?? '',
     effort: view.pilot?.settings.effort ?? '',
     project: view.project?.name,
-  }).toEqual(expected);
+  };
+  // Le profil se lit par son nom (« perso ») : son identifiant change d'une instance à l'autre
+  if ('profile' in expected) {
+    const response = await request.get('/api/sources');
+    const { sources } = (await response.json()) as { sources: { id: string; label: string }[] };
+    actual.profile = sources.find(({ id }) => id === view.sourceId)?.label;
+  }
+  expect(actual).toEqual(expected);
 });
 
 Then('{string} should wait for the permission {string}', async ({ request }, session: string, detailText: string) => {

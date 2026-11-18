@@ -6,6 +6,7 @@ import { SettingsHeader } from '@/shared/layouts/settings-tabs';
 import {
   isolationQuery,
   IsolationRefused,
+  profilesQuery,
   quotaQuery,
   QuotaRefused,
   setQuotaScope,
@@ -23,6 +24,8 @@ export function SubscriptionScreen() {
   const client = useQueryClient();
   const { data: isolation } = useQuery(isolationQuery);
   const { data: quota } = useQuery(quotaQuery);
+  const { data: profiles } = useQuery(profilesQuery);
+  const profile = profiles?.sources.find(({ path }) => path === isolation?.subscription.profile);
   const [subscriptionError, setSubscriptionError] = useState<null | string>(null);
   const [quotaError, setQuotaError] = useState<null | string>(null);
   const subscription = useMutation({
@@ -56,6 +59,7 @@ export function SubscriptionScreen() {
         <>
           <SubscriptionPanel
             subscription={isolation.subscription}
+            profileHref={profile ? `/settings/sources/${encodeURIComponent(profile.id)}` : null}
             busy={busy}
             error={subscriptionError}
             onChange={(profile) => subscription.mutate(profile)}

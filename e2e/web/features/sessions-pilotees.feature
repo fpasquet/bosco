@@ -10,8 +10,8 @@ Fonctionnalité: Sessions pilotées par Bosco
     Et Bosco surveille les profils « .claude » et « .claude-perso »
     Et le dossier « labo-ia » est un projet
 
-  @CA-SESS-91
   @CA-SESS-92
+  @CA-SESS-155
   Scénario: Une session démarre depuis la vue d'ensemble, puis répond à chaque message
     Quand j'ouvre la page « / »
     Et je clique sur le lien « Nouvelle session »

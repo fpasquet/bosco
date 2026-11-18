@@ -7,7 +7,13 @@ const meta = {
   title: 'Features/Sandbox/SubscriptionPanel',
   component: SubscriptionPanel,
   parameters: { layout: 'padded' },
-  args: { busy: false, error: null, onChange: fn(), subscription: STORY_ISOLATION.subscription },
+  args: {
+    busy: false,
+    error: null,
+    onChange: fn(),
+    profileHref: '/settings/sources/pro',
+    subscription: STORY_ISOLATION.subscription,
+  },
 } satisfies Meta<typeof SubscriptionPanel>;
 
 export default meta;
