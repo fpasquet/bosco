@@ -26,10 +26,12 @@ When(
 When(
   'the session calls the Bosco tool {string} with:',
   async ({ bosco }, name: string, table: { rowsHash(): Record<string, string> }) => {
-    const args = Object.fromEntries(
-      Object.entries(table.rowsHash()).map(([key, value]) => {
+    const args: Record<string, unknown> = Object.fromEntries(
+      Object.entries(table.rowsHash()).map(([key, value]): [string, unknown] => {
         // Un dossier se donne depuis le dossier du scénario, comme le cwd absolu d'une session
         if (key === 'path') return [key, join(bosco.profilesRoot, value)];
+        // Les dossiers ajoutés à la session, séparés par des virgules
+        if (key === 'paths') return [key, value.split(',').map((path) => join(bosco.profilesRoot, path.trim()))];
         return [key, /^\d+$/.test(value) ? Number(value) : value];
       }),
     );

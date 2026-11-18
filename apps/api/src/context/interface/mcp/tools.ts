@@ -16,13 +16,18 @@ export interface ToolResult {
 }
 
 const path = { type: 'string', description: 'Dossier de travail absolu de la session (son cwd)' };
+const paths = {
+  type: 'array',
+  items: { type: 'string' },
+  description: 'Dossiers de travail ajoutés à la session (--add-dir), chemins absolus ; absent s’il n’y en a pas',
+};
 
 export const TOOLS: McpTool[] = [
   {
     name: 'bosco_context',
     description:
-      'Rend le contexte du projet où tu travailles : les instructions communes et celles de ses groupes, puis ses décisions acceptées, qui l’emportent, et sa place dans l’architecture. À lire avant de travailler.',
-    inputSchema: { type: 'object', properties: { path }, required: ['path'] },
+      'Rend le contexte du projet où tu travailles : les instructions communes et celles de ses groupes, puis ses décisions acceptées, qui l’emportent, et sa place dans l’architecture. Avec des dossiers ajoutés à la session, le contexte de chacun de leurs projets suit celui du projet principal. À lire avant de travailler.',
+    inputSchema: { type: 'object', properties: { path, paths }, required: ['path'] },
   },
   {
     name: 'bosco_propose_decision',
@@ -43,7 +48,7 @@ export const TOOLS: McpTool[] = [
   },
 ];
 
-const contextSchema = z.object({ path: z.string().min(1) });
+const contextSchema = z.object({ path: z.string().min(1), paths: z.array(z.string().min(1)).max(20).optional() });
 const proposeSchema = z.object({
   path: z.string().min(1),
   title: z.string().max(300),
@@ -64,10 +69,8 @@ const trim = (path: string) => path.replace(/\/$/, '');
 const HANDLERS: Record<string, (deps: ToolDeps, args: unknown) => Promise<ToolResult>> = {
   async bosco_context({ context }, args) {
     const input = contextSchema.parse(args);
-    const project = await context.projectOf(trim(input.path));
-    if (!project) return OUTSIDE;
-    const preview = await context.preview(project.name);
-    return { text: preview.text };
+    const text = await context.sessionContext(trim(input.path), (input.paths ?? []).map(trim));
+    return text === null ? OUTSIDE : { text };
   },
   async bosco_propose_decision({ context }, args) {
     const input = proposeSchema.parse(args);

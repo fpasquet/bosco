@@ -1,0 +1,8 @@
+{
+  "profile": "{{profiles}}/.claude-perso",
+  "text": "Range les notes du club",
+  "images": [],
+  "projects": ["{{profiles}}/notes-clubs"],
+  "settings": { "permissionMode": "acceptEdits", "model": null, "effort": null },
+  "sandbox": { "branch": null, "startBranch": null }
+}

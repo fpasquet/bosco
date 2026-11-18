@@ -12,7 +12,7 @@ import { IsolationResources } from '../isolation-resources';
  * Réglages › Bac à sable : ce que voit l'agent, ses limites et les domaines qu'il peut joindre.
  * Un domaine ajouté vaut tout de suite, même pour les bacs à sable démarrés ; sur le téléphone, tout se lit.
  */
-export function IsolationScreen() {
+export function IsolationScreen({ domain = null }: { domain?: null | string }) {
   const client = useQueryClient();
   const { data } = useQuery(isolationQuery);
   const [error, setError] = useState<null | string>(null);
@@ -33,6 +33,7 @@ export function IsolationScreen() {
           <IsolationResources isolation={data} />
           <IsolationEgress
             isolation={data}
+            domain={domain}
             busy={add.isPending || remove.isPending}
             error={error}
             onAdd={(domain) => add.mutate(domain)}

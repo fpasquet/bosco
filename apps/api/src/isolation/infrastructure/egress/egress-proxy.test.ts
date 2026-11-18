@@ -1,7 +1,7 @@
-// Ce que les scénarios ne voient pas : le proxy laisse passer un domaine de la liste, refuse et note les autres,
-// et relit la liste à chaque connexion (RF-CONT-07). Lancé en local, sans Docker, contre un serveur de test.
+// Ce que les scénarios ne voient pas : le proxy laisse passer un domaine de la liste générale ou des projets du bac à
+// sable, refuse et note les autres, et relit les listes à chaque connexion (RF-CONT-07, CA-CONT-108). Lancé en local, sans Docker, contre un serveur de test.
 import { type ChildProcess, spawn } from 'node:child_process';
-import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { createServer, request, type Server } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -11,6 +11,7 @@ const PORT = 39_128;
 const dir = mkdtempSync(join(tmpdir(), 'bosco-egress-'));
 const allow = join(dir, 'allow.json');
 const refusals = join(dir, 'refusals.jsonl');
+const project = join(dir, 'projects', 'a1b2c3.json');
 let proxy: ChildProcess;
 let target: Server;
 let targetPort = 0;
@@ -55,6 +56,7 @@ beforeAll(async () => {
       BOSCO_EGRESS_ALLOW: allow,
       BOSCO_EGRESS_REFUSALS: refusals,
       BOSCO_EGRESS_PORT: String(PORT),
+      BOSCO_EGRESS_PROJECTS: 'a1b2c3.json',
     },
     stdio: 'ignore',
   });
@@ -89,6 +91,15 @@ describe('egress proxy', () => {
       .split('\n')
       .map((line) => (JSON.parse(line) as { host: string }).host);
     expect(hosts).toEqual(['localhost', 'localhost']);
+  });
+
+  it('CA-CONT-108 · adds the domains of the projects of the sandbox to the general list', async () => {
+    mkdirSync(join(dir, 'projects'), { recursive: true });
+    writeFileSync(project, JSON.stringify(['localhost']));
+    const allowed = await tunnel('localhost');
+    writeFileSync(project, JSON.stringify([]));
+    const removed = await tunnel('localhost');
+    expect([allowed, removed]).toEqual([200, 403]);
   });
 
   it('reads the list again on each connection', async () => {

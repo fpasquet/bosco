@@ -1,0 +1,11 @@
+{
+  "target": { "kind": "project", "name": "api-voix" },
+  "text": {
+    "title": "Valider chaque requête par un schéma",
+    "context": "Les routes acceptaient des corps incomplets.",
+    "decision": "Chaque route valide son corps par un schéma JSON.",
+    "consequences": null,
+    "alternatives": null
+  },
+  "accept": true
+}

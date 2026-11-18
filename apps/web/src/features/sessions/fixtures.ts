@@ -1,6 +1,7 @@
 // Sessions du fil rouge des specs, pour les histoires : les dates suivent l'heure courante.
 import type {
   ConversationStepDto,
+  GroupDto,
   JournalEntryDto,
   SessionConversationDto,
   SessionDto,
@@ -12,6 +13,7 @@ const laboIa = (folder: string) => ({ folder, id: 1, name: 'labo-ia', root: '/ho
 
 function session(overrides: Partial<SessionDto> & Pick<SessionDto, 'id' | 'title'>): SessionDto {
   return {
+    addedProjects: [],
     branch: 'develop',
     cost: { unpriced: false, usd: 0 },
     lastAction: null,
@@ -59,6 +61,7 @@ export const STORY_SESSIONS: SessionDto[] = [
     id: '5e0a91c3',
     title: 'Corriger l’indexation des PDF dans Elasticsearch',
     project: laboIa('packages/rag'),
+    addedProjects: [{ id: 2, name: 'outils-node', root: '/home/dev/www/outils-node' }],
     lastAction: 'Bash · yarn test --forceExit',
     recentActions: ['Bash · yarn test --forceExit', 'Modifie src/indexer/pdf.ts'],
     cost: { unpriced: false, usd: 0.62 },
@@ -88,6 +91,33 @@ export const STORY_SESSIONS: SessionDto[] = [
     cost: { unpriced: false, usd: 0.09 },
     usage: { cacheCreation: 0, cacheRead: 10_000, input: 7000, output: 1000 },
   }),
+];
+
+/** Groupes du fil rouge : « Médias » réunit labo-ia et api-voix, « Node.js » outils-node. */
+export const STORY_GROUPS: GroupDto[] = [
+  {
+    id: 2,
+    name: 'Médias',
+    description: null,
+    instructions: '',
+    profile: null,
+    sidebar: true,
+    system: false,
+    projects: [
+      { id: 1, name: 'labo-ia' },
+      { id: 3, name: 'api-voix' },
+    ],
+  },
+  {
+    id: 3,
+    name: 'Node.js',
+    description: null,
+    instructions: '',
+    profile: null,
+    sidebar: true,
+    system: false,
+    projects: [{ id: 2, name: 'outils-node' }],
+  },
 ];
 
 /** Les deux sessions du fil rouge qui t'attendent : une autorisation demandée, un tour terminé. */

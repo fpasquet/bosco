@@ -9,6 +9,8 @@ import { totalTokens } from '../../lib/overview';
 export interface SessionSideProps {
   now: Date;
   onCopy: (text: string, label: string) => void;
+  /** Projets d'une session à plusieurs projets (E2k), à la place de sa branche */
+  projects?: ReactNode;
   /** Commande de reprise d'une session close ; null tant qu'elle est ouverte (RF-SESS-09) */
   resume: null | string;
   /** Carte du bac à sable d'une session qui y tourne (E2j), en tête de la colonne */
@@ -26,7 +28,7 @@ function Row({ label, value }: { label: string; value: string }) {
 }
 
 /** Colonne du détail : usage estimé (RF-SESS-05), fichiers modifiés par l'agent, identifiant et reprise. */
-export function SessionSide({ now, onCopy, resume, sandbox, session }: SessionSideProps) {
+export function SessionSide({ now, onCopy, projects, resume, sandbox, session }: SessionSideProps) {
   const closed = session.state === 'ended' || session.state === 'inactive';
   const { usage } = session;
   return (
@@ -56,27 +58,29 @@ export function SessionSide({ now, onCopy, resume, sandbox, session }: SessionSi
           <Row label="Tours" value={String(session.turns)} />
         </dl>
       </section>
-      <section aria-labelledby="branch-title" className="rounded-card border border-line bg-surface p-4 shadow-card">
-        <h2 id="branch-title" className="mb-3 flex items-center gap-2 text-xs font-semibold text-muted">
-          Branche <span className="font-mono font-normal">{session.branch ?? '—'}</span>
-        </h2>
-        {session.changedFiles.length === 0 ? (
-          <p className="text-xs text-muted">Aucun fichier modifié par l’agent.</p>
-        ) : (
-          <ul className="flex flex-col gap-1 font-mono text-xs">
-            {session.changedFiles.map((file) => (
-              <li key={file.path} className="flex gap-2">
-                <span className="min-w-0 flex-1 truncate" title={file.path}>
-                  {relativePath(file.path, session.project?.root)}
-                </span>
-                <span className="text-success">+{file.added}</span>
-                {file.removed > 0 && <span className="text-danger">−{file.removed}</span>}
-              </li>
-            ))}
-          </ul>
-        )}
-        <p className="mt-2 text-xs text-muted">depuis le début de la session · hors commandes shell</p>
-      </section>
+      {projects ?? (
+        <section aria-labelledby="branch-title" className="rounded-card border border-line bg-surface p-4 shadow-card">
+          <h2 id="branch-title" className="mb-3 flex items-center gap-2 text-xs font-semibold text-muted">
+            Branche <span className="font-mono font-normal">{session.branch ?? '—'}</span>
+          </h2>
+          {session.changedFiles.length === 0 ? (
+            <p className="text-xs text-muted">Aucun fichier modifié par l’agent.</p>
+          ) : (
+            <ul className="flex flex-col gap-1 font-mono text-xs">
+              {session.changedFiles.map((file) => (
+                <li key={file.path} className="flex gap-2">
+                  <span className="min-w-0 flex-1 truncate" title={file.path}>
+                    {relativePath(file.path, session.project?.root)}
+                  </span>
+                  <span className="text-success">+{file.added}</span>
+                  {file.removed > 0 && <span className="text-danger">−{file.removed}</span>}
+                </li>
+              ))}
+            </ul>
+          )}
+          <p className="mt-2 text-xs text-muted">depuis le début de la session · hors commandes shell</p>
+        </section>
+      )}
       <section aria-labelledby="session-title" className="rounded-card border border-line bg-surface p-4 shadow-card">
         <h2 id="session-title" className="mb-3 text-xs font-semibold text-muted">
           Session

@@ -21,6 +21,16 @@ export interface ProjectsListProps {
   /** Sur le téléphone, toucher un projet ouvre la feuille de ses actions */
   onOpen: (project: ProjectDto) => void;
   onRestore: (path: string) => void;
+  /** Sessions hors de tout projet, listées sous « Hors projet », la plus récente d'abord */
+  outsideSessions?: OutsideSession[];
+}
+
+/** Une session hors de tout projet : son titre et son dossier de travail. */
+export interface OutsideSession {
+  id: string;
+  lastEventAt: string;
+  path: null | string;
+  title: string;
 }
 
 function SuggestionRow({
@@ -69,9 +79,10 @@ export function ProjectsList({
   onNewGroup,
   onOpen,
   onRestore,
+  outsideSessions = [],
 }: ProjectsListProps) {
   const [showIgnored, setShowIgnored] = useState(false);
-  const ids = { ignored: useId(), projects: useId(), suggestions: useId() };
+  const ids = { ignored: useId(), outside: useId(), projects: useId(), suggestions: useId() };
   const { home, ignored, outside, projects, suggestions } = data;
   return (
     <div className="flex flex-col gap-5">
@@ -120,13 +131,45 @@ export function ProjectsList({
               </li>
             );
           })}
-          <li className="flex items-center gap-3 bg-surface-alt px-4 py-2.5 text-muted">
+          <li
+            id={outsideSessions.length > 0 ? undefined : 'outside'}
+            className="flex scroll-mt-4 items-center gap-3 bg-surface-alt px-4 py-2.5 text-muted"
+          >
             <FolderOpen aria-hidden className="size-4 shrink-0" />
             <p className="min-w-0 flex-1">Hors projet</p>
             <span className="font-mono text-xs">{sessionsLabel(outside)}</span>
           </li>
         </ul>
       </section>
+      {outsideSessions.length > 0 && (
+        <section
+          id="outside"
+          aria-labelledby={ids.outside}
+          className="scroll-mt-4 rounded-card border border-line bg-surface shadow-card"
+        >
+          <div className="border-b border-line px-4 py-2.5">
+            <h2 id={ids.outside} className="text-xs font-semibold text-muted">
+              Hors projet
+            </h2>
+            <p className="mt-0.5 text-xs text-muted">Sessions dont le dossier n’est dans aucun projet</p>
+          </div>
+          <ul aria-labelledby={ids.outside} className="divide-y divide-line">
+            {outsideSessions.map((session) => (
+              <li key={session.id} className="flex items-baseline gap-2 px-4 py-2.5">
+                <Link href={`/sessions/${encodeURIComponent(session.id)}`} className="truncate link-hover">
+                  {session.title}
+                </Link>
+                {session.path && (
+                  <span className="truncate font-mono text-xs text-muted">{displayPath(session.path, home)}</span>
+                )}
+                <span className="ml-auto text-xs whitespace-nowrap text-muted">
+                  {sinceNow(new Date(session.lastEventAt), now)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
       {(suggestions.length > 0 || ignored.length > 0) && (
         <section aria-labelledby={ids.suggestions} className="rounded-card border border-line bg-surface shadow-card">
           <div className="border-b border-line px-4 py-2.5">

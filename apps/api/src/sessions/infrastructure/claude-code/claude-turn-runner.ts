@@ -32,6 +32,7 @@ export function turnArguments(request: TurnRequest): string[] {
     CLI_MODES[permissionMode],
     ...(model ? ['--model', model] : []),
     ...(effort ? ['--effort', effort] : []),
+    ...request.addDirs.flatMap((dir) => ['--add-dir', dir]),
     ...(request.resume ? ['--resume', request.sessionId] : ['--session-id', request.sessionId]),
   ];
 }
@@ -60,6 +61,9 @@ export class ClaudeTurnRunner implements TurnRunner {
     const env = { ...process.env };
     if (defaultProfile || request.launch) delete env.CLAUDE_CONFIG_DIR;
     else env.CLAUDE_CONFIG_DIR = request.configDir;
+    // Les instructions (CLAUDE.md) des projets ajoutés par --add-dir ne se lisent qu'avec ce réglage (vérifié sur
+    // Claude Code 2.1.326) ; en bac à sable, la commande du conteneur le passe
+    if (request.addDirs.length > 0) env.CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD = '1';
     // En bac à sable, le tour s'exécute dans le conteneur de la session, entrée ouverte (DT-37)
     const [file, args] = request.launch
       ? [request.launch.file, [...request.launch.args, ...turnArguments(request)]]

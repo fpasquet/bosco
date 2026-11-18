@@ -1,8 +1,11 @@
 import type { FolderPath } from './folder.ts';
 import { DomainError } from '../../shared/domain/domain-error.ts';
+import { isDomainName } from '../../shared/domain/domain-name.ts';
 
 export interface ProjectSnapshot {
   addedAt: Date;
+  /** Domaines propres au projet, ajoutés à la liste générale pour ses bacs à sable */
+  domains: string[];
   /** Le dossier est un dépôt git : seuls ceux-là tournent en bac à sable */
   git: boolean;
   id: number;
@@ -42,6 +45,18 @@ export class ProjectHasRunningSession extends DomainError {
 export class InvalidStartBranch extends DomainError {
   constructor() {
     super('invalidStartBranch', 'The start branch is not a valid branch name');
+  }
+}
+
+export class InvalidProjectDomain extends DomainError {
+  constructor() {
+    super('invalidProjectDomain', 'A domain name alone, without protocol or path: pypi.org or *.github.com');
+  }
+}
+
+export class ProjectDomainTaken extends DomainError {
+  constructor(domain: string) {
+    super('projectDomainTaken', `${domain} is already in the domains of the project`);
   }
 }
 
@@ -87,6 +102,7 @@ export class Project {
     if (projects.some(({ path }) => path === folder.value)) throw new ProjectAlreadyAdded(folder.value);
     return new Project({
       addedAt,
+      domains: [],
       git,
       id,
       name: projectName(
@@ -101,7 +117,7 @@ export class Project {
   }
 
   static restore(snapshot: ProjectSnapshot): Project {
-    return new Project({ ...snapshot });
+    return new Project({ ...snapshot, domains: [...snapshot.domains] });
   }
 
   get id(): number {
@@ -122,12 +138,25 @@ export class Project {
     if (changes.startBranch !== undefined) this.snapshot.startBranch = startBranchOf(changes.startBranch);
   }
 
+  /** Un domaine propre au projet : un nom, ou « *. » et un nom ; il vaut tout de suite pour ses bacs à sable. */
+  addDomain(value: string): void {
+    const domain = value.trim().toLowerCase();
+    if (!isDomainName(domain)) throw new InvalidProjectDomain();
+    if (this.snapshot.domains.includes(domain)) throw new ProjectDomainTaken(domain);
+    this.snapshot.domains = [...this.snapshot.domains, domain];
+  }
+
+  removeDomain(value: string): void {
+    const domain = value.trim().toLowerCase();
+    this.snapshot.domains = this.snapshot.domains.filter((candidate) => candidate !== domain);
+  }
+
   /** Dernier choix de « Où elle tourne » : la prochaine session du projet le reprend. */
   rememberPlace(place: null | ProjectPlaceChoice): void {
     this.snapshot.place = place === 'sandbox' && !this.snapshot.git ? 'workstation' : place;
   }
 
   toSnapshot(): ProjectSnapshot {
-    return { ...this.snapshot };
+    return { ...this.snapshot, domains: [...this.snapshot.domains] };
   }
 }

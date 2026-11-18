@@ -1,7 +1,7 @@
-// Ce que les scénarios ne voient pas : l'ordre exact du texte transmis, les groupes sans instructions et un projet
-// sans groupe.
+// Ce que les scénarios ne voient pas : l'ordre exact du texte transmis, les groupes sans instructions, un projet
+// sans groupe, et le texte d'une session à plusieurs projets coupé à 10 000 caractères.
 import { describe, expect, it } from 'vitest';
-import { contextOf, contextText, type GroupInstructions } from './context-text.ts';
+import { CONTEXT_LIMIT, contextOf, contextText, type GroupInstructions, sessionContextText } from './context-text.ts';
 import { Decision, type DecisionText } from './decision.ts';
 
 const at = new Date('2026-11-06T14:00:00');
@@ -86,5 +86,22 @@ describe('parseProposal', () => {
       decision: 'Retirer les points avant la recherche.',
     });
     expect(parseProposal('# Sans décision\n\n## Contexte\nRien.')).toBeNull();
+  });
+});
+
+describe('sessionContextText', () => {
+  it('CA-CONT-105 · gives one block per project, the principal first, and stays under 10 000 characters', () => {
+    const blocks = [
+      { project: 'api-tarifs', text: '# Contexte du projet api-tarifs' },
+      { project: 'site-clubs', text: `# Contexte du projet site-clubs\n${'x'.repeat(CONTEXT_LIMIT)}` },
+    ];
+    const sent = sessionContextText(blocks);
+    expect(
+      sent.startsWith('Session sur 2 projets : api-tarifs (projet principal, dossier de travail), puis site-clubs.'),
+    ).toBe(true);
+    expect(sent.indexOf('api-tarifs\n') < sent.indexOf('# Contexte du projet site-clubs')).toBe(true);
+    expect(sent).toHaveLength(CONTEXT_LIMIT);
+    expect(sent.endsWith('[Contexte coupé : 10 000 caractères au plus.]')).toBe(true);
+    expect(sessionContextText([blocks[0] ?? { project: '', text: '' }])).toBe('# Contexte du projet api-tarifs');
   });
 });

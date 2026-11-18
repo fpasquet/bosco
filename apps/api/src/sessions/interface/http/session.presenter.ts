@@ -13,6 +13,10 @@ export function presentSession(view: SessionView): SessionDto {
           ...view.pilot,
           sandbox: view.pilot.sandbox && {
             ...view.pilot.sandbox,
+            copies: view.pilot.sandbox.copies.map((copy) => ({
+              ...copy,
+              retrievedAt: copy.retrievedAt?.toISOString() ?? null,
+            })),
             retrievedAt: view.pilot.sandbox.retrievedAt?.toISOString() ?? null,
             stopsAt: view.pilot.sandbox.stopsAt.toISOString(),
           },

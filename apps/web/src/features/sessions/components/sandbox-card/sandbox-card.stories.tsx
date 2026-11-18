@@ -13,6 +13,7 @@ const meta = {
     onStop: fn(),
     sandbox: {
       branch: 'bosco/s-typescript-6',
+      copies: [],
       from: 'develop',
       removed: false,
       retrievedAt: null,

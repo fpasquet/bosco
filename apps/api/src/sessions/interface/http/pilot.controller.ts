@@ -13,7 +13,13 @@ import {
   Query,
 } from '@nestjs/common';
 import { z } from 'zod';
-import type { PilotOptionsDto, SandboxRefusalsDto, SuggestionDto } from '@bosco/domain';
+import type {
+  PilotOptionsDto,
+  RetrievedBranchesDto,
+  SandboxBranchesDto,
+  SandboxRefusalsDto,
+  SuggestionDto,
+} from '@bosco/domain';
 import type { LiveSignalService } from '../../application/live-signal.service.ts';
 import type { PilotService } from '../../application/pilot.service.ts';
 import type { SuggestionService } from '../../application/suggestion.service.ts';
@@ -25,6 +31,7 @@ import {
   InvalidAnswers,
   InvalidPilotMessage,
   MAX_IMAGES,
+  MAX_SESSION_PROJECTS,
   PERMISSION_MODES,
   PilotTargetNotFound,
 } from '../../domain/pilot.ts';
@@ -46,14 +53,21 @@ const messageSchema = z.object({
   text: z.string().max(100_000),
 });
 
+const BRANCH = z.string().trim().max(200).nullable();
+
 const startSchema = messageSchema.extend({
   profile: z.string().min(1).nullable(),
+  /** Projet principal, dossier de travail de la session */
   project: z.string().min(1),
-  /** Dans un bac à sable (E16b) : branche de départ et branche de la session, null : proposées */
+  /** Autres projets de la session, qu'elle voit en plus du principal (E16c) */
+  projects: z.array(z.string().min(1)).max(MAX_SESSION_PROJECTS).optional(),
+  /** Dans un bac à sable (E16b, E16d) : branche de la session, branches de départ, null : proposées */
   sandbox: z
-    .object({ branch: z.string().trim().max(200).nullable(), startBranch: z.string().trim().max(200).nullable() })
+    .object({ branch: BRANCH, startBranch: BRANCH, startBranches: z.record(z.string(), BRANCH).optional() })
     .nullish(),
 });
+
+const retrieveSchema = z.object({ project: z.string().min(1).nullish() }).nullish();
 
 /** Réponses à une question de l'agent : une liste de choix par question, ou null pour « Passer » (CA-SESS-96). */
 const answersSchema = z.object({
@@ -110,6 +124,7 @@ export class PilotController {
         ...pilotMessage(input),
         profile: input.profile,
         project: input.project,
+        projects: input.projects ?? [],
         sandbox: input.sandbox ?? null,
       });
       return { sessionId };
@@ -118,15 +133,34 @@ export class PilotController {
     }
   }
 
-  /** « Récupérer la branche » (CA-SESS-112) : la branche reçue dans le dépôt du poste. */
+  /**
+   * « Récupérer la branche » (CA-SESS-112), « Récupérer les branches » (CA-SESS-141) : un projet, ou toutes les
+   * branches qui ont du travail ; les branches reçues dans les dépôts du poste.
+   */
   @Post('sessions/:id/sandbox/retrieve')
-  async retrieve(@Param('id') id: string): Promise<{ branch: string }> {
+  @HttpCode(200)
+  async retrieve(@Param('id') id: string, @Body() body: unknown): Promise<RetrievedBranchesDto> {
+    const input = parseBody(retrieveSchema, body ?? null);
     try {
-      const branch = await this.pilot.retrieve(id);
-      return { branch };
+      const branches = await this.pilot.retrieve(id, input?.project ?? null);
+      return { branch: branches[0]?.branch ?? null, branches };
     } catch (error) {
       translate(error);
     }
+  }
+
+  /** Branches du bac à sable, une par projet, avec ce qu'elles contiennent (E2k). */
+  @Get('sessions/:id/sandbox/branches')
+  async branches(@Param('id') id: string): Promise<SandboxBranchesDto> {
+    const branches = await this.pilot.branches(id);
+    return {
+      branches: branches.map(({ files, from, project, retrievedAt }) => ({
+        files,
+        from,
+        project,
+        retrievedAt: retrievedAt?.toISOString() ?? null,
+      })),
+    };
   }
 
   /** « Arrêter le bac à sable » : le conteneur s'arrête, la copie reste. */

@@ -11,6 +11,7 @@ const meta = {
   args: {
     busy: false,
     now: NOW,
+    domainError: null,
     startBranchError: null,
     project: {
       id: 2,
@@ -21,6 +22,7 @@ const meta = {
       pinned: true,
       place: 'sandbox',
       startBranch: null,
+      domains: ['paiement.exemple.dev', 'grilles.exemple.dev'],
       sessions: 38,
       running: 0,
       lastSessionAt: new Date('2026-11-17T14:59:55').toISOString(),
@@ -42,7 +44,9 @@ const meta = {
     ],
     onAddToGroup: fn(),
     onNewGroup: fn(),
+    onAddDomain: fn(),
     onPlace: fn(),
+    onRemoveDomain: fn(),
     onRemove: fn(),
     onStartBranch: fn(),
   },
@@ -65,6 +69,7 @@ export const WithoutGit: Story = {
       pinned: false,
       place: null,
       startBranch: null,
+      domains: [],
       sessions: 1,
       running: 0,
       lastSessionAt: null,
@@ -76,3 +81,8 @@ export const WithoutGit: Story = {
 export const BranchRefused: Story = { args: { startBranchError: 'Ce nom de branche n’est pas valable pour git.' } };
 
 export const Mobile: Story = { globals: { viewport: { value: 'mobile1' } } };
+
+/** Un domaine refusé par Bosco, sous son champ. */
+export const DomainRefused: Story = {
+  args: { domainError: 'Un nom de domaine seul, sans protocole ni chemin : pypi.org ou *.github.com.' },
+};

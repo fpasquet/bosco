@@ -2,6 +2,7 @@ import { EntitySchema } from '@mikro-orm/core';
 
 export interface ProjectRow {
   addedAt: Date;
+  domains: string[];
   git: boolean;
   id: number;
   name: string;
@@ -23,6 +24,7 @@ export const ProjectSchema = new EntitySchema<ProjectRow>({
     pinned: { type: 'boolean', default: false },
     place: { type: 'string', nullable: true },
     startBranch: { type: 'string', nullable: true, fieldName: 'start_branch' },
+    domains: { type: 'json', default: '[]' },
     addedAt: { type: 'datetime', fieldName: 'added_at' },
   },
 });

@@ -4,6 +4,7 @@ import type { TurnRequest } from '../../application/pilot.service.ts';
 import { turnArguments, userMessage } from './claude-turn-runner.ts';
 
 const request: TurnRequest = {
+  addDirs: [],
   launch: null,
   configDir: '/home/dev/.claude-perso',
   cwd: '/home/dev/api-voix',

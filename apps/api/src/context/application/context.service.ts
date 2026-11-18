@@ -5,6 +5,7 @@ import {
   contextText,
   type GroupInstructions,
   type ProjectContext,
+  sessionContextText,
   tokensOf,
 } from '../domain/context-text.ts';
 import { Decision, type DecisionSnapshot, type DecisionTarget, type DecisionText } from '../domain/decision.ts';
@@ -86,6 +87,27 @@ export class ContextService {
       at: this.clock.now(),
       absent: { proposed: context.proposed },
     };
+  }
+
+  /**
+   * Texte qu'une session lit par le serveur MCP de Bosco : le contexte de son projet principal, celui de son dossier de
+   * travail, puis de chacun des autres projets qu'elle voit (--add-dir), une fois chacun (CA-SESS-142) ; null hors des
+   * projets connus.
+   */
+  async sessionContext(path: string, others: readonly string[]): Promise<null | string> {
+    const principal = await this.projectOf(path);
+    if (!principal) return null;
+    const names = [principal.name];
+    for (const other of others) {
+      const found = await this.projectOf(other);
+      if (found && !names.includes(found.name)) names.push(found.name);
+    }
+    const blocks = [];
+    for (const project of names) {
+      const context = await this.contextOf(project);
+      blocks.push({ project, text: contextText(project, context) });
+    }
+    return sessionContextText(blocks);
   }
 
   /** Projets qui ont une décision à eux, proposée ou acceptée : ceux que l'écran du contexte propose de consulter. */

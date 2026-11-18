@@ -50,6 +50,11 @@ export interface RunningSessions {
   countIn(projectId: number): Promise<number>;
 }
 
+/** Domaines propres aux projets, publiés pour les proxies de sortie de leurs bacs à sable : ils valent tout de suite. */
+export interface ProjectDomains {
+  publish(projects: readonly { domains: readonly string[]; path: string }[]): Promise<void>;
+}
+
 /** Dossiers de travail des sessions déjà lues, branchés par le point de composition. */
 export interface SessionFolders {
   list(): Promise<SessionFolder[]>;

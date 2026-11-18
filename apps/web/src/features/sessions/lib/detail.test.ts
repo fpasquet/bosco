@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
-// Ce que les scénarios ne voient pas : la reprise selon le profil, la part du cache et la fin de la durée.
+// Ce que les scénarios ne voient pas : la reprise selon le profil et les projets, la part du cache, la fin de la durée
+// et les fichiers modifiés rangés par projet.
 import type { SessionDto, SourceDto } from '@bosco/domain';
-import { cacheShare, durationEnd, resumeCommand } from './detail';
+import { cacheShare, durationEnd, filesIn, resumeCommand } from './detail';
 
 const sources: SourceDto[] = [
   { id: 'pro', label: 'pro', liveTracking: true, path: '/home/dev/.claude', watched: true },
@@ -24,6 +25,35 @@ describe('resumeCommand', () => {
     expect(resumeCommand(session({ sourceId: 'perso' }), sources, '/home/dev')).toBe(
       'CLAUDE_CONFIG_DIR=~/.claude-perso claude --resume c41e9a07-1111',
     );
+  });
+
+  it('adds the other projects of a session over several projects, with the setting that reads their instructions', () => {
+    const pilot = {
+      projects: ['/home/dev/www/site-clubs', '/home/dev/www/creneaux'],
+      running: false,
+    } as SessionDto['pilot'];
+    expect(resumeCommand(session({ pilot, sourceId: 'perso', state: 'waiting' }), sources, '/home/dev')).toBe(
+      'CLAUDE_CONFIG_DIR=~/.claude-perso CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1 claude --resume c41e9a07-1111 --add-dir ~/www/site-clubs --add-dir ~/www/creneaux',
+    );
+  });
+
+  it('files the changed files under each project, the relative ones under the principal', () => {
+    const files = ['/home/dev/www/api-tarifs/src/grille.ts', 'src/tarifs.ts', '/home/dev/www/site-clubs/src/club.tsx'];
+    const several = session({
+      addedProjects: [{ id: 5, name: 'site-clubs', root: '/home/dev/www/site-clubs' }],
+      changedFiles: files.map((path) => ({ added: 1, path, removed: 0 })),
+      project: { folder: '', id: 3, name: 'api-tarifs', root: '/home/dev/www/api-tarifs' },
+    });
+    const paths = (root: string) => filesIn(several, root).map(({ path }) => path);
+    expect([
+      paths('/home/dev/www/api-tarifs'),
+      paths('/home/dev/www/site-clubs'),
+      paths('/home/dev/www/creneaux'),
+    ]).toEqual([
+      ['/home/dev/www/api-tarifs/src/grille.ts', 'src/tarifs.ts'],
+      ['/home/dev/www/site-clubs/src/club.tsx'],
+      [],
+    ]);
   });
 
   it('gives nothing for a session still open (RF-SESS-09)', () => {

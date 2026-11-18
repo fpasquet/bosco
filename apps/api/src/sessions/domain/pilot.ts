@@ -86,7 +86,6 @@ export class NoPilotedTurn extends DomainError {
   }
 }
 
-/** Un projet, un profil ou une session que Bosco ne connaît pas, ou une session effacée par Claude Code. */
 /** Le quota de l'abonnement dépasse son seuil d'attente : aucun tour ne part (DT-39). */
 export class QuotaHeld extends DomainError {
   constructor(reason: string) {
@@ -94,6 +93,7 @@ export class QuotaHeld extends DomainError {
   }
 }
 
+/** Un projet, un profil ou une session que Bosco ne connaît pas, ou une session effacée par Claude Code. */
 export class PilotTargetNotFound extends DomainError {
   constructor(message: string) {
     super('pilotTargetNotFound', message);
@@ -152,4 +152,18 @@ export function answersOf(questions: AgentQuestion[], answers: string[][]): Reco
       return [question.question, chosen.join(', ')];
     }),
   );
+}
+
+/** Projets d'une session, au plus : le principal et ceux qu'elle voit en plus. */
+export const MAX_SESSION_PROJECTS = 20;
+
+/**
+ * Autres projets d'une session pilotée (règle 14) : ceux qu'elle voit en plus de son projet principal, son dossier de
+ * travail, une fois chacun et dans l'ordre choisi.
+ */
+export function otherProjects(principal: string, projects: readonly string[]): string[] {
+  const others = [...new Set(projects)].filter((root) => root !== principal);
+  if (others.length + 1 > MAX_SESSION_PROJECTS)
+    throw new InvalidPilotMessage(`${MAX_SESSION_PROJECTS} projets au plus par session.`);
+  return others;
 }

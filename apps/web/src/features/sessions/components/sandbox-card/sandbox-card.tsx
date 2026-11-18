@@ -9,7 +9,8 @@ export interface SandboxCardProps {
   /** Une action est en cours, ou un tour : la copie s'écrit encore */
   busy: boolean;
   onRemove: () => void;
-  onRetrieve: () => void;
+  /** « Récupérer la branche » ; absent pour une session à plusieurs projets, que la carte « Branches » récupère */
+  onRetrieve?: () => void;
   onStop: () => void;
   sandbox: PilotSandboxDto;
 }
@@ -50,10 +51,12 @@ export function SandboxCard({ busy, onRemove, onRetrieve, onStop, sandbox }: San
         <p className="mt-3 text-xs text-muted">Supprimé : la session reste lisible, mais ne se reprend plus.</p>
       ) : (
         <div className="mt-3 flex flex-col gap-2">
-          <Button size="sm" disabled={busy} onClick={onRetrieve}>
-            <Download aria-hidden className="size-4" />
-            Récupérer la branche
-          </Button>
+          {onRetrieve && (
+            <Button size="sm" disabled={busy} onClick={onRetrieve}>
+              <Download aria-hidden className="size-4" />
+              Récupérer la branche
+            </Button>
+          )}
           {sandbox.state === 'running' && (
             <Button size="sm" variant="outline" disabled={busy} onClick={onStop}>
               <Square aria-hidden className="size-3.5" />

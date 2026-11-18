@@ -2,15 +2,18 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import type { JournalEntryDto, SessionDto } from '@bosco/domain';
+import { cn } from '@/lib/cn';
 import { PageSkeleton } from '@/shared/components/page-skeleton';
+import { useIsPhone } from '@/shared/hooks/use-is-phone';
 import { useNotices } from '@/shared/hooks/use-notices';
 import { useNow } from '@/shared/hooks/use-now';
 import {
   answerQuestion,
   cancelPending,
   removeSandbox,
-  retrieveBranch,
+  retrieveBranches,
   sandboxRefusalsQuery,
   stopSandbox,
 } from '../../api/pilot';
@@ -27,13 +30,16 @@ import { AllowDialog } from '../allow-dialog';
 import { ConnectionStatus } from '../connection-status';
 import { PendingMessage } from '../pending-message';
 import { PermissionCard } from '../permission-card';
+import { openTab, type PhoneTab, PhoneTabs, phoneTabsOf, tabPanel } from '../phone-tabs';
 import { PilotPanel } from '../pilot-panel';
 import { QuestionCard } from '../question-card';
+import { ResumeCard } from '../resume-card';
 import { SandboxCard } from '../sandbox-card';
 import { SandboxRefusals } from '../sandbox-refusals';
 import { SessionFeed } from '../session-feed';
 import { SessionHeader } from '../session-header';
 import { SessionSide } from '../session-side';
+import { SessionProjects } from './session-projects';
 
 /** Ce que l'agent a dit juste avant de demander l'autorisation. */
 /** Relecture du fil d'une session qui tourne : seules les lignes ajoutées au transcript sont lues. */
@@ -53,6 +59,8 @@ export function SessionDetailScreen({ id }: { id: string }) {
   const now = useNow();
   const router = useRouter();
   const copy = useCopy();
+  const phone = useIsPhone();
+  const [tab, setTab] = useState<PhoneTab>('feed');
   useLiveEvents(true);
   const { data: sources } = useQuery(sourcesQuery);
   const { data: sessions } = useQuery(sessionsQuery);
@@ -73,7 +81,10 @@ export function SessionDetailScreen({ id }: { id: string }) {
   const failed = (error: unknown) =>
     notify(error instanceof Error ? error.message : 'Le bac à sable n’a pas répondu.', 'warning');
   const retrieve = useMutation({
-    mutationFn: () => retrieveBranch(id),
+    mutationFn: async () => {
+      const { branch } = await retrieveBranches(id);
+      return branch ?? '';
+    },
     onSuccess: (branch) => {
       const asked = data?.session.pilot?.sandbox?.branch;
       notify(
@@ -106,6 +117,13 @@ export function SessionDetailScreen({ id }: { id: string }) {
   const { journal, session } = data;
   // Une session en bac à sable ne se reprend que dans Bosco (règle 12)
   const resume = session.pilot?.sandbox ? null : resumeCommand(session, sources.sources, sources.home);
+  // Une session à plusieurs projets a la carte « Projets », « Branches » en bac à sable (E2k)
+  const several = session.addedProjects.length > 0;
+  // Sur le téléphone, des onglets remplacent la colonne de droite ; « Projets » porte la carte et la reprise
+  const tabs = phoneTabsOf(several);
+  const shown = openTab(phone, tab, tabs);
+  const panel = (name: PhoneTab) => tabPanel(shown, name);
+  const projects = several ? <SessionProjects session={session} busy={Boolean(session.pilot?.running)} /> : undefined;
   return (
     <div className="flex min-h-full flex-col gap-4 p-4 md:h-full md:px-8 md:pt-6">
       <ConnectionStatus />
@@ -117,8 +135,12 @@ export function SessionDetailScreen({ id }: { id: string }) {
         resume={resume}
         onCopy={copy}
       />
+      {shown && <PhoneTabs current={shown} tabs={tabs} onChange={setTab} />}
       <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 md:grid-cols-3">
-        <div className="flex min-h-0 min-w-0 flex-col md:col-span-2">
+        <div
+          {...panel('feed')}
+          className={cn('flex min-h-0 min-w-0 flex-col md:col-span-2', shown && shown !== 'feed' && 'hidden')}
+        >
           <SessionFeed
             session={session}
             journal={journal}
@@ -149,7 +171,12 @@ export function SessionDetailScreen({ id }: { id: string }) {
                     }}
                   />
                 )}
-                {refusals && <SandboxRefusals refusals={refusals.refusals} />}
+                {refusals && (
+                  <SandboxRefusals
+                    refusals={refusals.refusals}
+                    project={session.project ? { id: session.project.id, name: session.project.name } : null}
+                  />
+                )}
                 {session.pilot?.pending && (
                   <PendingMessage
                     {...session.pilot.pending}
@@ -162,23 +189,36 @@ export function SessionDetailScreen({ id }: { id: string }) {
             footer={<PilotPanel key={session.id} session={session} />}
           />
         </div>
-        <SessionSide
-          session={session}
-          now={now}
-          resume={resume}
-          onCopy={copy}
-          sandbox={
-            session.pilot?.sandbox && (
-              <SandboxCard
-                sandbox={session.pilot.sandbox}
-                busy={session.pilot.running || retrieve.isPending || stop.isPending || remove.isPending}
-                onRetrieve={() => retrieve.mutate()}
-                onStop={() => stop.mutate()}
-                onRemove={() => remove.mutate()}
-              />
-            )
-          }
-        />
+        {shown === 'projects' && (
+          <div {...panel('projects')} className="flex flex-col gap-4">
+            {projects}
+            {!session.pilot?.sandbox && <ResumeCard resume={resume} onCopy={copy} />}
+          </div>
+        )}
+        {/* Le fil reste monté sous les autres onglets, pour garder le message en cours ; l'usage se rend à la demande */}
+        {(!shown || shown === 'usage') && (
+          <div {...panel('usage')}>
+            <SessionSide
+              session={session}
+              now={now}
+              resume={resume}
+              onCopy={copy}
+              // Sur le téléphone, les projets ont leur onglet : l'usage ne montre pas non plus la branche du seul principal
+              projects={shown && several ? false : projects}
+              sandbox={
+                session.pilot?.sandbox && (
+                  <SandboxCard
+                    sandbox={session.pilot.sandbox}
+                    busy={session.pilot.running || retrieve.isPending || stop.isPending || remove.isPending}
+                    onRetrieve={several ? undefined : () => retrieve.mutate()}
+                    onStop={() => stop.mutate()}
+                    onRemove={() => remove.mutate()}
+                  />
+                )
+              }
+            />
+          </div>
+        )}
       </div>
       <AllowDialog session={answers.confirming} onCancel={answers.cancel} onConfirm={answers.confirm} />
     </div>

@@ -1,6 +1,7 @@
 {
   "sessions": [
     {
+      "addedProjects": [],
       "branch": "feat/specs",
       "channel": false,
       "cost": {

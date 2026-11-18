@@ -6,6 +6,7 @@ import type {
   ProjectDto,
   ProjectPlaceDto,
   ProjectsDto,
+  SessionDto,
 } from '@bosco/domain';
 
 /** Refus de Bosco (dossier déjà ajouté, introuvable, session qui tourne), avec le texte à montrer. */
@@ -13,7 +14,9 @@ export class ProjectRefused extends Error {}
 
 /** Codes des refus de l'API qui ont un texte pour la personne ; les autres gardent le message de Bosco. */
 const PROJECT_ERRORS: Record<string, string> = {
+  invalidProjectDomain: 'Un nom de domaine seul, sans protocole ni chemin : pypi.org ou *.github.com.',
   invalidStartBranch: 'Ce nom de branche n’est pas valable pour git.',
+  projectDomainTaken: 'Ce domaine est déjà dans la liste du projet.',
   projectHasRunningSession: 'Une session pilotée par Bosco tourne encore dans ce projet.',
   unknownProject: 'Ce projet a été retiré.',
 };
@@ -42,6 +45,12 @@ async function send(path: string, body?: unknown, method: 'DELETE' | 'PATCH' | '
 export const projectsOverviewQuery = {
   queryKey: ['projects', 'overview'],
   queryFn: () => read<ProjectsDto>('/api/projects'),
+};
+
+/** Sessions lues par Bosco : celles hors de tout projet se listent sous « Hors projet ». */
+export const sessionsQuery = {
+  queryKey: ['sessions'],
+  queryFn: async () => (await read<{ sessions: SessionDto[] }>('/api/sessions')).sessions,
 };
 
 /** Page d'un projet : le projet, sa branche courante et ses sessions pilotées qui tournent. */
@@ -89,6 +98,17 @@ export async function changeProject(
   changes: { pinned?: boolean; place?: null | ProjectPlaceDto; startBranch?: null | string },
 ): Promise<ProjectDetailDto> {
   const response = await send(`/api/projects/${id}`, changes, 'PATCH');
+  return (await response.json()) as ProjectDetailDto;
+}
+
+/** Un domaine propre au projet, ajouté à la liste générale pour ses bacs à sable ; vaut tout de suite. */
+export async function addProjectDomain(id: number, domain: string): Promise<ProjectDetailDto> {
+  const response = await send(`/api/projects/${id}/domains`, { domain });
+  return (await response.json()) as ProjectDetailDto;
+}
+
+export async function removeProjectDomain(id: number, domain: string): Promise<ProjectDetailDto> {
+  const response = await send(`/api/projects/${id}/domains/${encodeURIComponent(domain)}`, undefined, 'DELETE');
   return (await response.json()) as ProjectDetailDto;
 }
 

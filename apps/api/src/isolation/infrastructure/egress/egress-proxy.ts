@@ -1,23 +1,34 @@
-// Proxy de sortie d'une tâche du worker (RF-CONT-07), lancé seul dans son conteneur : c'est le seul pont entre le
-// réseau privé de l'agent et Internet. Il ne laisse passer que les domaines de la liste, relue à chaque connexion
-// (un domaine autorisé depuis Bosco vaut tout de suite), et note chaque refus. Sans dépendance ni import du projet :
-// Node le lance tel quel dans l'image de l'agent.
+// Proxy de sortie d'un bac à sable (RF-CONT-07), lancé seul dans son conteneur : c'est le seul pont entre le réseau
+// privé de l'agent et Internet. Il ne laisse passer que les domaines de la liste générale et ceux des projets du bac à
+// sable, relus à chaque connexion (un domaine autorisé depuis Bosco vaut tout de suite), et note chaque refus. Sans
+// dépendance ni import du projet : Node le lance tel quel dans l'image de l'agent.
 import { appendFileSync, readFileSync } from 'node:fs';
 import { createServer, request } from 'node:http';
 import { connect } from 'node:net';
+import { dirname, join } from 'node:path';
 
 const ALLOW = process.env.BOSCO_EGRESS_ALLOW ?? '/bosco/allow/allow.json';
 const REFUSALS = process.env.BOSCO_EGRESS_REFUSALS ?? '/bosco/log/refusals.jsonl';
 const PORT = Number(process.env.BOSCO_EGRESS_PORT ?? 3128);
+/** Fichiers des domaines propres aux projets du bac à sable, à côté de la liste générale */
+const PROJECTS = (process.env.BOSCO_EGRESS_PROJECTS ?? '')
+  .split(',')
+  .filter((file) => /^[a-f0-9]+\.json$/.test(file))
+  .map((file) => join(dirname(ALLOW), 'projects', file));
+
+/** Une liste de domaines ; vide si le fichier manque ou se lit mal. */
+function listOf(file: string): string[] {
+  try {
+    const domains: unknown = JSON.parse(readFileSync(file, 'utf8'));
+    return Array.isArray(domains) ? domains.filter((domain): domain is string => typeof domain === 'string') : [];
+  } catch {
+    return [];
+  }
+}
 
 /** Même règle que le domaine (egress.ts) : un nom exact, ou « *. » pour ses sous-domaines. */
 function allowed(host: string): boolean {
-  let domains: string[];
-  try {
-    domains = JSON.parse(readFileSync(ALLOW, 'utf8')) as string[];
-  } catch {
-    return false;
-  }
+  const domains = [ALLOW, ...PROJECTS].flatMap(listOf);
   const name = host.toLowerCase().replace(/\.$/, '');
   return domains.some((domain) => {
     const rule = domain.toLowerCase();

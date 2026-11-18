@@ -4,6 +4,7 @@ import { useState } from 'react';
 import type { SourcesDto } from '@bosco/domain';
 import { PageSkeleton } from '@/shared/components/page-skeleton';
 import { useNow } from '@/shared/hooks/use-now';
+import { groupsQuery } from '../../api/groups';
 import { importProgressQuery, sessionsQuery } from '../../api/sessions';
 import { sourcesQuery } from '../../api/sources';
 import { useLiveEvents } from '../../hooks/use-live-events';
@@ -13,6 +14,7 @@ import { formatCost } from '../../lib/format';
 import {
   endedToday,
   filterSessions,
+  groupByGroup,
   groupByProject,
   groupByState,
   indicatorsOf,
@@ -50,7 +52,8 @@ function LiveOverview({ sources, title }: OverviewProps & { sources: SourcesDto 
   const { data: progress } = useQuery(importProgressQuery);
   const all = sessions ?? [];
   const open = openSessions(all, now);
-  const visible = filterSessions(open, { hideInactive: grouping === 'project' && hideInactive, query });
+  const { data: groups } = useQuery(groupsQuery);
+  const visible = filterSessions(open, { hideInactive: grouping !== 'state' && hideInactive, query });
   const indicators = indicatorsOf(open, all, now);
   const loading = sessions === undefined || progress !== null;
   const liveTracking = sources.sources.some((source) => source.liveTracking);
@@ -76,7 +79,13 @@ function LiveOverview({ sources, title }: OverviewProps & { sources: SourcesDto 
       <ConnectionStatus />
       {progress && <ImportProgressBanner progress={progress} />}
       {!liveTracking && <LiveTrackingLine />}
-      {grouping === 'project' ? (
+      {grouping === 'state' ? (
+        <StateBoard
+          columns={groupByState(visible, liveTracking)}
+          now={now}
+          actionsOf={(session) => <WaitingActions session={session} {...actions} />}
+        />
+      ) : (
         <>
           {liveTracking && <WaitingBanner now={now} sessions={waitingSessions(open)} {...actions} />}
           {progress === null && sessions !== undefined && (
@@ -85,19 +94,15 @@ function LiveOverview({ sources, title }: OverviewProps & { sources: SourcesDto 
             </div>
           )}
           <SessionsTable
-            groups={groupByProject(visible)}
+            groups={grouping === 'group' ? groupByGroup(visible, groups ?? []) : groupByProject(visible)}
+            column={grouping === 'group' ? 'project' : undefined}
+            headings
             markOf={(session) => profileMark(session, sources.sources)}
             now={now}
             pendingRows={loading ? PENDING_ROWS : 0}
             frozen={offline}
           />
         </>
-      ) : (
-        <StateBoard
-          columns={groupByState(visible, liveTracking)}
-          now={now}
-          actionsOf={(session) => <WaitingActions session={session} {...actions} />}
-        />
       )}
       {!loading && open.length === 0 && <p className="text-center text-muted">Aucune session ouverte aujourd’hui.</p>}
       {grouping === 'state' && <EndedToday sessions={endedToday(all, now)} />}

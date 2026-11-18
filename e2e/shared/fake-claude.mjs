@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // Faux Claude Code des scénarios (sessions pilotées, DT-31) : `claude -p` en flux JSON, réduit à ce que Bosco lit.
-// Il écrit le transcript dans le profil comme Claude Code, demande une autorisation si le message parle
+// Il écrit le transcript dans le profil comme Claude Code, rappelle les dossiers ajoutés (--add-dir) et s'il lit leurs
+// instructions, demande une autorisation si le message parle
 // d'« autorisation », pose une question s'il parle de « question », attend « Arrêter » s'il parle d'un « long » travail,
 // et répond en rappelant ce qu'il a reçu (réglages du tour, images) pour que les scénarios le vérifient.
 import { randomUUID } from 'node:crypto';
@@ -33,6 +34,10 @@ const option = (name) => {
 };
 const sessionId = option('--resume') ?? option('--session-id') ?? randomUUID();
 const settings = `mode ${option('--permission-mode')} · modèle ${option('--model') ?? 'défaut'} · effort ${option('--effort') ?? 'défaut'}`;
+// Dossiers ajoutés à la session (--add-dir), rejoués à chaque tour ; leurs CLAUDE.md ne se lisent qu'avec le réglage
+const added = args.flatMap((arg, index) => (arg === '--add-dir' ? [args[index + 1]?.split('/').at(-1)] : []));
+const instructions = process.env.CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD === '1' ? ' avec leurs instructions' : '';
+const addedNote = added.length > 0 ? ` · dossiers ajoutés ${added.join(', ')}${instructions}` : '';
 const configDir = process.env.CLAUDE_CONFIG_DIR ?? join(homedir(), '.claude');
 const cwd = process.cwd();
 const projects = join(configDir, 'projects', cwd.replaceAll('/', '-'));
@@ -135,7 +140,7 @@ async function turn(content) {
     });
     return finish('Interrompu.', 'error_during_execution');
   }
-  return finish(`Reçu : ${text} · ${settings} · images ${images}`);
+  return finish(`Reçu : ${text} · ${settings} · images ${images}${addedNote}`);
 }
 
 createInterface({ input: process.stdin }).on('line', (raw) => {

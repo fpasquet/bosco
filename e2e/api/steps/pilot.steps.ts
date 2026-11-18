@@ -9,6 +9,7 @@ import { Given, Then, When } from './fixtures.ts';
 
 /** Ce que les scénarios lisent du détail d'une session (le paquet e2e ne dépend pas du contrat partagé) */
 interface SessionView {
+  addedProjects: { name: string }[];
   channel?: boolean;
   pilot: null | {
     pending: null | { text: string };
@@ -274,3 +275,22 @@ When('I read the refused exits of {string}', async ({ last, request }, session: 
   const response = await request.get(`/api/sessions/${idOf(session)}/sandbox/refusals`);
   last.response = { status: response.status(), body: (await response.json()) as unknown };
 });
+
+Then('{string} should see the other projects {string}', async ({ request }, session: string, names: string) => {
+  await eventually(request, idOf(session), (view) => view.addedProjects.map(({ name }) => name).join(', ') === names);
+});
+
+When('I read the branches of {string}', async ({ last, request }, session: string) => {
+  const response = await request.get(`/api/sessions/${idOf(session)}/sandbox/branches`);
+  last.response = { status: response.status(), body: (await response.json()) as unknown };
+});
+
+When(
+  'I retrieve the branch of the project {string} of {string}',
+  async ({ bosco, last, request }, project: string, session: string) => {
+    const response = await request.post(`/api/sessions/${idOf(session)}/sandbox/retrieve`, {
+      data: { project: join(bosco.profilesRoot, project) },
+    });
+    last.response = { status: response.status(), body: (await response.json()) as unknown };
+  },
+);

@@ -1,5 +1,6 @@
 'use client';
 import { Lock, ShieldAlert, X } from 'lucide-react';
+import { useEffect } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import type { IsolationDto } from '@bosco/domain';
 import { Button } from '@/shared/ui/button';
@@ -8,6 +9,8 @@ export interface IsolationEgressProps {
   busy: boolean;
   /** Refus de l'API pour le domaine saisi, affiché sous le champ */
   error: null | string;
+  /** Domaine à ajouter, déjà rempli (une sortie refusée d'une session) */
+  domain?: null | string;
   isolation: IsolationDto;
   onAdd: (domain: string) => void;
   onRemove: (domain: string) => void;
@@ -28,8 +31,12 @@ function Card({ children, id, title }: { children: React.ReactNode; id: string; 
  * Isolation du bac à sable, sortie réseau (E11) : les domaines qu'un agent peut joindre. Un domaine autorisé vaut tout
  * de suite, sans relancer le bac à sable ; les refus se lisent dans chaque session.
  */
-export function IsolationEgress({ busy, error, isolation, onAdd, onRemove }: IsolationEgressProps) {
-  const { control, handleSubmit, register } = useForm({ defaultValues: { domain: '' } });
+export function IsolationEgress({ busy, domain = null, error, isolation, onAdd, onRemove }: IsolationEgressProps) {
+  const { control, handleSubmit, register, setFocus } = useForm({ defaultValues: { domain: domain ?? '' } });
+  // Venu d'une sortie refusée, le domaine rempli attend d'être ajouté
+  useEffect(() => {
+    if (domain) setFocus('domain');
+  }, [domain, setFocus]);
   const draft = useWatch({ control, name: 'domain' });
   const { added, locked } = isolation.domains;
   return (
