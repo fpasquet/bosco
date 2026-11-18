@@ -1,4 +1,4 @@
-import { FolderGit2, History, LayoutDashboard, type LucideIcon, Settings } from 'lucide-react';
+import { ChartColumn, FolderGit2, History, LayoutDashboard, type LucideIcon, Settings } from 'lucide-react';
 
 /** Place de la page ouverte : elle choisit l'entrée active de la barre latérale et de l'onglet du bas. */
 export type ShellPlace =
@@ -8,7 +8,8 @@ export type ShellPlace =
   | { kind: 'other' }
   | { kind: 'overview' }
   | { kind: 'projects' }
-  | { kind: 'settings' };
+  | { kind: 'settings' }
+  | { kind: 'usage' };
 
 export interface NavItem {
   href: string;
@@ -22,6 +23,7 @@ export interface NavItem {
 export const NAV_ITEMS: readonly NavItem[] = [
   { href: '/', label: 'Vue d’ensemble', icon: LayoutDashboard, places: ['overview'] },
   { href: '/history', label: 'Historique', icon: History, places: ['history'] },
+  { href: '/usage', label: 'Usage', icon: ChartColumn, places: ['usage'] },
 ];
 
 export const SETTINGS_ITEM: NavItem = { href: '/settings', label: 'Réglages', icon: Settings, places: ['settings'] };
@@ -29,7 +31,8 @@ export const SETTINGS_ITEM: NavItem = { href: '/settings', label: 'Réglages', i
 /** Onglets du bas du téléphone : les projets et les groupes s'ouvrent depuis « Projets ». */
 export const MOBILE_TABS: readonly NavItem[] = [
   { href: '/', label: 'Ensemble', icon: LayoutDashboard, places: ['overview'] },
-  { href: '/history', label: 'Historique', icon: History, places: ['history'] },
+  // L'onglet Historique s'ouvre sur la bascule « Sessions | Usage »
+  { href: '/history', label: 'Historique', icon: History, places: ['history', 'usage'] },
   { href: '/projects', label: 'Projets', icon: FolderGit2, places: ['projects', 'project', 'group'] },
   // Sur le téléphone, la racine des Réglages est l'onglet Sources, suivi des autres onglets
   { href: '/settings/sources', label: 'Réglages', icon: Settings, places: ['settings'] },
