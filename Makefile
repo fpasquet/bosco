@@ -5,7 +5,7 @@ PROFILE ?= $(HOME)/.claude
 BETA_DIR ?= $(HOME)/.cache/bosco/beta
 
 .DEFAULT_GOAL := help
-.PHONY: help install dev start desktop desktop-install desktop-package desktop-package-install desktop-update beta android build check lint typecheck test format format-check e2e e2e-api e2e-web e2e-record e2e-clean storybook claude-compat db-migration service-install mcp-install mcp-install-dev mcp-remove skills tokens tokens-check requirements requirements-check
+.PHONY: help install dev start changelog desktop desktop-install desktop-package desktop-package-install desktop-update beta android build check lint typecheck test format format-check e2e e2e-api e2e-web e2e-record e2e-clean storybook claude-compat db-migration service-install mcp-install mcp-install-dev mcp-remove skills tokens tokens-check requirements requirements-check
 
 help: ## List the commands
 	@grep -E '^[a-z0-9-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN { FS = ":.*## " } { printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2 }'
@@ -57,6 +57,9 @@ endif
 # Outils Android dans le dossier personnel (JDK 17, SDK), comme les a installés le lot 4
 JAVA_HOME ?= $(HOME)/.local/jdk-17
 ANDROID_HOME ?= $(HOME)/Android/Sdk
+
+changelog: ## Regenerate CHANGELOG.md from the conventional commits of main (git-cliff)
+	pnpm exec git-cliff --output CHANGELOG.md
 
 android: ## Build the Android application (APK in apps/mobile/android/app/build/outputs/apk/release)
 	cd apps/mobile && CI=1 npx expo prebuild --platform android --clean --no-install

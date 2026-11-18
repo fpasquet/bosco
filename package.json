@@ -30,6 +30,7 @@
     "@bosco/configs": "workspace:*",
     "@commitlint/cli": "21.2.4",
     "@commitlint/config-conventional": "21.2.4",
+    "git-cliff": "2.14.2",
     "husky": "9.1.7",
     "lint-staged": "17.6.0",
     "prettier": "3.9.10",
