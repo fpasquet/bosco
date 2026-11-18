@@ -34,6 +34,14 @@ Fonctionnalité: Navigation par lieux
     Et je clique sur l’élément de menu « Réglages »
     Alors je suis sur la page « /projects/1/settings »
 
+  @CA-CONT-175
+  Scénario: Un projet ni épinglé ni actif apparaît dans la barre latérale le temps de la visite de sa page
+    Quand j'ouvre la page « /projects/1/sessions »
+    Alors la barre latérale montre le projet « maison »
+    Et l’entrée « maison » de la barre latérale est active
+    Quand j'ouvre la page « /history »
+    Alors la barre latérale ne montre pas le projet « maison »
+
   @CA-CONT-153
   Scénario: Un projet épinglé reste dans la barre latérale, et la quitte désépinglé sans être retiré
     Quand j'ouvre la page « / »

@@ -51,3 +51,23 @@ Given('le projet {texte} a la décision acceptée {texte}', async ({ bosco }, pr
   });
   expect(response.status).toBe(201);
 });
+
+Given(
+  'la décision {int} a une nouvelle version {texte} avec la note {texte}',
+  async ({ bosco }, id: number, title: string, note: string) => {
+    const response = await fetch(`${bosco.url}/api/decisions/${id}/versions`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ text: { title, context: 'Un contexte.', decision: `${title}.` }, note }),
+    });
+    expect(response.status).toBe(201);
+  },
+);
+
+When('je choisis la {texte} dans l’historique', async ({ page }, version: string) => {
+  // Une version se nomme par son numéro, suivi de sa date, de son auteur et de sa note
+  await page
+    .getByRole('region', { name: 'Historique' })
+    .getByRole('button', { name: new RegExp(`^${version}`) })
+    .click();
+});

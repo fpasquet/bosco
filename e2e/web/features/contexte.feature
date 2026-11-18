@@ -62,6 +62,41 @@ Fonctionnalité: Contexte des agents
     Et je vois le texte « Les nouveaux tests aussi »
     Et je vois le texte « Version 1 »
 
+  @CA-CONT-08
+  Scénario: « Modifier avant d'accepter » rouvre une décision proposée, et la version acceptée est celle relue
+    Étant donné une session a proposé la décision « Ranger les catégories du budget en base » dans le projet « maison »
+    Quand j'ouvre la page « /projects/1/context/decisions/1 »
+    Et je clique sur le bouton « Modifier avant d’accepter »
+    Alors le champ « Titre » vaut « Ranger les catégories du budget en base »
+    Quand je saisis « Ranger les catégories du budget dans la base » dans le champ « Titre »
+    Et je clique sur le bouton « Accepter »
+    Alors je suis sur la page « /projects/1/context »
+    Et je vois le lien « DEC-1 Ranger les catégories du budget dans la base »
+
+  @CA-CONT-15
+  Scénario: Chaque version d'une décision garde sa date, son auteur et sa note, et se lit en la choisissant
+    Étant donné le projet « maison » a la décision acceptée « Ranger les catégories du budget en base »
+    Et la décision 1 a une nouvelle version « Ranger les catégories du budget avec leurs couleurs » avec la note « Les couleurs aussi »
+    Quand j'ouvre la page « /projects/1/context/decisions/1 »
+    Alors je vois le texte « Les couleurs aussi »
+    Et je vois le texte « Ranger les catégories du budget avec leurs couleurs. »
+    Quand je choisis la « Version 1 » dans l’historique
+    Alors je vois le texte « Ranger les catégories du budget en base. »
+    Et je ne vois plus le texte « Ranger les catégories du budget avec leurs couleurs. »
+
+  @CA-CONT-16
+  Scénario: « Remplacer » écrit une nouvelle décision, et la décision remplacée renvoie vers elle
+    Étant donné le projet « maison » a la décision acceptée « Ranger les catégories du budget en base »
+    Quand j'ouvre la page « /projects/1/context/decisions/1 »
+    Et je clique sur le lien « Remplacer »
+    Et je saisis « Ranger les catégories du budget dans un fichier » dans le champ « Titre »
+    Et je saisis « La base est trop lourde pour un budget. » dans le champ « Contexte »
+    Et je saisis « Ranger les catégories dans un fichier JSON. » dans le champ « Décision »
+    Et je clique sur le bouton « Accepter la décision »
+    Et j'ouvre la page « /projects/1/context/decisions/1 »
+    Alors je vois l’étiquette « Remplacée »
+    Et je vois le lien « DEC-2 · Ranger les catégories du budget dans un fichier »
+
   @CA-CONT-01
   @CA-CONT-05
   @CA-CONT-100

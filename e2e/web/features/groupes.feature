@@ -114,6 +114,27 @@ Fonctionnalité: Groupes de projets
     Quand je choisis « site-perso » dans la liste « pour le projet »
     Alors je vois le titre « Texte transmis à un agent de site-perso »
 
+  @CA-CONT-174
+  Scénario: L'aperçu des instructions d'un groupe de plusieurs projets se lit pour chacun, le projet principal d'abord
+    Étant donné le groupe « Perso » réunit les projets « site-perso » et « maison »
+    Et le groupe « Perso » a l’instruction « Aucun service payant ni de télémétrie. »
+    Quand j'ouvre la page « /groups/2/instructions »
+    Et je clique sur le bouton « Aperçu du texte transmis »
+    Alors la liste « pour le projet » vaut « site-perso »
+    Quand je choisis « maison » dans la liste « pour le projet »
+    Alors je vois le titre « Texte transmis à un agent de maison »
+
+  @mobile
+  @CA-CONT-139
+  Scénario: Sur le téléphone, un groupe se lit seulement, et une session y démarre depuis son en-tête
+    Étant donné le profil Claude Code « .claude » a accès à l’abonnement Claude de « camille@exemple.dev »
+    Et le groupe « Perso » réunit les projets « maison » et « site-perso »
+    Quand j'ouvre la page « /groups/2/sessions »
+    Et je clique sur le lien « Nouvelle session dans ce groupe »
+    Et je saisis « Ajoute les catégories au budget du foyer » dans le champ « Premier message »
+    Et je clique sur le bouton « Démarrer »
+    Alors je vois le texte « Reçu : Ajoute les catégories au budget du foyer »
+
   @CA-CONT-135
   Scénario: « Parcourir les dossiers… » depuis un groupe y range les projets ajoutés
     Étant donné le groupe « Node.js » réunit le projet « site-perso »

@@ -41,6 +41,22 @@ Fonctionnalité: Page d'un projet
     Quand je clique sur le bouton « Annuler »
     Alors je suis sur la page « /projects/2/settings »
 
+  @CA-CONT-159
+  Scénario: « Nouvelle session » d'un projet part de ce projet, et ⋯ à côté ouvre le menu du projet
+    Quand j'ouvre la page « /projects/1/sessions »
+    Et je clique sur le bouton « Actions du projet »
+    Alors je vois l’élément de menu « Épingler dans la barre latérale »
+    Quand j’appuie sur Échap
+    Et je clique sur le lien « Nouvelle session » de la page
+    Alors je vois le bouton « maison, projet principal »
+
+  @mobile
+  @CA-CONT-159
+  Scénario: Sur le téléphone, un projet a les onglets Sessions, Contexte et Réglages
+    Quand j'ouvre la page « /projects/1/sessions »
+    Alors les onglets « Onglets du projet » sont « Sessions, Contexte, Réglages »
+    Et je vois le lien « Nouvelle session »
+
   @mobile
   @CA-CONT-129
   @NF-18
