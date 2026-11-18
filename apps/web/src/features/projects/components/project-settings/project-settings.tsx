@@ -6,7 +6,7 @@ import { displayPath } from '@/lib/format';
 import { SectionSkeleton } from '@/shared/components/section-skeleton';
 import { useNotices } from '@/shared/hooks/use-notices';
 import { useNow } from '@/shared/hooks/use-now';
-import { groupsQuery } from '../../api/groups';
+import { groupsQuery, inheritedDefaultsQuery, profilesQuery } from '../../api/groups';
 import {
   addProjectDomain,
   changeProject,
@@ -27,12 +27,18 @@ export function ProjectSettings({ domain = null, id }: { domain?: null | string;
   const { data: project } = useQuery(projectQuery(id));
   const { data: overview } = useQuery(projectsOverviewQuery);
   const { data: groups } = useQuery(groupsQuery);
+  const { data: sources } = useQuery(profilesQuery);
+  const { data: inherited } = useQuery({
+    ...inheritedDefaultsQuery({ project: project?.path ?? '' }),
+    enabled: Boolean(project),
+  });
   const [branchError, setBranchError] = useState<null | string>(null);
   const [domainError, setDomainError] = useState<null | string>(null);
   const saved = async (project: ProjectDetailDto) => {
     client.setQueryData(projectQuery(id).queryKey, project);
     await client.invalidateQueries({ queryKey: ['projects', 'overview'] });
     await client.invalidateQueries({ queryKey: ['pilot', 'options'] });
+    await client.invalidateQueries({ queryKey: ['pilot', 'defaults'] });
   };
   const domains = useMutation({
     mutationFn: ({ add, domain }: { add: boolean; domain: string }) =>
@@ -67,6 +73,8 @@ export function ProjectSettings({ domain = null, id }: { domain?: null | string;
       domainError={domainError}
       draftDomain={domain}
       groups={groups}
+      inherited={inherited}
+      profiles={(sources?.sources ?? []).filter(({ watched }) => watched)}
       now={now}
       project={{ ...project, path: displayPath(project.path, overview.home) }}
       startBranchError={branchError}
@@ -77,6 +85,7 @@ export function ProjectSettings({ domain = null, id }: { domain?: null | string;
       onRemoveDomain={(domain) => domains.mutate({ add: false, domain })}
       onAddToGroup={(group) => actions.addToGroup(named, group)}
       onNewGroup={() => actions.newGroup([project.id])}
+      onDefaults={(defaults) => change.mutate({ defaults })}
       onPlace={(place) => change.mutate({ place })}
       onRemove={() => actions.remove(named)}
       onStartBranch={(startBranch) => {

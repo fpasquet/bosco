@@ -46,7 +46,18 @@ const meta = {
     onAddToGroup: fn(),
     onNewGroup: fn(),
     onAddDomain: fn(),
+    onDefaults: fn(),
     onPlace: fn(),
+    profiles: [
+      { label: 'pro', path: '/home/camille/.claude' },
+      { label: 'perso', path: '/home/camille/.claude-perso' },
+    ],
+    inherited: {
+      effort: { value: 'high', origin: { level: 'project', name: 'labo-ia' } },
+      model: { value: 'claude-sonnet-5-5', origin: { level: 'project', name: 'labo-ia' } },
+      permissionMode: { value: 'ask', origin: { level: 'profile', name: 'pro' } },
+      profile: { value: '/home/camille/.claude', origin: { level: 'defaultProfile' } },
+    },
     onRemoveDomain: fn(),
     onRemove: fn(),
     onStartBranch: fn(),

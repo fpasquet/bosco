@@ -6,6 +6,7 @@ import type {
   ProjectDto,
   ProjectPlaceDto,
   ProjectsDto,
+  SessionDefaultsDto,
   SessionDto,
 } from '@bosco/domain';
 
@@ -95,7 +96,12 @@ export async function restoreSuggestion(path: string): Promise<void> {
 /** Épingler, désépingler, et les valeurs par défaut des sessions du projet ; vaut tout de suite. */
 export async function changeProject(
   id: number,
-  changes: { pinned?: boolean; place?: null | ProjectPlaceDto; startBranch?: null | string },
+  changes: {
+    defaults?: Partial<SessionDefaultsDto>;
+    pinned?: boolean;
+    place?: null | ProjectPlaceDto;
+    startBranch?: null | string;
+  },
 ): Promise<ProjectDetailDto> {
   const response = await send(`/api/projects/${id}`, changes, 'PATCH');
   return (await response.json()) as ProjectDetailDto;

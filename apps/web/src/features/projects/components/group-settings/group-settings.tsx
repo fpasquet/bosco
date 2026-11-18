@@ -4,19 +4,22 @@ import { FolderSearch, Star } from 'lucide-react';
 import { useEffect, useId } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+import type { GroupDto, SessionDefaultsDto, SessionDefaultsResolvedDto } from '@bosco/domain';
 import { SectionCard as Card } from '@/shared/components/section-card';
+import { SessionDefaultsFields } from '@/shared/components/session-defaults-fields';
 import { Button } from '@/shared/ui/button';
-import { APP_NAME, type GroupDto } from '@bosco/domain';
 
 type Member = GroupDto['projects'][number];
 
 export interface GroupSettingsProps {
   busy: boolean;
   group: GroupDto;
+  /** Ce dont hérite une nouvelle session du groupe, avec l'origine de chaque valeur */
+  inherited?: SessionDefaultsResolvedDto;
   onArrange: (projects: Member[]) => void;
   onBrowse: () => void;
   onDelete: () => void;
-  onProfile: (profile: null | string) => void;
+  onDefaults: (changes: Partial<SessionDefaultsDto>) => void;
   onRename: (identity: { description: null | string; name: string }) => void;
   onSidebar: (shown: boolean) => void;
   /** Profils Claude Code surveillés, que le groupe peut prendre par défaut */
@@ -31,12 +34,6 @@ const identitySchema = z.object({
   name: z.string().refine((value) => value.trim().length > 0, 'Donne un nom au groupe.'),
   description: z.string(),
 });
-
-/** D'où vient le profil des sessions démarrées avec le groupe. */
-function profileOrigin(chosen: null | string, watched: boolean): string {
-  if (chosen === null) return `Hérité · profil du projet principal, à défaut celui de ${APP_NAME}`;
-  return watched ? 'Réglé ici' : 'Réglé ici · profil qui n’est plus surveillé';
-}
 
 function Identity({
   busy,
@@ -133,8 +130,9 @@ export function GroupSettings({
   group,
   onArrange,
   onBrowse,
+  inherited,
   onDelete,
-  onProfile,
+  onDefaults,
   onRename,
   onSidebar,
   profiles,
@@ -143,7 +141,6 @@ export function GroupSettings({
 }: GroupSettingsProps) {
   const members = group.projects;
   const candidates = projects.filter(({ id }) => !members.some((member) => member.id === id));
-  const profile = profiles.find(({ path }) => path === group.defaults.profile);
   const sidebarHelp = useId();
   return (
     <div className="flex max-w-3xl flex-col gap-4">
@@ -202,24 +199,14 @@ export function GroupSettings({
         </div>
       </Card>
       <Card title="Sessions">
-        <label className="flex flex-col gap-1.5">
-          <span className="text-xs font-medium">Profil</span>
-          <select
-            className="select hidden w-64 md:inline-flex"
-            value={group.defaults.profile ?? ''}
-            disabled={busy}
-            onChange={(event) => onProfile(event.target.value || null)}
-          >
-            <option value="">Hériter</option>
-            {profiles.map(({ label, path }) => (
-              <option key={path} value={path}>
-                {label}
-              </option>
-            ))}
-          </select>
-          <span className="md:hidden">{profile?.label ?? 'Hériter'}</span>
-          <span className="text-xs text-muted">{profileOrigin(group.defaults.profile, profile !== undefined)}</span>
-        </label>
+        <SessionDefaultsFields
+          principal
+          busy={busy}
+          defaults={group.defaults}
+          inherited={inherited}
+          profiles={profiles}
+          onChange={onDefaults}
+        />
       </Card>
       <Card title="Barre latérale">
         <div className="flex items-center gap-3">

@@ -13,6 +13,7 @@ import {
   deleteGroup,
   GroupRefused,
   groupsQuery,
+  inheritedDefaultsQuery,
   previewQuery,
   profilesQuery,
   writeInstructions,
@@ -79,6 +80,7 @@ export function GroupScreen({ children, id, tab }: { children?: ReactNode; id: n
   const { data: groups } = useQuery(groupsQuery);
   const { data: overview } = useQuery(projectsOverviewQuery);
   const { data: sources } = useQuery({ ...profilesQuery, enabled: tab === 'settings' });
+  const { data: inherited } = useQuery({ ...inheritedDefaultsQuery({ group: id }), enabled: tab === 'settings' });
   const [pending, setPending] = useState<null | Pending>(null);
   const [nameError, setNameError] = useState<null | string>(null);
   const [previewing, setPreviewing] = useState(false);
@@ -170,6 +172,7 @@ export function GroupScreen({ children, id, tab }: { children?: ReactNode; id: n
         <GroupSettings
           busy={busy}
           group={group}
+          inherited={inherited}
           profiles={(sources?.sources ?? [])
             .filter(({ watched }) => watched)
             .map(({ label, path }) => ({ label, path }))}
@@ -178,7 +181,7 @@ export function GroupScreen({ children, id, tab }: { children?: ReactNode; id: n
           onArrange={arrange}
           onBrowse={actions.browse}
           onDelete={() => setPending({ kind: 'delete' })}
-          onProfile={(profile) => change.mutate(() => changeGroup(id, { defaults: { profile } }))}
+          onDefaults={(defaults) => change.mutate(() => changeGroup(id, { defaults }))}
           onSidebar={(sidebar) => change.mutate(() => changeGroup(id, { sidebar }))}
           onRename={(identity) => {
             setNameError(null);
