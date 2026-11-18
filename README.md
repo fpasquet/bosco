@@ -69,6 +69,7 @@ make desktop-release  # .deb, AppImage et fichiers de mise à jour, à la versio
 | `apps/web`         | Interface Next.js, design system (tokens des specs, daisyUI, shadcn/ui sur Radix, Storybook)                                                                                            |
 | `apps/desktop`     | Application du poste (Electron, Linux) : fenêtre de l'interface, barre système, notifications natives ; paquet .deb                                                                     |
 | `apps/mobile`      | Application Android (Expo) : interface téléphone dans une vue web, appairage par QR code, notifications locales                                                                         |
+| `apps/docs`        | Site de documentation (Fumadocs), en français : installation, applications, guides, développement ; export statique dans `out/`                                                         |
 | `packages/domain`  | Contrats partagés avec le web : nom de l'application, types des vues                                                                                                                    |
 | `packages/configs` | Configurations partagées : TypeScript, ESLint, Vitest, Prettier                                                                                                                         |
 | `tools/release`    | Outils du workflow Release : version calculée depuis les commits, écrite dans les applications, CHANGELOG.md et notes                                                                   |
@@ -82,6 +83,8 @@ make desktop-release  # .deb, AppImage et fichiers de mise à jour, à la versio
 make check            # lint, types, tests et build de chaque paquet (Turborepo)
 make e2e              # scénarios de l'API, puis parcours du web (ordinateur et téléphone)
 make storybook        # http://localhost:6006
+make docs             # site de documentation sur http://127.0.0.1:4890
+make docs-build       # export statique du site dans apps/docs/out
 make format
 make tokens           # recopie les tokens des specs (../specs/bosco/ui)
 make requirements     # régénère docs/requirements depuis le cahier des charges

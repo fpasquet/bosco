@@ -20,3 +20,6 @@ test-results/
 .data/
 # Paquet .deb de l'application du poste et son dossier de préparation
 apps/desktop/out/
+# Site de documentation : collections générées par fumadocs-mdx, export statique
+.source/
+apps/docs/out/

@@ -1,0 +1,70 @@
+---
+title: Présentation
+description: Bosco tourne sur ton poste et rassemble tes sessions Claude Code au même endroit, pour voir celle qui t'attend et lui répondre sans changer de fenêtre.
+---
+
+Tu lances plusieurs sessions Claude Code en parallèle, dans plusieurs terminaux et plusieurs projets. L'une demande l'autorisation de lancer `npm run db:migrate`, une autre a fini son tour et pose une question, une troisième tourne depuis vingt minutes. Sans Bosco, tu passes d'un terminal à l'autre pour le découvrir.
+
+Bosco est un service local qui lit les sessions Claude Code du poste et les montre dans une seule interface, dans le navigateur, dans l'application du poste sous Linux ou sur ton téléphone Android. Le bosco est le maître d'équipage d'un navire : ici, l'équipage, ce sont les sessions.
+
+## Ce que fait Bosco
+
+- **Découvrir les sessions.** Bosco lit les profils Claude Code du poste (`~/.claude`, `~/.claude-perso`…) et range chaque session sous son projet : `api-tarifs`, `creneaux`, `maison`… Il en suit l'état en direct : « T'attend », « En cours », « Inactive », « Terminée ».
+- **Voir celle qui t'attend.** Une autorisation demandée, une question de l'agent ou un tour terminé font passer la session en « T'attend ». Elle remonte en tête de la vue d'ensemble, une pastille s'allume dans la barre latérale et une notification part.
+- **Autoriser sans changer de fenêtre.** « Autoriser » ou « Refuser » depuis Bosco, avec un motif transmis à l'agent. Le terminal garde la main : la première réponse l'emporte.
+- **Piloter une session.** Lancer une session depuis Bosco, lui écrire, l'arrêter, choisir son mode d'autorisation, son modèle et son effort, sur un ou plusieurs projets.
+- **Bac à sable.** Faire tourner une session pilotée dans un conteneur Docker, isolée du poste, sur sa propre branche, avec un réseau fermé aux seuls domaines permis. Tu récupères ensuite la branche dans ton dépôt.
+- **Projets et groupes.** Choisir ses projets dans un navigateur de dossiers, les réunir en groupes (« Club des Trois Lacs », « Gîtes du Haut-Vallon », « Perso ») et donner à chaque groupe des instructions que lisent les agents.
+- **Historique et usage.** Retrouver une session passée, puis voir ce que consomment les sessions : tokens, coût estimé, quota de l'abonnement, PR créées.
+
+## À qui il sert
+
+À un développeur seul sur son poste, qui fait tourner plusieurs agents Claude Code en même temps. Bosco ne partage rien : il écoute seulement sur `127.0.0.1`, garde ses données dans `~/.local/share/bosco` et ne s'ouvre au réseau local que pour un téléphone que tu as appairé.
+
+Bosco tourne sous Linux. Le service et l'interface marchent aussi sous macOS, dans le navigateur ; l'application du poste n'existe que pour Linux, l'application téléphone que pour Android.
+
+## Comment il s'insère
+
+```text
+ terminaux                                   service Bosco (127.0.0.1:4870)
+ ┌──────────────────────────┐   hooks HTTP   ┌──────────────────────────────┐
+ │ claude (profil ~/.claude) │ ─────────────▶ │ lit les transcripts          │
+ │ claude (~/.claude-perso)  │ ◀───────────── │ suit l'état, répond aux      │
+ └──────────────────────────┘   Autoriser /   │ autorisations, notifie       │
+                                Refuser       │ lance les sessions pilotées  │
+                                              └──────────────┬───────────────┘
+                                                             │
+                     ┌───────────────────┬───────────────────┼──────────────────────┐
+                     ▼                   ▼                   ▼                      ▼
+               navigateur        application du poste   téléphone Android     bac à sable
+                                 (Electron, Linux)      (réseau local, QR)    (conteneur Docker)
+```
+
+- Bosco lit les transcripts que Claude Code écrit dans chaque profil, sans les modifier.
+- Le **suivi en direct** ajoute des hooks HTTP aux réglages du profil : Bosco sait alors quand une session t'attend et peut répondre à une autorisation. Il s'installe profil par profil, depuis Réglages › Sources.
+- Une **session pilotée** est lancée par Bosco lui-même (`claude -p`), sur le poste ou dans un bac à sable.
+
+## Par où commencer
+
+<Cards>
+  <Card
+    title="Installation"
+    href="/docs/installation"
+    description="Prérequis, make install, make start, le service systemd et le serveur MCP."
+  />
+  <Card
+    title="Vue d'ensemble et sessions"
+    href="/docs/guides/sessions"
+    description="Les états, « T'attend », autoriser ou refuser une commande."
+  />
+  <Card
+    title="Application du poste"
+    href="/docs/desktop"
+    description="Le paquet .deb, la barre système et les notifications."
+  />
+  <Card
+    title="Application Android"
+    href="/docs/android"
+    description="L'APK, l'appairage par QR code et les notifications."
+  />
+</Cards>

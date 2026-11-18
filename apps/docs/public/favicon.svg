@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="32" height="32">
+  <!-- Favicon : le sifflet sans la chaînette, trait plus épais pour rester lisible à 16 px -->
+  <rect width="24" height="24" rx="5.3" fill="#0d6e66"/>
+  <g transform="translate(1.88 1.1) scale(0.9)" fill="none" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M2.6 11.2Q8.4 9.6 13.3 11"/>
+    <circle cx="17.2" cy="12.4" r="4"/>
+    <path d="M4.6 13.4Q9.6 17.2 14.4 15.8"/>
+    <circle cx="17.2" cy="10.4" r="1.2" fill="#ffffff" stroke="none"/>
+  </g>
+</svg>

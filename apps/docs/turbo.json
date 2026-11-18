@@ -1,0 +1,20 @@
+{
+  "$schema": "https://turborepo.com/schema.json",
+  "extends": ["//"],
+  "tasks": {
+    "generate": {
+      "outputs": [".source/**"]
+    },
+    "lint": {
+      "dependsOn": ["^build", "generate"]
+    },
+    "typecheck": {
+      "dependsOn": ["^build", "generate"]
+    },
+    "build": {
+      "dependsOn": ["^build", "generate"],
+      "env": ["BOSCO_DOCS_BASE_PATH"],
+      "outputs": ["out/**", ".next/**", "!.next/cache/**"]
+    }
+  }
+}

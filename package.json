@@ -25,7 +25,9 @@
     "format:check": "prettier --check .",
     "skills:install": "node scripts/install-skills.mjs",
     "prepare": "husky",
-    "storybook": "pnpm --filter @bosco/web storybook"
+    "storybook": "pnpm --filter @bosco/web storybook",
+    "docs": "turbo run build --filter=@bosco/domain && pnpm --filter @bosco/docs docs",
+    "docs:build": "turbo run build --filter=@bosco/docs"
   },
   "devDependencies": {
     "@bosco/configs": "workspace:*",
