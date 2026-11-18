@@ -16,9 +16,12 @@ Feature: Live tracking
     Then the response code should be 200
     And the response property "installed" should equal "true"
     And the settings of the profile ".claude-perso" should call Bosco on 6 events
+    And the response property "mcpServer" should equal "true"
+    And the profile ".claude-perso" should have the MCP server of Bosco
     When I uninstall live tracking for the profile ".claude-perso"
     Then the response property "installed" should equal "false"
     And the settings of the profile ".claude-perso" should equal "fixtures/settings-perso.json"
+    And the profile ".claude-perso" should lack the MCP server of Bosco
 
   Scenario: A hook without the secret of the installation is refused
     When I install live tracking for the profile ".claude-perso"

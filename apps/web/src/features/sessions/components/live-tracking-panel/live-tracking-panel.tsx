@@ -131,6 +131,10 @@ export function LiveTrackingPanel(props: LiveTrackingPanelProps) {
                   <li key={event}>{event}</li>
                 ))}
               </ul>
+              <p>
+                Il ajoute aussi le serveur {APP_NAME} au profil : ses sessions lisent le contexte de leur projet et
+                proposent leurs décisions.
+              </p>
               <label className="flex items-center gap-2">
                 <input
                   type="checkbox"
@@ -159,6 +163,11 @@ export function LiveTrackingPanel(props: LiveTrackingPanelProps) {
                   label="Réglages écrits"
                   detail={status?.outdated ? 'À mettre à jour' : (status?.settingsPath ?? '…')}
                   done={Boolean(status?.installed)}
+                />
+                <CheckLine
+                  label={`Serveur ${APP_NAME} ajouté au profil`}
+                  detail="contexte des projets et décisions proposées"
+                  done={Boolean(status?.mcpServer)}
                 />
                 <CheckLine label={`${APP_NAME} joignable`} detail="port local" done />
                 <CheckLine

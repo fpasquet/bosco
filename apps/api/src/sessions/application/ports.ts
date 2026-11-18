@@ -88,6 +88,13 @@ export interface ProfileSettings {
   uninstall(profilePath: string, endpoint: HookEndpoint): Promise<void>;
 }
 
+/** Serveur MCP de Bosco dans un profil Claude Code, ajouté sans rien remplacer des serveurs existants. */
+export interface McpServerInstaller {
+  install(profilePath: string): Promise<void>;
+  isInstalled(profilePath: string): Promise<boolean>;
+  uninstall(profilePath: string): Promise<void>;
+}
+
 /**
  * Valeurs par défaut des sessions lancées dans Bosco avec un profil (E4g), gardées par Bosco ; NO_DEFAULTS sans
  * réglage.

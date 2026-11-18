@@ -18,9 +18,11 @@ Fonctionnalité: Suivi en direct
     Et je clique sur le bouton « Installer » de la source « perso »
     Et je clique sur le bouton « Suivant » de la fenêtre
     Alors je vois le texte « Garder une copie des réglages actuels »
+    Et je vois le texte « Il ajoute aussi le serveur Bosco au profil »
     Et la page est accessible
     Quand je clique sur le bouton « Installer » de la fenêtre
     Alors je vois le texte « Ouvre une session Claude Code dans ce profil pour terminer la vérification »
+    Et je vois le texte « Serveur Bosco ajouté au profil : fait »
     Quand la session « c41e9a07 » du profil « .claude-perso » donne un signal
     Alors je vois le texte « Le suivi en direct fonctionne pour perso »
     Quand je clique sur le lien « Terminer » de la fenêtre

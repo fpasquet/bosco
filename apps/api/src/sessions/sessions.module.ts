@@ -24,6 +24,7 @@ import { UsageService } from './application/usage.service.ts';
 import { ClaudeChannelInstaller } from './infrastructure/claude-code/channel-installer.ts';
 import { ClaudeTurnRunner } from './infrastructure/claude-code/claude-turn-runner.ts';
 import { FileConversationReader } from './infrastructure/claude-code/conversation-reader.ts';
+import { ClaudeMcpServerInstaller, MCP_SERVER } from './infrastructure/claude-code/mcp-server-installer.ts';
 import { FileProfileFinder } from './infrastructure/claude-code/profile-finder.ts';
 import { FileProfileSettings } from './infrastructure/claude-code/profile-settings.ts';
 import { FileSessionRegistry } from './infrastructure/claude-code/session-registry.ts';
@@ -184,6 +185,10 @@ const conversations = new FileConversationReader();
           new FileProfileSettings(),
           (sourceId) => ({ secret, url: `http://${config.host}:${config.port}/api/hooks/${sourceId}` }),
           (sourceId) => liveSignals.lastSignalAt(sourceId),
+          new ClaudeMcpServerInstaller(config.pilotClaude, config.profilesRoot, MCP_SERVER, {
+            secret,
+            url: `http://${config.host}:${config.port}/mcp`,
+          }),
         ),
     },
     {

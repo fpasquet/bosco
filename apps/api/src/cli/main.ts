@@ -8,6 +8,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { APP_NAME } from '@bosco/domain';
 import { loadConfig } from '../config.ts';
+import { ClaudeMcpServerInstaller, MCP_SERVER } from '../sessions/infrastructure/claude-code/mcp-server-installer.ts';
 import { loadHookSecret } from '../sessions/infrastructure/hooks/hook-secret.ts';
 import { runChannel } from './channel.ts';
 import { serviceUnit } from './service-unit.ts';
@@ -66,16 +67,26 @@ program
 
 const mcp = program.command('mcp').description('Manage the MCP server of Bosco in a Claude Code profile');
 
-/** Claude Code du poste, dans le profil choisi : c'est lui qui écrit sa configuration MCP. */
-function claudeIn(profile: string, args: string[]): Promise<number> {
+/** Serveur MCP de Bosco dans le profil choisi, ajouté comme le fait l'installation du suivi en direct. */
+function mcpServerOf(): ClaudeMcpServerInstaller {
   const config = loadConfig();
-  return new Promise((resolve) => {
-    const child = spawn(config.worker.claudeBinary, args, {
-      env: { ...process.env, CLAUDE_CONFIG_DIR: profile },
-      stdio: 'inherit',
-    });
-    child.on('exit', (code) => resolve(code ?? 1));
+  const secret = loadHookSecret(config.dataDir);
+  return new ClaudeMcpServerInstaller(config.worker.claudeBinary, config.profilesRoot, MCP_SERVER, {
+    secret,
+    url: `http://127.0.0.1:${config.port}/mcp`,
   });
+}
+
+/** Le résultat de Claude Code, qui écrit lui-même sa configuration : un échec est dit, puis la commande échoue. */
+async function run(action: Promise<void>, done: string): Promise<void> {
+  try {
+    await action;
+    console.log(done);
+    process.exit(0);
+  } catch (error) {
+    console.error(error instanceof Error ? error.message : String(error));
+    process.exit(1);
+  }
 }
 
 mcp
@@ -83,23 +94,7 @@ mcp
   .description('Add the MCP server of Bosco to a Claude Code profile, for every project')
   .option('--profile <dir>', 'Claude Code profile', join(homedir(), '.claude'))
   .action(async (options: { profile: string }) => {
-    const config = loadConfig();
-    const secret = loadHookSecret(config.dataDir);
-    const url = `http://127.0.0.1:${config.port}/mcp`;
-    const code = await claudeIn(options.profile, [
-      'mcp',
-      'add',
-      '--scope',
-      'user',
-      '--transport',
-      'http',
-      command,
-      url,
-      '--header',
-      `Authorization: Bearer ${secret}`,
-    ]);
-    if (code === 0) console.log(`in Claude Code, ask: « prends la prochaine tâche ${APP_NAME} »`);
-    process.exit(code);
+    await run(mcpServerOf().install(options.profile), `in Claude Code, ask: « prends la prochaine tâche ${APP_NAME} »`);
   });
 
 mcp
@@ -107,8 +102,7 @@ mcp
   .description('Remove the MCP server of Bosco from a Claude Code profile')
   .option('--profile <dir>', 'Claude Code profile', join(homedir(), '.claude'))
   .action(async (options: { profile: string }) => {
-    const code = await claudeIn(options.profile, ['mcp', 'remove', '--scope', 'user', command]);
-    process.exit(code);
+    await run(mcpServerOf().uninstall(options.profile), `removed from ${options.profile}`);
   });
 
 await program.parseAsync();

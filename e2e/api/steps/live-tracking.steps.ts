@@ -69,6 +69,19 @@ Given(
   },
 );
 
+Then('the profile {string} should {word} the MCP server of Bosco', ({ bosco }, profile: string, has: string) => {
+  let servers: Record<string, unknown> = {};
+  try {
+    const config = JSON.parse(readFileSync(join(bosco.profilesRoot, profile, '.claude.json'), 'utf8')) as {
+      mcpServers?: Record<string, unknown>;
+    };
+    servers = config.mcpServers ?? {};
+  } catch {
+    // pas encore de configuration
+  }
+  expect(Object.keys(servers).includes('bosco')).toBe(has === 'have');
+});
+
 When('I uninstall live tracking for the profile {string}', async ({ bosco, last, request }, profile: string) => {
   const id = await sourceIdOf(bosco.url, profile);
   const response = await request.delete(`/api/sources/${id}/live-tracking`);

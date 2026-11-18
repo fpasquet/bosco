@@ -3,6 +3,8 @@ export interface LiveTrackingDto {
   backupPath?: null | string;
   installed: boolean;
   lastSignalAt: null | string;
+  /** Serveur MCP de Bosco présent dans le profil : ajouté avec le suivi en direct */
+  mcpServer: boolean;
   /** Installé par une autre version de Bosco : à mettre à jour */
   outdated: boolean;
   settingsPath: string;
