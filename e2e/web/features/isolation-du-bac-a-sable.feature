@@ -30,6 +30,15 @@ Fonctionnalité: Isolation du bac à sable
     Quand je clique sur le bouton « Retirer *.github.com »
     Alors la liste « Domaines ajoutés » ne contient plus « *.github.com »
 
+  @CA-REGL-09
+  Scénario: Ce que voit l'agent se résume en fichiers, secrets et réseau, seul l'accès à l'abonnement étant transmis
+    Quand j'ouvre la page « /settings/sandbox »
+    Alors la ligne « Fichiers » du tableau montre « Sa copie du projet, son dossier personnel, ses conversations »
+    Et la ligne « Secrets » du tableau montre « L’accès à l’abonnement Claude de la session »
+    Et la ligne « Secrets » du tableau montre « Accès GitHub, .npmrc, tes connecteurs et accès »
+    Et la ligne « Réseau » du tableau montre « Le reste d’Internet »
+    Et je vois le texte « (Claude Code, git, Node, Python, ripgrep) »
+
   @mobile
   @CA-CONT-42
   @CA-REGL-11
