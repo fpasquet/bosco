@@ -1,4 +1,9 @@
 {
+  "access": {
+    "kind": "login",
+    "problem": null,
+    "tokenFile": null
+  },
   "account": "camille@exemple.dev",
   "claude": {
     "effort": "medium",
@@ -17,7 +22,8 @@
     "label": "perso",
     "watched": true,
     "liveTracking": false,
-    "managed": false
+    "managed": false,
+    "tokenFile": null
   },
   "usedBy": {
     "groups": [

@@ -6,6 +6,7 @@ export interface SourceRow {
   liveTracking: boolean;
   managed: boolean;
   path: string;
+  tokenFile?: null | string;
   watched: boolean;
 }
 
@@ -88,6 +89,7 @@ export const SourceSchema = new EntitySchema<SourceRow>({
     watched: { type: 'boolean' },
     liveTracking: { type: 'boolean', fieldName: 'live_tracking' },
     managed: { type: 'boolean', default: false },
+    tokenFile: { type: 'string', fieldName: 'token_file', nullable: true },
   },
 });
 

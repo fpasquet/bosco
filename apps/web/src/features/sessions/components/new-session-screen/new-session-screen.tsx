@@ -410,37 +410,63 @@ function originRoots(
   return found ? [found.root] : [];
 }
 
-/** Abonnement Claude d'une nouvelle session : la valeur par défaut dit d'où elle vient (« profil par défaut »). */
+/** Compte d'un abonnement dans le choix : son adresse, sinon « jeton longue durée » pour un profil à jeton. */
+function accountOf({ access, account }: PilotOptionsDto['profiles'][number]): string {
+  if (account) return ` · ${account}`;
+  return access === 'token' ? ' · jeton longue durée' : '';
+}
+
+/**
+ * Abonnement Claude d'une nouvelle session : la valeur par défaut dit d'où elle vient (« profil par défaut »). Un profil
+ * surveillé sans accès reste visible, grisé, avec le chemin vers ses réglages.
+ */
 function ProfileSelect({
   defaults,
   onChange,
   profile,
   profiles,
+  unavailable,
 }: {
   defaults: SessionDefaultsResolvedDto | undefined;
   onChange: (profile: null | string) => void;
   profile: null | string;
   profiles: PilotOptionsDto['profiles'];
+  unavailable: PilotOptionsDto['unavailableProfiles'];
 }) {
   const origin = defaults && defaults.profile.value === profile ? originLabel(defaults.profile.origin) : null;
   return (
-    <label className="flex min-w-0 flex-col gap-1.5">
-      <span className="text-sm font-medium">Abonnement Claude</span>
-      <select
-        className="select w-full"
-        value={profile ?? ''}
-        onChange={(event) => onChange(event.target.value || null)}
-      >
-        {profiles.length === 0 && <option value="">Aucun profil avec un accès Claude</option>}
-        {profiles.map(({ account, label, path }) => (
-          <option key={path} value={path}>
-            {label}
-            {path === profile && origin ? ` · ${origin}` : ''}
-            {account ? ` · ${account}` : ''}
-          </option>
-        ))}
-      </select>
-    </label>
+    <div className="flex min-w-0 flex-col gap-1.5">
+      <label className="flex min-w-0 flex-col gap-1.5">
+        <span className="text-sm font-medium">Abonnement Claude</span>
+        <select
+          className="select w-full"
+          value={profile ?? ''}
+          onChange={(event) => onChange(event.target.value || null)}
+        >
+          {profiles.length === 0 && <option value="">Aucun profil avec un accès Claude</option>}
+          {profiles.map((choice) => (
+            <option key={choice.path} value={choice.path}>
+              {choice.label}
+              {choice.path === profile && origin ? ` · ${origin}` : ''}
+              {accountOf(choice)}
+            </option>
+          ))}
+          {unavailable.map(({ label, path }) => (
+            <option key={path} value={path} disabled>
+              {label} · aucun accès · à régler dans le profil
+            </option>
+          ))}
+        </select>
+      </label>
+      {unavailable.map(({ label, problem, sourceId }) => (
+        <span key={sourceId} className="text-xs text-muted">
+          {label} : {problem ?? 'aucun accès'} ·{' '}
+          <Link href={`/settings/sources/${encodeURIComponent(sourceId)}`} className="link font-medium link-primary">
+            à régler dans le profil<span className="sr-only"> {label}</span>
+          </Link>
+        </span>
+      ))}
+    </div>
   );
 }
 
@@ -621,6 +647,7 @@ function NewSessionForm({
                   defaults={defaults}
                   profile={profile}
                   profiles={options.profiles}
+                  unavailable={options.unavailableProfiles}
                   onChange={setProfile}
                 />
               </div>

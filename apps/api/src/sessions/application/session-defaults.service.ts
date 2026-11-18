@@ -40,6 +40,11 @@ export interface ResolvedDefaults extends ResolvedSettings {
 
 /** Réglages d'un profil : ses valeurs dans Bosco, celles de Claude Code, son compte et ce qui l'utilise. */
 export interface ProfileSettingsView {
+  /**
+   * Accès du profil à son abonnement : sa connexion (/login), un jeton longue durée déclaré par son fichier, ou aucun ;
+   * problem dit pourquoi un jeton déclaré ne sert pas
+   */
+  access: { kind: 'login' | 'none' | 'token'; problem: null | string; tokenFile: null | string };
   account: null | string;
   claude: SessionDefaults;
   defaults: SessionDefaults;
@@ -48,7 +53,9 @@ export interface ProfileSettingsView {
   usedBy: { groups: { id: number; name: string }[]; openSessions: number };
 }
 
-const NO_PROFILES: PilotProfiles = { subscriptions: () => Promise.resolve({ choices: [], effective: null }) };
+const NO_PROFILES: PilotProfiles = {
+  subscriptions: () => Promise.resolve({ choices: [], effective: null, unavailable: [] }),
+};
 
 /**
  * Valeurs par défaut des sessions : résolues au démarrage par le domaine, du choix de la session au
@@ -116,8 +123,13 @@ export class SessionDefaultsService {
       this.sessions.knownGroups(),
       this.sessions.listSessions(),
     ]);
+    const choice = accounts.choices.find(({ path }) => path === source.path);
+    const missing = accounts.unavailable?.find(({ path }) => path === source.path);
     return {
-      account: accounts.choices.find(({ path }) => path === source.path)?.account ?? null,
+      access: choice
+        ? { kind: choice.access, problem: null, tokenFile: choice.tokenFile }
+        : { kind: 'none', problem: missing?.problem ?? null, tokenFile: missing?.tokenFile ?? source.tokenFile },
+      account: choice?.account ?? null,
       claude,
       defaults,
       isDefault: accounts.effective === source.path,

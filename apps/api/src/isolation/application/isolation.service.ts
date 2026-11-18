@@ -1,3 +1,4 @@
+import type { ProfileAccess, SandboxAccess } from '../../shared/domain/profile-access.ts';
 import { DomainError } from '../../shared/domain/domain-error.ts';
 import { allows, isDomain, LOCKED_DOMAINS } from '../domain/egress.ts';
 
@@ -9,14 +10,39 @@ export interface IsolationStore {
   subscription(): Promise<null | string>;
 }
 
+/** Profil Claude Code surveillé : son dossier, et le fichier de son jeton longue durée s'il en a déclaré un. */
+export interface ClaudeProfile {
+  label: string;
+  path: string;
+  tokenFile: null | string;
+}
+
 /** Profils Claude Code du poste et leur accès à l'abonnement ; rien n'est jamais montré des jetons eux-mêmes. */
 export interface ClaudeProfiles {
-  /** Compte de l'abonnement d'un profil et son fichier d'accès, s'il en a un */
-  account(profile: string): Promise<{ account: null | string; credentials: null | string }>;
+  /** Compte de l'abonnement d'un profil et son accès : sa connexion, son jeton longue durée, ou aucun */
+  access(profile: ClaudeProfile): Promise<{ access: ProfileAccess; account: null | string }>;
   /** Le fichier existe sur le poste */
   exists(path: string): Promise<boolean>;
   /** Profils Claude Code surveillés */
-  profiles(): Promise<{ label: string; path: string }[]>;
+  profiles(): Promise<ClaudeProfile[]>;
+}
+
+/** Profil qui a un accès à l'abonnement : un choix possible, avec son compte et la forme de son accès. */
+export interface SubscriptionChoice {
+  access: 'login' | 'token';
+  account: null | string;
+  label: string;
+  path: string;
+  /** Fichier du jeton longue durée ; null pour une connexion */
+  tokenFile: null | string;
+}
+
+/** Profil surveillé sans accès utilisable : visible, grisé ; problem dit pourquoi un jeton déclaré ne sert pas. */
+export interface UnavailableSubscription {
+  label: string;
+  path: string;
+  problem: null | string;
+  tokenFile: null | string;
 }
 
 /** Liste lue par le proxy de chaque bac à sable à chaque connexion : un changement vaut tout de suite. */
@@ -33,12 +59,15 @@ export class InvalidIsolation extends DomainError {
 
 /** Abonnement par défaut tel que les réglages le montrent : celui choisi, son compte, et les choix possibles. */
 export interface SubscriptionView {
+  /** Forme de l'accès du profil par défaut ; null sans profil connu */
+  access: 'login' | 'token' | null;
   account: null | string;
   /** Un accès à l'abonnement existe : sans lui, aucun bac à sable ne démarre */
   available: boolean;
-  choices: { account: null | string; label: string; path: string }[];
+  choices: SubscriptionChoice[];
   label: null | string;
   profile: null | string;
+  unavailable: UnavailableSubscription[];
 }
 
 export interface IsolationSnapshot {
@@ -67,11 +96,21 @@ export class IsolationService {
     await this.publish();
   }
 
-  /** Accès à l'abonnement d'un profil, copié dans un bac à sable ; celui par défaut sans profil. */
-  async credentialsOf(profile: null | string = null): Promise<string> {
+  /**
+   * Accès à l'abonnement d'un profil pour un bac à sable ; celui par défaut sans profil. Un jeton déclaré passe tel
+   * quel, même illisible : le tour dira pourquoi il ne part pas, plutôt que de prendre un autre compte.
+   */
+  async accessOf(profile: null | string = null): Promise<SandboxAccess> {
     const chosen = profile ?? this.chosen;
-    const account = chosen ? await this.claude.profiles.account(chosen) : null;
-    return account?.credentials ?? this.claude.defaults.credentials;
+    if (chosen) {
+      const listed = await this.claude.profiles.profiles();
+      const known = listed.find(({ path }) => path === chosen) ?? { label: '', path: chosen, tokenFile: null };
+      const { access } = await this.claude.profiles.access(known);
+      if (access.kind === 'login') return { kind: 'login', credentials: access.credentials };
+      if (access.kind === 'token') return { kind: 'token', tokenFile: access.tokenFile };
+      if (access.tokenFile) return { kind: 'token', tokenFile: access.tokenFile };
+    }
+    return { kind: 'login', credentials: this.claude.defaults.credentials };
   }
 
   /** Profils Claude qui ont un accès à un abonnement : ceux dont le quota se montre. */
@@ -89,8 +128,9 @@ export class IsolationService {
   async setSubscription(profile: null | string): Promise<IsolationSnapshot> {
     if (profile) {
       const profiles = await this.claude.profiles.profiles();
-      const { credentials } = await this.claude.profiles.account(profile);
-      if (!profiles.some(({ path }) => path === profile) || !credentials)
+      const known = profiles.find(({ path }) => path === profile);
+      const found = known ? await this.claude.profiles.access(known) : null;
+      if (!found || found.access.kind === 'none')
         throw new InvalidIsolation('Choisis un profil surveillé qui a un accès à l’abonnement Claude.');
     }
     this.chosen = profile;
@@ -138,20 +178,28 @@ export class IsolationService {
     const { defaults, profiles } = this.claude;
     const listed = await profiles.profiles();
     const accounts = await Promise.all(
-      listed.map(async (profile) => ({ ...profile, ...(await profiles.account(profile.path)) })),
+      listed.map(async (profile) => ({ ...profile, ...(await profiles.access(profile)) })),
     );
-    const choices = accounts
-      .filter(({ credentials }) => credentials !== null)
-      .map(({ account, label, path }) => ({ account, label, path }));
+    const choices: SubscriptionChoice[] = accounts.flatMap(({ access, account, label, path }) =>
+      access.kind === 'none'
+        ? []
+        : [{ access: access.kind, account, label, path, tokenFile: access.kind === 'token' ? access.tokenFile : null }],
+    );
+    const unavailable: UnavailableSubscription[] = accounts.flatMap(({ access, label, path }) =>
+      access.kind === 'none' ? [{ label, path, problem: access.problem, tokenFile: access.tokenFile }] : [],
+    );
     const chosen = this.chosen
       ? accounts.find(({ path }) => path === this.chosen)
-      : accounts.find(({ credentials }) => credentials === defaults.credentials);
+      : accounts.find(({ access }) => access.kind === 'login' && access.credentials === defaults.credentials);
+    const usable = chosen && chosen.access.kind !== 'none' ? chosen.access.kind : null;
     return {
+      access: usable,
       account: chosen?.account ?? null,
-      available: this.chosen ? Boolean(chosen?.credentials) : await profiles.exists(defaults.credentials),
+      available: this.chosen ? usable !== null : await profiles.exists(defaults.credentials),
       choices,
       label: chosen?.label ?? null,
       profile: chosen?.path ?? null,
+      unavailable,
     };
   }
 }

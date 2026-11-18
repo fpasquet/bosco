@@ -3,7 +3,7 @@
 // Il écrit le transcript dans le profil comme Claude Code, rappelle les dossiers ajoutés (--add-dir) et s'il lit leurs
 // instructions, demande une autorisation si le message parle
 // d'« autorisation », pose une question s'il parle de « question », attend « Arrêter » s'il parle d'un « long » travail,
-// rend la main à Bosco comme après 3 refus du vérificateur s'il parle de « refus » en « Approuver pour moi », redit le contexte reçu au lancement s'il parle de « contexte », et répond en rappelant ce qu'il a reçu (réglages du tour, images) pour que les scénarios le vérifient.
+// rend la main à Bosco comme après 3 refus du vérificateur s'il parle de « refus » en « Approuver pour moi », redit le contexte reçu au lancement s'il parle de « contexte », et répond en rappelant ce qu'il a reçu (réglages du tour, images, fin du jeton longue durée) pour que les scénarios le vérifient.
 import { randomUUID } from 'node:crypto';
 import { appendFileSync, mkdirSync } from 'node:fs';
 import { homedir } from 'node:os';
@@ -34,6 +34,9 @@ const option = (name) => {
 };
 const sessionId = option('--resume') ?? option('--session-id') ?? randomUUID();
 const settings = `mode ${option('--permission-mode')} · modèle ${option('--model') ?? 'défaut'} · effort ${option('--effort') ?? 'défaut'}`;
+// Jeton longue durée reçu par l'environnement (CLAUDE_CODE_OAUTH_TOKEN) : ses 4 derniers caractères, jamais plus
+const token = process.env.CLAUDE_CODE_OAUTH_TOKEN;
+const tokenNote = token ? ` · jeton …${token.slice(-4)}` : '';
 // Dossiers ajoutés à la session (--add-dir), rejoués à chaque tour ; leurs CLAUDE.md ne se lisent qu'avec le réglage
 const added = args.flatMap((arg, index) => (arg === '--add-dir' ? [args[index + 1]?.split('/').at(-1)] : []));
 const instructions = process.env.CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD === '1' ? ' avec leurs instructions' : '';
@@ -163,7 +166,7 @@ async function turn(content) {
     });
     return finish('Interrompu.', 'error_during_execution');
   }
-  return finish(`Reçu : ${text} · ${settings} · images ${images}${addedNote}`);
+  return finish(`Reçu : ${text} · ${settings} · images ${images}${addedNote}${tokenNote}`);
 }
 
 createInterface({ input: process.stdin }).on('line', (raw) => {

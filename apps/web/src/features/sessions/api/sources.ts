@@ -37,6 +37,37 @@ export const profileFoldersQuery = (path: null | string) => ({
   },
 });
 
+/** Navigateur de « Utiliser un jeton longue durée » : dossiers et fichiers, cachés compris, leurs noms seulement. */
+export const tokenFilesQuery = (path: null | string) => ({
+  queryKey: ['folders', 'hidden', 'files', path],
+  queryFn: async (): Promise<FolderListingDto> => {
+    const params = new URLSearchParams({ hidden: 'true', files: 'true', ...(path ? { path } : {}) });
+    const response = await fetch(`/api/folders?${params.toString()}`);
+    if (!response.ok) throw new Error(`GET /api/folders answered ${response.status}`);
+    return (await response.json()) as FolderListingDto;
+  },
+});
+
+/** Refus du fichier d'un jeton, avec sa raison (« Le fichier du jeton est vide. »). */
+export class TokenFileRefused extends Error {}
+
+/**
+ * « Utiliser un jeton longue durée » : le fichier qui contient le jeton de `claude setup-token`, dont Bosco ne garde que
+ * le chemin ; null le retire. Rend les réglages du profil, accès compris.
+ */
+export async function declareToken(sourceId: string, path: null | string): Promise<ProfileSettingsDto> {
+  const response = await fetch(`/api/sources/${encodeURIComponent(sourceId)}/token`, {
+    method: 'PUT',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ path }),
+  });
+  if (!response.ok) {
+    const { message } = (await response.json().catch(() => ({}))) as { message?: string };
+    throw new TokenFileRefused(message ?? 'Le fichier du jeton n’a pas pu être enregistré.');
+  }
+  return (await response.json()) as ProfileSettingsDto;
+}
+
 /** Refus de l'ajout d'un dossier, traduit pour l'interface. */
 export class FolderRefused extends Error {}
 

@@ -20,7 +20,9 @@ describe('folders of a sandbox', () => {
       },
       exec: () => ({ args: [], file: 'docker' }),
     } as unknown as SandboxContainers;
-    const sandboxes = new GitSandboxes(root, containers, () => Promise.resolve('{}'));
+    const sandboxes = new GitSandboxes(root, containers, () =>
+      Promise.resolve({ kind: 'login', credentials: '/home/camille/.claude/.credentials.json' }),
+    );
     await sandboxes.ensure(sessionId, ['/home/camille/www/api-tarifs', '/home/camille/www/site-clubs']);
     expect(specs[0]?.mounts).toEqual([
       { from: join(root, sessionId, 'repo'), to: '/home/camille/www/api-tarifs' },

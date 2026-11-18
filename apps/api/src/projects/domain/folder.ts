@@ -88,6 +88,14 @@ export function visibleFolders(entries: readonly FolderEntry[], hidden = false):
     .toSorted((a, b) => a.name.localeCompare(b.name, 'fr', { sensitivity: 'base' }) || a.name.localeCompare(b.name));
 }
 
+/** Noms des fichiers d'un dossier, triés comme les dossiers ; cachés seulement avec `hidden`. */
+export function visibleFiles(entries: readonly FolderEntry[], hidden = false): string[] {
+  return entries
+    .filter(({ directory, name }) => !directory && (hidden || !name.startsWith('.')))
+    .map(({ name }) => name)
+    .toSorted((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }) || a.localeCompare(b));
+}
+
 /** Fil d'Ariane d'un dossier depuis le dossier personnel, écrit « ~ ». */
 export function crumbsOf(folder: FolderPath, home: string): { name: string; path: string }[] {
   const inside = relativePath(folder.value, home).split('/').filter(Boolean);

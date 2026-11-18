@@ -1,8 +1,12 @@
 // Ce que les scénarios ne voient pas : la ligne de commande d'un tour piloté, son contexte, le message reçu par l'agent
-// (DT-31) et la raison exacte que Claude Code donne quand il suspend « Approuver pour moi ».
-import { describe, expect, it } from 'vitest';
-import type { TurnRequest } from '../../application/pilot.service.ts';
-import { suspensionOf, turnArguments, userMessage } from './claude-turn-runner.ts';
+// (DT-31), la raison exacte que Claude Code donne quand il suspend « Approuver pour moi », et le jeton longue durée
+// passé par l'environnement du tour.
+import { chmodSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { afterAll, describe, expect, it } from 'vitest';
+import type { TurnListener, TurnRequest } from '../../application/pilot.service.ts';
+import { ClaudeTurnRunner, suspensionOf, turnArguments, UNREADABLE_TOKEN, userMessage } from './claude-turn-runner.ts';
 
 const request: TurnRequest = {
   addDirs: [],
@@ -17,6 +21,7 @@ const request: TurnRequest = {
   resume: true,
   sessionId: 'c7e04a19',
   settings: { effort: 'high', model: 'claude-opus-5-5', permissionMode: 'plan' },
+  tokenFile: null,
 };
 
 describe('turnArguments', () => {
@@ -91,5 +96,44 @@ describe('suspensionOf', () => {
   it('ignores any other permission request', () => {
     expect(suspensionOf({ subtype: 'can_use_tool', tool_name: 'Bash' })).toBeNull();
     expect(suspensionOf({ ...ask('3 consecutive actions were blocked'), decision_reason_type: 'rule' })).toBeNull();
+  });
+});
+
+describe('the long-lived token of a turn', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'bosco-token-'));
+  afterAll(() => rmSync(dir, { recursive: true, force: true }));
+  // Faux Claude Code : il écrit sur sa sortie d'erreur le jeton qu'il a reçu, puis échoue
+  const binary = join(dir, 'claude');
+  writeFileSync(binary, '#!/bin/sh\necho "received ${CLAUDE_CODE_OAUTH_TOKEN:-none}" >&2\nexit 1\n');
+  chmodSync(binary, 0o755);
+
+  function run(tokenFile: null | string, env: Record<string, string> = {}): Promise<null | string> {
+    const saved = { ...process.env };
+    Object.assign(process.env, env);
+    try {
+      return new Promise((resolve) => {
+        const listener = { exited: resolve } as unknown as TurnListener;
+        new ClaudeTurnRunner(binary).start({ ...request, cwd: dir, configDir: dir, tokenFile }, listener);
+      });
+    } finally {
+      process.env = saved;
+    }
+  }
+
+  it('CA-REGL-33 · passes the token read from its file at launch, and never shows it in an error', async () => {
+    const file = join(dir, 'token');
+    writeFileSync(file, 'sk-ant-oat01-fake-token-1234\n');
+    const error = await run(file);
+    expect(error).toBe('received …1234');
+  });
+
+  it('CA-REGL-33 · never passes the token of the environment of Bosco to a profile without one', async () => {
+    const inherited = await run(null, { CLAUDE_CODE_OAUTH_TOKEN: 'sk-ant-oat01-from-bosco-9999' });
+    expect(inherited).toBe('received none');
+  });
+
+  it('CA-REGL-33 · does not start a turn whose token no longer reads, and says why', async () => {
+    const unreadable = await run(join(dir, 'missing'));
+    expect(unreadable).toBe(UNREADABLE_TOKEN);
   });
 });

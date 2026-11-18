@@ -58,6 +58,8 @@ export interface ProjectsDto {
 export interface FolderListingDto {
   /** Du dossier personnel (« ~ ») au dossier ouvert */
   crumbs: { name: string; path: string }[];
+  /** Fichiers du dossier (noms seulement), quand on choisit un fichier : celui d'un jeton longue durée */
+  files?: { name: string; path: string }[];
   folders: { added: boolean; git: boolean; name: string; path: string; suggestion: boolean }[];
   home: string;
   /** null au dossier personnel, d'où l'on ne remonte pas */

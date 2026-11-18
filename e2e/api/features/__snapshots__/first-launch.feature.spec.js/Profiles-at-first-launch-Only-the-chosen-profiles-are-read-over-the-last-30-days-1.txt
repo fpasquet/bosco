@@ -6,7 +6,8 @@
       "label": "claude",
       "watched": false,
       "liveTracking": false,
-      "managed": false
+      "managed": false,
+      "tokenFile": null
     },
     {
       "id": "<masked>",
@@ -14,7 +15,8 @@
       "label": "perso",
       "watched": true,
       "liveTracking": false,
-      "managed": false
+      "managed": false,
+      "tokenFile": null
     }
   ]
 }

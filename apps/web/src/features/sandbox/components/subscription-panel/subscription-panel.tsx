@@ -15,9 +15,21 @@ export interface SubscriptionPanelProps {
   subscription: SubscriptionDto;
 }
 
-/** Profil de l'abonnement : son nom et son compte (« profil ~/.claude · camille@exemple.dev »). */
-function profileName({ account, label }: { account: null | string; label: null | string }): string {
-  return [label ? `profil ${label}` : null, account].filter(Boolean).join(' · ');
+/**
+ * Profil de l'abonnement : son nom et son compte (« profil ~/.claude · camille@exemple.dev »), ou « jeton longue durée »
+ * pour un profil à jeton dont l'adresse n'est pas connue.
+ */
+function profileName({
+  access,
+  account,
+  label,
+}: {
+  access: 'login' | 'token' | null;
+  account: null | string;
+  label: null | string;
+}): string {
+  const who = account ?? (access === 'token' ? 'jeton longue durée' : null);
+  return [label ? `profil ${label}` : null, who].filter(Boolean).join(' · ');
 }
 
 /**
@@ -43,8 +55,8 @@ export function SubscriptionPanel({ busy, error, onChange, profileHref = null, s
           </h2>
           <p className="text-muted">
             {subscription.available
-              ? 'Proposé à chaque nouvelle session ; tu peux en choisir un autre au démarrage. Un bac à sable en reçoit une copie de l’accès.'
-              : 'Aucun accès à l’abonnement : connecte-toi dans un profil surveillé, puis choisis-le ici.'}
+              ? 'Proposé à chaque nouvelle session ; tu peux en choisir un autre au démarrage. Un bac à sable reçoit son accès : une copie de la connexion, ou le jeton longue durée au lancement de chaque tour.'
+              : 'Aucun accès à l’abonnement : connecte-toi avec /login dans un profil surveillé, ou déclare son jeton longue durée dans ses réglages, puis choisis-le ici.'}
           </p>
           {subscription.available && profileHref && (
             <p className="mt-1 text-muted">

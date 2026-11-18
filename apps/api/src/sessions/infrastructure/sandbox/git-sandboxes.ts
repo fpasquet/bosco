@@ -8,6 +8,7 @@ import { existsSync } from 'node:fs';
 import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { basename, join } from 'node:path';
 import { promisify } from 'node:util';
+import type { SandboxAccess } from '../../../shared/domain/profile-access.ts';
 import type { Sandboxes, SandboxState, TurnLaunch } from '../../application/pilot.service.ts';
 import { SandboxError, sandboxKeyOf } from '../../domain/sandbox.ts';
 
@@ -36,7 +37,8 @@ export interface SandboxContainers {
     projects: readonly string[];
     workdir: string;
   }): Promise<void>;
-  exec(key: string): TurnLaunch;
+  /** env : noms des variables du tour transmises au conteneur, leur valeur venant de l'environnement de la commande */
+  exec(key: string, env?: readonly string[]): TurnLaunch;
   remove(key: string): Promise<void>;
   state(key: string): Promise<SandboxState>;
   stop(key: string): Promise<void>;
@@ -49,8 +51,11 @@ export class GitSandboxes implements Sandboxes {
   constructor(
     private readonly root: string,
     private readonly containers: SandboxContainers,
-    /** Accès à l'abonnement Claude d'un profil, copié dans le dossier personnel de l'agent */
-    private readonly credentialsOf: (profile: string) => Promise<string>,
+    /**
+     * Accès à l'abonnement Claude d'un profil : sa connexion, copiée dans le dossier personnel de l'agent, ou le fichier
+     * de son jeton longue durée, qui n'est jamais copié (le tour le passe par son environnement)
+     */
+    private readonly accessOf: (profile: string) => Promise<SandboxAccess>,
   ) {
     this.profile = join(root, 'profile');
   }
@@ -117,9 +122,10 @@ export class GitSandboxes implements Sandboxes {
       copies.push({ base: await git(repo, 'rev-parse', 'HEAD'), from });
     }
     const principal = input.projects[0]?.root ?? '';
-    // L'accès à l'abonnement, et rien d'autre du profil : ni serveurs, ni connecteurs, ni réglages
-    const credentials = await this.credentialsOf(input.profile);
-    await cp(credentials, join(dir, 'home', '.claude', '.credentials.json'));
+    // L'accès à l'abonnement, et rien d'autre du profil : ni serveurs, ni connecteurs, ni réglages. Un jeton longue durée
+    // n'est pas copié : chaque tour le reçoit par son environnement
+    const access = await this.accessOf(input.profile);
+    if (access.kind === 'login') await cp(access.credentials, join(dir, 'home', '.claude', '.credentials.json'));
     await writeFile(join(dir, 'home', '.claude', 'settings.json'), JSON.stringify({ autoUpdates: false }));
     // Les points de montage existent avant le conteneur : sinon Docker les crée en root, et la suppression échoue
     const project = projectDir(principal);
@@ -128,7 +134,7 @@ export class GitSandboxes implements Sandboxes {
     return copies;
   }
 
-  async ensure(sessionId: string, projectRoots: readonly string[]): Promise<TurnLaunch> {
+  async ensure(sessionId: string, projectRoots: readonly string[], env: readonly string[] = []): Promise<TurnLaunch> {
     const dir = this.dirOf(sessionId);
     // Sans ses copies, le conteneur monterait des dossiers vides que Docker créerait en root : la session ne se reprend
     // plus
@@ -151,7 +157,7 @@ export class GitSandboxes implements Sandboxes {
         { from: join(this.profile, 'projects', project), to: `/home/agent/.claude/projects/${project}` },
       ],
     });
-    return this.containers.exec(key);
+    return this.containers.exec(key, env);
   }
 
   state(sessionId: string): Promise<SandboxState> {

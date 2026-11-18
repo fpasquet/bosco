@@ -30,6 +30,8 @@ export interface ProfileFinder {
   findCandidates(): Promise<ProfileCandidate[]>;
   /** Aperçu d'un dossier choisi à la main ; null s'il n'est pas un dossier de configuration de Claude Code */
   inspect(path: string): Promise<null | ProfileCandidate>;
+  /** Pourquoi un fichier ne peut pas servir de jeton longue durée (absent, illisible, vide) ; null s'il le peut */
+  tokenFileProblem(path: string): Promise<null | string>;
 }
 
 /** Lit les transcripts d'un profil depuis une date, puis suit leurs ajouts, sans jamais les modifier. */

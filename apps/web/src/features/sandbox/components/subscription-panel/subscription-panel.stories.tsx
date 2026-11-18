@@ -23,7 +23,38 @@ export const Defaults: Story = {};
 
 export const WithoutAccess: Story = {
   args: {
-    subscription: { account: null, available: false, choices: [], label: null, profile: null },
+    subscription: {
+      access: null,
+      account: null,
+      available: false,
+      choices: [],
+      label: null,
+      profile: null,
+      unavailable: [],
+    },
+  },
+};
+
+/** Abonnement par défaut sur un profil à jeton longue durée, sans adresse connue. */
+export const LongLivedToken: Story = {
+  args: {
+    subscription: {
+      access: 'token',
+      account: null,
+      available: true,
+      choices: [
+        {
+          access: 'token',
+          account: null,
+          label: '~/.claude-ultra',
+          path: '/home/camille/.claude-ultra',
+          tokenFile: '/home/camille/.secrets/claude-ultra.token',
+        },
+      ],
+      label: '~/.claude-ultra',
+      profile: '/home/camille/.claude-ultra',
+      unavailable: [],
+    },
   },
 };
 
