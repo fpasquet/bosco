@@ -74,7 +74,7 @@ jobs:
         env:
           # La page Télécharger lit les releases au build ; le jeton évite la limite des appels anonymes à l'API
           GITHUB_TOKEN: ${{ github.token }}
-          # Facultative : https://bosco.pages.dev par défaut ; à régler pour un domaine rattaché ou un nom suffixé
+          # Facultative : https://bosco-c5q.pages.dev par défaut (le nom bosco était pris, Cloudflare l'a suffixé) ; à régler pour un domaine rattaché
           NEXT_PUBLIC_SITE_URL: ${{ vars.NEXT_PUBLIC_SITE_URL }}
       # Le projet Pages se crée au premier passage ; ensuite, Cloudflare répond qu'il existe déjà
       - name: Create the Cloudflare Pages project

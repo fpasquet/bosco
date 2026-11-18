@@ -4,6 +4,7 @@ Poste de pilotage local des sessions Claude Code : Bosco découvre les sessions 
 
 - Specs UI et cahier des charges : dépôt de specs `fpasquet/specs`, dossier `bosco/` (artifacts : [specs UI](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1), [cahier des charges](https://claude.ai/artifact/8ze73zWxiHUVDx99xfQqC4)).
 - Exigences de développement exportées : [`docs/requirements/`](docs/requirements/README.md).
+- Site de documentation : [bosco-c5q.pages.dev](https://bosco-c5q.pages.dev).
 - Instructions des agents : [`AGENTS.md`](AGENTS.md).
 
 ## Démarrer
@@ -77,7 +78,7 @@ make desktop-release  # .deb, AppImage et fichiers de mise à jour, à la versio
 
 ## Documentation
 
-Le site de documentation (`apps/docs`, Fumadocs) est un export statique publié sur Cloudflare Pages par le workflow « Docs » (`.github/workflows/docs.yml`) : à chaque push sur `main` qui touche le site, après chaque exécution réussie du workflow « Release » (la page Télécharger lit les releases GitHub au build et donne ainsi la nouvelle version), et à la main depuis l'onglet Actions. Sans domaine, il est servi sur `https://bosco.pages.dev`.
+Le site de documentation (`apps/docs`, Fumadocs) est un export statique publié sur Cloudflare Pages par le workflow « Docs » (`.github/workflows/docs.yml`) : à chaque push sur `main` qui touche le site, après chaque exécution réussie du workflow « Release » (la page Télécharger lit les releases GitHub au build et donne ainsi la nouvelle version), et à la main depuis l'onglet Actions. Sans domaine, il est servi sur [bosco-c5q.pages.dev](https://bosco-c5q.pages.dev) : le nom `bosco` étant déjà pris, Cloudflare a suffixé l'adresse du projet.
 
 Mise en place, une seule fois :
 
@@ -92,7 +93,7 @@ Mise en place, une seule fois :
 
 4. Lance **Actions › Docs › Run workflow**. Le premier passage crée le projet Pages `bosco` (branche de production `main`), les suivants le réutilisent. Sans les secrets, le workflow s'arrête sur un avertissement, sans échec.
 
-Si le nom `bosco` est déjà pris sur Cloudflare, le projet reçoit un suffixe (`bosco-xyz.pages.dev`, l'adresse est dans le résumé du déploiement) : règle alors la variable du dépôt `NEXT_PUBLIC_SITE_URL` sur cette adresse (`gh variable set NEXT_PUBLIC_SITE_URL --repo fpasquet/bosco --body https://…`). Pour un domaine plus tard : **Workers & Pages › bosco › Custom domains**, puis la même variable. Le nom du projet est `CLOUDFLARE_PAGES_PROJECT` dans `docs.yml` (et `DOCS_PROJECT` du Makefile). `make docs-deploy` publie depuis le poste, après `wrangler login`.
+L'adresse du site est la valeur par défaut de `SITE_URL` (`apps/docs/src/lib/constants.ts`). Pour un domaine plus tard : **Workers & Pages › bosco › Custom domains**, puis la variable du dépôt `NEXT_PUBLIC_SITE_URL` sur cette adresse (`gh variable set NEXT_PUBLIC_SITE_URL --repo fpasquet/bosco --body https://…`). Le nom du projet est `CLOUDFLARE_PAGES_PROJECT` dans `docs.yml` (et `DOCS_PROJECT` du Makefile). `make docs-deploy` publie depuis le poste, après `wrangler login`.
 
 ## Commandes
 
