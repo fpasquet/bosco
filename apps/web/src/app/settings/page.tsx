@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 
-/** Réglages : les notifications, premier onglet. */
+/** Réglages : l'onglet Sources d'abord. */
 export default function SettingsPage() {
-  redirect('/settings/notifications');
+  redirect('/settings/sources');
 }

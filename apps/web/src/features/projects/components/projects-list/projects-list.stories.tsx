@@ -16,6 +16,7 @@ const meta = {
     onAddToGroup: fn(),
     onIgnore: fn(),
     onNewGroup: fn(),
+    onOpen: fn(),
     onRestore: fn(),
   },
 } satisfies Meta<typeof ProjectsList>;

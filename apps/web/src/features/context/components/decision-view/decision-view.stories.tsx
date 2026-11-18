@@ -11,7 +11,7 @@ const meta = {
     detail: { decision: STORY_PROPOSED, replacedBy: null, specifiedBy: [] },
     now: new Date('2026-11-06T15:30:00'),
     targetLabel: 'api-voix',
-    parent: { href: '/context?project=api-voix', label: 'Contexte › api-voix' },
+    decisionsHref: '/projects/3/context/decisions',
     busy: false,
     onAccept: fn(),
     onRefuse: fn(),

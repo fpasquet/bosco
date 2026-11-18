@@ -215,7 +215,7 @@ export class PilotService {
     private readonly repository: PilotRepository,
     private readonly runner: TurnRunner,
     private readonly signals: Signals,
-    private readonly sessions: Pick<SessionService, 'knownProjects' | 'viewOf'>,
+    private readonly sessions: Pick<SessionService, 'knownProjects' | 'rememberPlace' | 'viewOf'>,
     private readonly sessionRepository: Pick<SessionRepository, 'find'>,
     private readonly sources: Pick<SourceRepository, 'list'>,
     private readonly registry: Pick<SessionRegistry, 'isOpen'>,
@@ -291,7 +291,16 @@ export class PilotService {
   /** Formulaire d'une nouvelle session (E16a) : projets connus, abonnements et celui par défaut. */
   async options(): Promise<{
     profiles: { account: null | string; label: string; path: string }[];
-    projects: { branch: null | string; defaultProfile: null | string; git: boolean; name: string; root: string }[];
+    projects: {
+      branch: null | string;
+      defaultProfile: null | string;
+      git: boolean;
+      id: number;
+      name: string;
+      place: 'sandbox' | 'workstation' | null;
+      root: string;
+      startBranch: null | string;
+    }[];
     sandboxUnavailable: null | string;
   }> {
     const sources = await this.sources.list();
@@ -301,9 +310,9 @@ export class PilotService {
     const profiles = choices.filter(({ path }) => watched.has(path));
     const defaultProfile = effective && watched.has(effective) ? effective : null;
     const projects = [];
-    for (const { git, name, root } of known) {
+    for (const { git, id, name, place, root, startBranch } of known) {
       const branch = this.sandbox && git ? await this.sandbox.sandboxes.currentBranch(root).catch(() => null) : null;
-      projects.push({ branch, defaultProfile, git, name, root });
+      projects.push({ branch, defaultProfile, git, id, name, place, root, startBranch });
     }
     const sandboxUnavailable = this.sandbox
       ? await this.sandbox.sandboxes.unavailable()
@@ -350,6 +359,7 @@ export class PilotService {
         };
     record.settings = input.settings;
     await this.keep(record);
+    await this.sessions.rememberPlace(project.root, input.sandbox ? 'sandbox' : 'workstation');
     await this.run(record, message, false);
     return record.sessionId;
   }

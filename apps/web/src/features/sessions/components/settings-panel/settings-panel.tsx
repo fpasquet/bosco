@@ -1,8 +1,5 @@
 'use client';
-import { ArrowRight } from 'lucide-react';
-import Link from 'next/link';
 import type { SettingsDto } from '../../api/settings';
-import { PhoneAccess } from '../phone-access';
 
 /** Pas proposés pour le seuil d'inactivité : de 5 à 60 minutes (CA-SESS-59). */
 const THRESHOLDS = [5, 10, 15, 20, 30, 45, 60];
@@ -25,7 +22,10 @@ function Row({ children, hint, label }: { children: React.ReactNode; hint: strin
   );
 }
 
-/** Réglages des sources (E4a) : seuil d'inactivité, notification du bureau, conservation de l'historique. */
+/**
+ * Réglages des sources : seuil d'inactivité et conservation de l'historique. L'accès du téléphone et les
+ * notifications ont leur onglet.
+ */
 export function SettingsPanel({ busy, onChange, settings }: SettingsPanelProps) {
   return (
     <section aria-labelledby="settings-title" className="rounded-card border border-line bg-surface shadow-card">
@@ -48,16 +48,6 @@ export function SettingsPanel({ busy, onChange, settings }: SettingsPanelProps) 
             ))}
           </select>
         </Row>
-        <Row label="Notifications" hint="Questions qui t’attendent, sessions finies, longs tours.">
-          <Link
-            href="/settings/notifications"
-            className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
-          >
-            Régler<span className="sr-only"> les notifications</span>
-            <ArrowRight aria-hidden className="size-4" />
-          </Link>
-        </Row>
-        <PhoneAccess />
         <Row
           label="Historique conservé"
           hint="Bosco garde sa propre copie des sessions, même quand Claude Code efface les siennes après 30 jours."

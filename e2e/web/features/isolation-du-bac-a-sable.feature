@@ -11,12 +11,13 @@ Fonctionnalité: Isolation du bac à sable
   @CA-CONT-41
   @CA-CONT-43
   @CA-CONT-44
+  @CA-REGL-08
   @NF-18
   Scénario: Les limites d'un bac à sable, et un domaine qui s'ajoute par son nom puis se retire d'un clic
     Quand j'ouvre la page « /settings »
-    Et je clique sur le lien « Isolation du bac à sable »
-    Alors je suis sur la page « /settings/isolation »
-    Et je vois le titre « Isolation du bac à sable »
+    Et je clique sur le lien « Bac à sable »
+    Alors je suis sur la page « /settings/sandbox »
+    Et le fil d’Ariane est « Réglages › Bac à sable »
     Et je vois le texte « sans droits d’administration »
     Et je vois le texte « Le filtrage se fait par nom de domaine : un domaine autorisé reste une sortie possible. »
     Et la page est accessible
@@ -32,10 +33,11 @@ Fonctionnalité: Isolation du bac à sable
 
   @mobile
   @CA-CONT-42
+  @CA-REGL-11
   @NF-18
-  Scénario: Sur le téléphone, l'isolation se lit depuis les sources, sans rien modifier
-    Quand j'ouvre la page « /sources »
-    Et je clique sur le lien « Isolation du bac à sable »
+  Scénario: Sur le téléphone, l'isolation se lit depuis les réglages, sans rien modifier
+    Quand j'ouvre la page « /settings/sources »
+    Et je clique sur le lien « Bac à sable »
     Alors je vois le texte « Modifiable depuis le poste. Ces réglages sont réservés à toi. »
     Et je vois le texte « api.anthropic.com »
     Et la page est accessible

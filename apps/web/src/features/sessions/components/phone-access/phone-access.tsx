@@ -22,8 +22,8 @@ import { PairingDialog } from '../pairing-dialog';
 const WAITING_REFRESH_MS = 2000;
 
 /**
- * Accès depuis le téléphone (E4a, E4c) : désactivé par défaut ; l'activer ouvre l'appairage par code, et un téléphone
- * appairé se retire d'un clic (CA-SESS-60, CA-SESS-68, CA-SESS-69).
+ * Accès depuis le téléphone : désactivé par défaut ; l'activer ouvre l'appairage par code, « Appairer un
+ * téléphone » en ouvre un autre, et un téléphone appairé se retire d'un clic.
  */
 export function PhoneAccess() {
   const now = useNow();
@@ -69,10 +69,23 @@ export function PhoneAccess() {
     );
   // Réservé au poste : depuis le téléphone, la carte n'apparaît pas
   if (!access) return null;
+  const pair = () => {
+    known.current = new Set((devices ?? []).map((device) => device.id));
+    newCode.mutate();
+  };
   return (
     <div className="flex flex-col gap-3 px-4 py-3">
       <div className="flex flex-wrap items-center gap-4">
-        {/* Dans une fenêtre étroite, les boutons passent à la ligne plutôt que d'écraser le texte */}
+        <input
+          type="checkbox"
+          role="switch"
+          aria-label="Accès depuis le téléphone"
+          className="toggle toggle-primary"
+          checked={access.enabled}
+          disabled={enable.isPending || disable.isPending}
+          onChange={(event) => (event.target.checked ? enable.mutate() : disable.mutate())}
+        />
+        {/* Dans une fenêtre étroite, le bouton passe à la ligne plutôt que d'écraser le texte */}
         <div className="min-w-0 flex-1 basis-60">
           <p className="font-medium">Accès depuis le téléphone</p>
           <p className="text-xs text-muted">
@@ -82,42 +95,35 @@ export function PhoneAccess() {
           </p>
         </div>
         {access.enabled && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-muted"
-            disabled={disable.isPending}
-            onClick={() => disable.mutate()}
-          >
-            Désactiver
+          <Button variant="outline" size="sm" disabled={newCode.isPending} onClick={pair}>
+            Appairer un téléphone
           </Button>
         )}
-        <Button
-          variant={access.enabled ? 'outline' : 'primary'}
-          size="sm"
-          disabled={enable.isPending}
-          onClick={() => enable.mutate()}
-        >
-          {access.enabled ? 'Appairer un téléphone' : 'Activer et appairer un téléphone'}
-        </Button>
       </div>
-      {devices && devices.length > 0 && (
-        <ul
-          aria-label="Téléphones appairés"
-          className="flex flex-col divide-y divide-line rounded-control border border-line"
-        >
-          {devices.map((device) => (
-            <li key={device.id} className="flex items-center gap-3 px-3 py-2">
-              <Smartphone aria-hidden className="size-4 shrink-0 text-muted" />
-              <span className="min-w-0 flex-1 truncate">{device.name}</span>
-              <span className="text-xs text-muted">appairé {sinceNow(new Date(device.pairedAt), now)}</span>
-              <Button variant="ghost" size="sm" onClick={() => revoke.mutate(device.id)}>
-                Retirer
-              </Button>
-            </li>
-          ))}
-        </ul>
-      )}
+      <section aria-labelledby="paired-phones" className="flex flex-col gap-1.5">
+        <h3 id="paired-phones" className="text-xs font-semibold text-muted">
+          Téléphones appairés
+        </h3>
+        {devices && devices.length > 0 ? (
+          <ul
+            aria-labelledby="paired-phones"
+            className="flex flex-col divide-y divide-line rounded-control border border-line"
+          >
+            {devices.map((device) => (
+              <li key={device.id} className="flex items-center gap-3 px-3 py-2">
+                <Smartphone aria-hidden className="size-4 shrink-0 text-muted" />
+                <span className="min-w-0 flex-1 truncate">{device.name}</span>
+                <span className="text-xs text-muted">appairé {sinceNow(new Date(device.pairedAt), now)}</span>
+                <Button variant="ghost" size="sm" onClick={() => revoke.mutate(device.id)}>
+                  Retirer
+                </Button>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-muted">Aucun téléphone appairé.</p>
+        )}
+      </section>
       <PairingDialog
         open={code !== null}
         code={code}

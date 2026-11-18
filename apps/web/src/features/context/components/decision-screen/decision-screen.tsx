@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import type { DecisionDto, DecisionTextDto } from '@bosco/domain';
 import { PageSkeleton } from '@/shared/components/page-skeleton';
+import { Breadcrumbs } from '@/shared/ui/breadcrumbs';
 import {
   abandonDecision,
   acceptDecision,
@@ -17,23 +18,23 @@ import {
 import { DecisionForm, type DecisionFormValues } from '../decision-form';
 import { DecisionView } from '../decision-view';
 
-/** Retour au contexte du projet de la décision. */
-function parentOf(project: null | string) {
-  if (project === null) return { href: '/context', label: 'Contexte' };
-  return { href: `/context?project=${encodeURIComponent(project)}`, label: `Contexte › ${project}` };
+/** Onglet Contexte de la page d'un projet, et ses décisions. */
+function placeOf(projectId: number) {
+  const context = `/projects/${projectId}/context`;
+  return { context, decisions: `${context}/decisions` };
 }
 
-/** Une décision, tenue à jour après chaque action. */
-export function DecisionScreen({ id }: { id: number }) {
+/** Une décision, tenue à jour après chaque action ; sa place est sous le contexte de son projet. */
+export function DecisionScreen({ id, projectId }: { id: number; projectId: number }) {
   const router = useRouter();
   const client = useQueryClient();
   const { data } = useQuery(decisionQuery(id));
   const project = data?.decision.target.name ?? null;
-  const parent = parentOf(project);
+  const place = placeOf(projectId);
   const done = async (decision: DecisionDto) => {
     await client.invalidateQueries();
     // Acceptée ou refusée : retour au contexte du projet, où le bandeau disparaît
-    if (decision.state === 'accepted' || decision.state === 'refused') router.push(parent.href);
+    if (decision.state === 'accepted' || decision.state === 'refused') router.push(place.context);
   };
   const accept = useMutation({
     mutationFn: (edited: DecisionTextDto | null) => acceptDecision(id, edited),
@@ -48,7 +49,7 @@ export function DecisionScreen({ id }: { id: number }) {
         detail={data}
         now={new Date()}
         targetLabel={project ?? ''}
-        parent={parent}
+        decisionsHref={place.decisions}
         busy={accept.isPending || refuse.isPending || abandon.isPending}
         onAccept={(edited) => accept.mutate(edited)}
         onRefuse={(reason) => refuse.mutate(reason)}
@@ -58,18 +59,20 @@ export function DecisionScreen({ id }: { id: number }) {
   );
 }
 
-/** Nouvelle décision d'un projet ; elle peut en remplacer une autre. */
-export function NewDecisionScreen({ project, replaces }: { project: string; replaces: null | number }) {
+/** Nouvelle décision d'un projet, sous l'onglet Contexte de sa page ; elle peut en remplacer une autre. */
+export function NewDecisionScreen({ projectId, replaces }: { projectId: number; replaces: null | number }) {
   const router = useRouter();
   const client = useQueryClient();
-  const parent = parentOf(project);
+  const place = placeOf(projectId);
   const { data: replaced } = useQuery({ ...decisionQuery(replaces ?? 0), enabled: replaces !== null });
   // Une décision se porte sur n'importe quel projet connu, même sans décision encore
   const { data: known } = useQuery(projectsQuery);
+  const project = known?.find(({ id }) => id === projectId)?.name ?? '';
   const retarget = (name: string) => {
-    const query = new URLSearchParams({ project: name });
-    if (replaces !== null) query.set('replaces', String(replaces));
-    router.replace(`/context/decisions/new?${query.toString()}`);
+    const target = known?.find((candidate) => candidate.name === name);
+    if (!target) return;
+    const query = replaces === null ? '' : `?replaces=${replaces}`;
+    router.replace(`${placeOf(target.id).decisions}/new${query}`);
   };
   const [error, setError] = useState<null | string>(null);
   const write = useMutation({
@@ -77,7 +80,7 @@ export function NewDecisionScreen({ project, replaces }: { project: string; repl
       writeDecision({ target: { kind: 'project', name: project }, text, accept, replaces }),
     onSuccess: async () => {
       await client.invalidateQueries();
-      router.push(parent.href);
+      router.push(place.context);
     },
     onError: (failure) =>
       setError(failure instanceof ContextRefused ? failure.message : 'La décision n’a pas pu être enregistrée.'),
@@ -85,14 +88,20 @@ export function NewDecisionScreen({ project, replaces }: { project: string; repl
   return (
     <div className="flex flex-col gap-4 p-4 md:px-8 md:pt-6">
       <div>
-        <p className="text-xs text-muted">{parent.label}</p>
+        <Breadcrumbs
+          items={[
+            { href: '/projects', label: 'Projets' },
+            { href: place.context, label: project || 'Projet' },
+            { label: replaces ? `Remplacer DEC-${replaces}` : 'Nouvelle décision' },
+          ]}
+        />
         <h1 className="mt-1 font-display text-2xl font-semibold tracking-tight">
           {replaces ? `Remplacer DEC-${replaces}` : 'Nouvelle décision'}
         </h1>
       </div>
       <p className="text-muted md:hidden">Une décision s’écrit depuis le poste.</p>
       <div className="hidden max-w-3xl md:block">
-        {(replaces === null || replaced) && (
+        {(replaces === null || replaced) && project && (
           <DecisionForm
             mode="new"
             initial={replaced?.decision.versions.at(-1) ?? null}
@@ -112,16 +121,17 @@ export function NewDecisionScreen({ project, replaces }: { project: string; repl
 }
 
 /** Nouvelle version d'une décision acceptée, avec sa note obligatoire. */
-export function EditDecisionScreen({ id }: { id: number }) {
+export function EditDecisionScreen({ id, projectId }: { id: number; projectId: number }) {
   const router = useRouter();
   const client = useQueryClient();
+  const place = placeOf(projectId);
   const { data } = useQuery(decisionQuery(id));
   const [error, setError] = useState<null | string>(null);
   const edit = useMutation({
     mutationFn: ({ note, text }: DecisionFormValues) => editDecision(id, text, note),
     onSuccess: async () => {
       await client.invalidateQueries();
-      router.push(`/context/decisions/${id}`);
+      router.push(`${place.decisions}/${id}`);
     },
     onError: (failure) =>
       setError(failure instanceof ContextRefused ? failure.message : 'La version n’a pas pu être enregistrée.'),
@@ -129,7 +139,17 @@ export function EditDecisionScreen({ id }: { id: number }) {
   if (!data) return <PageSkeleton variant="form" rows={3} />;
   return (
     <div className="flex flex-col gap-4 p-4 md:px-8 md:pt-6">
-      <h1 className="font-display text-2xl font-semibold tracking-tight">Modifier DEC-{id}</h1>
+      <div>
+        <Breadcrumbs
+          items={[
+            { href: '/projects', label: 'Projets' },
+            { href: place.context, label: data.decision.target.name },
+            { href: `${place.decisions}/${id}`, label: `DEC-${id}` },
+            { label: 'Modifier' },
+          ]}
+        />
+        <h1 className="mt-1 font-display text-2xl font-semibold tracking-tight">Modifier DEC-{id}</h1>
+      </div>
       <p className="text-muted md:hidden">Une décision se modifie depuis le poste.</p>
       <div className="hidden max-w-3xl md:block">
         <DecisionForm

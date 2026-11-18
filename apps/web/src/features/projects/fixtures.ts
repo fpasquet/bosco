@@ -17,6 +17,8 @@ export const projectsOverview: ProjectsDto = {
       name: 'sejours',
       path: `${HOME}/www/sejours`,
       pinned: false,
+      place: null,
+      startBranch: null,
       sessions: 6,
     },
     {
@@ -26,6 +28,8 @@ export const projectsOverview: ProjectsDto = {
       name: 'api-tarifs',
       path: `${HOME}/www/api-tarifs`,
       pinned: false,
+      place: null,
+      startBranch: null,
       sessions: 4,
     },
     {
@@ -35,6 +39,8 @@ export const projectsOverview: ProjectsDto = {
       name: 'creneaux',
       path: `${HOME}/www/creneaux`,
       pinned: false,
+      place: null,
+      startBranch: null,
       sessions: 9,
     },
     {
@@ -44,6 +50,8 @@ export const projectsOverview: ProjectsDto = {
       name: 'site-clubs',
       path: `${HOME}/www/site-clubs`,
       pinned: false,
+      place: null,
+      startBranch: null,
       sessions: 2,
     },
     {
@@ -53,6 +61,8 @@ export const projectsOverview: ProjectsDto = {
       name: 'notes-clubs',
       path: `${HOME}/Documents/notes-clubs`,
       pinned: false,
+      place: null,
+      startBranch: null,
       sessions: 1,
     },
   ],

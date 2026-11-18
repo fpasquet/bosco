@@ -1,5 +1,6 @@
 'use client';
 import { ChevronDown, Folder, FolderGit2, FolderOpen } from 'lucide-react';
+import Link from 'next/link';
 import { useId, useState } from 'react';
 import type { FolderSuggestionDto, GroupDto, ProjectDto, ProjectsDto } from '@bosco/domain';
 import { displayPath, sinceNow } from '@/lib/format';
@@ -17,6 +18,8 @@ export interface ProjectsListProps {
   onAddToGroup: (project: ProjectDto, group: GroupDto) => void;
   onIgnore: (path: string) => void;
   onNewGroup: (project: ProjectDto) => void;
+  /** Sur le téléphone, toucher un projet ouvre la feuille de ses actions */
+  onOpen: (project: ProjectDto) => void;
   onRestore: (path: string) => void;
 }
 
@@ -64,6 +67,7 @@ export function ProjectsList({
   onAddToGroup,
   onIgnore,
   onNewGroup,
+  onOpen,
   onRestore,
 }: ProjectsListProps) {
   const [showIgnored, setShowIgnored] = useState(false);
@@ -87,7 +91,13 @@ export function ProjectsList({
                 <Icon aria-hidden className="size-4 shrink-0 text-muted" />
                 <div className="min-w-0 flex-1">
                   <p className="flex items-center gap-2 font-medium">
-                    {project.name}
+                    {/* Un clic ouvre la page du projet ; sur le téléphone, la feuille de ses actions */}
+                    <Link href={`/projects/${project.id}/sessions`} className="link-hover max-md:hidden">
+                      {project.name}
+                    </Link>
+                    <button type="button" className="text-left md:hidden" onClick={() => onOpen(project)}>
+                      {project.name}
+                    </button>
                     {!project.git && <span className="badge badge-outline badge-sm">sans git</span>}
                   </p>
                   <p className="truncate text-xs text-muted">

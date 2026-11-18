@@ -1,12 +1,12 @@
 'use client';
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ChevronRight } from 'lucide-react';
-import Link from 'next/link';
 import { useState, useSyncExternalStore } from 'react';
 import { PageSkeleton } from '@/shared/components/page-skeleton';
 import { postToAndroidApp, useAndroidApp } from '@/shared/hooks/use-android-app';
 import { useNotices } from '@/shared/hooks/use-notices';
 import { useNow } from '@/shared/hooks/use-now';
+import { SettingsHeader } from '@/shared/layouts/settings-tabs';
 import { APP_NAME, type SourceDto } from '@bosco/domain';
 import { channelProfilesQuery, installChannel, uninstallChannel } from '../../api/channel';
 import { installLiveTracking, liveTrackingQuery, uninstallLiveTracking } from '../../api/live-tracking';
@@ -26,8 +26,11 @@ const noSubscription = () => () => undefined;
 const STATUS_REFRESH_MS = 5000;
 const CHECK_REFRESH_MS = 1500;
 
-/** Sources (E4a) : les profils surveillés, leur suivi en direct, et l'installation pas à pas (E4b). */
-export function SourcesScreen({ title }: { title: string }) {
+/**
+ * Réglages › Sources : les profils surveillés, leur suivi en direct et l'installation pas à pas, le canal
+ * de Bosco et le seuil d'inactivité. Sur le téléphone, c'est la racine des Réglages.
+ */
+export function SourcesScreen() {
   const now = useNow(STATUS_REFRESH_MS);
   const client = useQueryClient();
   const push = useNotices((state) => state.push);
@@ -105,12 +108,10 @@ export function SourcesScreen({ title }: { title: string }) {
   const selectedStatus = selected ? statusOf(selected.id) : undefined;
   return (
     <div className="flex flex-col gap-5 p-4 md:px-8 md:pt-6">
-      <div>
-        <p className="text-xs text-muted">Poste local · lecture seule, rien n’est modifié sans ton accord</p>
-        <h1 className="mt-1 hidden font-display text-2xl font-semibold tracking-tight md:block">{title}</h1>
-      </div>
+      <SettingsHeader current="sources" />
+      <p className="text-xs text-muted">Poste local · lecture seule, rien n’est modifié sans ton accord</p>
       <p className="rounded-card border border-line bg-surface-alt px-4 py-3 text-xs text-muted md:hidden">
-        Le suivi en direct s’installe depuis le poste : ouvre {APP_NAME} sur l’ordinateur, dans Sources, pour
+        Le suivi en direct s’installe depuis le poste : ouvre {APP_NAME} sur l’ordinateur, dans Réglages › Sources, pour
         l’installer ou le retirer.
       </p>
       <section aria-labelledby="sources-title" className="rounded-card border border-line bg-surface shadow-card">
@@ -152,33 +153,17 @@ export function SourcesScreen({ title }: { title: string }) {
           onChange={(changes) => saveSettings.mutate(changes)}
         />
       )}
-      <nav
-        aria-label="Réglages du poste"
-        className="flex flex-col divide-y divide-line rounded-card border border-line bg-surface shadow-card md:hidden"
-      >
-        {[
-          { href: '/settings/notifications', label: 'Notifications' },
-          { href: '/settings/subscription', label: 'Abonnement Claude' },
-          { href: '/settings/isolation', label: 'Isolation du bac à sable' },
-          { href: '/containers', label: 'Conteneurs en cours' },
-        ].map(({ href, label }) => (
-          <Link key={href} href={href} className="flex items-center justify-between px-4 py-3">
-            <span className="font-medium">{label}</span>
-            <ChevronRight aria-hidden className="size-4 text-muted" />
-          </Link>
-        ))}
-        {androidApp && (
-          // Réglages propres à l'application Android : poste appairé, arrière-plan (E18d)
-          <button
-            type="button"
-            className="flex items-center justify-between px-4 py-3 text-left"
-            onClick={() => postToAndroidApp({ type: 'app-settings' })}
-          >
-            <span className="font-medium">Réglages de l’application</span>
-            <ChevronRight aria-hidden className="size-4 text-muted" />
-          </button>
-        )}
-      </nav>
+      {androidApp && (
+        // Réglages propres à l'application Android : poste appairé, arrière-plan
+        <button
+          type="button"
+          className="flex items-center justify-between rounded-card border border-line bg-surface px-4 py-3 text-left shadow-card md:hidden"
+          onClick={() => postToAndroidApp({ type: 'app-settings' })}
+        >
+          <span className="font-medium">Réglages de l’application</span>
+          <ChevronRight aria-hidden className="size-4 text-muted" />
+        </button>
+      )}
       <ChannelPanel
         profile={(openPath && channelOf(openPath)) || null}
         shownPath={openPath ? displayPath(openPath, data.home) : ''}

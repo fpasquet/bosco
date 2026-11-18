@@ -1,4 +1,5 @@
 import type {
+  Branches,
   Clock,
   DiscoveryToImport,
   Folders,
@@ -6,17 +7,31 @@ import type {
   GroupRepository,
   IgnoredFolders,
   ProjectRepository,
+  RunningSessions,
   SessionFolders,
 } from './ports.ts';
 import { importDiscovered } from '../domain/discovered-import.ts';
 import { browsedFolder, crumbsOf, FolderNotFound, FolderPath, parentOf, visibleFolders } from '../domain/folder.ts';
 import { type ProjectPlace, ProjectPlacement } from '../domain/placement.ts';
-import { Project, type ProjectSnapshot, UnknownProject } from '../domain/project.ts';
+import {
+  Project,
+  type ProjectChanges,
+  ProjectHasRunningSession,
+  type ProjectPlaceChoice,
+  type ProjectSnapshot,
+  UnknownProject,
+} from '../domain/project.ts';
 import { activityOf, type Suggestion } from '../domain/suggestions.ts';
 
 export interface ProjectView extends ProjectSnapshot {
   lastSessionAt: Date | null;
   sessions: number;
+}
+
+/** Page d'un projet : sa vue, la branche courante de son dossier et ses sessions pilotées qui tournent. */
+export interface ProjectDetail extends ProjectView {
+  branch: null | string;
+  running: number;
 }
 
 /** Page des projets : les projets, les sessions hors projet et les dossiers proposés. */
@@ -38,6 +53,7 @@ export interface FolderListing {
 }
 
 const NO_SESSIONS: SessionFolders = { list: () => Promise.resolve([]) };
+const NO_RUNNING: RunningSessions = { countIn: () => Promise.resolve(0) };
 
 /**
  * Projets choisis par la personne : les dossiers qu'elle ajoute, où se rangent les sessions. Gardés en mémoire, car la
@@ -46,6 +62,7 @@ const NO_SESSIONS: SessionFolders = { list: () => Promise.resolve([]) };
 export class ProjectService {
   private projects: ProjectSnapshot[] = [];
   private placement: ProjectPlacement;
+  private running: RunningSessions = NO_RUNNING;
   private sessions: SessionFolders = NO_SESSIONS;
 
   constructor(
@@ -55,6 +72,7 @@ export class ProjectService {
     private readonly folders: Folders,
     private readonly git: GitOrigins,
     private readonly discovery: DiscoveryToImport,
+    private readonly branches: Branches,
     private readonly clock: Clock,
     /** Dossier personnel, d'où part le navigateur de dossiers */
     private readonly home: string,
@@ -67,6 +85,11 @@ export class ProjectService {
   /** Sessions déjà lues, branchées au démarrage (le contexte des sessions dépend de celui-ci). */
   useSessions(sessions: SessionFolders): void {
     this.sessions = sessions;
+  }
+
+  /** Sessions pilotées qui tournent, branchées au démarrage : elles empêchent de retirer leur projet. */
+  useRunning(running: RunningSessions): void {
+    this.running = running;
   }
 
   /** Projets lus au démarrage (et après une remise à zéro des scénarios), après la reprise des dépôts découverts. */
@@ -108,6 +131,37 @@ export class ProjectService {
     };
   }
 
+  /** Un projet, avec l'activité de ses sessions et la branche courante de son dossier. */
+  async getProject(id: number): Promise<ProjectDetail> {
+    const { projects } = await this.overview();
+    const project = projects.find((candidate) => candidate.id === id);
+    if (!project) throw new UnknownProject(id);
+    const [branch, running] = await Promise.all([
+      project.git ? this.branches.currentOf(project.path) : null,
+      this.running.countIn(id),
+    ]);
+    return { ...project, branch, running };
+  }
+
+  /** Épingle ou désépingle un projet, ou règle les valeurs par défaut de ses sessions ; vaut tout de suite. */
+  async changeProject(id: number, changes: ProjectChanges): Promise<ProjectDetail> {
+    const project = await this.loadProject(id);
+    project.change(changes);
+    await this.repository.save([project]);
+    await this.refresh();
+    return this.getProject(id);
+  }
+
+  /** « Où elle tourne » d'une session démarrée dans le projet : la suivante le reprend. */
+  async rememberPlace(root: string, place: ProjectPlaceChoice): Promise<void> {
+    const found = this.projects.find((project) => project.path === root);
+    if (!found || found.place === place) return;
+    const project = await this.loadProject(found.id);
+    project.rememberPlace(place);
+    await this.repository.save([project]);
+    await this.refresh();
+  }
+
   /** Ajoute un ou plusieurs dossiers d'un coup ; un dossier ignoré redevient proposable s'il est retiré plus tard. */
   async addProjects(paths: readonly string[]): Promise<ProjectSnapshot[]> {
     const folders = [
@@ -139,7 +193,11 @@ export class ProjectService {
    * groupes, où le suivant devient principal.
    */
   async removeProject(id: number): Promise<void> {
-    if (!this.projects.some((project) => project.id === id)) throw new UnknownProject(id);
+    const project = this.projects.find((candidate) => candidate.id === id);
+    if (!project) throw new UnknownProject(id);
+    // Une session pilotée qui tourne travaille encore dans ce dossier : on attend qu'elle s'arrête
+    const running = await this.running.countIn(id);
+    if (running > 0) throw new ProjectHasRunningSession(project.name);
     const groups = await this.groups.list();
     const touched = groups.filter((group) => group.has(id));
     for (const group of touched) group.removeProject(id);
@@ -202,6 +260,13 @@ export class ProjectService {
     await this.repository.save(added);
     for (const path of found.ignored) await this.ignoredFolders.ignore(path, this.clock.now());
     await this.discovery.settle();
+  }
+
+  private async loadProject(id: number): Promise<Project> {
+    const projects = await this.repository.list();
+    const project = projects.find((candidate) => candidate.id === id);
+    if (!project) throw new UnknownProject(id);
+    return project;
   }
 
   private async refresh(): Promise<void> {

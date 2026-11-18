@@ -1,5 +1,5 @@
 'use client';
-import { EyeOff, Plus, Search, X } from 'lucide-react';
+import { EyeOff, Plus, Search } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useRef } from 'react';
 import { cn } from '@/lib/cn';
@@ -16,8 +16,6 @@ export interface OverviewHeaderProps {
   query: string;
   /** Coût du jour, rappelé à côté du regroupement sur téléphone, sans la bande d'indicateurs */
   costToday?: string;
-  /** Projet filtré (E1c), affiché en puce que la croix retire */
-  project: null | string;
   /** Sous-titre des colonnes par état, qui n'ont pas de bande d'indicateurs (E1d) */
   summary?: string;
   title: string;
@@ -30,7 +28,7 @@ const GROUPINGS: { label: string; value: Grouping }[] = [
 
 /** En-tête de la vue d'ensemble : regroupement gardé d'une visite à l'autre, recherche (raccourci « / »), filtres. */
 export function OverviewHeader(props: OverviewHeaderProps) {
-  const { grouping, hideInactive, now, onGroupingChange, onHideInactiveChange, onQueryChange, query, project } = props;
+  const { grouping, hideInactive, now, onGroupingChange, onHideInactiveChange, onQueryChange, query } = props;
   const search = useRef<HTMLInputElement>(null);
   useEffect(() => {
     const focusSearch = (event: KeyboardEvent) => {
@@ -44,19 +42,9 @@ export function OverviewHeader(props: OverviewHeaderProps) {
   }, []);
   return (
     <div className="flex flex-wrap items-end gap-3">
-      <div className={cn('min-w-0', !project && 'hidden md:block')}>
-        <p className="hidden text-xs text-muted md:block">{props.summary ?? `Poste local · ${dayLabel(now)}`}</p>
-        <div className="mt-1 flex items-center gap-3">
-          <h1 className="hidden font-display text-2xl font-semibold tracking-tight md:block">{props.title}</h1>
-          {project && (
-            <span className="badge gap-1.5 badge-outline">
-              Projet : {project}
-              <Link href="/" aria-label={`Retirer le filtre Projet : ${project}`} className="text-muted hover:text-ink">
-                <X aria-hidden className="size-3.5" />
-              </Link>
-            </span>
-          )}
-        </div>
+      <div className="hidden min-w-0 md:block">
+        <p className="text-xs text-muted">{props.summary ?? `Poste local · ${dayLabel(now)}`}</p>
+        <h1 className="mt-1 font-display text-2xl font-semibold tracking-tight">{props.title}</h1>
       </div>
       <div className="flex w-full items-center gap-2 text-xs text-muted md:ml-auto md:w-auto">
         <span id="grouping-label">Regrouper par</span>

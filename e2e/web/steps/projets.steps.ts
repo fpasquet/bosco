@@ -24,6 +24,13 @@ Given('le groupe {texte} réunit le projet {texte}', async ({ bosco }, group: st
   await addGroup(bosco, group, [project]);
 });
 
+Given(
+  'le groupe {texte} réunit les projets {texte} et {texte}',
+  async ({ bosco }, group: string, first: string, second: string) => {
+    await addGroup(bosco, group, [first, second]);
+  },
+);
+
 Given('le groupe {texte} a l’instruction {texte}', async ({ bosco }, group: string, instruction: string) => {
   await writeGroupInstructions(bosco, group, instruction);
 });

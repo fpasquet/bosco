@@ -98,3 +98,17 @@ Feature: Piloted sessions
     When I send GET request to "/api/pilot/suggestions?kind=command&q=t&session=c41e9a07"
     Then the response property "suggestions.0.value" should equal "tdd"
     And the response property "suggestions.0.origin" should equal "skill · profil perso"
+
+  @CA-CONT-132
+  @CA-CONT-127
+  @RF-CONT-21
+  Scenario: A project is not removed while a session piloted by Bosco runs in it, and keeps where it ran
+    When I start a session in the project "labo-ia" with the JSON "fixtures/pilot/start-long.json"
+    And I write to "the started session" with the JSON "fixtures/pilot/sigles.json"
+    Then "the started session" should be running with the pending message "Pense aux sigles"
+    When I send GET request to "/api/projects/1"
+    Then the response property "running" should equal "1"
+    And the response property "place" should equal "workstation"
+    When I send DELETE request to "/api/projects/1"
+    Then the response code should be 409
+    And the response property "code" should equal "projectHasRunningSession"

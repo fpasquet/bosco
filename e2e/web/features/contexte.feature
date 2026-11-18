@@ -12,17 +12,22 @@ Fonctionnalité: Contexte des agents
 
   @CA-CONT-03
   @CA-CONT-06
+  @CA-CONT-164
+  @CA-CONT-165
   @NF-18
-  Scénario: Une décision proposée par une session attend, puis rejoint le contexte une fois acceptée
+  Scénario: Une décision proposée par une session attend dans l'onglet Contexte du projet, puis le rejoint une fois acceptée
     Étant donné une session a proposé la décision « Normaliser les sigles » dans le projet « labo-ia »
-    Quand j'ouvre la page « /context?project=labo-ia »
-    Alors je vois le texte « 1 décision proposée par un agent attend ta validation »
+    Quand j'ouvre la page « /projects/1/context »
+    Alors le fil d’Ariane est « Projets › labo-ia › Contexte »
+    Et l’entrée « labo-ia » de la barre latérale est active
+    Et je vois le texte « 1 décision proposée par un agent attend ta validation »
     Et la page est accessible
     Quand je clique sur le lien « Examiner DEC-1 »
-    Alors je vois le texte « Proposée par une session »
+    Alors le fil d’Ariane est « Projets › labo-ia › DEC-1 »
+    Et je vois le texte « Proposée par une session »
     Et la page est accessible
     Quand je clique sur le bouton « Accepter »
-    Alors je suis sur la page « /context »
+    Alors je suis sur la page « /projects/1/context »
     Et je vois le lien « DEC-1 Normaliser les sigles »
     Et je ne vois plus le texte « 1 décision proposée par un agent attend ta validation »
 
@@ -30,7 +35,7 @@ Fonctionnalité: Contexte des agents
   @CA-CONT-14
   @NF-18
   Scénario: Une nouvelle décision exige un titre, un contexte et une décision
-    Quand j'ouvre la page « /context/decisions/new?project=labo-ia »
+    Quand j'ouvre la page « /projects/1/context/decisions/new »
     Et je clique sur le bouton « Accepter la décision »
     Alors je vois le texte « Donne un titre à la décision. »
     Et la page est accessible
@@ -44,13 +49,13 @@ Fonctionnalité: Contexte des agents
   @CA-CONT-22
   Scénario: Une décision acceptée change avec une note et garde sa version précédente
     Étant donné le projet « labo-ia » a la décision acceptée « Garder Jest pour les tests »
-    Quand j'ouvre la page « /context/decisions/1/edit »
+    Quand j'ouvre la page « /projects/1/context/decisions/1/edit »
     Et je saisis « Garder Jest pour les tests existants » dans le champ « Titre »
     Et je clique sur le bouton « Enregistrer la version 2 »
     Alors je vois le texte « Écris une note pour dire ce qui change. »
     Quand je saisis « Les nouveaux tests aussi » dans le champ « Note du changement (obligatoire) »
     Et je clique sur le bouton « Enregistrer la version 2 »
-    Alors je suis sur la page « /context/decisions/1 »
+    Alors je suis sur la page « /projects/1/context/decisions/1 »
     Et je vois le texte « Les nouveaux tests aussi »
     Et je vois le texte « Version 1 »
 
@@ -63,7 +68,7 @@ Fonctionnalité: Contexte des agents
     Et le groupe « Labo » réunit le projet « labo-ia »
     Et le groupe « Labo » a l’instruction « Citer les sources de chaque réponse. »
     Et le projet « labo-ia » a la décision acceptée « Garder Jest pour les tests »
-    Quand j'ouvre la page « /context?project=labo-ia »
+    Quand j'ouvre la page « /projects/1/context »
     Alors la liste « Tous les projets » contient « Node 22 au minimum. »
     Et la liste « Labo » contient « Citer les sources de chaque réponse. »
     Et je vois le texte « elles l’emportent sur les instructions des groupes »
@@ -71,29 +76,29 @@ Fonctionnalité: Contexte des agents
     Quand je clique sur le lien « Modifier les instructions de Labo »
     Alors je suis sur la page « /groups/2/instructions »
 
-  @CA-CONT-86
-  Scénario: Le choix du projet ne propose que les projets qui ont une décision
-    Étant donné le profil Claude Code « .claude » contient le transcript « session-api-voix-fastify.jsonl » de la session « a41f07c2 »
-    Et le projet « labo-ia » a la décision acceptée « Garder Jest pour les tests »
-    Quand j'ouvre la page « /context »
-    Alors le choix « Projet » propose « labo-ia »
+  @CA-CONT-164
+  Scénario: L'ancienne adresse du contexte d'un projet mène à l'onglet Contexte de sa page
+    Quand j'ouvre la page « /context?project=labo-ia »
+    Alors je suis sur la page « /projects/1/context »
 
+  @CA-CONT-11
   @CA-CONT-87
+  @CA-CONT-102
   @NF-18
-  Scénario: Sans décision, la première s'écrit pour un projet choisi parmi les projets connus
-    Étant donné le profil Claude Code « .claude » contient le transcript « session-api-voix-fastify.jsonl » de la session « a41f07c2 »
-    Quand j'ouvre la page « /context »
-    Alors je vois le texte « Aucun projet n’a encore de décision : elles arrivent proposées par un agent, ou écrites ici. »
+  Scénario: Sans décision, la première s'écrit depuis le contexte du projet, pour un projet choisi parmi tous
+    Quand j'ouvre la page « /projects/2/context »
+    Alors je vois le texte « Aucune décision pour api-voix : elles arrivent proposées par un agent, ou écrites ici. »
     Et la page est accessible
     Quand je clique sur le lien « Nouvelle décision »
-    Et je choisis « api-voix » dans la liste « Porte sur »
     Alors la liste « Porte sur » vaut « api-voix »
-    Et la page est accessible
+    Quand je choisis « labo-ia » dans la liste « Porte sur »
+    Alors je suis sur la page « /projects/1/context/decisions/new »
+    Et la liste « Porte sur » vaut « labo-ia »
     Quand je saisis « Garder les fichiers audio 30 jours en cache » dans le champ « Titre »
     Et je saisis « Générer un même article plusieurs fois coûte cher. » dans le champ « Contexte »
     Et je saisis « Garder chaque fichier audio 30 jours. » dans le champ « Décision »
     Et je clique sur le bouton « Accepter la décision »
-    Alors la liste « Projet » vaut « api-voix »
+    Alors je suis sur la page « /projects/1/context »
     Et je vois le lien « DEC-1 Garder les fichiers audio 30 jours en cache »
 
   @mobile
@@ -101,9 +106,9 @@ Fonctionnalité: Contexte des agents
   @NF-18
   Scénario: Sur le téléphone, une décision proposée s'accepte, une décision acceptée se lit seulement
     Étant donné une session a proposé la décision « Normaliser les sigles » dans le projet « labo-ia »
-    Quand j'ouvre la page « /context/decisions/1 »
+    Quand j'ouvre la page « /projects/1/context/decisions/1 »
     Et je clique sur le bouton « Accepter »
-    Alors je suis sur la page « /context »
-    Quand j'ouvre la page « /context/decisions/1 »
+    Alors je suis sur la page « /projects/1/context »
+    Quand j'ouvre la page « /projects/1/context/decisions/1 »
     Alors je vois le texte « Modifier, remplacer ou abandonner une décision se fait depuis le poste. »
     Et la page est accessible

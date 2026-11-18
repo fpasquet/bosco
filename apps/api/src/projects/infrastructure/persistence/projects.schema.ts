@@ -7,6 +7,8 @@ export interface ProjectRow {
   name: string;
   path: string;
   pinned: boolean;
+  place: null | string;
+  startBranch: null | string;
 }
 
 /** Dossiers ajoutés comme projets. */
@@ -19,6 +21,8 @@ export const ProjectSchema = new EntitySchema<ProjectRow>({
     name: { type: 'string', unique: true },
     git: { type: 'boolean' },
     pinned: { type: 'boolean', default: false },
+    place: { type: 'string', nullable: true },
+    startBranch: { type: 'string', nullable: true, fieldName: 'start_branch' },
     addedAt: { type: 'datetime', fieldName: 'added_at' },
   },
 });

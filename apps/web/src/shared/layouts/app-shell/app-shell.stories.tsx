@@ -5,6 +5,7 @@ const meta = {
   title: 'Layouts/AppShell',
   component: AppShell,
   args: {
+    place: { kind: 'overview' },
     title: 'Vue d’ensemble',
     children: <div className="px-8 pt-6 font-display text-2xl font-semibold">Vue d’ensemble</div>,
   },
@@ -17,3 +18,12 @@ type Story = StoryObj<typeof meta>;
 export const Desktop: Story = {};
 
 export const Mobile: Story = { globals: { viewport: { value: 'mobile1' } } };
+
+/** Les réglages : « Réglages » en pied de la barre latérale est actif, comme l'onglet du bas du téléphone. */
+export const Settings: Story = {
+  args: {
+    place: { kind: 'settings' },
+    title: 'Réglages',
+    children: <div className="px-8 pt-6 font-display text-2xl font-semibold">Réglages</div>,
+  },
+};

@@ -58,3 +58,12 @@ export function arrivalOrder(
     lines: instructionLines(candidate.instructions).length,
   }));
 }
+
+/**
+ * Projets dont l'aperçu du texte transmis se lit depuis un groupe : ses projets, le principal d'abord ; « Tous les
+ * projets » n'a pas de principal, ses projets viennent par ordre alphabétique.
+ */
+export function previewChoices(group: GroupDto): string[] {
+  const names = group.projects.map(({ name }) => name);
+  return group.system ? names.toSorted((a, b) => a.localeCompare(b, 'fr')) : names;
+}

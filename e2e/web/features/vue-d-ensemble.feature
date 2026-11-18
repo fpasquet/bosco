@@ -40,17 +40,25 @@ Fonctionnalité: Vue d'ensemble
     Et l’indicateur « Coût du jour » vaut « 0,07 $ »
     Et je vois le texte « estimé »
 
-  @CA-SESS-11
-  @CA-SESS-12
-  Scénario: Un projet de la barre latérale filtre la vue d'ensemble
+  @CA-SESS-143
+  @CA-SESS-144
+  @CA-CONT-155
+  @CA-CONT-157
+  @NF-18
+  Scénario: Un projet de la barre latérale ouvre sa page, qui dit sa place, au lieu de filtrer la vue d'ensemble
     Étant donné il est « 2026-11-06T15:10:00+01:00 » dans le navigateur
     Et Bosco surveille les profils « .claude » et « .claude-perso »
     Quand j'ouvre la page « / »
-    Et je clique sur le lien « labo-ia »
-    Alors je vois le texte « Projet : labo-ia »
+    Alors la page n’a pas de fil d’Ariane
+    Et l’entrée « Vue d’ensemble » de la barre latérale est active
+    Quand je clique sur le lien « labo-ia » de la barre latérale
+    Alors je suis sur la page « /projects/1/sessions »
+    Et le fil d’Ariane est « Projets › labo-ia »
+    Et l’entrée « labo-ia » de la barre latérale est active
+    Et les onglets « Onglets du projet » sont « Sessions, Contexte, Réglages »
+    Et l’onglet « Sessions » est ouvert
     Et le tableau a la colonne « Dossier »
-    Quand je clique sur le lien « Retirer le filtre Projet : labo-ia »
-    Alors je ne vois plus le texte « Projet : labo-ia »
+    Et la page est accessible
 
   @CA-SESS-14
   @CA-SESS-15

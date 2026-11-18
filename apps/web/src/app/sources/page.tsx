@@ -1,13 +1,7 @@
-import { OverviewSidebar } from '@/features/sessions/components/sessions-sidebar';
-import { SourcesScreen } from '@/features/sessions/components/sources-screen';
-import { AppShell } from '@/shared/layouts/app-shell';
+import { redirect } from 'next/navigation';
 
-const TITLE = 'Sources';
-
-export default function SourcesPage() {
-  return (
-    <AppShell title={TITLE} sidebar={<OverviewSidebar selected={null} />}>
-      <SourcesScreen title={TITLE} />
-    </AppShell>
-  );
+/** Ancienne page Sources : l'onglet Sources des Réglages, avec le canal demandé (« ?canal=pro »). */
+export default async function SourcesPage({ searchParams }: { searchParams: Promise<{ canal?: string }> }) {
+  const { canal } = await searchParams;
+  redirect(canal ? `/settings/sources?canal=${encodeURIComponent(canal)}` : '/settings/sources');
 }

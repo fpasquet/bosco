@@ -16,9 +16,11 @@ import {
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import type { PilotSettingsDto, SessionDto } from '@bosco/domain';
+import type { GroupDto, PilotSettingsDto, SessionDto } from '@bosco/domain';
 import { PageSkeleton } from '@/shared/components/page-skeleton';
 import { useNotices } from '@/shared/hooks/use-notices';
+import { Breadcrumbs } from '@/shared/ui/breadcrumbs';
+import { groupQuery } from '../../api/groups';
 import { pilotOptionsQuery, startSession, suggestions } from '../../api/pilot';
 import { sessionsQuery } from '../../api/sessions';
 import { Composer, type ComposerValue } from '../composer';
@@ -95,33 +97,78 @@ function SandboxSummary({ branch, name }: { branch: string; name: string }) {
   );
 }
 
+/** Fil d'Ariane et retour d'une nouvelle session, selon la page d'où elle part. */
+function originOf(
+  origin: NewSessionOrigin,
+  group: GroupDto | null,
+  projects: readonly { id: number; name: string }[],
+): { back: string; crumbs: { href: string; label: string }[] } {
+  if (group) {
+    const back = `/groups/${group.id}/sessions`;
+    return {
+      back,
+      crumbs: [
+        { href: '/projects', label: 'Groupes' },
+        { href: back, label: group.name },
+      ],
+    };
+  }
+  const project = projects.find(({ id }) => id === origin.project);
+  if (project) {
+    const back = `/projects/${project.id}/sessions`;
+    return {
+      back,
+      crumbs: [
+        { href: '/projects', label: 'Projets' },
+        { href: back, label: project.name },
+      ],
+    };
+  }
+  return { back: '/', crumbs: [] };
+}
+
+/** D'où part la nouvelle session : la vue d'ensemble, la page d'un projet ou celle d'un groupe. */
+export interface NewSessionOrigin {
+  group: null | number;
+  project: null | number;
+}
+
 /**
  * Nouvelle session (E16a, E16b, CA-SESS-91, CA-SESS-106) : le projet et l'abonnement Claude, où elle tourne (sur le
  * poste ou dans un bac à sable, sur sa propre branche), puis le premier message, avec les réglages du tour dans la
- * barre d'outils. Elle s'ouvre dans Bosco.
+ * barre d'outils. Elle s'ouvre dans Bosco. Partie d'un projet ou d'un groupe, elle le reprend, avec son fil d'Ariane.
  */
-export function NewSessionScreen() {
+export function NewSessionScreen({ origin }: { origin: NewSessionOrigin }) {
   const router = useRouter();
   const client = useQueryClient();
   const push = useNotices((state) => state.push);
   const { data: options } = useQuery(pilotOptionsQuery);
   const { data: sessions } = useQuery(sessionsQuery);
+  const { data: group } = useQuery({ ...groupQuery(origin.group ?? 0), enabled: origin.group !== null });
   const [chosenProject, setProject] = useState<null | string>(null);
   const [chosenProfile, setProfile] = useState<null | string>(null);
   const [settings, setSettings] = useState<PilotSettingsDto>(DEFAULT_SETTINGS);
-  const [where, setWhere] = useState<'sandbox' | 'workstation'>('workstation');
+  const [chosenWhere, setWhere] = useState<'sandbox' | 'workstation' | null>(null);
   const [startBranch, setStartBranch] = useState<null | string>(null);
   const [branch, setBranch] = useState('');
-  if (!options) return <PageSkeleton variant="detail" rows={6} />;
-  const project = options.projects.find(({ root }) => root === chosenProject) ?? options.projects[0] ?? null;
-  const profile = chosenProfile ?? project?.defaultProfile ?? options.profiles[0]?.path ?? null;
+  if (!options || (origin.group !== null && !group)) return <PageSkeleton variant="detail" rows={6} />;
+  // Le projet d'où l'on vient, ou le projet principal du groupe, est choisi d'office
+  const preferred = origin.project ?? group?.projects[0]?.id ?? null;
+  const project =
+    options.projects.find(({ root }) => root === chosenProject) ??
+    options.projects.find(({ id }) => id === preferred) ??
+    options.projects[0] ??
+    null;
+  const profile = chosenProfile ?? group?.profile ?? project?.defaultProfile ?? options.profiles[0]?.path ?? null;
+  // « Où elle tourne » reprend le dernier choix fait pour le projet
+  const where = chosenWhere ?? project?.place ?? 'workstation';
   // Un projet sans git ne se copie pas dans un bac à sable : ses sessions tournent seulement sur le poste
   const sandboxUnavailable =
     options.sandboxUnavailable ?? (project && !project.git ? `${project.name} n’est pas un dépôt git` : null);
   const sandboxed = where === 'sandbox' && !sandboxUnavailable;
   // Le bac à sable travaille sur sa propre copie : une session du terminal dans le même dossier ne le gêne pas
   const busy = project && !sandboxed ? openIn(sessions ?? [], project.root) : null;
-  const from = startBranch ?? project?.branch ?? '';
+  const from = startBranch ?? project?.startBranch ?? project?.branch ?? '';
   const choose = (next: 'sandbox' | 'workstation') => {
     setWhere(next);
     // L'agent ne peut abîmer que sa copie : les modifications passent sans demander (E16b)
@@ -140,14 +187,21 @@ export function NewSessionScreen() {
       throw error;
     }
   };
+  const start = originOf(origin, group ?? null, options.projects);
   return (
     <div className="flex flex-col gap-5 p-4 md:px-8 md:pt-6">
       <div className="flex items-end gap-3">
         <div className="min-w-0">
-          <p className="hidden text-xs text-muted md:block">Vue d’ensemble › Nouvelle session</p>
+          <Breadcrumbs items={[...start.crumbs, { label: 'Nouvelle session' }]} />
           <h1 className="mt-1 hidden font-display text-2xl font-semibold tracking-tight md:block">Nouvelle session</h1>
+          {group && (
+            <p className="text-xs text-muted">
+              Avec le groupe {group.name}
+              {group.projects[0] && ` · projet principal ${group.projects[0].name}`}
+            </p>
+          )}
         </div>
-        <Link href="/" className="ml-auto link text-sm text-muted">
+        <Link href={start.back} className="ml-auto link text-sm text-muted">
           Annuler
         </Link>
       </div>

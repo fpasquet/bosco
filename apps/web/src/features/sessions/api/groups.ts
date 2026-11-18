@@ -1,12 +1,11 @@
-import type { GroupsDto } from '@bosco/domain';
+import type { GroupDto } from '@bosco/domain';
 
-/** Groupes de projets, lus pour la barre latérale (même clé que la page des projets, qui les change). */
-export const sidebarGroupsQuery = {
-  queryKey: ['groups'],
-  queryFn: async () => {
-    const response = await fetch('/api/groups');
-    if (!response.ok) throw new Error(`GET /api/groups answered ${response.status}`);
-    const { groups } = (await response.json()) as GroupsDto;
-    return groups;
+/** Un groupe et ses projets, pour réunir leurs sessions dans sa page. */
+export const groupQuery = (id: number) => ({
+  queryKey: ['groups', id],
+  queryFn: async (): Promise<GroupDto> => {
+    const response = await fetch(`/api/groups/${id}`);
+    if (!response.ok) throw new Error(`GET /api/groups/${id} answered ${response.status}`);
+    return (await response.json()) as GroupDto;
   },
-};
+});

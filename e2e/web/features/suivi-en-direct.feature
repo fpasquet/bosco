@@ -14,7 +14,7 @@ Fonctionnalité: Suivi en direct
   @CA-SESS-65
   @NF-18
   Scénario: Le suivi en direct s'installe pas à pas et se vérifie sur un vrai signal
-    Quand j'ouvre la page « /sources »
+    Quand j'ouvre la page « /settings/sources »
     Et je clique sur le bouton « Installer » de la source « perso »
     Et je clique sur le bouton « Suivant » de la fenêtre
     Alors je vois le texte « Garder une copie des réglages actuels »

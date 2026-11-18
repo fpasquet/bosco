@@ -3,16 +3,16 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import type { IsolationDto } from '@bosco/domain';
 import { SectionSkeleton } from '@/shared/components/section-skeleton';
-import { SettingsTabs } from '@/shared/layouts/settings-tabs';
+import { SettingsHeader } from '@/shared/layouts/settings-tabs';
 import { addDomain, isolationQuery, IsolationRefused, removeDomain } from '../../api/isolation';
 import { IsolationEgress } from '../isolation-egress';
 import { IsolationResources } from '../isolation-resources';
 
 /**
- * Réglages › Isolation du bac à sable (E11) : ce que voit l'agent, ses limites et les domaines qu'il peut joindre.
+ * Réglages › Bac à sable : ce que voit l'agent, ses limites et les domaines qu'il peut joindre.
  * Un domaine ajouté vaut tout de suite, même pour les bacs à sable démarrés ; sur le téléphone, tout se lit.
  */
-export function IsolationScreen({ title }: { title: string }) {
+export function IsolationScreen() {
   const client = useQueryClient();
   const { data } = useQuery(isolationQuery);
   const [error, setError] = useState<null | string>(null);
@@ -26,11 +26,7 @@ export function IsolationScreen({ title }: { title: string }) {
   const remove = useMutation({ mutationFn: removeDomain, onSuccess: saved, onError: refused });
   return (
     <div className="flex flex-col gap-4 p-4 md:px-8 md:pt-6">
-      <div className="flex flex-col gap-3">
-        <p className="text-xs text-muted">{title}</p>
-        <SettingsTabs current="/settings/isolation" />
-        <h1 className="font-display text-2xl font-semibold tracking-tight">Isolation du bac à sable</h1>
-      </div>
+      <SettingsHeader current="sandbox" />
       {!data && <SectionSkeleton rows={4} />}
       {data && (
         <div className="grid gap-4 md:grid-cols-2">

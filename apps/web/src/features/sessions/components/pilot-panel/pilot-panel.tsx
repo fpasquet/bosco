@@ -31,7 +31,7 @@ export function PilotPanel({ session }: { session: SessionDto }) {
       <p className="flex flex-wrap items-center gap-x-2 gap-y-1 border-t border-line bg-surface-alt px-4 py-3 text-sm text-muted">
         <SquareTerminal aria-hidden className="size-4 shrink-0" />
         Ouverte dans un terminal · réponds-y là-bas.
-        <Link href={`/sources?canal=${encodeURIComponent(session.sourceId)}`} className="link link-primary">
+        <Link href={`/settings/sources?canal=${encodeURIComponent(session.sourceId)}`} className="link link-primary">
           Lancer tes sessions avec le canal de Bosco pour leur écrire d’ici
         </Link>
       </p>

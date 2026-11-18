@@ -1,6 +1,6 @@
-import { Box, ChevronRight, Copy, FolderOpen, MessageSquare, RadioTower } from 'lucide-react';
-import Link from 'next/link';
+import { Box, Copy, FolderOpen, MessageSquare, RadioTower } from 'lucide-react';
 import type { SessionDto } from '@bosco/domain';
+import { Breadcrumbs } from '@/shared/ui/breadcrumbs';
 import { Button } from '@/shared/ui/button';
 import { elapsed } from '../../lib/format';
 import { SessionStateBadge } from '../session-state-badge';
@@ -32,19 +32,17 @@ export function SessionHeader({ mark, now, onCopy, profile, resume, session }: S
   return (
     <header className="flex flex-wrap items-start gap-4">
       <div className="min-w-0 flex-1">
-        <nav aria-label="Fil d’Ariane" className="flex items-center gap-1 text-xs text-muted">
-          <Link href="/" className="link link-hover">
-            Vue d’ensemble
-          </Link>
-          {session.project && (
-            <>
-              <ChevronRight aria-hidden className="size-3" />
-              <Link href={`/?project=${encodeURIComponent(session.project.name)}`} className="link link-hover">
-                {session.project.name}
-              </Link>
-            </>
-          )}
-        </nav>
+        {/* Place fixe, quelle que soit l'entrée : le projet principal de la session, sinon « Hors projet » */}
+        <Breadcrumbs
+          items={
+            session.project
+              ? [
+                  { href: '/projects', label: 'Projets' },
+                  { href: `/projects/${session.project.id}/sessions`, label: session.project.name },
+                ]
+              : [{ label: 'Hors projet' }]
+          }
+        />
         <h1 className="mt-1 flex flex-wrap items-center gap-2 font-display text-xl font-semibold tracking-tight md:text-2xl">
           <SessionStateBadge state={session.state} />
           <span className="line-clamp-2 min-w-0">{titleOf(session)}</span>

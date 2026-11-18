@@ -1,13 +1,6 @@
-import { IsolationScreen } from '@/features/sandbox/components/isolation-screen';
-import { OverviewSidebar } from '@/features/sessions/components/sessions-sidebar';
-import { AppShell } from '@/shared/layouts/app-shell';
+import { redirect } from 'next/navigation';
 
-const TITLE = 'Réglages';
-
+/** Ancienne adresse de l'isolation du bac à sable : l'onglet Bac à sable des Réglages. */
 export default function IsolationPage() {
-  return (
-    <AppShell title={TITLE} sidebar={<OverviewSidebar selected={null} />}>
-      <IsolationScreen title={TITLE} />
-    </AppShell>
-  );
+  redirect('/settings/sandbox');
 }

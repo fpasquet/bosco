@@ -6,7 +6,7 @@ const TITLE = 'Conteneurs en cours';
 /** Conteneurs en cours sur le téléphone (E19a) : écran poussé depuis les réglages. */
 export default function ContainersPage() {
   return (
-    <AppShell title={TITLE}>
+    <AppShell title={TITLE} place={{ kind: 'settings' }}>
       <ContainersScreen />
     </AppShell>
   );

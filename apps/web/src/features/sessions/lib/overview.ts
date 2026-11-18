@@ -16,8 +16,6 @@ export const STATE_LABELS: Record<SessionStateDto, string> = {
 export interface OverviewFilters {
   hideInactive: boolean;
   query: string;
-  /** Nom du projet choisi dans la barre latérale (E1c) ; null : tous les projets */
-  project: null | string;
 }
 
 export interface ProjectGroup {
@@ -111,11 +109,17 @@ function matches(session: SessionDto, query: string): boolean {
 
 export function filterSessions(sessions: readonly SessionDto[], filters: OverviewFilters): SessionDto[] {
   return sessions.filter(
-    (session) =>
-      (filters.project === null || session.project?.name === filters.project) &&
-      !(filters.hideInactive && session.state === 'inactive') &&
-      matches(session, filters.query),
+    (session) => !(filters.hideInactive && session.state === 'inactive') && matches(session, filters.query),
   );
+}
+
+/**
+ * Sessions d'une page de projet ou de groupe : celles dont le projet est l'un des siens, une fois chacune
+ * ; une session hors projet n'est dans aucune.
+ */
+export function sessionsIn(sessions: readonly SessionDto[], projects: readonly number[]): SessionDto[] {
+  const ids = new Set(projects);
+  return sessions.filter((session) => session.project !== null && ids.has(session.project.id));
 }
 
 /** Sessions qui t'attendent, la plus ancienne attente en premier (CA-SESS-05). */
@@ -143,11 +147,32 @@ export function indicatorsOf(open: readonly SessionDto[], all: readonly SessionD
   };
 }
 
-/** Projets de la barre latérale, dans l'ordre des intertitres, avec leur nombre de sessions ouvertes. */
-export function projectsOf(open: readonly SessionDto[]): { count: number; name: string }[] {
-  return groupByProject(open).flatMap(({ name, sessions }) =>
-    name === null ? [] : [{ name, count: sessions.length }],
-  );
+/** Sessions ouvertes d'une ligne de la barre latérale, et celles qui t'attendent. */
+export interface PlaceActivity {
+  count: number;
+  waiting: number;
+}
+
+function activityOf(sessions: readonly SessionDto[]): PlaceActivity {
+  return { count: sessions.length, waiting: sessions.filter((session) => session.state === 'waiting').length };
+}
+
+/**
+ * Projets de la barre latérale qui ont une session ouverte, dans l'ordre des intertitres (le plus urgent d'abord), et
+ * les sessions hors projet.
+ */
+export function projectsOf(open: readonly SessionDto[]): {
+  outside: PlaceActivity;
+  projects: (PlaceActivity & { id: number })[];
+} {
+  const outside = open.filter((session) => session.project === null);
+  return {
+    outside: activityOf(outside),
+    projects: groupByProject(open).flatMap(({ sessions }) => {
+      const id = sessions[0]?.project?.id;
+      return id === undefined ? [] : [{ id, ...activityOf(sessions) }];
+    }),
+  };
 }
 
 /** Profil par défaut de Claude Code (~/.claude) : ses sessions n'ont pas de marque, celles des autres portent la leur. */

@@ -7,6 +7,7 @@ import { CONFIG, ORM } from '../shared/tokens.ts';
 import { GroupService } from './application/group.service.ts';
 import { ProjectService } from './application/project.service.ts';
 import { DiskFolders } from './infrastructure/fs/disk-folders.ts';
+import { HeadBranches } from './infrastructure/git/head-branches.ts';
 import { GitWorktreeOrigins } from './infrastructure/git/worktree-origins.ts';
 import {
   MikroOrmDiscoveryToImport,
@@ -38,6 +39,7 @@ import { GROUP_SERVICE, PROJECT_SERVICE } from './tokens.ts';
           new DiskFolders(),
           new GitWorktreeOrigins(),
           new MikroOrmDiscoveryToImport(orm),
+          new HeadBranches(),
           { now: () => new Date() },
           config.profilesRoot,
           // Dossiers temporaires et données de Bosco : des copies et des essais, jamais des projets à proposer

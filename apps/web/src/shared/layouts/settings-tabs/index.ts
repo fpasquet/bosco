@@ -1,1 +1,1 @@
-export { SettingsTabs } from './settings-tabs';
+export { SETTINGS_TABS, SettingsHeader, type SettingsHeaderProps, type SettingsTab } from './settings-tabs';

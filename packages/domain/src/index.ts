@@ -59,6 +59,8 @@ export type {
   FolderSuggestionDto,
   GroupDto,
   GroupsDto,
+  ProjectDetailDto,
   ProjectDto,
+  ProjectPlaceDto,
   ProjectsDto,
 } from './projects.ts';

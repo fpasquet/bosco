@@ -25,7 +25,7 @@ export function SandboxRefusals({ refusals }: SandboxRefusalsDto) {
               {clockOf(at)}
             </time>
           </span>
-          <Link href="/settings/isolation/egress" className="link text-xs font-medium link-primary max-md:hidden">
+          <Link href="/settings/sandbox" className="link text-xs font-medium link-primary max-md:hidden">
             Ajouter à la liste
           </Link>
         </li>

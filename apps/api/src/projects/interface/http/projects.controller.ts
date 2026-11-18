@@ -1,7 +1,7 @@
-import { Body, Controller, Delete, Get, HttpCode, Inject, Param, ParseIntPipe, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Inject, Param, ParseIntPipe, Patch, Post } from '@nestjs/common';
 import { z } from 'zod';
-import type { FolderSuggestionDto, ProjectDto, ProjectsDto } from '@bosco/domain';
-import type { ProjectService, ProjectView } from '../../application/project.service.ts';
+import type { FolderSuggestionDto, ProjectDetailDto, ProjectDto, ProjectsDto } from '@bosco/domain';
+import type { ProjectDetail, ProjectService, ProjectView } from '../../application/project.service.ts';
 import type { ProjectSnapshot } from '../../domain/project.ts';
 import type { Suggestion } from '../../domain/suggestions.ts';
 import { parseBody } from '../../../shared/interface/http/parse-body.ts';
@@ -11,6 +11,11 @@ import { settle } from './settle.ts';
 const PATH = z.string().min(1).max(4096);
 const addSchema = z.object({ paths: z.array(PATH).min(1).max(200) });
 const folderSchema = z.object({ path: PATH });
+const changeSchema = z.object({
+  pinned: z.boolean().optional(),
+  place: z.enum(['sandbox', 'workstation']).nullable().optional(),
+  startBranch: z.string().max(200).nullable().optional(),
+});
 
 function presentProject(project: ProjectSnapshot | ProjectView): ProjectDto {
   const view = 'sessions' in project ? project : { ...project, lastSessionAt: null, sessions: 0 };
@@ -21,8 +26,14 @@ function presentProject(project: ProjectSnapshot | ProjectView): ProjectDto {
     name: view.name,
     path: view.path,
     pinned: view.pinned,
+    place: view.place,
     sessions: view.sessions,
+    startBranch: view.startBranch,
   };
+}
+
+function presentDetail(project: ProjectDetail): ProjectDetailDto {
+  return { ...presentProject(project), branch: project.branch, running: project.running };
 }
 
 function presentSuggestion(suggestion: Suggestion): FolderSuggestionDto {
@@ -52,6 +63,20 @@ export class ProjectsController {
     const { paths } = parseBody(addSchema, body);
     const added = await settle(() => this.projects.addProjects(paths));
     return { projects: added.map(presentProject) };
+  }
+
+  @Get(':id')
+  async getProject(@Param('id', ParseIntPipe) id: number): Promise<ProjectDetailDto> {
+    const project = await settle(() => this.projects.getProject(id));
+    return presentDetail(project);
+  }
+
+  /** Épingler, désépingler, et les valeurs par défaut des sessions du projet. */
+  @Patch(':id')
+  async changeProject(@Param('id', ParseIntPipe) id: number, @Body() body: unknown): Promise<ProjectDetailDto> {
+    const changes = parseBody(changeSchema, body);
+    const project = await settle(() => this.projects.changeProject(id, changes));
+    return presentDetail(project);
   }
 
   @Delete(':id')

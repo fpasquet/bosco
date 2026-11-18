@@ -11,11 +11,14 @@ Fonctionnalité: Accès depuis le téléphone
   @CA-SESS-60
   @CA-SESS-66
   @CA-SESS-69
+  @CA-REGL-07
   @NF-18
   Scénario: Activer l'accès montre l'adresse et un code, et Annuler ferme la fenêtre
-    Quand j'ouvre la page « /sources »
-    Alors je vois le texte « Désactivé : aucun accès en dehors de ce poste. »
-    Quand je clique sur le bouton « Activer et appairer un téléphone »
+    Quand j'ouvre la page « /settings/phone »
+    Alors le fil d’Ariane est « Réglages › Téléphone »
+    Et je vois le texte « Désactivé : aucun accès en dehors de ce poste. »
+    Et je vois le texte « Aucun téléphone appairé. »
+    Quand je bascule l’interrupteur « Accès depuis le téléphone »
     Alors je vois le texte « à usage unique »
     Et je vois le texte « scanne ce QR code »
     Et je vois le texte « Accepte l’avertissement du navigateur »

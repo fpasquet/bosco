@@ -6,8 +6,9 @@ import { GROUP_SERVICE, PROJECT_SERVICE } from './projects/tokens.ts';
 import { SESSION_SERVICE } from './sessions/tokens.ts';
 
 /**
- * Projets et sessions se croisent : une session se range dans le projet qui contient son dossier de travail, et les
- * projets proposent les dossiers où des sessions ont tourné. Branchés avant que les sources ne soient relues.
+ * Projets et sessions se croisent : une session se range dans le projet qui contient son dossier de travail, les
+ * projets proposent les dossiers où des sessions ont tourné, gardent le dernier « Où elle tourne » de leurs sessions et
+ * ne se retirent pas tant qu'une session pilotée y tourne. Branchés avant que les sources ne soient relues.
  */
 @Injectable()
 export class ProjectsWiring implements OnModuleInit {
@@ -19,9 +20,22 @@ export class ProjectsWiring implements OnModuleInit {
 
   async onModuleInit(): Promise<void> {
     this.projects.useSessions({ list: () => this.sessions.sessionFolders() });
+    this.projects.useRunning({
+      countIn: async (projectId) => {
+        const sessions = await this.sessions.listSessions();
+        return sessions.filter(
+          ({ pilot, project }) =>
+            project?.id === projectId && pilot && (pilot.running || pilot.sandbox?.state === 'running'),
+        ).length;
+      },
+    });
     this.sessions.useProjects({
-      list: () => this.projects.listProjects().map(({ git, name, path }) => ({ git, name, root: path })),
+      list: () =>
+        this.projects
+          .listProjects()
+          .map(({ git, id, name, path, place, startBranch }) => ({ git, id, name, place, root: path, startBranch })),
       placeOf: (gitRoot, path) => this.projects.placeOf(gitRoot, path),
+      rememberPlace: (root, place) => this.projects.rememberPlace(root, place),
     });
     await this.projects.load();
     await this.groups.load();

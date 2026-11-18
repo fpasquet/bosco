@@ -9,7 +9,8 @@ Fonctionnalité: Coquille
     Et la page est accessible
 
   @mobile
+  @CA-SESS-145
   Scénario: Sur téléphone, les onglets du bas mènent aux écrans
     Quand j'ouvre la page « / »
-    Alors je vois le lien « Ensemble »
+    Alors les onglets « Navigation principale » sont « Ensemble, Historique, Projets, Réglages »
     Et la page est accessible

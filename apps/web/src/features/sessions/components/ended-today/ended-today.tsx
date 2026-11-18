@@ -1,12 +1,13 @@
 import Link from 'next/link';
 import type { SessionDto } from '@bosco/domain';
+import { cn } from '@/lib/cn';
 import { clockOf } from '../../lib/detail';
 import { formatCost } from '../../lib/format';
 import { titleOf } from '../sessions-table';
 
 export interface EndedTodayProps {
-  /** Projet filtré (E1c) : le lien ouvre l'historique déjà filtré sur lui */
-  project: null | string;
+  /** Page d'un projet : le lien ouvre l'historique déjà filtré sur lui ; d'un groupe : l'historique */
+  scope?: { history: string; label: string };
   /** Sessions terminées aujourd'hui, des plus récentes aux plus anciennes */
   sessions: SessionDto[];
 }
@@ -14,10 +15,16 @@ export interface EndedTodayProps {
 /** Lignes montrées ; le reste est dans l'historique (E1d). */
 const SHOWN = 4;
 
-/** Sessions terminées aujourd'hui, sous la vue d'ensemble, avec « Voir l'historique » (E1c, E1d ; CA-SESS-13). */
-export function EndedToday({ project, sessions }: EndedTodayProps) {
+/** Lignes montrées sur le téléphone, avant le lien vers l'historique. */
+const SHOWN_ON_PHONE = 2;
+
+/**
+ * Sessions terminées aujourd'hui, sous la vue par état, la page d'un projet ou d'un groupe, avec « Voir l'historique »
+ *.
+ */
+export function EndedToday({ scope, sessions }: EndedTodayProps) {
   if (sessions.length === 0) return null;
-  const history = project ? `/history?project=${encodeURIComponent(project)}` : '/history';
+  const history = scope?.history ?? '/history';
   const rest = sessions.length - SHOWN;
   return (
     <section aria-labelledby="ended-today" className="rounded-card border border-line bg-surface shadow-card">
@@ -25,15 +32,18 @@ export function EndedToday({ project, sessions }: EndedTodayProps) {
         id="ended-today"
         className="flex items-center gap-2 border-b border-line px-4 py-2.5 text-xs font-semibold text-muted"
       >
-        {project ? 'Terminées aujourd’hui dans ce projet' : 'Terminées aujourd’hui'}
+        {scope ? `Terminées aujourd’hui ${scope.label}` : 'Terminées aujourd’hui'}
         <span className="badge badge-ghost font-mono badge-sm">{sessions.length}</span>
         <Link href={history} className="ml-auto link font-normal link-primary">
           Voir l’historique
         </Link>
       </h2>
       <ul className="divide-y divide-line">
-        {sessions.slice(0, SHOWN).map((session) => (
-          <li key={session.id} className="relative flex items-center gap-3 px-4 py-2">
+        {sessions.slice(0, SHOWN).map((session, index) => (
+          <li
+            key={session.id}
+            className={cn('relative flex items-center gap-3 px-4 py-2', index >= SHOWN_ON_PHONE && 'max-md:hidden')}
+          >
             <Link
               href={`/sessions/${encodeURIComponent(session.id)}`}
               className="min-w-0 flex-1 truncate after:absolute after:inset-0"

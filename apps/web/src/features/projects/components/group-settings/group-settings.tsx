@@ -1,10 +1,10 @@
 'use client';
-import type { ReactNode } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { FolderSearch, Star } from 'lucide-react';
 import { useEffect, useId } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+import { SectionCard as Card } from '@/shared/components/section-card';
 import { Button } from '@/shared/ui/button';
 import { APP_NAME, type GroupDto } from '@bosco/domain';
 
@@ -36,18 +36,6 @@ const identitySchema = z.object({
 function profileOrigin(chosen: null | string, watched: boolean): string {
   if (chosen === null) return `Hérité · profil du projet principal, à défaut celui de ${APP_NAME}`;
   return watched ? 'Réglé ici' : 'Réglé ici · profil qui n’est plus surveillé';
-}
-
-function Card({ children, title }: { children: ReactNode; title: string }) {
-  const id = useId();
-  return (
-    <section aria-labelledby={id} className="rounded-card border border-line bg-surface shadow-card">
-      <h2 id={id} className="border-b border-line px-4 py-2.5 text-xs font-semibold text-muted">
-        {title}
-      </h2>
-      <div className="flex flex-col gap-3 px-4 py-3">{children}</div>
-    </section>
-  );
 }
 
 function Identity({

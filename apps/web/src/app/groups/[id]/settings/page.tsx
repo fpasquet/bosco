@@ -1,12 +1,11 @@
 import { GroupScreen } from '@/features/projects/components/group-screen';
-import { OverviewSidebar } from '@/features/sessions/components/sessions-sidebar';
 import { AppShell } from '@/shared/layouts/app-shell';
 
 export default async function GroupSettingsPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+  const id = Number((await params).id);
   return (
-    <AppShell title="Groupe" sidebar={<OverviewSidebar selected={null} selectedGroup={Number(id)} />}>
-      <GroupScreen id={Number(id)} tab="settings" />
+    <AppShell title="Groupe" place={{ kind: 'group', id }}>
+      <GroupScreen id={id} tab="settings" />
     </AppShell>
   );
 }
