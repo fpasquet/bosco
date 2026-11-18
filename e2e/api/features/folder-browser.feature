@@ -36,6 +36,14 @@ Feature: Folder browser
     When I browse the folder "www/nowhere"
     Then the response code should be 404
 
+  @RF-SESS-01
+  Scenario: To add a configuration folder of Claude Code, the browser shows the hidden folders too
+    When I browse the home folder with the hidden folders
+    Then the response code should be 200
+    And the response property "folders.0.name" should equal ".claude"
+    When I browse the folder ".claude"
+    Then the response code should be 400
+
   @NF-13
   @RF-CONT-24
   Scenario: The phone reads the projects, but neither browses the workstation nor changes the projects

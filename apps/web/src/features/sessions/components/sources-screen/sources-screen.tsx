@@ -14,7 +14,7 @@ import { channelProfilesQuery, installChannel, uninstallChannel } from '../../ap
 import { installLiveTracking, liveTrackingQuery, uninstallLiveTracking } from '../../api/live-tracking';
 import { sessionsQuery } from '../../api/sessions';
 import { type SettingsDto, settingsQuery, updateSettings } from '../../api/settings';
-import { addSource, FolderRefused, setSourceWatched, sourcesQuery } from '../../api/sources';
+import { addSource, FolderRefused, profileFoldersQuery, setSourceWatched, sourcesQuery } from '../../api/sources';
 import { useCopy } from '../../hooks/use-copy';
 import { displayPath } from '../../lib/format';
 import { sandboxActivity } from '../../lib/sources';
@@ -129,6 +129,9 @@ export function SourcesScreen() {
   });
   const channelOf = (path: string) => channelProfiles?.find((profile) => profile.path === path);
   const [adding, setAdding] = useState(false);
+  // Dossier ouvert dans « Ajouter un dossier » ; null : le dossier personnel
+  const [folder, setFolder] = useState<null | string>(null);
+  const { data: folderListing } = useQuery({ ...profileFoldersQuery(folder), enabled: adding });
   const add = useMutation({
     mutationFn: addSource,
     onSuccess: async (source) => {
@@ -161,6 +164,7 @@ export function SourcesScreen() {
           className="ml-auto"
           onClick={() => {
             add.reset();
+            setFolder(null);
             setAdding(true);
           }}
         >
@@ -237,6 +241,8 @@ export function SourcesScreen() {
       )}
       <AddFolderDialog
         open={adding}
+        listing={folderListing ?? null}
+        onOpen={setFolder}
         busy={add.isPending}
         serverError={add.error ? refusalOf(add.error) : null}
         onCancel={() => setAdding(false)}

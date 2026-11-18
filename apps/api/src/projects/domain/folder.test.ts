@@ -37,6 +37,16 @@ describe('Folder browser', () => {
     expect(() => browsedFolder('/home/dev/www/.git/hooks', HOME)).toThrow(FolderRefused);
   });
 
+  it('opens and shows the hidden folders only to choose a configuration folder of Claude Code', () => {
+    expect(browsedFolder('/home/dev/.claude-perso', HOME, true).value).toBe('/home/dev/.claude-perso');
+    expect(() => browsedFolder('/etc', HOME, true)).toThrow(FolderRefused);
+    const entries = [
+      { directory: true, git: false, name: '.claude-perso' },
+      { directory: true, git: true, name: 'www' },
+    ];
+    expect(visibleFolders(entries, true).map(({ name }) => name)).toEqual(['.claude-perso', 'www']);
+  });
+
   it('CA-CONT-114 · shows folders only, never files nor hidden folders, in the order of their names', () => {
     const entries = [
       { directory: true, git: true, name: 'site-clubs' },

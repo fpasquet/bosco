@@ -9,8 +9,9 @@ import { settle } from './settle.ts';
 export class FoldersController {
   constructor(@Inject(PROJECT_SERVICE) private readonly projects: ProjectService) {}
 
+  /** `hidden=true` montre aussi les dossiers cachés : pour choisir un dossier de configuration de Claude Code. */
   @Get()
-  async browse(@Query('path') path?: string): Promise<FolderListingDto> {
-    return settle(() => this.projects.browse(path ?? null));
+  async browse(@Query('path') path?: string, @Query('hidden') hidden?: string): Promise<FolderListingDto> {
+    return settle(() => this.projects.browse(path ?? null, hidden === 'true'));
   }
 }

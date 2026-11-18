@@ -60,8 +60,8 @@ export class DiskFolders implements Folders {
 
   async list(path: string): Promise<FolderEntry[]> {
     const entries = await readdir(path, { withFileTypes: true }).catch(() => []);
-    // Les dossiers cachés ne sont jamais ouverts : seuls les dossiers visibles sont inspectés
-    const folders = entries.filter((entry) => entry.isDirectory() && !entry.name.startsWith('.'));
+    // Les dossiers cachés se listent aussi : le domaine décide de les montrer (dossiers de configuration de Claude Code)
+    const folders = entries.filter((entry) => entry.isDirectory());
     return Promise.all(
       folders.map(async (entry) => {
         const git = await hasGit(join(path, entry.name));

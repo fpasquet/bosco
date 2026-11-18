@@ -251,21 +251,22 @@ export class ProjectService {
   }
 
   /**
-   * Sous-dossiers d'un dossier du dossier personnel : leurs noms seulement, dossiers cachés masqués, avec ce que la
-   * personne doit savoir pour choisir (dépôt git, déjà ajouté, une session y a tourné).
+   * Sous-dossiers d'un dossier du dossier personnel : leurs noms seulement, dossiers cachés masqués (sauf `hidden`,
+   * pour choisir un dossier de configuration de Claude Code), avec ce que la personne doit savoir pour choisir (dépôt
+   * git, déjà ajouté, une session y a tourné).
    */
-  async browse(path: null | string): Promise<FolderListing> {
-    const asked = browsedFolder(path, this.home);
+  async browse(path: null | string, hidden = false): Promise<FolderListing> {
+    const asked = browsedFolder(path, this.home, hidden);
     const [real, realHome] = await Promise.all([this.folders.realPath(asked.value), this.folders.realPath(this.home)]);
     if (!real || !realHome) throw new FolderNotFound(asked.value);
     // Un lien symbolique ne fait pas sortir du dossier personnel
-    browsedFolder(real, realHome);
+    browsedFolder(real, realHome, hidden);
     const [entries, overview] = await Promise.all([this.folders.list(asked.value), this.overview()]);
     const added = new Set(this.projects.map((project) => project.path));
     const suggested = new Set(overview.suggestions.map((suggestion) => suggestion.path));
     return {
       crumbs: crumbsOf(asked, this.home),
-      folders: visibleFolders(entries).map(({ git, name }) => {
+      folders: visibleFolders(entries, hidden).map(({ git, name }) => {
         const child = asked.value === '/' ? `/${name}` : `${asked.value}/${name}`;
         return { added: added.has(child), git, name, path: child, suggestion: suggested.has(child) };
       }),

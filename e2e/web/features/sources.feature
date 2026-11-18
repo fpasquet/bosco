@@ -42,7 +42,7 @@ Fonctionnalité: Sources et réglages
     Étant donné le profil Claude Code « .claude-pro » contient le transcript « session-site-perso-fastify.jsonl » de la session « a41f07c2 »
     Quand j'ouvre la page « /settings/sources »
     Et je clique sur le bouton « Ajouter un dossier »
-    Et je saisis le dossier du profil « .claude-pro » dans le champ « Dossier de configuration »
+    Et je clique sur le bouton radio « .claude-pro »
     Alors la page est accessible
     Quand je clique sur le bouton « Ajouter » de la fenêtre
     Alors je vois le texte « Dossier ajouté : pro est surveillé. »
