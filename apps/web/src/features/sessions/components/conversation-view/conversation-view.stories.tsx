@@ -32,3 +32,20 @@ export const AutoModeSuspended: Story = {
     notices: [{ at: STORY_CONVERSATION.turns[1]?.at ?? '', count: 3, kind: 'autoModeSuspended', seq: 7, total: false }],
   },
 };
+
+const agentTurn = STORY_CONVERSATION.turns.find((turn) => turn.role === 'assistant');
+const minutesAfter = (at: string, minutes: number) => new Date(Date.parse(at) + minutes * 60_000).toISOString();
+
+/** Bac à sable : une sortie refusée à l'endroit du tour où l'agent l'a tentée, deux refus du domaine en une ligne. */
+export const SandboxRefusals: Story = {
+  args: {
+    live: false,
+    refusals: {
+      project: { id: 1, name: 'api-tarifs' },
+      list: [
+        { at: minutesAfter(agentTurn?.at ?? '', 1), host: 'raw.githubusercontent.com' },
+        { at: minutesAfter(agentTurn?.at ?? '', 2), host: 'raw.githubusercontent.com' },
+      ],
+    },
+  },
+};

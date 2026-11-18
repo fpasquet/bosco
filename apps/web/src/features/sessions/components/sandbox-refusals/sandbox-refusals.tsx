@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { DropdownMenu } from 'radix-ui';
 import type { SandboxRefusalsDto } from '@bosco/domain';
 import { clockOf } from '../../lib/detail';
+import { groupRefusals, type RefusalLine } from '../../lib/refusals';
 
 export interface SandboxRefusalsProps extends SandboxRefusalsDto {
   /** Projet de la session, dont les domaines propres peuvent recevoir le domaine refusé ; null hors projet */
@@ -68,29 +69,35 @@ function AddToList({ host, project }: { host: string; project: SandboxRefusalsPr
   );
 }
 
+/** Une sortie réseau refusée dans le fil, à son heure ; plusieurs refus du même domaine dans un tour en une ligne. */
+export function SandboxRefusal({ at, count, host, project }: RefusalLine & Pick<SandboxRefusalsProps, 'project'>) {
+  return (
+    <div className="flex flex-wrap items-center gap-2 rounded-card border border-warning bg-warning-soft px-3 py-2 text-sm">
+      <ShieldX aria-hidden className="size-4 shrink-0 text-warning" />
+      <span className="min-w-0 flex-1">
+        <b className="font-semibold">Sortie réseau refusée</b> · <span className="font-mono">{host}</span> ·{' '}
+        <time dateTime={at} className="font-mono tabular-nums">
+          {clockOf(at)}
+        </time>
+        {count > 1 && <span className="text-muted"> · {count} tentatives</span>}
+      </span>
+      <AddToList host={host} project={project} />
+    </div>
+  );
+}
+
 /**
- * Sorties réseau refusées d'un bac à sable : le domaine et l'heure, à la fin du fil. « Ajouter à
- * la liste » ouvre, sur le poste, les domaines du projet de la session ou la liste générale, le domaine déjà rempli.
+ * Sorties réseau refusées d'un bac à sable qu'aucun tour du fil ne porte (fil encore en lecture) : à la fin du fil.
+ * « Ajouter à la liste » ouvre, sur le poste, les domaines du projet de la session ou la liste générale, le domaine
+ * déjà rempli.
  */
 export function SandboxRefusals({ project, refusals }: SandboxRefusalsProps) {
   if (refusals.length === 0) return null;
-  // Plusieurs refus d'un même domaine ne font qu'une ligne : la plus récente
-  const byHost = new Map(refusals.map((refusal) => [refusal.host, refusal]));
   return (
     <ul aria-label="Sorties réseau refusées" className="mt-3 flex flex-col gap-2">
-      {[...byHost.values()].map(({ at, host }) => (
-        <li
-          key={host}
-          className="flex flex-wrap items-center gap-2 rounded-card border border-warning bg-warning-soft px-3 py-2 text-sm"
-        >
-          <ShieldX aria-hidden className="size-4 shrink-0 text-warning" />
-          <span className="min-w-0 flex-1">
-            <b className="font-semibold">Sortie réseau refusée</b> · <span className="font-mono">{host}</span> ·{' '}
-            <time dateTime={at} className="font-mono tabular-nums">
-              {clockOf(at)}
-            </time>
-          </span>
-          <AddToList host={host} project={project} />
+      {groupRefusals(refusals).map((line) => (
+        <li key={line.host}>
+          <SandboxRefusal {...line} project={project} />
         </li>
       ))}
     </ul>

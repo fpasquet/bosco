@@ -36,7 +36,6 @@ import { PilotPanel } from '../pilot-panel';
 import { QuestionCard } from '../question-card';
 import { ResumeCard } from '../resume-card';
 import { SandboxCard } from '../sandbox-card';
-import { SandboxRefusals } from '../sandbox-refusals';
 import { SessionFeed } from '../session-feed';
 import { SessionHeader } from '../session-header';
 import { SessionSide } from '../session-side';
@@ -152,6 +151,12 @@ export function SessionDetailScreen({ id }: { id: string }) {
             conversation={conversation}
             loading={conversationPending}
             now={now}
+            refusals={
+              refusals && {
+                list: refusals.refusals,
+                project: session.project ? { id: session.project.id, name: session.project.name } : null,
+              }
+            }
             tail={
               <>
                 {untracked && <LiveTrackingOffer profile={untracked.label} sourceId={untracked.id} />}
@@ -175,12 +180,6 @@ export function SessionDetailScreen({ id }: { id: string }) {
                       if (session.waiting?.kind !== 'question') return;
                       answerQuestion(session.id, session.waiting.requestId, answers).catch(() => undefined);
                     }}
-                  />
-                )}
-                {refusals && (
-                  <SandboxRefusals
-                    refusals={refusals.refusals}
-                    project={session.project ? { id: session.project.id, name: session.project.name } : null}
                   />
                 )}
                 {session.pilot?.pending && (

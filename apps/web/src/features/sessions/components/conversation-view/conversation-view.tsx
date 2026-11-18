@@ -6,9 +6,11 @@ import { Message, MessageContent, MessageHeader } from '@/shared/ui/message';
 import type { Todo } from '../../lib/conversation';
 import { planOf, sourcesOf } from '../../lib/conversation';
 import { clockOf } from '../../lib/detail';
+import { placeRefusals, type Refusal, type RefusalLine, splitAtRefusals } from '../../lib/refusals';
 import { AgentParts } from '../agent-parts';
 import { AutoModeSuspended, type AutoModeSuspension } from '../auto-mode-suspended';
 import { PlanQueue } from '../plan-queue';
+import { SandboxRefusal, type SandboxRefusalsProps } from '../sandbox-refusals';
 import { SourcesList } from '../sources-list';
 
 export interface ConversationViewProps {
@@ -17,6 +19,8 @@ export interface ConversationViewProps {
   live: boolean;
   /** Suspensions d'« Approuver pour moi » du journal, placées à leur heure entre les tours */
   notices?: AutoModeSuspension[];
+  /** Sorties réseau refusées d'un bac à sable, placées à leur heure dans le tour de l'agent */
+  refusals?: { list: readonly Refusal[]; project: SandboxRefusalsProps['project'] };
 }
 
 function Time({ at }: { at: string }) {
@@ -54,22 +58,33 @@ function AgentTurn({
   current,
   live,
   plan,
+  refusals = [],
+  refusalsProject = null,
   turn,
 }: {
   current: boolean;
   live: boolean;
   /** État du plan de l'agent à la fin de ce tour, quand il l'a changé (Queue) */
   plan?: Todo[];
+  refusals?: RefusalLine[];
+  refusalsProject?: SandboxRefusalsProps['project'];
   turn: ConversationTurnDto;
 }) {
   const sources = sourcesOf(turn.parts);
+  const segments = splitAtRefusals(turn.parts, refusals);
   return (
     <Message>
       <MessageContent>
         <MessageHeader className="gap-1.5 px-0">
           Agent · <Time at={turn.at} />
         </MessageHeader>
-        <AgentParts parts={turn.parts} live={live} current={current} />
+        {segments.map((segment, index) => (
+          // Les refus d'un tour ne changent pas d'ordre : leur position est leur identité
+          <Fragment key={index}>
+            <AgentParts parts={segment.parts} live={live} current={current && index === segments.length - 1} />
+            {segment.refusal && <SandboxRefusal {...segment.refusal} project={refusalsProject} />}
+          </Fragment>
+        ))}
         {plan && plan.length > 0 && <PlanQueue todos={plan} live={live && current} />}
         {sources.length > 0 && <SourcesList sources={sources} />}
       </MessageContent>
@@ -81,8 +96,10 @@ function AgentTurn({
  * Fil complet d'une session, sur les patterns d'AI Elements : tes demandes en bulles (Message), les réponses de
  * l'agent en Markdown, ses réflexions (Reasoning) et ses outils (Tool, Terminal, Test Results, Stack Trace, Task).
  */
-export function ConversationView({ conversation, live, notices = [] }: ConversationViewProps) {
+export function ConversationView({ conversation, live, notices = [], refusals }: ConversationViewProps) {
   const { plans, turns } = planOf(conversation.turns);
+  const placed = placeRefusals(turns, refusals?.list ?? []);
+  const project = refusals?.project ?? null;
   const last = turns.at(-1);
   // Une suspension vient avant le premier tour commencé après elle
   const before = (turn: ConversationTurnDto) =>
@@ -103,12 +120,22 @@ export function ConversationView({ conversation, live, notices = [] }: Conversat
           {turn.role === 'user' ? (
             <UserTurn turn={turn} />
           ) : (
-            <AgentTurn turn={turn} live={live} current={live && turn === last} plan={plans.get(turn.id)} />
+            <AgentTurn
+              turn={turn}
+              live={live}
+              current={live && turn === last}
+              plan={plans.get(turn.id)}
+              refusals={placed.byTurn.get(turn.id)}
+              refusalsProject={project}
+            />
           )}
         </Fragment>
       ))}
       {after.map((notice) => (
         <AutoModeSuspended key={notice.seq} suspended={notice} />
+      ))}
+      {placed.rest.map((line) => (
+        <SandboxRefusal key={line.host} {...line} project={project} />
       ))}
     </div>
   );
