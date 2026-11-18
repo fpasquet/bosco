@@ -19,6 +19,7 @@ import { SessionService } from './application/session.service.ts';
 import { SettingsService } from './application/settings.service.ts';
 import { SourceService } from './application/source.service.ts';
 import { SuggestionService } from './application/suggestion.service.ts';
+import { UsageBackfillService } from './application/usage-backfill.service.ts';
 import { ClaudeChannelInstaller } from './infrastructure/claude-code/channel-installer.ts';
 import { ClaudeTurnRunner } from './infrastructure/claude-code/claude-turn-runner.ts';
 import { FileConversationReader } from './infrastructure/claude-code/conversation-reader.ts';
@@ -26,6 +27,7 @@ import { FileProfileFinder } from './infrastructure/claude-code/profile-finder.t
 import { FileProfileSettings } from './infrastructure/claude-code/profile-settings.ts';
 import { FileSessionRegistry } from './infrastructure/claude-code/session-registry.ts';
 import { DiskSuggestions } from './infrastructure/claude-code/suggestions.ts';
+import { FileTranscriptReplay } from './infrastructure/claude-code/transcript-replay.ts';
 import { FileTranscriptWatcher } from './infrastructure/claude-code/transcript-watcher.ts';
 import { SessionEventsBus } from './infrastructure/events/session-events.bus.ts';
 import { loadHookSecret } from './infrastructure/hooks/hook-secret.ts';
@@ -292,6 +294,18 @@ export class SessionsModule implements OnApplicationBootstrap, OnApplicationShut
     @Inject(SESSION_DEFAULTS_SERVICE) private readonly defaults: SessionDefaultsService,
   ) {}
 
+  /** L'usage des sessions lues avant qu'il soit gardé tour par tour se relit en arrière-plan, sans retenir le démarrage. */
+  private completeUsage(): void {
+    const backfill = new UsageBackfillService(
+      new MikroOrmSessionRepository(this.orm),
+      new MikroOrmSourceRepository(this.orm),
+      new FileTranscriptReplay(),
+    );
+    void backfill.completeUsage().catch((error: unknown) => {
+      console.warn(`usage backfill stopped: ${error instanceof Error ? error.message : String(error)}`);
+    });
+  }
+
   async onApplicationBootstrap(): Promise<void> {
     await this.settings.load();
     this.sessions.useNotifications(this.notifications);
@@ -302,6 +316,7 @@ export class SessionsModule implements OnApplicationBootstrap, OnApplicationShut
     await this.pilot.load();
     await this.liveSignals.dropStalePermissions();
     await this.sourceService.resumeWatching();
+    this.completeUsage();
   }
 
   async onApplicationShutdown(): Promise<void> {

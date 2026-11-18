@@ -1,11 +1,25 @@
-import type { MikroORM } from '@mikro-orm/sqlite';
-import type { SessionRepository } from '../../application/ports.ts';
-import type { JournalEntry } from '../../domain/transcript-event.ts';
+import type { EntityManager, MikroORM } from '@mikro-orm/sqlite';
+import type {
+  RecordedPullRequest,
+  RecordedTurn,
+  SessionRepository,
+  UsageBackfillRepository,
+  UsageRepository,
+} from '../../application/ports.ts';
+import type { CreatedPullRequest, JournalEntry, TurnUsage } from '../../domain/transcript-event.ts';
 import { Session, type Waiting } from '../../domain/session.ts';
 import { TokenUsage } from '../../domain/token-usage.ts';
-import { type SessionEventRow, SessionEventSchema, type SessionRow, SessionSchema } from './sessions.schema.ts';
+import {
+  type SessionEventRow,
+  SessionEventSchema,
+  SessionPullRequestSchema,
+  type SessionRow,
+  SessionSchema,
+  type SessionTurnRow,
+  SessionTurnSchema,
+} from './sessions.schema.ts';
 
-export class MikroOrmSessionRepository implements SessionRepository {
+export class MikroOrmSessionRepository implements SessionRepository, UsageBackfillRepository, UsageRepository {
   constructor(private readonly orm: MikroORM) {}
 
   async find(id: string): Promise<null | Session> {
@@ -50,6 +64,7 @@ export class MikroOrmSessionRepository implements SessionRepository {
       cacheCreationTokens: usage.cacheCreation,
       cacheReadTokens: usage.cacheRead,
     });
+    await this.saveUsage(em, snapshot.id, session.pullUsage());
     if (journal.length) {
       await em.insertMany(
         SessionEventSchema,
@@ -74,6 +89,68 @@ export class MikroOrmSessionRepository implements SessionRepository {
           ]);
     }
   }
+
+  /** Usage des tours et PR créées lus avec le transcript ; une PR déjà notée ne compte pas deux fois. */
+  private async saveUsage(
+    em: EntityManager,
+    sessionId: string,
+    { pullRequests, turns }: { pullRequests: CreatedPullRequest[]; turns: TurnUsage[] },
+  ): Promise<void> {
+    if (turns.length)
+      await em.insertMany(
+        SessionTurnSchema,
+        turns.map((turn) => toTurnRow(sessionId, turn)),
+      );
+    if (pullRequests.length)
+      await em.upsertMany(
+        SessionPullRequestSchema,
+        pullRequests.map(({ at, url }) => ({ at, sessionId, url })),
+        { onConflictAction: 'ignore', onConflictFields: ['url'] },
+      );
+  }
+
+  async listTurns(from: Date | null): Promise<RecordedTurn[]> {
+    const rows = await this.orm.em
+      .fork()
+      .find(SessionTurnSchema, from ? { at: { $gte: from } } : {}, { orderBy: { at: 'asc' } });
+    return rows.map((row) => ({
+      at: row.at,
+      model: row.model,
+      sessionId: row.sessionId,
+      usage: new TokenUsage(row.inputTokens, row.outputTokens, row.cacheCreationTokens, row.cacheReadTokens),
+    }));
+  }
+
+  async listPullRequests(from: Date | null): Promise<RecordedPullRequest[]> {
+    const rows = await this.orm.em.fork().find(SessionPullRequestSchema, from ? { at: { $gte: from } } : {});
+    return rows.map(({ at, sessionId, url }) => ({ at, sessionId, url }));
+  }
+
+  async listActivity(from: Date | null): Promise<{ at: Date; kind: string; sessionId: string }[]> {
+    const rows = await this.orm.em.fork().find(SessionEventSchema, from ? { at: { $gte: from } } : {}, {
+      fields: ['at', 'kind', 'sessionId', 'seq'],
+      orderBy: { sessionId: 'asc', seq: 'asc' },
+    });
+    return rows.map(({ at, kind, sessionId }) => ({ at, kind, sessionId }));
+  }
+
+  async firstTurnAt(): Promise<Date | null> {
+    const [first] = await this.orm.em.fork().find(SessionTurnSchema, {}, { orderBy: { at: 'asc' }, limit: 1 });
+    return first?.at ?? null;
+  }
+
+  async replaceUsage(session: Session): Promise<void> {
+    const em = this.orm.em.fork();
+    const { id } = session.toSnapshot();
+    await em.nativeDelete(SessionTurnSchema, { sessionId: id });
+    await this.saveUsage(em, id, session.pullUsage());
+    await em.nativeUpdate(SessionSchema, { id }, { usageComplete: session.toSnapshot().usageComplete });
+  }
+
+  async listIncompleteUsage(): Promise<Session[]> {
+    const rows = await this.orm.em.fork().find(SessionSchema, { usageComplete: false });
+    return rows.map(toSession);
+  }
 }
 
 /** Une suspension d'« Approuver pour moi » garde son nombre de refus en JSON dans le texte de sa ligne. */
@@ -81,6 +158,18 @@ function toEntry({ at, kind, seq, text }: SessionEventRow): JournalEntry {
   if (kind !== 'autoModeSuspended') return { at, kind: kind as 'prompt' | 'reply' | 'tool', seq, text };
   const { count, total } = JSON.parse(text) as { count: number; total: boolean };
   return { at, count, kind, seq, total };
+}
+
+function toTurnRow(sessionId: string, { at, model, usage }: TurnUsage): SessionTurnRow {
+  return {
+    sessionId,
+    at,
+    model,
+    inputTokens: usage.input,
+    outputTokens: usage.output,
+    cacheCreationTokens: usage.cacheCreation,
+    cacheReadTokens: usage.cacheRead,
+  };
 }
 
 function toSession(row: SessionRow): Session {

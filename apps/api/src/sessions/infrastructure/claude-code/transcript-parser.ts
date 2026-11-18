@@ -14,6 +14,8 @@ export interface ParsedLine {
 /** Une session lue en plusieurs fois garde ce suivi : un message de l'assistant écrit bloc par bloc répète son usage. */
 export class TranscriptParser {
   private readonly countedMessages = new Set<string>();
+  /** Appels d'outil qui créent une PR (`gh pr create`), en attente de leur résultat, qui en donne l'adresse */
+  private readonly pullRequestCalls = new Set<string>();
 
   parse(line: string): ParsedLine[] {
     const record = parseJson(line);
@@ -49,9 +51,27 @@ export class TranscriptParser {
   private userEvents(sessionId: string, base: Base, message: unknown): ParsedLine[] {
     const content = isRecord(message) ? message.content : undefined;
     const prompt = typeof content === 'string' ? content : textBlocks(content);
-    // Les résultats d'outils reviennent aussi en lignes « user » : ce ne sont pas des messages de la personne
-    if (!prompt) return [];
+    // Les résultats d'outils reviennent aussi en lignes « user » : ce ne sont pas des messages de la personne, mais
+    // celui d'une création de PR en donne l'adresse
+    if (!prompt)
+      return this.pullRequests(content).map((url) => ({
+        sessionId,
+        event: { ...base, kind: 'pullRequest', text: url },
+      }));
     return [{ sessionId, event: { ...base, kind: 'prompt', text: shorten(prompt) } }];
+  }
+
+  /** Adresses des PR rendues par les appels `gh pr create` dont ce contenu donne le résultat. */
+  private pullRequests(content: unknown): string[] {
+    if (!Array.isArray(content)) return [];
+    return content.filter(isRecord).flatMap((block) => {
+      const id = text(block.tool_use_id);
+      if (block.type !== 'tool_result' || !id || !this.pullRequestCalls.has(id)) return [];
+      this.pullRequestCalls.delete(id);
+      const output = typeof block.content === 'string' ? block.content : (textBlocks(block.content) ?? '');
+      const url = PULL_REQUEST_URL.exec(output)?.[0];
+      return url ? [url] : [];
+    });
   }
 
   private assistantEvents(sessionId: string, base: Base, message: unknown): ParsedLine[] {
@@ -61,6 +81,10 @@ export class TranscriptParser {
     const usage = messageId && !this.countedMessages.has(messageId) ? tokenUsage(message.usage) : null;
     if (messageId && usage) this.countedMessages.add(messageId);
     const blocks = Array.isArray(message.content) ? message.content.filter(isRecord) : [];
+    for (const block of blocks) {
+      const id = text(block.id);
+      if (block.type === 'tool_use' && id && createsPullRequest(block)) this.pullRequestCalls.add(id);
+    }
     const events = blocks
       .flatMap((block) => blockEvent(block))
       .map((event) => ({ sessionId, event: { ...base, model, ...event } }));
@@ -72,6 +96,16 @@ export class TranscriptParser {
     }
     return events.filter((parsed) => parsed.event.text !== '' || parsed.event.usage);
   }
+}
+
+/** Adresse d'une PR GitHub, telle que `gh pr create` l'écrit à la fin de sa sortie. */
+const PULL_REQUEST_URL = /https:\/\/github\.com\/[\w.-]+\/[\w.-]+\/pull\/\d+/;
+
+/** Un appel de Bash qui lance `gh pr create`, seul ou dans une suite de commandes. */
+function createsPullRequest(block: Record<string, unknown>): boolean {
+  if (block.name !== 'Bash' || !isRecord(block.input)) return false;
+  const command = text(block.input.command);
+  return command !== null && /\bgh\s+pr\s+create\b/.test(command);
 }
 
 type Base = Pick<TranscriptEvent, 'at' | 'branch' | 'cwd' | 'model' | 'projectRoot' | 'usage'>;

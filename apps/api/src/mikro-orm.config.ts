@@ -32,6 +32,7 @@ import { Migration20261118100000 } from './migrations/Migration20261118100000.ts
 import { Migration20261118110000 } from './migrations/Migration20261118110000.ts';
 import { Migration20261118120000 } from './migrations/Migration20261118120000.ts';
 import { Migration20261118130000 } from './migrations/Migration20261118130000.ts';
+import { Migration20261118140000 } from './migrations/Migration20261118140000.ts';
 import {
   GroupProjectSchema,
   IgnoredFolderSchema,
@@ -43,7 +44,9 @@ import { PilotSchema } from './sessions/infrastructure/persistence/pilot.reposit
 import { ProfileDefaultsSchema } from './sessions/infrastructure/persistence/profile-defaults.repository.ts';
 import {
   SessionEventSchema,
+  SessionPullRequestSchema,
   SessionSchema,
+  SessionTurnSchema,
   SourceSchema,
   TranscriptCursorSchema,
 } from './sessions/infrastructure/persistence/sessions.schema.ts';
@@ -79,6 +82,7 @@ export const MIGRATIONS = [
   { name: 'Migration20261118110000', class: Migration20261118110000 },
   { name: 'Migration20261118120000', class: Migration20261118120000 },
   { name: 'Migration20261118130000', class: Migration20261118130000 },
+  { name: 'Migration20261118140000', class: Migration20261118140000 },
 ];
 
 export function ormConfig(dbName: string) {
@@ -89,6 +93,8 @@ export function ormConfig(dbName: string) {
       SourceSchema,
       SessionSchema,
       SessionEventSchema,
+      SessionTurnSchema,
+      SessionPullRequestSchema,
       TranscriptCursorSchema,
       DeviceSchema,
       TaskSchema,

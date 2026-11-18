@@ -31,8 +31,28 @@ export interface SessionRow {
   sourceId: string;
   startedAt: Date;
   title: null | string;
+  usageComplete: boolean;
   /** Attente de la session, en JSON (dates en ISO 8601) */
   waiting: null | Record<string, unknown>;
+}
+
+/** Usage d'un tour d'une session (une réponse de l'agent) : la page Usage le compte par jour, projet et modèle. */
+export interface SessionTurnRow {
+  at: Date;
+  cacheCreationTokens: number;
+  cacheReadTokens: number;
+  id?: number;
+  inputTokens: number;
+  model: null | string;
+  outputTokens: number;
+  sessionId: string;
+}
+
+/** PR créée par l'agent d'une session, repérée dans son fil ; une adresse ne compte qu'une fois. */
+export interface SessionPullRequestRow {
+  at: Date;
+  sessionId: string;
+  url: string;
 }
 
 /** Journal d'une session : une ligne par événement, numérotée, jamais modifiée. */
@@ -89,6 +109,32 @@ export const SessionSchema = new EntitySchema<SessionRow>({
     endedAt: { type: 'datetime', fieldName: 'ended_at', nullable: true },
     turns: { type: 'integer', default: 0 },
     changedFiles: { type: 'json', fieldName: 'changed_files', default: '[]' },
+    usageComplete: { type: 'boolean', fieldName: 'usage_complete', default: false },
+  },
+});
+
+export const SessionTurnSchema = new EntitySchema<SessionTurnRow>({
+  name: 'SessionTurn',
+  tableName: 'session_turn',
+  properties: {
+    id: { type: 'integer', primary: true, autoincrement: true },
+    sessionId: { type: 'string', fieldName: 'session_id', index: true },
+    at: { type: 'datetime', index: true },
+    model: { type: 'string', nullable: true },
+    inputTokens: { type: 'integer', fieldName: 'input_tokens' },
+    outputTokens: { type: 'integer', fieldName: 'output_tokens' },
+    cacheCreationTokens: { type: 'integer', fieldName: 'cache_creation_tokens' },
+    cacheReadTokens: { type: 'integer', fieldName: 'cache_read_tokens' },
+  },
+});
+
+export const SessionPullRequestSchema = new EntitySchema<SessionPullRequestRow>({
+  name: 'SessionPullRequest',
+  tableName: 'session_pull_request',
+  properties: {
+    url: { type: 'string', primary: true },
+    sessionId: { type: 'string', fieldName: 'session_id', index: true },
+    at: { type: 'datetime', index: true },
   },
 });
 

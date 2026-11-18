@@ -1,5 +1,5 @@
 import type { AgentQuestion } from './pilot.ts';
-import type { JournalEntry, TranscriptEvent } from './transcript-event.ts';
+import type { CreatedPullRequest, JournalEntry, TranscriptEvent, TurnUsage } from './transcript-event.ts';
 import { type FileChange, mergeChange } from './file-change.ts';
 import { estimateCostMicros } from './model-pricing.ts';
 import { TokenUsage } from './token-usage.ts';
@@ -54,12 +54,16 @@ export interface SessionSnapshot {
   /** Tokens d'un modèle sans tarif connu : la session est alors « non chiffrée » pour cette part */
   unpricedTokens: number;
   usage: TokenUsage;
+  /** L'usage de chacun de ses tours est gardé depuis le début ; faux pour une session lue avant qu'il le soit */
+  usageComplete: boolean;
   waiting: null | Waiting;
 }
 
 /** Une session Claude Code, découverte dans un dossier surveillé : son contexte, son usage et son journal. */
 export class Session {
   private readonly pending: JournalEntry[] = [];
+  private readonly pendingTurns: TurnUsage[] = [];
+  private readonly pendingPullRequests: CreatedPullRequest[] = [];
 
   private constructor(private snapshot: SessionSnapshot) {}
 
@@ -93,6 +97,7 @@ export class Session {
       endedAt: null,
       changedFiles: [],
       turns: 0,
+      usageComplete: true,
     });
   }
 
@@ -181,6 +186,11 @@ export class Session {
   /** Tient compte d'un événement lu dans le transcript : contexte, usage, dernier message, journal. */
   record(event: TranscriptEvent): void {
     const at = event.at ?? this.snapshot.lastEventAt;
+    if (event.kind === 'pullRequest') {
+      this.pendingPullRequests.push({ at, url: event.text });
+      return;
+    }
+    if (event.usage) this.pendingTurns.push({ at, model: event.model ?? this.snapshot.model, usage: event.usage });
     // Une action plus récente que la fin du tour montre que la session est repartie, même si un signal a été manqué
     const { waiting } = this.snapshot;
     if (waiting?.kind === 'turn' && event.kind !== 'title' && event.at && event.at > waiting.since)
@@ -247,6 +257,30 @@ export class Session {
   noteAutoModeSuspended(count: number, total: boolean, at: Date): void {
     this.pending.push({ seq: this.snapshot.nextSeq, at, kind: 'autoModeSuspended', count, total });
     this.snapshot = { ...this.snapshot, nextSeq: this.snapshot.nextSeq + 1 };
+  }
+
+  /** Usage des tours et PR créées lus depuis le dernier enregistrement, à écrire une seule fois (page Usage). */
+  pullUsage(): { pullRequests: CreatedPullRequest[]; turns: TurnUsage[] } {
+    return { pullRequests: this.pendingPullRequests.splice(0), turns: this.pendingTurns.splice(0) };
+  }
+
+  /**
+   * Usage de ses tours et PR créées, relus depuis le début de son transcript pour une session lue avant qu'ils soient
+   * gardés ; sans transcript (effacé par Claude Code), tout son usage compte au jour où elle a commencé.
+   */
+  replayUsage(events: null | TranscriptEvent[]): void {
+    this.pendingTurns.splice(0);
+    this.pendingPullRequests.splice(0);
+    const { model, startedAt, usage } = this.snapshot;
+    if (events === null) {
+      if (usage.total > 0) this.pendingTurns.push({ at: startedAt, model, usage });
+    } else
+      for (const event of events) {
+        const at = event.at ?? startedAt;
+        if (event.kind === 'pullRequest') this.pendingPullRequests.push({ at, url: event.text });
+        else if (event.usage) this.pendingTurns.push({ at, model: event.model ?? model, usage: event.usage });
+      }
+    this.snapshot = { ...this.snapshot, usageComplete: true };
   }
 
   /** Entrées du journal ajoutées depuis le dernier enregistrement, à écrire une seule fois. */
