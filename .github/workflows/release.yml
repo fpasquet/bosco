@@ -136,6 +136,9 @@ jobs:
           distribution: temurin
           java-version: '17'
       - uses: android-actions/setup-android@v3
+        with:
+          # Le paquet « tools » par défaut n'existe plus dans les dépôts du SDK ; Gradle installe le reste
+          packages: platform-tools
       - run: pnpm install --frozen-lockfile
       # La clé de release vient des secrets du dépôt ; sans elle, seul un essai à blanc continue, signé en debug
       - name: Release key

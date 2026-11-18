@@ -183,6 +183,11 @@ execFileSync('npm', ['install', '--omit=dev', '--no-package-lock', '--no-audit',
 // 4. Le paquet .deb : l'exécutable bosco-desktop dans /opt/Bosco, son entrée dans le menu des applications, et le bac à
 // sable d'Electron configuré à l'installation (chrome-sandbox appartient à root, avec le bit SUID)
 const electron = requireFromApp('electron/package.json');
+const electronDir = dirname(requireFromApp.resolve('electron/package.json'));
+const electronDist = join(electronDir, 'dist');
+// Le binaire d'Electron vient du script d'installation du paquet, que pnpm ne relance pas quand il reprend le paquet
+// de son cache (CI) : on le télécharge alors ici
+if (!existsSync(electronDist)) execFileSync(process.execPath, [join(electronDir, 'install.js')], { stdio: 'inherit' });
 const { build, Platform } = requireFromApp('electron-builder');
 const artifacts = await build({
   targets: Platform.LINUX.createTarget(targets),
@@ -194,7 +199,7 @@ const artifacts = await build({
     executableName: 'bosco-desktop',
     artifactName: `bosco-desktop_${version}_\${arch}.\${ext}`,
     electronVersion: electron.version,
-    electronDist: join(dirname(requireFromApp.resolve('electron/package.json')), 'dist'),
+    electronDist,
     directories: { app: shell, output: out },
     asar: false,
     npmRebuild: false,
