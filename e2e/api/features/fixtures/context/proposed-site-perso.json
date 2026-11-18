@@ -1,9 +1,0 @@
-{
-  "target": { "kind": "project", "name": "site-perso" },
-  "text": {
-    "title": "Garder les fichiers audio 30 jours en cache",
-    "context": "Générer un même article plusieurs fois coûte cher.",
-    "decision": "Garder chaque fichier audio 30 jours."
-  },
-  "accept": false
-}

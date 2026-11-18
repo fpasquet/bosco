@@ -137,16 +137,6 @@ export class ContextService {
     return sessionContextText(blocks);
   }
 
-  /** Projets qui ont une décision à eux, proposée ou acceptée : ceux que l'écran du contexte propose de consulter. */
-  async listDecidedProjects(): Promise<string[]> {
-    const all = await this.decisions.list();
-    const names = all.flatMap((decision) => {
-      const { state, target } = decision.toSnapshot();
-      return state === 'accepted' || state === 'proposed' ? [target.name] : [];
-    });
-    return [...new Set(names)].toSorted((a, b) => a.localeCompare(b));
-  }
-
   async proposals(): Promise<DecisionSnapshot[]> {
     const all = await this.decisions.list();
     return all.map((decision) => decision.toSnapshot()).filter((decision) => decision.state === 'proposed');

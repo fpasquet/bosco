@@ -60,16 +60,6 @@ Feature: Context of the agents
     Then the response property "versions.length" should equal "2"
     And the response property "versions.1.note" should equal "Les colonnes aussi"
 
-  @CA-CONT-86
-  Scenario: Only the projects with a decision of their own, proposed or accepted, are offered
-    When I send POST request to "/api/decisions" with the JSON "fixtures/context/project-decision.json"
-    And I send POST request to "/api/decisions" with the JSON "fixtures/context/proposed-site-perso.json"
-    And I send GET request to "/api/context/projects"
-    Then the response property "projects" should equal "maison,site-perso"
-    When I send POST request to "/api/decisions/2/refuse"
-    And I send GET request to "/api/context/projects"
-    Then the response property "projects" should equal "maison"
-
   @CA-CONT-10
   Scenario: A decision proposed by an agent names its session, and arrives as a notification
     When a Claude Code session in "maison/packages/recettes" proposes the decision "Normaliser les sigles"
