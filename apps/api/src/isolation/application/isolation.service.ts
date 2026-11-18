@@ -162,7 +162,7 @@ export class IsolationService {
   /** Seul un domaine ajouté se retire : la liste par défaut est verrouillée. */
   async removeDomain(value: string): Promise<IsolationSnapshot> {
     const domain = value.trim().toLowerCase();
-    if ((LOCKED_DOMAINS as readonly string[]).includes(domain))
+    if (LOCKED_DOMAINS.includes(domain))
       throw new InvalidIsolation(`${domain} est nécessaire à Claude Code et aux installations : il reste autorisé.`);
     this.added = this.added.filter((added) => added !== domain);
     await this.store.saveAddedDomains(this.added);
