@@ -36,9 +36,30 @@ make android                  # APK de l'application Android (JDK 17 et SDK Andr
 
 Le paquet s'installe avec `make desktop-package-install` : l'application va dans `/opt/Bosco`, son entrée dans le menu des applications, et son bac à sable est configuré à l'installation. Elle garde les données de `~/.local/share/bosco`, comme le service lancé depuis le dépôt. Chaque paquet porte la version de l'application suivie de la date et du commit, toujours plus récente pour apt. Installé pendant que Bosco tourne, il se signale dans la barre système : « Relancer Bosco » passe à la nouvelle version. Une version plus ancienne refuse de démarrer sur des données qu'une plus récente a mises à jour.
 
-Sans rien construire sur le poste, les deux applications se téléchargent depuis GitHub : le workflow « Apps » construit le paquet `.deb` et l'APK à chaque push sur `main` (et à la demande, depuis l'onglet Actions), et les garde 30 jours dans les artefacts de l'exécution. Une étiquette `v*` les joint en plus à une release. L'APK est signé avec la clé de débogage du gabarit Expo : il s'installe à la main (sources inconnues autorisées), pas sur un store.
+Sans rien construire sur le poste, les applications se téléchargent depuis les [releases GitHub](https://github.com/fpasquet/bosco/releases) : le paquet `.deb`, l'AppImage (qui se met à jour seule, depuis les mêmes releases) et l'APK Android, signé avec la clé de release. Une beta paraît en pre-release. Réglages › À propos dit la version qui tourne, cherche une fois par jour au plus une version plus récente (sur le canal stable ou bêta, sans identifiant, désactivable) et affiche le journal des versions.
+
+L'AppImage se lance sans le bac à sable de Chromium (`--no-sandbox`, ajouté par son lanceur) : une AppImage ne peut pas installer le `chrome-sandbox` privilégié ni le profil AppArmor qu'Ubuntu exige depuis la 23.10. Le paquet `.deb` les configure à l'installation : préfère-le si tu veux ce bac à sable.
 
 Pour essayer une branche avant sa fusion, `make beta BRANCH=<branche>` la construit dans un worktree à part (`~/.cache/bosco/beta`, gardé d'un essai à l'autre) sans toucher au dépôt courant, puis installe son paquet à la place de l'application, sur les vraies données. Sans `BRANCH`, c'est la copie de travail courante qui est installée. `make beta BRANCH=main` revient à la version stable, à condition que la branche essayée n'ait pas migré la base.
+
+## Versions
+
+Chaque version suit les [Conventional Commits](https://www.conventionalcommits.org/) de `main` : une nouveauté (`feat`) monte la version mineure, une correction (`fix`) le correctif, avant la 1.0. La version du dépôt est celle de `package.json` ; le service, l'application du poste et l'application Android la lisent.
+
+Une release se lance à la main, depuis l'onglet Actions, workflow « Release » :
+
+1. **Essai à blanc** (`dry_run`, coché par défaut) : la version et les notes s'affichent dans le résumé de l'exécution, les fichiers restent dans ses artefacts. Rien ne part sur le dépôt.
+2. **Beta** (`channel: beta`) : la beta suivante (`0.3.0-beta.1`, puis `-beta.2`…), publiée en pre-release.
+3. **Stable** (`channel: stable`) : la version des commits, ou celle donnée dans `version`.
+
+Le workflow écrit la version dans les applications, régénère `CHANGELOG.md` (git-cliff, `cliff.toml`) et construit le `.deb`, l'AppImage, leurs fichiers de mise à jour (`latest-linux.yml`, `beta-linux.yml`) et l'APK sur ce commit. Une fois tout construit, il pousse le commit `chore(release): vX.Y.Z` et l'étiquette `vX.Y.Z` sur `main`, puis crée la release avec les notes de la version, les fichiers et `SHA256SUMS`.
+
+L'APK se signe avec la clé de release, rangée dans les secrets du dépôt : `ANDROID_KEYSTORE_BASE64` (le keystore en base64), `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS` et `ANDROID_KEY_PASSWORD`. Sans eux, une release s'arrête ; un essai à blanc signe avec la clé de debug.
+
+```bash
+make changelog        # régénère CHANGELOG.md
+make desktop-release  # .deb, AppImage et fichiers de mise à jour, à la version exacte du dépôt (copie propre)
+```
 
 ## Dépôt
 
@@ -50,6 +71,7 @@ Pour essayer une branche avant sa fusion, `make beta BRANCH=<branche>` la constr
 | `apps/mobile`      | Application Android (Expo) : interface téléphone dans une vue web, appairage par QR code, notifications locales                                                                         |
 | `packages/domain`  | Contrats partagés avec le web : nom de l'application, types des vues                                                                                                                    |
 | `packages/configs` | Configurations partagées : TypeScript, ESLint, Vitest, Prettier                                                                                                                         |
+| `tools/release`    | Outils du workflow Release : version calculée depuis les commits, écrite dans les applications, CHANGELOG.md et notes                                                                   |
 | `e2e`              | Scénarios Gherkin de l'API (anglais) et du web (français), module d'enregistrement des appels sortants                                                                                  |
 
 ## Commandes

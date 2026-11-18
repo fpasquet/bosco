@@ -1,0 +1,217 @@
+name: Release
+
+# Publie une version de Bosco, lancé à la main depuis l'onglet Actions (comme les releases d'Insomnia) :
+#   1. la version se calcule depuis les commits de main (ou se donne), sur le canal stable ou beta (X.Y.Z-beta.N) ;
+#   2. elle s'écrit dans les applications, CHANGELOG.md se régénère, un commit « chore(release): vX.Y.Z » se prépare ;
+#   3. l'application du poste (.deb, AppImage, fichiers de mise à jour) et l'APK Android se construisent sur ce commit ;
+#   4. sauf en essai à blanc, le commit et l'étiquette vX.Y.Z partent sur main, puis la release GitHub (pre-release
+#      pour une beta) reçoit les notes de la version et les fichiers.
+# Rien ne part sur le dépôt avant que tout soit construit. Un essai à blanc laisse les fichiers dans les artefacts.
+on:
+  workflow_dispatch:
+    inputs:
+      channel:
+        description: Canal de la version
+        type: choice
+        options: [beta, stable]
+        default: beta
+        required: true
+      version:
+        description: Version X.Y.Z (vide = calculée depuis les commits ; sur le canal beta, la beta suivante)
+        type: string
+        required: false
+      dry_run:
+        description: Essai à blanc (tout construire, sans commit, sans étiquette ni release)
+        type: boolean
+        default: true
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  prepare:
+    name: Version and changelog
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.plan.outputs.version }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          # Tout l'historique et les étiquettes : git-cliff en tire la version et le journal
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Plan the version
+        id: plan
+        env:
+          CHANNEL: ${{ inputs.channel }}
+          REQUESTED: ${{ inputs.version }}
+        run: echo "version=$(node tools/release/src/cli.ts plan --channel "$CHANNEL" --version "$REQUESTED")" >> "$GITHUB_OUTPUT"
+      - name: Write the version, the changelog and the release notes
+        env:
+          VERSION: ${{ steps.plan.outputs.version }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/release"
+          node tools/release/src/cli.ts apply "$VERSION" --notes "$RUNNER_TEMP/release/notes.md"
+      - name: Commit the release
+        env:
+          VERSION: ${{ steps.plan.outputs.version }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit --all --message "chore(release): v$VERSION"
+          git format-patch -1 --stdout > "$RUNNER_TEMP/release/release.patch"
+      - name: Summary
+        env:
+          VERSION: ${{ steps.plan.outputs.version }}
+        run: |
+          { echo "## Bosco $VERSION"; echo; cat "$RUNNER_TEMP/release/notes.md"; } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v5
+        with:
+          name: release
+          path: ${{ runner.temp }}/release/
+          if-no-files-found: error
+
+  desktop:
+    name: Desktop application (.deb, AppImage)
+    needs: prepare
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v5
+        with:
+          name: release
+          path: ${{ runner.temp }}/release
+      - name: Apply the release commit
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git am "$RUNNER_TEMP/release/release.patch"
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: make desktop-release
+      - uses: actions/upload-artifact@v5
+        with:
+          name: desktop
+          path: |
+            apps/desktop/out/*.deb
+            apps/desktop/out/*.AppImage
+            apps/desktop/out/*-linux.yml
+          if-no-files-found: error
+
+  android:
+    name: Android application (APK)
+    needs: prepare
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v5
+        with:
+          name: release
+          path: ${{ runner.temp }}/release
+      - name: Apply the release commit
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git am "$RUNNER_TEMP/release/release.patch"
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - run: pnpm install --frozen-lockfile
+      # La clé de release vient des secrets du dépôt ; sans elle, seul un essai à blanc continue, signé en debug
+      - name: Release key
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          if [ -z "$ANDROID_KEYSTORE_BASE64" ]; then
+            if [ "$DRY_RUN" = 'true' ]; then
+              echo '::warning::No release key in the secrets: the APK of this dry run is signed with the debug key.'
+              exit 0
+            fi
+            echo '::error::The secret ANDROID_KEYSTORE_BASE64 is missing: a release APK must be signed with the release key.'
+            exit 1
+          fi
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/release.keystore"
+          {
+            echo "BOSCO_ANDROID_KEYSTORE=$RUNNER_TEMP/release.keystore"
+            echo "BOSCO_ANDROID_KEYSTORE_PASSWORD=$ANDROID_KEYSTORE_PASSWORD"
+            echo "BOSCO_ANDROID_KEY_ALIAS=$ANDROID_KEY_ALIAS"
+            echo "BOSCO_ANDROID_KEY_PASSWORD=$ANDROID_KEY_PASSWORD"
+          } >> "$GITHUB_ENV"
+      - run: make android JAVA_HOME="$JAVA_HOME" ANDROID_HOME="$ANDROID_HOME"
+      # Gradle nomme toujours l'APK app-release.apk : il prend le nom de la version
+      - name: Name the APK after the version
+        env:
+          VERSION: ${{ needs.prepare.outputs.version }}
+        run: |
+          mkdir -p out
+          cp apps/mobile/android/app/build/outputs/apk/release/app-release.apk "out/bosco-android-$VERSION.apk"
+          rm -f "$RUNNER_TEMP/release.keystore"
+      - uses: actions/upload-artifact@v5
+        with:
+          name: android
+          path: out/*.apk
+          if-no-files-found: error
+
+  publish:
+    name: Publish the release
+    if: ${{ !inputs.dry_run }}
+    needs: [prepare, desktop, android]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: actions/download-artifact@v5
+        with:
+          path: ${{ runner.temp }}/artifacts
+      - name: Push the release commit and its tag
+        env:
+          VERSION: ${{ needs.prepare.outputs.version }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git am "$RUNNER_TEMP/artifacts/release/release.patch"
+          git tag --annotate "v$VERSION" --message "Bosco $VERSION"
+          # Les deux ensemble, ou aucun : main a avancé pendant la construction, la release est à relancer
+          git push --atomic origin "HEAD:${GITHUB_REF_NAME}" "v$VERSION"
+      - name: Create the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.prepare.outputs.version }}
+          CHANNEL: ${{ inputs.channel }}
+        run: |
+          mkdir files
+          cp "$RUNNER_TEMP"/artifacts/desktop/* "$RUNNER_TEMP"/artifacts/android/* files/
+          (cd files && sha256sum -- * > SHA256SUMS)
+          prerelease=()
+          if [ "$CHANNEL" = 'beta' ]; then prerelease=(--prerelease); fi
+          gh release create "v$VERSION" files/* \
+            --title "Bosco $VERSION" \
+            --notes-file "$RUNNER_TEMP/artifacts/release/notes.md" \
+            --verify-tag "${prerelease[@]}"
