@@ -53,11 +53,17 @@ export function ContainersScreen() {
                 CPU {coresOf(sandbox)} · {memoryUsageOf(sandbox)}
                 {(near.cpu || near.memory) && ' · Proche du plafond'}
               </p>
-              {sandbox.sessionId && (
-                <Button variant="outline" className="mt-2 h-11 w-full" asChild>
-                  <Link href={`/sessions/${sandbox.sessionId}`}>Voir la session</Link>
-                </Button>
-              )}
+              {/* Dernières mesures d'un Docker muet : leurs actions sont désactivées */}
+              {sandbox.sessionId &&
+                (frozen ? (
+                  <Button variant="outline" className="mt-2 h-11 w-full" disabled>
+                    Voir la session
+                  </Button>
+                ) : (
+                  <Button variant="outline" className="mt-2 h-11 w-full" asChild>
+                    <Link href={`/sessions/${sandbox.sessionId}`}>Voir la session</Link>
+                  </Button>
+                ))}
             </li>
           );
         })}
