@@ -74,3 +74,15 @@ Feature: Live tracking
       | outcome   | elsewhere |
     When I answer the permission of the session "c41e9a07" with the JSON "fixtures/allow.json"
     Then the response code should be 409
+
+  @CA-SESS-57
+  Scenario: Live tracking installed by another version of Bosco is to update, until installed again
+    Given I install live tracking for the profile ".claude-perso"
+    And the live tracking of the profile ".claude-perso" was installed by another version of Bosco
+    When I read the live tracking of the profile ".claude-perso"
+    Then the response property "installed" should equal "false"
+    And the response property "outdated" should equal "true"
+    When I install live tracking for the profile ".claude-perso"
+    Then the response property "installed" should equal "true"
+    And the response property "outdated" should equal "false"
+    And the settings of the profile ".claude-perso" should call Bosco on 6 events

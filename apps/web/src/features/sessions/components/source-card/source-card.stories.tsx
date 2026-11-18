@@ -46,3 +46,6 @@ export const Sandboxes: Story = {
 
 /** Sur le téléphone : l'interrupteur montre l'état sans le changer. */
 export const ReadOnly: Story = { args: { readOnly: true } };
+
+/** Suivi installé par une autre version de Bosco : la source passe « À mettre à jour ». */
+export const Outdated: Story = { args: { liveTrackingOutdated: true } };

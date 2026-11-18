@@ -1,5 +1,5 @@
-// Ce que les scénarios ne voient pas : les réglages de la personne gardés à l'identique, un fichier illisible, et les
-// noms que Claude Code donne aux modes de ses réglages.
+// Ce que les scénarios ne voient pas : les réglages de la personne gardés à l'identique, un fichier illisible, les
+// hooks d'une version précédente de Bosco, et les noms que Claude Code donne aux modes de ses réglages.
 import { existsSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -35,8 +35,8 @@ describe('FileProfileSettings', () => {
     expect(installed.hooks.PermissionRequest).toEqual([
       { hooks: [{ type: 'http', url: endpoint.url, headers: { Authorization: 'Bearer s3cr3t' } }] },
     ]);
-    const installedNow = await settings.isInstalled(path, endpoint);
-    expect(installedNow).toBe(true);
+    const installedNow = await settings.installation(path, endpoint);
+    expect(installedNow).toBe('installed');
     await settings.uninstall(path, endpoint);
     expect(read(path)).toEqual(own);
   });
@@ -57,8 +57,8 @@ describe('FileProfileSettings', () => {
       JSON.stringify({ hooks: { Stop: [{ hooks: [other] }], SessionEnd: [{ hooks: [other, elsewhere] }] } }),
     );
     const settings = new FileProfileSettings();
-    const otherInstalled = await settings.isInstalled(path, endpoint);
-    expect(otherInstalled).toBe(false);
+    const otherInstalled = await settings.installation(path, endpoint);
+    expect(otherInstalled).toBe('missing');
     await settings.install(path, endpoint, false);
     const installed = read(path) as { hooks: Record<string, { hooks: { url?: string }[] }[]> };
     const urls = Object.values(installed.hooks).flatMap((groups) => groups.flatMap((group) => group.hooks));
@@ -66,6 +66,28 @@ describe('FileProfileSettings', () => {
     expect(installed.hooks.SessionEnd?.[0]?.hooks).toEqual([elsewhere]);
     await settings.uninstall(path, endpoint);
     expect(read(path)).toEqual({ hooks: { SessionEnd: [{ hooks: [elsewhere] }] } });
+  });
+
+  it.each([
+    ['another port', { ...endpoint, url: 'http://127.0.0.1:4880/api/hooks/perso' }],
+    ['another secret', { ...endpoint, secret: 'r0tat3d' }],
+  ])('reads its hooks installed with %s as to update', async (_, previous) => {
+    const path = profile();
+    const settings = new FileProfileSettings();
+    await settings.install(path, previous, false);
+    const installation = await settings.installation(path, endpoint);
+    expect(installation).toBe('outdated');
+  });
+
+  it('reads its hooks as to update when an event it follows is missing', async () => {
+    const path = profile();
+    const settings = new FileProfileSettings();
+    await settings.install(path, endpoint, false);
+    const installed = read(path) as { hooks: Record<string, unknown> };
+    delete installed.hooks.PermissionRequest;
+    writeFileSync(join(path, 'settings.json'), JSON.stringify(installed));
+    const installation = await settings.installation(path, endpoint);
+    expect(installation).toBe('outdated');
   });
 
   it('never rewrites settings it cannot read', async () => {

@@ -1,4 +1,4 @@
-import type { ProfileSettingsDto, SourcesDto } from '@bosco/domain';
+import type { ProfileSettingsDto, SourceDto, SourcesDto } from '@bosco/domain';
 
 export const sourcesQuery = {
   queryKey: ['sources'],
@@ -16,6 +16,28 @@ export async function watchProfiles(paths: string[]): Promise<void> {
     body: JSON.stringify({ paths }),
   });
   if (!response.ok) throw new Error(`POST /api/sources answered ${response.status}`);
+}
+
+/** Refus de l'ajout d'un dossier, traduit pour l'interface. */
+export class FolderRefused extends Error {}
+
+const FOLDER_REFUSALS: Record<string, string> = {
+  notAProfile: 'Ce dossier n’est pas un dossier de configuration de Claude Code.',
+  sourceAlreadyKnown: 'Ce dossier est déjà une source.',
+};
+
+/** « Ajouter un dossier » : un autre dossier de configuration de Claude Code, surveillé comme un profil. */
+export async function addSource(path: string): Promise<SourceDto> {
+  const response = await fetch('/api/sources/folder', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ path }),
+  });
+  if (!response.ok) {
+    const { code } = (await response.json().catch(() => ({}))) as { code?: string };
+    throw new FolderRefused((code && FOLDER_REFUSALS[code]) ?? 'Le dossier n’a pas pu être ajouté.');
+  }
+  return (await response.json()) as SourceDto;
 }
 
 /** Interrupteur d'une source : la lecture s'arrête ou reprend, rien n'est effacé (CA-SESS-56). */

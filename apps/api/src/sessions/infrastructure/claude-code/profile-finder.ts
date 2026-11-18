@@ -21,6 +21,21 @@ export class FileProfileFinder implements ProfileFinder {
     return candidates.sort((a, b) => a.path.localeCompare(b.path));
   }
 
+  /** Un dossier ajouté à la main : il a des sessions (projects/) ou des réglages de Claude Code. */
+  async inspect(path: string): Promise<null | ProfileCandidate> {
+    const preview = await this.preview(path);
+    if (preview) return preview;
+    const markers = await Promise.all(
+      ['settings.json', '.credentials.json'].map((file) =>
+        stat(join(path, file)).then(
+          (info) => info.isFile(),
+          () => false,
+        ),
+      ),
+    );
+    return markers.some(Boolean) ? { path, projectCount: 0, lastSessionAt: null } : null;
+  }
+
   private async preview(path: string): Promise<null | ProfileCandidate> {
     const projects = join(path, 'projects');
     const folders = await readdir(projects, { withFileTypes: true }).catch(() => null);

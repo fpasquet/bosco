@@ -38,6 +38,11 @@ export interface LiveTrackingPanelProps {
   step: LiveTrackingStep;
 }
 
+function installLabel(status: LiveTrackingDto | undefined): string {
+  if (status?.outdated) return 'Mettre à jour';
+  return status?.installed ? 'Réinstaller' : 'Installer';
+}
+
 function CheckLine({ detail, done, label }: { detail: string; done: boolean; label: string }) {
   return (
     <li className="flex items-start gap-3">
@@ -136,6 +141,12 @@ export function LiveTrackingPanel(props: LiveTrackingPanelProps) {
                 Garder une copie des réglages actuels
               </label>
               {status?.installed && <p className="text-success">Installé dans {status.settingsPath}</p>}
+              {status?.outdated && (
+                <p role="note" className="rounded-card bg-warning-soft px-4 py-3 text-warning">
+                  Les réglages du profil viennent d’une autre version de {APP_NAME} : « Mettre à jour » les remplace par
+                  ceux d’aujourd’hui.
+                </p>
+              )}
             </div>
           )}
           {step === 'check' && (
@@ -146,7 +157,7 @@ export function LiveTrackingPanel(props: LiveTrackingPanelProps) {
               <ul className="flex flex-col gap-3">
                 <CheckLine
                   label="Réglages écrits"
-                  detail={status?.settingsPath ?? '…'}
+                  detail={status?.outdated ? 'À mettre à jour' : (status?.settingsPath ?? '…')}
                   done={Boolean(status?.installed)}
                 />
                 <CheckLine label={`${APP_NAME} joignable`} detail="port local" done />
@@ -183,7 +194,7 @@ export function LiveTrackingPanel(props: LiveTrackingPanelProps) {
           {step === 'intro' && <Button onClick={() => onStepChange('install')}>Suivant</Button>}
           {step === 'install' && (
             <Button disabled={busy} onClick={() => onInstall(backup)}>
-              {status?.installed ? 'Réinstaller' : 'Installer'}
+              {installLabel(status)}
             </Button>
           )}
           {step === 'check' && (

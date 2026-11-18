@@ -8,7 +8,20 @@ import type {
   TranscriptWatcher,
 } from './ports.ts';
 import type { SessionService } from './session.service.ts';
+import { DomainError } from '../../shared/domain/domain-error.ts';
 import { Source, type SourceSnapshot } from '../domain/source.ts';
+
+export class NotAProfile extends DomainError {
+  constructor(path: string) {
+    super('notAProfile', `${path} is not a Claude Code configuration folder`);
+  }
+}
+
+export class SourceAlreadyKnown extends DomainError {
+  constructor(path: string) {
+    super('sourceAlreadyKnown', `${path} is already a source`);
+  }
+}
 
 /** Profils lus au premier lancement : les 30 derniers jours (CA-SESS-03). */
 export const HISTORY_DAYS = 30;
@@ -45,6 +58,18 @@ export class SourceService {
     await this.sourceRepository.save(sources);
     await this.resumeWatching(sources);
     return sources.map((source) => source.toSnapshot());
+  }
+
+  /** « Ajouter un dossier » : un autre dossier de configuration de Claude Code, surveillé comme un profil. */
+  async addSource(path: string): Promise<SourceSnapshot> {
+    const sources = await this.sourceRepository.list();
+    if (sources.some((source) => source.path === path)) throw new SourceAlreadyKnown(path);
+    const candidate = await this.profileFinder.inspect(path);
+    if (!candidate) throw new NotAProfile(path);
+    const source = Source.choose(this.idGenerator.next(), candidate.path, true);
+    await this.sourceRepository.save([source]);
+    await this.resumeWatching([source]);
+    return source.toSnapshot();
   }
 
   /** Interrupteur d'une source (E4a) : la lecture s'arrête, ou reprend là où elle en était (CA-SESS-56). */

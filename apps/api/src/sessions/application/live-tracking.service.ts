@@ -14,6 +14,8 @@ export const LIVE_TRACKING_EVENTS = [
 
 export interface LiveTrackingStatus {
   installed: boolean;
+  /** Installé par une autre version de Bosco : ses hooks ne sont plus ceux d'aujourd'hui, à réinstaller */
+  outdated: boolean;
   /** Dernier signal reçu d'une session de ce profil : la vérification repose sur un vrai signal (CA-SESS-64) */
   lastSignalAt: Date | null;
   settingsPath: string;
@@ -37,8 +39,13 @@ export class LiveTrackingService {
 
   async status(sourceId: string): Promise<LiveTrackingStatus> {
     const source = await this.sourceOf(sourceId);
-    const installed = await this.settings.isInstalled(source.path, this.endpointOf(source.id));
-    return { installed, lastSignalAt: this.lastSignalAt(source.id), settingsPath: `${source.path}/settings.json` };
+    const installation = await this.settings.installation(source.path, this.endpointOf(source.id));
+    return {
+      installed: installation === 'installed',
+      outdated: installation === 'outdated',
+      lastSignalAt: this.lastSignalAt(source.id),
+      settingsPath: `${source.path}/settings.json`,
+    };
   }
 
   async install(sourceId: string, backup: boolean): Promise<LiveTrackingStatus & { backupPath: null | string }> {

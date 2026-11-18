@@ -27,6 +27,8 @@ export interface SourceRepository {
 /** Dossiers de configuration de Claude Code présents sur le poste, avec leur aperçu. */
 export interface ProfileFinder {
   findCandidates(): Promise<ProfileCandidate[]>;
+  /** Aperçu d'un dossier choisi à la main ; null s'il n'est pas un dossier de configuration de Claude Code */
+  inspect(path: string): Promise<null | ProfileCandidate>;
 }
 
 /** Lit les transcripts d'un profil depuis une date, puis suit leurs ajouts, sans jamais les modifier. */
@@ -71,11 +73,17 @@ export interface HookEndpoint {
   url: string;
 }
 
+export type LiveTrackingInstallation = 'installed' | 'missing' | 'outdated';
+
 /** Réglages d'un profil Claude Code (<profil>/settings.json) : Bosco y ajoute ses hooks sans rien remplacer. */
 export interface ProfileSettings {
   /** Hooks de Bosco ajoutés aux réglages ; `backup` garde d'abord une copie des réglages actuels (CA-SESS-62) */
   install(profilePath: string, endpoint: HookEndpoint, backup: boolean): Promise<{ backupPath: null | string }>;
-  isInstalled(profilePath: string, endpoint: HookEndpoint): Promise<boolean>;
+  /**
+   * installed : les hooks de cette version de Bosco, sur son adresse et avec son secret ; outdated : des hooks de ce
+   * Bosco qui ne sont plus ceux-là (port, secret ou événements changés) ; missing : aucun
+   */
+  installation(profilePath: string, endpoint: HookEndpoint): Promise<LiveTrackingInstallation>;
   /** Retire les seuls hooks de Bosco : les réglages redeviennent ceux d'avant l'installation (CA-SESS-63) */
   uninstall(profilePath: string, endpoint: HookEndpoint): Promise<void>;
 }

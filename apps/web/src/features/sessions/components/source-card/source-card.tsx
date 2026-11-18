@@ -1,4 +1,4 @@
-import { Box, Radio, RadioTower, SquareTerminal } from 'lucide-react';
+import { Box, Radio, RadioTower, SquareTerminal, TriangleAlert } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/shared/ui/button';
 import { APP_NAME } from '@bosco/domain';
@@ -11,6 +11,8 @@ export interface SourceCardProps {
   /** Dernier signal reçu d'une session du profil ; null tant qu'aucune n'a parlé depuis le démarrage de Bosco */
   lastSignalAt: Date | null;
   liveTracking: boolean;
+  /** Suivi installé par une autre version de Bosco : la source passe « À mettre à jour » */
+  liveTrackingOutdated?: boolean;
   /** Réglages du profil (E4g) : ses valeurs par défaut des sessions ; absent : pas de lien */
   manageHref?: string;
   now: Date;
@@ -61,9 +63,37 @@ export function ManagedSourceCard({ activity, path }: ManagedSourceCardProps) {
   );
 }
 
+function StatusBadge({ outdated, watched }: { outdated: boolean; watched: boolean }) {
+  if (outdated) return <span className="badge shrink-0 badge-soft badge-sm badge-warning">À mettre à jour</span>;
+  if (watched) return <span className="badge shrink-0 badge-soft badge-sm badge-success">Actif</span>;
+  return <span className="badge shrink-0 badge-ghost badge-sm">En pause</span>;
+}
+
+function LiveTrackingState({ liveTracking, outdated }: { liveTracking: boolean; outdated: boolean }) {
+  if (outdated)
+    return (
+      <p className="flex items-center gap-1.5 font-medium">
+        <TriangleAlert aria-hidden className="size-3.5 shrink-0 text-warning" />
+        Suivi en direct à mettre à jour
+      </p>
+    );
+  return (
+    <p className="flex items-center gap-1.5 font-medium">
+      <Radio aria-hidden className={liveTracking ? 'size-3.5 shrink-0 text-success' : 'size-3.5 shrink-0 text-muted'} />
+      {liveTracking ? 'Suivi en direct installé' : 'Suivi en direct non installé'}
+    </p>
+  );
+}
+
+function liveTrackingAction(liveTracking: boolean, outdated: boolean): string {
+  if (outdated) return 'Mettre à jour';
+  return liveTracking ? 'Vérifier le suivi en direct' : 'Installer';
+}
+
 /** Une source surveillée (E4a) : son suivi en direct et son dernier signal, pour voir d'un coup d'œil que tout est branché. */
 export function SourceCard(props: SourceCardProps) {
   const { label, lastSignalAt, liveTracking, now, onOpenLiveTracking, onWatchedChange, path, watched } = props;
+  const outdated = props.liveTrackingOutdated ?? false;
   return (
     <li className="flex items-start gap-3 px-4 py-3 md:items-center md:gap-4">
       <span className="grid size-9 shrink-0 place-items-center rounded-control bg-surface-alt text-muted">
@@ -74,11 +104,7 @@ export function SourceCard(props: SourceCardProps) {
         <div className="min-w-0 md:flex-1">
           <p className="flex min-w-0 items-center gap-2 font-medium">
             <span className="truncate">{label}</span>
-            {watched ? (
-              <span className="badge shrink-0 badge-soft badge-sm badge-success">Actif</span>
-            ) : (
-              <span className="badge shrink-0 badge-ghost badge-sm">En pause</span>
-            )}
+            <StatusBadge outdated={outdated} watched={watched} />
           </p>
           <p className="truncate font-mono text-xs text-muted">{path}</p>
           {props.manageHref && (
@@ -88,13 +114,7 @@ export function SourceCard(props: SourceCardProps) {
           )}
         </div>
         <div className="min-w-0 text-xs md:w-56">
-          <p className="flex items-center gap-1.5 font-medium">
-            <Radio
-              aria-hidden
-              className={liveTracking ? 'size-3.5 shrink-0 text-success' : 'size-3.5 shrink-0 text-muted'}
-            />
-            {liveTracking ? 'Suivi en direct installé' : 'Suivi en direct non installé'}
-          </p>
+          <LiveTrackingState liveTracking={liveTracking} outdated={outdated} />
           <p className="text-muted">
             {lastSignalAt ? `dernier signal ${sinceNow(lastSignalAt, now)}` : 'aucun signal depuis le démarrage'}
           </p>
@@ -120,12 +140,13 @@ export function SourceCard(props: SourceCardProps) {
         onChange={(event) => onWatchedChange(event.target.checked)}
       />
       <Button
-        variant={liveTracking ? 'outline' : 'primary'}
+        variant={liveTracking && !outdated ? 'outline' : 'primary'}
         size="sm"
         className="hidden md:inline-flex"
         onClick={onOpenLiveTracking}
       >
-        {liveTracking ? 'Vérifier le suivi en direct' : 'Installer'}
+        {liveTrackingAction(liveTracking, outdated)}
+        {outdated && <span className="sr-only"> le suivi en direct du profil {label}</span>}
       </Button>
     </li>
   );

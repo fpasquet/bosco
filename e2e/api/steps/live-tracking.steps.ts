@@ -1,7 +1,7 @@
 import type { DataTable } from 'playwright-bdd';
 // Phrases du suivi en direct : réglages des profils, et hooks envoyés à Bosco comme le fait Claude Code.
 import { expect } from '@playwright/test';
-import { cpSync, mkdirSync, readFileSync } from 'node:fs';
+import { cpSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { ApiResponse } from './fixtures.ts';
 import { sendHook, settingsOf, sourceIdOf } from '../../shared/hooks.ts';
@@ -53,6 +53,21 @@ When('I install live tracking for the profile {string}', async ({ bosco, last, r
   const response = await request.put(`/api/sources/${id}/live-tracking`, { data: { backup: true } });
   last.response = { status: response.status(), body: (await response.json()) as unknown };
 });
+
+When('I read the live tracking of the profile {string}', async ({ bosco, last, request }, profile: string) => {
+  const id = await sourceIdOf(bosco.url, profile);
+  const response = await request.get(`/api/sources/${id}/live-tracking`);
+  last.response = { status: response.status(), body: (await response.json()) as unknown };
+});
+
+Given(
+  'the live tracking of the profile {string} was installed by another version of Bosco',
+  ({ bosco }, profile: string) => {
+    // Une autre version de Bosco : même entrée des hooks, mais un autre secret
+    const path = join(bosco.profilesRoot, profile, 'settings.json');
+    writeFileSync(path, readFileSync(path, 'utf8').replaceAll(/Bearer [\w-]+/g, 'Bearer previous-version'));
+  },
+);
 
 When('I uninstall live tracking for the profile {string}', async ({ bosco, last, request }, profile: string) => {
   const id = await sourceIdOf(bosco.url, profile);

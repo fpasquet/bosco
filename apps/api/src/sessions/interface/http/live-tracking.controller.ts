@@ -22,6 +22,8 @@ interface LiveTrackingDto {
   backupPath?: null | string;
   installed: boolean;
   lastSignalAt: null | string;
+  /** Installé par une autre version de Bosco : à mettre à jour */
+  outdated: boolean;
   settingsPath: string;
 }
 

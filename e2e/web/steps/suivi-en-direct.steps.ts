@@ -1,5 +1,6 @@
 // Phrases du suivi en direct dans le web : installation dans un profil, et Claude Code qui attend une réponse.
 import { expect } from '@playwright/test';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { type HookResponse, sendHook, sourceIdOf } from '../../shared/hooks.ts';
 import { Given, Then, When } from './fixtures.ts';
@@ -25,6 +26,12 @@ Given('le suivi en direct est installé dans le profil {texte}', async ({ bosco 
     body: JSON.stringify({ backup: true }),
   });
   expect(response.ok).toBe(true);
+});
+
+Given('le suivi en direct du profil {texte} vient d’une autre version de Bosco', ({ bosco }, profile: string) => {
+  // Une autre version de Bosco : même entrée des hooks, mais un autre secret
+  const path = join(bosco.profilesRoot, profile, 'settings.json');
+  writeFileSync(path, readFileSync(path, 'utf8').replaceAll(/Bearer [\w-]+/g, 'Bearer previous-version'));
 });
 
 Given(
@@ -108,6 +115,13 @@ When('je clique sur le lien {texte} de la fenêtre', async ({ page }, name: stri
 When('je saisis {texte} dans le champ {texte}', async ({ page }, text: string, label: string) => {
   await page.getByLabel(label).fill(text);
 });
+
+When(
+  'je saisis le dossier du profil {texte} dans le champ {texte}',
+  async ({ bosco, page }, profile: string, label: string) => {
+    await page.getByLabel(label).fill(join(bosco.profilesRoot, profile));
+  },
+);
 
 Then('le bandeau des sessions qui t’attendent montre {texte}', async ({ page }, text: string) => {
   await expect(page.getByRole('region', { name: 'Sessions qui t’attendent' })).toContainText(text);
