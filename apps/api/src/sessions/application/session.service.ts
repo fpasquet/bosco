@@ -46,6 +46,8 @@ export interface SessionView {
   sourceId: string;
   startedAt: Date;
   state: SessionState;
+  /** Part des sous-agents de la session, comprise dans usage et cost ; null quand elle n'en a pas eu */
+  subagents: null | { tokens: number; usd: number };
   title: null | string;
   usage: { cacheCreation: number; cacheRead: number; input: number; output: number };
   turns: number;
@@ -275,6 +277,10 @@ export class SessionService {
       sourceId,
       startedAt,
       state,
+      subagents:
+        snapshot.subagentUsage.total > 0
+          ? { tokens: snapshot.subagentUsage.total, usd: snapshot.subagentCostMicros / 1_000_000 }
+          : null,
       waiting: state === 'waiting' ? snapshot.waiting : null,
       turns: snapshot.turns,
       changedFiles: snapshot.changedFiles,

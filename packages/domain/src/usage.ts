@@ -38,6 +38,8 @@ export interface UsageReportDto {
     sandboxes: number;
   };
   byModel: UsageShareDto[];
+  /** Sessions elles-mêmes et sous-agents : ce que coûtent les sous-agents sur la période */
+  byOrigin: UsageShareDto[];
   byProfile: UsageShareDto[];
   byProject: UsageShareDto[];
   days: UsageDayDto[];
@@ -52,6 +54,9 @@ export interface UsageReportDto {
     cacheReuse: number;
     costUsd: number;
     sessions: number;
+    /** Part des sous-agents, comprise dans les totaux : coût estimé (dollars) et tokens */
+    subagents: { costUsd: number; tokens: number };
+    /** Réponses de l'agent des sessions, sans celles de leurs sous-agents */
     turns: number;
     /** Part des tours qui n'ont rien relu du cache, en % */
     turnsWithoutCacheRead: number;

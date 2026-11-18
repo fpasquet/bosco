@@ -55,7 +55,7 @@ export class MikroOrmSessionRepository implements SessionRepository, UsageBackfi
 
   async save(session: Session, journal: JournalEntry[]): Promise<void> {
     const em = this.orm.em.fork();
-    const { usage, waiting, ...snapshot } = session.toSnapshot();
+    const { subagentUsage, usage, waiting, ...snapshot } = session.toSnapshot();
     await em.upsert(SessionSchema, {
       ...snapshot,
       waiting: waiting ? { ...waiting, since: waiting.since.toISOString() } : null,
@@ -63,6 +63,10 @@ export class MikroOrmSessionRepository implements SessionRepository, UsageBackfi
       outputTokens: usage.output,
       cacheCreationTokens: usage.cacheCreation,
       cacheReadTokens: usage.cacheRead,
+      subagentInputTokens: subagentUsage.input,
+      subagentOutputTokens: subagentUsage.output,
+      subagentCacheCreationTokens: subagentUsage.cacheCreation,
+      subagentCacheReadTokens: subagentUsage.cacheRead,
     });
     await this.saveUsage(em, snapshot.id, session.pullUsage());
     if (journal.length) {
@@ -117,6 +121,7 @@ export class MikroOrmSessionRepository implements SessionRepository, UsageBackfi
       at: row.at,
       model: row.model,
       sessionId: row.sessionId,
+      subagent: row.subagent,
       usage: new TokenUsage(row.inputTokens, row.outputTokens, row.cacheCreationTokens, row.cacheReadTokens),
     }));
   }
@@ -142,7 +147,8 @@ export class MikroOrmSessionRepository implements SessionRepository, UsageBackfi
   async replaceUsage(session: Session): Promise<void> {
     const em = this.orm.em.fork();
     const { id } = session.toSnapshot();
-    await em.nativeDelete(SessionTurnSchema, { sessionId: id });
+    // Les tours des sous-agents viennent de leurs propres fichiers : la relecture du transcript ne les remplace pas
+    await em.nativeDelete(SessionTurnSchema, { sessionId: id, subagent: false });
     await this.saveUsage(em, id, session.pullUsage());
     await em.nativeUpdate(SessionSchema, { id }, { usageComplete: session.toSnapshot().usageComplete });
   }
@@ -160,11 +166,12 @@ function toEntry({ at, kind, seq, text }: SessionEventRow): JournalEntry {
   return { at, count, kind, seq, total };
 }
 
-function toTurnRow(sessionId: string, { at, model, usage }: TurnUsage): SessionTurnRow {
+function toTurnRow(sessionId: string, { at, model, subagent, usage }: TurnUsage): SessionTurnRow {
   return {
     sessionId,
     at,
     model,
+    subagent,
     inputTokens: usage.input,
     outputTokens: usage.output,
     cacheCreationTokens: usage.cacheCreation,
@@ -173,10 +180,23 @@ function toTurnRow(sessionId: string, { at, model, usage }: TurnUsage): SessionT
 }
 
 function toSession(row: SessionRow): Session {
-  const { inputTokens, outputTokens, cacheCreationTokens, cacheReadTokens, waiting, ...snapshot } = row;
+  const { inputTokens, outputTokens, cacheCreationTokens, cacheReadTokens, waiting, ...rest } = row;
+  const {
+    subagentCacheCreationTokens,
+    subagentCacheReadTokens,
+    subagentInputTokens,
+    subagentOutputTokens,
+    ...snapshot
+  } = rest;
   return Session.restore({
     ...snapshot,
     waiting: waiting ? ({ ...waiting, since: new Date(String(waiting.since)) } as unknown as Waiting) : null,
     usage: new TokenUsage(inputTokens, outputTokens, cacheCreationTokens, cacheReadTokens),
+    subagentUsage: new TokenUsage(
+      subagentInputTokens,
+      subagentOutputTokens,
+      subagentCacheCreationTokens,
+      subagentCacheReadTokens,
+    ),
   });
 }

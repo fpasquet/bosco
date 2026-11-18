@@ -25,4 +25,14 @@ export class TokenUsage {
       this.cacheRead + other.cacheRead,
     );
   }
+
+  /** Ce qui reste une fois une part retirée, jamais en dessous de zéro. */
+  minus(other: TokenUsage): TokenUsage {
+    return new TokenUsage(
+      Math.max(0, this.input - other.input),
+      Math.max(0, this.output - other.output),
+      Math.max(0, this.cacheCreation - other.cacheCreation),
+      Math.max(0, this.cacheRead - other.cacheRead),
+    );
+  }
 }

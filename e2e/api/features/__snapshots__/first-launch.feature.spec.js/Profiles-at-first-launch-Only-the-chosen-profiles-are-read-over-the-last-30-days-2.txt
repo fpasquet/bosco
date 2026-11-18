@@ -28,6 +28,7 @@
       "sourceId": "<masked>",
       "startedAt": "2026-11-06T14:02:00.000Z",
       "state": "inactive",
+      "subagents": null,
       "waiting": null,
       "turns": 1,
       "changedFiles": [],

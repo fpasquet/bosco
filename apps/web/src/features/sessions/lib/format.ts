@@ -26,11 +26,14 @@ export function formatCost(cost: { unpriced: boolean; usd: number }): string {
   return `${DOLLARS.format(cost.usd)}${NBSP}$`;
 }
 
-/** Tokens arrondis : « 212 k », « 1,2 M ». */
+const TENTHS = new Intl.NumberFormat('fr', { maximumFractionDigits: 1 });
+
+/** Tokens arrondis : « 212 k », « 1,2 M », « 1,4 Md » (999,96 M s'écrirait « 1 000 M »). */
 export function formatTokens(count: number): string {
   if (count < 1000) return String(count);
   if (count < 1_000_000) return `${Math.round(count / 1000)}${NBSP}k`;
-  return `${new Intl.NumberFormat('fr', { maximumFractionDigits: 1 }).format(count / 1_000_000)}${NBSP}M`;
+  if (count < 999_950_000) return `${TENTHS.format(count / 1_000_000)}${NBSP}M`;
+  return `${TENTHS.format(count / 1_000_000_000)}${NBSP}Md`;
 }
 
 export function sessions(count: number): string {

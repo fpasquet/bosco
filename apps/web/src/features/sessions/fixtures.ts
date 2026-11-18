@@ -29,6 +29,7 @@ function session(overrides: Partial<SessionDto> & Pick<SessionDto, 'id' | 'title
     sourceId: 'pro',
     startedAt: ago(38 * 60),
     state: 'running',
+    subagents: null,
     usage: { cacheCreation: 0, cacheRead: 0, input: 0, output: 0 },
     waiting: null,
     turns: 0,

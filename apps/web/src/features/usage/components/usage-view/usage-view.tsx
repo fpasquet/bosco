@@ -113,6 +113,7 @@ export function UsageView({
           <UsageBreakdown
             byProject={report.byProject}
             byModel={report.byModel}
+            byOrigin={report.byOrigin}
             byProfile={report.byProfile}
             onProject={(id) => onChange({ ...filters, scope: { kind: 'project', id } })}
           />

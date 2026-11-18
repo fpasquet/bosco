@@ -46,7 +46,9 @@ export class TranscriptParser {
     const record = parseJson(line);
     if (!record) return [];
     const sessionId = text(record.sessionId);
-    if (!sessionId || record.isSidechain === true) return [];
+    if (!sessionId) return [];
+    // Un sous-agent travaille pour la session : seul l'usage de ses réponses compte pour elle, son fil reste le sien
+    if (record.isSidechain === true) return record.type === 'assistant' ? this.subagentUsage(sessionId, record) : [];
     // Un message écrit dans Bosco et arrivé par le canal est une demande de la personne, bien que « méta »
     const viaChannel = channelMessageOf(record);
     if (record.isMeta === true && !viaChannel) return [];
@@ -71,6 +73,37 @@ export class TranscriptParser {
       default:
         return [];
     }
+  }
+
+  /** Usage d'une réponse d'un sous-agent, compté une fois même si la réponse s'étale sur plusieurs lignes. */
+  private subagentUsage(sessionId: string, record: Record<string, unknown>): ParsedLine[] {
+    const message = record.message;
+    if (!isRecord(message)) return [];
+    const usage = this.firstUsage(message);
+    if (!usage) return [];
+    return [
+      {
+        sessionId,
+        event: {
+          at: date(record.timestamp),
+          branch: null,
+          cwd: null,
+          kind: 'subagentUsage',
+          model: text(message.model),
+          projectRoot: null,
+          text: '',
+          usage,
+        },
+      },
+    ];
+  }
+
+  /** L'usage d'un message de l'assistant la première fois qu'il est lu ; null ensuite ou sans usage. */
+  private firstUsage(message: Record<string, unknown>): null | TokenUsage {
+    const messageId = text(message.id);
+    const usage = messageId && !this.countedMessages.has(messageId) ? tokenUsage(message.usage) : null;
+    if (messageId && usage) this.countedMessages.add(messageId);
+    return usage;
   }
 
   private userEvents(sessionId: string, base: Base, message: unknown): ParsedLine[] {
@@ -102,9 +135,7 @@ export class TranscriptParser {
   private assistantEvents(sessionId: string, base: Base, message: unknown): ParsedLine[] {
     if (!isRecord(message)) return [];
     const model = text(message.model);
-    const messageId = text(message.id);
-    const usage = messageId && !this.countedMessages.has(messageId) ? tokenUsage(message.usage) : null;
-    if (messageId && usage) this.countedMessages.add(messageId);
+    const usage = this.firstUsage(message);
     const blocks = Array.isArray(message.content) ? message.content.filter(isRecord) : [];
     for (const block of blocks) {
       const id = text(block.id);

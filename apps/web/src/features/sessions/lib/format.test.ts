@@ -66,6 +66,9 @@ describe('formatTokens', () => {
     [940, '940'],
     [212_400, '212 k'],
     [1_240_000, '1,2 M'],
+    [999_940_000, '999,9 M'],
+    [999_960_000, '1 Md'],
+    [1_436_000_000, '1,4 Md'],
   ])('rounds %i tokens', (count, expected) => {
     expect(plain(formatTokens(count))).toBe(expected);
   });

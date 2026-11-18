@@ -4,6 +4,8 @@ import { formatPercent, formatUsd } from '../../lib/format';
 
 export interface UsageBreakdownProps {
   byModel: UsageShareDto[];
+  /** Les sessions elles-mêmes et leurs sous-agents */
+  byOrigin: UsageShareDto[];
   byProfile: UsageShareDto[];
   byProject: UsageShareDto[];
   /** Un clic sur un projet filtre toute la page sur lui */
@@ -44,17 +46,17 @@ function Column({ children, title }: { children: React.ReactNode; title: string 
 }
 
 /**
- * Répartition du coût estimé : par projet, par modèle et par profil, les plus gros d'abord, les petits
- * regroupés en « autres ». Une session à plusieurs projets compte pour chacun : la somme des projets peut dépasser le
+ * Répartition du coût estimé : par projet, par modèle, par profil, et entre les sessions et leurs sous-agents, les
+ * plus gros d'abord, les petits regroupés en « autres ». Une session à plusieurs projets compte pour chacun : la somme des projets peut dépasser le
  * total. Un modèle sans tarif connu s'affiche « non chiffré ».
  */
-export function UsageBreakdown({ byModel, byProfile, byProject, onProject }: UsageBreakdownProps) {
+export function UsageBreakdown({ byModel, byOrigin, byProfile, byProject, onProject }: UsageBreakdownProps) {
   return (
     <section aria-labelledby="usage-breakdown" className="flex flex-col gap-2">
       <h2 id="usage-breakdown" className="text-sm font-semibold">
         Répartition
       </h2>
-      <div className="grid gap-3 md:grid-cols-3">
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         <Column title="Par projet">
           {byProject.map((share) => (
             <Share
@@ -76,6 +78,11 @@ export function UsageBreakdown({ byModel, byProfile, byProject, onProject }: Usa
         </Column>
         <Column title="Par profil">
           {byProfile.map((share) => (
+            <Share key={share.key} share={share} label={share.label} />
+          ))}
+        </Column>
+        <Column title="Sessions et sous-agents">
+          {byOrigin.map((share) => (
             <Share key={share.key} share={share} label={share.label} />
           ))}
         </Column>

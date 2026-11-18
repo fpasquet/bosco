@@ -4,18 +4,23 @@ const INTEGER = new Intl.NumberFormat('fr', { maximumFractionDigits: 0 });
 const DOLLARS = new Intl.NumberFormat('fr', { maximumFractionDigits: 2, minimumFractionDigits: 2 });
 const PERCENT = new Intl.NumberFormat('fr', { maximumFractionDigits: 1 });
 
-/** Tokens arrondis : « 41 k », « 0,7 M », « 615,1 M ». */
+/** Au-delà, les tokens se comptent en milliards : 999,96 M s'écrirait « 1 000,0 M ». */
+const BILLION = 999_950_000;
+
+/** Tokens arrondis : « 41 k », « 0,7 M », « 615,1 M », « 1,2 Md ». */
 export function formatTokens(count: number): string {
   if (count < 1000) return INTEGER.format(count);
   if (count < 500_000) return `${INTEGER.format(count / 1000)}${NBSP}k`;
-  return `${ONE_DECIMAL.format(count / 1_000_000)}${NBSP}M`;
+  if (count < BILLION) return `${ONE_DECIMAL.format(count / 1_000_000)}${NBSP}M`;
+  return `${ONE_DECIMAL.format(count / 1_000_000_000)}${NBSP}Md`;
 }
 
-/** Graduation de l'axe en millions : « 50 M », « 2,5 M », « 0 ». */
+/** Graduation de l'axe : « 0 », « 50 M », « 2,5 M », « 1,5 Md ». */
 export function formatAxisTokens(count: number): string {
   if (count === 0) return '0';
   if (count < 1_000_000) return `${INTEGER.format(count / 1000)}${NBSP}k`;
-  return `${PERCENT.format(count / 1_000_000)}${NBSP}M`;
+  if (count < 1_000_000_000) return `${PERCENT.format(count / 1_000_000)}${NBSP}M`;
+  return `${PERCENT.format(count / 1_000_000_000)}${NBSP}Md`;
 }
 
 /** Coût estimé : « 283,01 $ ». */

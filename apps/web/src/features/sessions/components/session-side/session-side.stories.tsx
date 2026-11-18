@@ -28,3 +28,16 @@ export const Closed: Story = {
     resume: 'claude --resume 5e0a91c3-6b1d-4c3a-9f27-41a8d3e0c5b2',
   },
 };
+
+/** Des sous-agents ont travaillé pour la session : leur part est comprise dans le coût, et dite à part. */
+export const WithSubagents: Story = {
+  args: {
+    session: {
+      ...STORY_RUNNING,
+      state: 'ended',
+      cost: { unpriced: false, usd: 14.62 },
+      subagents: { tokens: 31_400_000, usd: 9.87 },
+    },
+    resume: 'claude --resume 5e0a91c3-6b1d-4c3a-9f27-41a8d3e0c5b2',
+  },
+};

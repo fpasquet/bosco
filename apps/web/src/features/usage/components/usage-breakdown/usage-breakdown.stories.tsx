@@ -11,6 +11,7 @@ const meta = {
     byProject: STORY_USAGE.byProject,
     byModel: STORY_USAGE.byModel,
     byProfile: STORY_USAGE.byProfile,
+    byOrigin: STORY_USAGE.byOrigin,
     onProject: fn(),
   },
 } satisfies Meta<typeof UsageBreakdown>;

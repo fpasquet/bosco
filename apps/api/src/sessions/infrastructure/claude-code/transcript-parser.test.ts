@@ -31,6 +31,33 @@ describe('TranscriptParser', () => {
     }
   });
 
+  it('CA-SESS-188 · keeps only the usage of a subagent reply, counted once, with its own model and time', () => {
+    const parser = new TranscriptParser();
+    const reply = JSON.stringify({
+      ...base,
+      type: 'assistant',
+      isSidechain: true,
+      agentId: 'a0383c7c',
+      timestamp: '2026-11-06T14:05:00Z',
+      message: {
+        id: 'msg_sub',
+        model: 'claude-sonnet-5-5',
+        content: [{ type: 'tool_use', id: 'toolu_1', name: 'Bash', input: { command: 'gh pr create' } }],
+        usage,
+      },
+    });
+    const [first, ...rest] = parser.parse(reply);
+    expect(rest).toEqual([]);
+    expect(first).toMatchObject({
+      sessionId: 'c41e9a07',
+      event: { kind: 'subagentUsage', text: '', model: 'claude-sonnet-5-5', cwd: null, branch: null },
+    });
+    expect(first?.event.at).toEqual(new Date('2026-11-06T14:05:00Z'));
+    expect(first?.event.usage?.total).toBe(100);
+    // La même réponse sur une ligne suivante (un bloc de plus) ne compte pas deux fois
+    expect(parser.parse(reply)).toEqual([]);
+  });
+
   it('keeps tool results out of the prompts', () => {
     const line = JSON.stringify({
       ...base,

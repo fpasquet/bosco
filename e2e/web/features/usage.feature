@@ -35,8 +35,8 @@ Fonctionnalité: Usage
     Quand j'ouvre la page « /usage »
     Et je clique sur le bouton « Depuis le début »
     Alors je vois le texte « Données depuis le 16 nov. 2026. »
-    Et l’indicateur « Réutilisation du cache » vaut « 97,6 % »
-    Et l’indicateur « Coût estimé » vaut « 0,30 $ »
+    Et l’indicateur « Réutilisation du cache » vaut « 97,7 % »
+    Et l’indicateur « Coût estimé » vaut « 0,35 $ »
     Et l’indicateur « Coût estimé » vaut « hors claude-nova-1, non chiffré »
     Et l’indicateur « PR créées » vaut « 1 »
     Quand j'ouvre la page « /usage »
@@ -66,10 +66,19 @@ Fonctionnalité: Usage
   @CA-SESS-181
   Scénario: La répartition met les plus gros d'abord, et un clic sur un projet filtre toute la page
     Quand j'ouvre la page « /usage?period=all »
-    Alors l’indicateur « Coût estimé » vaut « 0,30 $ »
+    Alors l’indicateur « Coût estimé » vaut « 0,35 $ »
     Quand je clique sur le bouton « creneaux : filtrer la page sur ce projet »
     Alors je vois le bouton « Retirer le filtre Projet : creneaux »
-    Et l’indicateur « Coût estimé » vaut « 0,21 $ »
+    Et l’indicateur « Coût estimé » vaut « 0,27 $ »
+
+  @CA-SESS-188
+  Scénario: Les sous-agents comptent dans le coût de leur session, et leur part se lit à part
+    Quand j'ouvre la page « /usage?period=all »
+    Alors l’indicateur « Coût estimé » vaut « dont 0,06 $ de sous-agents »
+    Et je vois le texte « Sessions et sous-agents »
+    Quand j'ouvre la page « /sessions/5b2d81e4 »
+    Alors l’indicateur « Modèle » vaut « Opus 5.5 »
+    Et l’indicateur « dont sous-agents » vaut « 0,06 $ · 63 k »
 
   @CA-SESS-182
   @CA-SESS-183

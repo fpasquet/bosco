@@ -37,6 +37,7 @@ function session(id: string, overrides: Partial<SessionDto> = {}): SessionDto {
     sourceId: 'pro',
     startedAt: new Date('2026-11-06T14:00:00').toISOString(),
     state: 'running',
+    subagents: null,
     title: `Session ${id}`,
     usage: { cacheCreation: 0, cacheRead: 0, input: 0, output: 0 },
     waiting: null,

@@ -2,7 +2,7 @@ import { type FSWatcher, watch } from 'chokidar';
 // Lecture des transcripts d'un profil : d'abord ceux des derniers jours, puis chaque ajout, à partir de la dernière
 // position lue. Bosco ne modifie jamais ces fichiers ; une ligne incomplète attend la lecture suivante.
 import { open, readdir, stat } from 'node:fs/promises';
-import { dirname, join } from 'node:path';
+import { basename, dirname, join, relative, sep } from 'node:path';
 import type { TranscriptWatcher } from '../../application/ports.ts';
 import type { SessionService } from '../../application/session.service.ts';
 import type { Source } from '../../domain/source.ts';
@@ -33,8 +33,9 @@ export class FileTranscriptWatcher implements TranscriptWatcher {
     const projects = join(source.path, 'projects');
     const watcher = watch(projects, {
       ignoreInitial: true,
-      depth: 1,
-      ignored: (path, stats) => Boolean(stats?.isFile() && !path.endsWith('.jsonl')),
+      // <dossier>/<session>.jsonl, et <dossier>/<session>/subagents/agent-<id>.jsonl pour les sous-agents
+      depth: 3,
+      ignored: (path, stats) => !isTranscriptPath(relative(projects, path), stats?.isFile()),
     });
     watcher.on('add', (file) => void this.enqueue(source, file));
     watcher.on('change', (file) => void this.enqueue(source, file));
@@ -47,13 +48,21 @@ export class FileTranscriptWatcher implements TranscriptWatcher {
    * transcript déjà lu n'est pas relu, seuls les plus anciens s'ajoutent quand la période s'allonge.
    */
   async readSince(source: Source, since: Date): Promise<void> {
-    const files = await recentTranscripts(join(source.path, 'projects'), since);
-    // Les sessions récentes d'abord : les sessions ouvertes s'affichent avant l'historique
-    files.sort((a, b) => b.mtime - a.mtime);
-    for (const [index, file] of files.entries()) {
-      this.reportProgress({ read: index, total: files.length });
+    const projects = join(source.path, 'projects');
+    const recent = (list: { mtime: number; path: string }[]) =>
+      // Les sessions récentes d'abord : les sessions ouvertes s'affichent avant l'historique
+      list.filter(({ mtime }) => mtime >= since.getTime()).toSorted((a, b) => b.mtime - a.mtime);
+    const sessionFiles = await listTranscripts(projects);
+    const sessions = recent(sessionFiles);
+    for (const [index, file] of sessions.entries()) {
+      this.reportProgress({ read: index, total: sessions.length });
       await this.enqueue(source, file.path);
     }
+    // Les sous-agents après les sessions, dont ils ne sont qu'une part de l'usage : le bandeau compte les sessions
+    const subagentFiles = await listSubagentTranscripts(projects);
+    const subagents = recent(subagentFiles);
+    if (subagents.length > 0) this.reportProgress({ read: sessions.length, total: sessions.length });
+    for (const file of subagents) await this.enqueue(source, file.path);
     this.reportProgress(null);
   }
 
@@ -143,7 +152,8 @@ export class FileTranscriptWatcher implements TranscriptWatcher {
     const parser = this.parsers.get(file) ?? new TranscriptParser();
     this.parsers.set(file, parser);
     const { bySession, reading } = await this.parseLines(parser, buffer.subarray(0, end).toString('utf8'));
-    this.judge(source, file, reading);
+    // Le format se juge sur les transcripts des sessions ; un sous-agent n'en donne que l'usage
+    if (!isSubagentTranscript(file)) this.judge(source, file, reading);
     for (const [sessionId, events] of bySession)
       await this.sessionService.recordTranscript(source.id, sessionId, events);
     await this.cursors.moveTo(file, offset + end + 1);
@@ -210,7 +220,52 @@ async function listTranscripts(projects: string): Promise<{ mtime: number; path:
   return files;
 }
 
-async function recentTranscripts(projects: string, since: Date): Promise<{ mtime: number; path: string }[]> {
-  const files = await listTranscripts(projects);
-  return files.filter(({ mtime }) => mtime >= since.getTime());
+/** Transcripts des sous-agents des sessions d'un profil : <dossier>/<session>/subagents/agent-<id>.jsonl. */
+async function listSubagentTranscripts(projects: string): Promise<{ mtime: number; path: string }[]> {
+  const folders = await readdir(projects, { withFileTypes: true }).catch(() => []);
+  const files: { mtime: number; path: string }[] = [];
+  for (const folder of folders.filter((entry) => entry.isDirectory())) {
+    const sessions = await readdir(join(projects, folder.name), { withFileTypes: true }).catch(() => []);
+    for (const session of sessions.filter((entry) => entry.isDirectory())) {
+      const dir = join(projects, folder.name, session.name, SUBAGENTS);
+      const names = await readdir(dir).catch(() => []);
+      for (const name of names.filter(isSubagentFile)) {
+        const info = await stat(join(dir, name)).catch(() => null);
+        if (info) files.push({ path: join(dir, name), mtime: info.mtimeMs });
+      }
+    }
+  }
+  return files;
+}
+
+const SUBAGENTS = 'subagents';
+
+function isSubagentFile(name: string): boolean {
+  return name.startsWith('agent-') && name.endsWith('.jsonl');
+}
+
+/** Fichier d'un sous-agent : …/<session>/subagents/agent-<id>.jsonl. */
+export function isSubagentTranscript(file: string): boolean {
+  return basename(dirname(file)) === SUBAGENTS && isSubagentFile(basename(file));
+}
+
+/**
+ * Chemin, relatif au dossier projects d'un profil, que la surveillance suit : les dossiers des projets, les
+ * transcripts des sessions, et le chemin jusqu'aux transcripts des sous-agents ; rien d'autre (résultats d'outils…).
+ * `file` : undefined quand la nature du chemin n'est pas encore connue.
+ */
+export function isTranscriptPath(path: string, file: boolean | undefined): boolean {
+  if (path === '') return true;
+  const parts = path.split(sep);
+  switch (parts.length) {
+    case 1:
+    case 2:
+      return file !== true || path.endsWith('.jsonl');
+    case 3:
+      return parts[2] === SUBAGENTS && file !== true;
+    case 4:
+      return parts[2] === SUBAGENTS && file !== false && isSubagentFile(parts[3] ?? '');
+    default:
+      return false;
+  }
 }
