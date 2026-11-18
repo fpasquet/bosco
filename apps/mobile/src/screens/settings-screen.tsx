@@ -1,6 +1,7 @@
 // Réglages de l'application : le poste appairé, rester connecté en arrière-plan, vibrer.
 import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
-import type { AppPreferences, Workstation } from '../lib/storage';
+import type { AppPreferences } from '../lib/preferences';
+import type { Workstation } from '../lib/storage';
 import { colors } from '../lib/theme';
 
 export interface SettingsScreenProps {
