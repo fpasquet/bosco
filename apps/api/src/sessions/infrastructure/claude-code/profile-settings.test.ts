@@ -1,4 +1,5 @@
-// Ce que les scénarios ne voient pas : les réglages de la personne gardés à l'identique, et un fichier illisible.
+// Ce que les scénarios ne voient pas : les réglages de la personne gardés à l'identique, un fichier illisible, et les
+// noms que Claude Code donne aux modes de ses réglages.
 import { existsSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -71,5 +72,19 @@ describe('FileProfileSettings', () => {
     const path = profile('{ "model": ');
     await expect(new FileProfileSettings().install(path, endpoint, true)).rejects.toBeInstanceOf(UnreadableSettings);
     expect(readFileSync(join(path, 'settings.json'), 'utf8')).toBe('{ "model": ');
+  });
+
+  it('CA-REGL-19 · reads the mode, the model and the effort of the profile, its own names for the modes included', async () => {
+    const settings = new FileProfileSettings();
+    const set = await settings.sessionDefaults(
+      profile(JSON.stringify({ model: 'sonnet', effortLevel: 'medium', permissions: { defaultMode: 'default' } })),
+    );
+    expect(set).toEqual({ effort: 'medium', model: 'sonnet', permissionMode: 'ask' });
+    const dontAsk = await settings.sessionDefaults(
+      profile(JSON.stringify({ permissions: { defaultMode: 'dontAsk' } })),
+    );
+    expect(dontAsk).toEqual({ effort: null, model: null, permissionMode: null });
+    const unreadable = await settings.sessionDefaults(profile('{ broken'));
+    expect(unreadable.permissionMode).toBeNull();
   });
 });

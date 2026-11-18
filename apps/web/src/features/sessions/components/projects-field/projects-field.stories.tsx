@@ -6,7 +6,6 @@ import { ProjectsField } from './projects-field';
 const project = (id: number, name: string): OptionProject => ({
   branch: 'develop',
   changes: 0,
-  defaultProfile: null,
   domains: [],
   git: true,
   id,
@@ -25,7 +24,7 @@ const GROUP = {
   name: 'Club des Trois Lacs',
   description: null,
   instructions: '',
-  profile: null,
+  defaults: { effort: null, model: null, permissionMode: null, profile: null },
   sidebar: true,
   system: false,
   projects: [

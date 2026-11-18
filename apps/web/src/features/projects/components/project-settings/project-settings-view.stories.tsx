@@ -14,6 +14,7 @@ const meta = {
     domainError: null,
     startBranchError: null,
     project: {
+      defaults: { effort: 'high', model: 'claude-sonnet-5-5', permissionMode: null, profile: null },
       id: 2,
       name: 'labo-ia',
       path: '~/www/labo-ia',
@@ -33,7 +34,7 @@ const meta = {
         name: 'Médias',
         description: null,
         instructions: '',
-        profile: null,
+        defaults: { effort: null, model: null, permissionMode: null, profile: null },
         sidebar: true,
         system: false,
         projects: [
@@ -61,6 +62,7 @@ export const Default: Story = {};
 export const WithoutGit: Story = {
   args: {
     project: {
+      defaults: { effort: null, model: null, permissionMode: null, profile: null },
       id: 4,
       name: 'notes',
       path: '~/notes',

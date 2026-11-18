@@ -21,6 +21,7 @@ export function presentSession(view: SessionView): SessionDto {
             stopsAt: view.pilot.sandbox.stopsAt.toISOString(),
           },
           since: view.pilot.since.toISOString(),
+          suspended: view.pilot.suspended && { ...view.pilot.suspended, at: view.pilot.suspended.at.toISOString() },
         }
       : null,
   };

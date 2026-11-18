@@ -1,0 +1,30 @@
+{
+  "account": "camille@exemple.dev",
+  "claude": {
+    "effort": "medium",
+    "model": "claude-sonnet-5-5",
+    "permissionMode": "plan"
+  },
+  "defaults": {
+    "effort": null,
+    "model": null,
+    "permissionMode": "acceptEdits"
+  },
+  "isDefault": false,
+  "source": {
+    "id": "<masked>",
+    "path": "<profiles>/.claude-perso",
+    "label": "perso",
+    "watched": true,
+    "liveTracking": false
+  },
+  "usedBy": {
+    "groups": [
+      {
+        "id": 2,
+        "name": "Club des Trois Lacs"
+      }
+    ],
+    "openSessions": 1
+  }
+}

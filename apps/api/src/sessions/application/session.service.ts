@@ -4,6 +4,7 @@ import type { JournalEntry, TranscriptEvent } from '../domain/transcript-event.t
 import type { NotificationService } from './notification.service.ts';
 import type { PilotView } from './pilot.service.ts';
 import type {
+  CatalogGroup,
   CatalogProject,
   Clock,
   ProjectCatalog,
@@ -18,7 +19,12 @@ import { DEFAULT_INACTIVITY_DELAY_MS, Session } from '../domain/session.ts';
 const RECENT_QUESTION_MS = 2 * 60 * 1000;
 
 /** Avant que les projets soient branchés, toutes les sessions sont hors projet. */
-const NO_PROJECTS: ProjectCatalog = { list: () => [], placeOf: () => null, rememberPlace: () => Promise.resolve() };
+const NO_PROJECTS: ProjectCatalog = {
+  groups: () => Promise.resolve([]),
+  list: () => [],
+  placeOf: () => null,
+  rememberPlace: () => Promise.resolve(),
+};
 
 export interface SessionView {
   /** Autres projets d'une session pilotée à plusieurs projets, qu'elle voit en plus de son projet principal */
@@ -94,6 +100,11 @@ export class SessionService {
   /** Projets où l'on démarre une session et dont on lit le contexte : ceux que la personne a ajoutés. */
   knownProjects(): Promise<CatalogProject[]> {
     return Promise.resolve(this.projects.list());
+  }
+
+  /** Groupes avec lesquels démarrer une session, et leurs valeurs par défaut. */
+  knownGroups(): Promise<CatalogGroup[]> {
+    return this.projects.groups();
   }
 
   /** « Où elle tourne » d'une session démarrée : la prochaine du même projet le reprend. */

@@ -29,7 +29,11 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {};
 
 /** Profil hérité, groupe masqué de la barre latérale. */
-export const Inherited: Story = { args: { group: { ...clubsGroup, profile: null, sidebar: false } } };
+export const Inherited: Story = {
+  args: {
+    group: { ...clubsGroup, defaults: { ...clubsGroup.defaults, permissionMode: null, profile: null }, sidebar: false },
+  },
+};
 
 /** Le nom est déjà pris par un autre groupe. */
 export const NameTaken: Story = { args: { serverError: 'Un groupe porte déjà ce nom.' } };

@@ -37,8 +37,9 @@ Feature: Sandbox isolation
     Then the response property "subscription.account" should equal "camille@exemple.dev"
     When I send PUT request to "/api/isolation/subscription" with the JSON "fixtures/isolation/perso-profile.json"
     Then the response property "subscription.account" should equal "camille.perso@exemple.dev"
-    When I send GET request to "/api/pilot/options"
-    Then the response property "projects.0.defaultProfile" should contain ".claude-perso"
+    When I send GET request to "/api/pilot/defaults"
+    Then the response property "profile.value" should contain ".claude-perso"
+    And the response property "profile.origin.level" should equal "defaultProfile"
 
   @CA-CONT-42
   Scenario: A paired phone reads the isolation settings but cannot change them

@@ -1,3 +1,4 @@
+import type { SessionDefaults } from '../../shared/domain/session-settings.ts';
 import type { QuotaWindows } from '../../shared/domain/subscription-quota.ts';
 import type { ChannelService } from './channel.service.ts';
 import type { LiveSignalService, PermissionAnswer } from './live-signal.service.ts';
@@ -10,6 +11,7 @@ import type {
   SessionRepository,
   SourceRepository,
 } from './ports.ts';
+import type { SessionDefaultsService } from './session-defaults.service.ts';
 import type { SessionService } from './session.service.ts';
 import {
   type AgentQuestion,
@@ -39,6 +41,7 @@ import {
   stopsAt,
   unretrieved,
 } from '../domain/sandbox.ts';
+import { settingsOf } from '../domain/session-defaults.ts';
 
 /** Un tour à lancer : `claude -p` dans le dossier du projet, avec le profil, une session nouvelle ou reprise (DT-31). */
 export interface TurnRequest {
@@ -106,6 +109,11 @@ export interface TurnListener {
   /** Le processus est sorti ; error : il s'est arrêté sans rendre de résultat */
   exited(error: null | string): void;
   permission(requestId: string, tool: string, input: Record<string, unknown>): void;
+  /**
+   * « Approuver pour moi » suspendu par Claude Code : `count` refus de suite, ou au total (`total`) ; la demande qui
+   * suit arrive par `permission`
+   */
+  suspended(count: number, total: boolean): void;
   question(requestId: string, input: Record<string, unknown>): void;
   /** Usage de l'abonnement, donné à chaque tour (DT-39) */
   quota(windows: QuotaWindows): void;
@@ -182,6 +190,15 @@ export interface PilotView {
   };
   settings: PilotSettings;
   since: Date;
+  /** « Approuver pour moi » suspendu par Claude Code : les demandes reviennent dans Bosco (CA-SESS-168) */
+  suspended: null | AutoModeSuspension;
+}
+
+/** Suspension d'« Approuver pour moi » : quand, après combien de refus, de suite ou au total. */
+export interface AutoModeSuspension {
+  at: Date;
+  count: number;
+  total: boolean;
 }
 
 interface Turn {
@@ -225,6 +242,9 @@ export class PilotService {
   private readonly records = new Map<string, PilotRecord>();
   private readonly turns = new Map<string, Turn>();
   private readonly pending = new Map<string, PilotMessage>();
+  /** Dernière suspension d'« Approuver pour moi » de chaque session, dite dans son fil */
+  private readonly suspensions = new Map<string, AutoModeSuspension>();
+  private defaults: null | Pick<SessionDefaultsService, 'resolveDefaults'> = null;
   private profiles: PilotProfiles = NO_PROFILES;
   private sandbox: null | SandboxDeps = null;
   /** Usage de l'abonnement lu dans le flux d'un tour, rangé par profil Claude, et ses seuils (DT-39) */
@@ -260,6 +280,11 @@ export class PilotService {
   /** Bacs à sable des sessions (DT-37), branchés au démarrage. */
   useSandboxes(deps: SandboxDeps): void {
     this.sandbox = deps;
+  }
+
+  /** Valeurs par défaut des nouvelles sessions (règle 16), branchées au démarrage. */
+  useDefaults(defaults: Pick<SessionDefaultsService, 'resolveDefaults'>): void {
+    this.defaults = defaults;
   }
 
   /** Abonnements Claude et celui par défaut (E11), branchés au démarrage. */
@@ -303,6 +328,7 @@ export class PilotService {
       },
       settings: record.settings,
       since: record.since,
+      suspended: this.suspensions.get(sessionId) ?? null,
     };
   }
 
@@ -319,7 +345,6 @@ export class PilotService {
       branch: null | string;
       /** Fichiers modifiés du poste, non commités, qu'un bac à sable ne copie pas ; null sans git */
       changes: null | number;
-      defaultProfile: null | string;
       domains: string[];
       git: boolean;
       id: number;
@@ -333,9 +358,8 @@ export class PilotService {
     const sources = await this.sources.list();
     const watched = new Set(sources.filter((source) => source.watched).map(({ path }) => path));
     const known = await this.sessions.knownProjects();
-    const { choices, effective } = await this.profiles.subscriptions();
+    const { choices } = await this.profiles.subscriptions();
     const profiles = choices.filter(({ path }) => watched.has(path));
-    const defaultProfile = effective && watched.has(effective) ? effective : null;
     const projects = [];
     for (const { domains, git, id, name, place, root, startBranch } of known) {
       const sandboxes = this.sandbox && git ? this.sandbox.sandboxes : null;
@@ -345,7 +369,7 @@ export class PilotService {
             sandboxes.uncommitted(root).catch(() => null),
           ])
         : [null, null];
-      projects.push({ branch, changes, defaultProfile, domains, git, id, name, place, root, startBranch });
+      projects.push({ branch, changes, domains, git, id, name, place, root, startBranch });
     }
     const sandboxUnavailable = this.sandbox
       ? await this.sandbox.sandboxes.unavailable()
@@ -355,9 +379,12 @@ export class PilotService {
 
   /**
    * « Démarrer la session » (CA-SESS-155, CA-SESS-163) : une nouvelle session dans le dossier du projet principal, qui
-   * voit aussi les autres projets choisis (règle 14), avec le profil choisi.
+   * voit aussi les autres projets choisis (règle 14). Son profil, son mode, son modèle et son effort sont ceux choisis
+   * pour elle, sinon ceux du groupe, du projet principal, du profil, puis du profil Claude Code (règle 16).
    */
   async start(input: {
+    /** Groupe choisi : ses valeurs par défaut passent avant celles du projet principal */
+    group?: null | number;
     message: PilotMessage;
     profile: null | string;
     /** Projet principal (sa racine) : le dossier de travail de la session */
@@ -373,7 +400,8 @@ export class PilotService {
       startBranch: null | string;
       startBranches?: Readonly<Record<string, null | string>>;
     };
-    settings: PilotSettings;
+    /** Réglages choisis pour la session ; null : selon les valeurs par défaut */
+    settings: SessionDefaults;
   }): Promise<string> {
     const message = checkPilotMessage(input.message);
     const known = await this.sessions.knownProjects();
@@ -391,8 +419,8 @@ export class PilotService {
         'projectWithoutGit',
         `Le projet ${withoutGit.name} n’est pas un dépôt git : pas de bac à sable.`,
       );
-    const accounts = await this.profiles.subscriptions();
-    const profile = input.profile ?? accounts.effective;
+    const resolved = await this.resolveStart(input, project.root);
+    const profile = input.profile ?? resolved.profile;
     const sources = await this.sources.list();
     const source = sources.find(({ path, watched }) => watched && path === profile);
     if (!source)
@@ -406,15 +434,38 @@ export class PilotService {
           projects: others.map(({ root }) => root),
           sandbox: null,
           sessionId,
-          settings: input.settings,
+          settings: resolved.settings,
           since: this.clock.now(),
           sourceId: source.id,
         };
-    record.settings = input.settings;
+    record.settings = resolved.settings;
     await this.keep(record);
     await this.sessions.rememberPlace(project.root, input.sandbox ? 'sandbox' : 'workstation');
     await this.run(record, message, false);
     return record.sessionId;
+  }
+
+  /** Profil et réglages du premier tour : le choix de la session, sinon les valeurs par défaut (DT-44). */
+  private async resolveStart(
+    input: { group?: null | number; profile: null | string; sandbox?: unknown; settings: SessionDefaults },
+    project: string,
+  ): Promise<{ profile: null | string; settings: PilotSettings }> {
+    const sandboxed = Boolean(input.sandbox);
+    if (!this.defaults) {
+      // Sans valeurs par défaut branchées : le choix de la session, sinon l'abonnement par défaut et « Demander »
+      const accounts = await this.profiles.subscriptions();
+      const { effort, model, permissionMode } = input.settings;
+      const mode = permissionMode ?? (sandboxed ? 'acceptEdits' : 'ask');
+      return { profile: accounts.effective, settings: { effort, model, permissionMode: mode } };
+    }
+    const resolved = await this.defaults.resolveDefaults({
+      chosen: input.settings,
+      group: input.group ?? null,
+      profile: input.profile,
+      project,
+      sandboxed,
+    });
+    return { profile: resolved.profile.value, settings: settingsOf(resolved) };
   }
 
   /**
@@ -661,6 +712,7 @@ export class PilotService {
     for (const turn of this.turns.values()) turn.process.finish();
     this.turns.clear();
     this.pending.clear();
+    this.suspensions.clear();
   }
 
   /** Au-delà du seuil d'attente, aucun tour ne part : le message est refusé avec la raison (DT-39). */
@@ -748,6 +800,10 @@ export class PilotService {
     };
     turn.process = this.runner.start(request, {
       permission: (requestId, tool, input) => this.permission(origin, turn, requestId, tool, input),
+      suspended: (count, total) => {
+        this.suspensions.set(record.sessionId, { at: this.clock.now(), count, total });
+        void this.publish(record.sessionId);
+      },
       question: (requestId, input) => this.question(origin, turn, requestId, input),
       cancelled: (requestId) => turn.abandons.get(requestId)?.(),
       // L'abonnement d'un bac à sable est celui choisi au démarrage ; sinon celui du profil de la session. Au-delà du

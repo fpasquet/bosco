@@ -100,7 +100,7 @@ export const STORY_GROUPS: GroupDto[] = [
     name: 'Médias',
     description: null,
     instructions: '',
-    profile: null,
+    defaults: { effort: null, model: null, permissionMode: null, profile: null },
     sidebar: true,
     system: false,
     projects: [
@@ -113,7 +113,7 @@ export const STORY_GROUPS: GroupDto[] = [
     name: 'Node.js',
     description: null,
     instructions: '',
-    profile: null,
+    defaults: { effort: null, model: null, permissionMode: null, profile: null },
     sidebar: true,
     system: false,
     projects: [{ id: 2, name: 'outils-node' }],

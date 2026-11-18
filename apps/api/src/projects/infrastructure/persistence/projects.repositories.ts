@@ -8,11 +8,27 @@ import type {
 } from '../../application/ports.ts';
 import type { DiscoverySettings } from '../../domain/discovered-import.ts';
 import type { RetiredSocle, RetiredSocleDecision } from '../../domain/socle-import.ts';
+import { effortOf, type LevelDefaults, permissionModeOf } from '../../../shared/domain/session-settings.ts';
 import { SocleSchema } from '../../../shared/infrastructure/persistence/retired.schema.ts';
 import { SettingSchema } from '../../../shared/infrastructure/persistence/setting.schema.ts';
 import { Group } from '../../domain/group.ts';
 import { Project, type ProjectPlaceChoice } from '../../domain/project.ts';
 import { GroupProjectSchema, IgnoredFolderSchema, ProjectGroupSchema, ProjectSchema } from './projects.schema.ts';
+
+/** Colonnes des valeurs par défaut : une valeur inconnue en base redevient héritée. */
+function defaultsOf(row: {
+  effort: null | string;
+  model: null | string;
+  permissionMode: null | string;
+  profile: null | string;
+}): LevelDefaults {
+  return {
+    effort: effortOf(row.effort),
+    model: row.model,
+    permissionMode: permissionModeOf(row.permissionMode),
+    profile: row.profile,
+  };
+}
 
 /** Colonne libre en base : seule une place connue est reprise. */
 function placeOf(value: null | string): null | ProjectPlaceChoice {
@@ -24,7 +40,13 @@ export class MikroOrmProjectRepository implements ProjectRepository {
 
   async list(): Promise<Project[]> {
     const rows = await this.orm.em.fork().find(ProjectSchema, {}, { orderBy: { id: 'asc' } });
-    return rows.map((row) => Project.restore({ ...row, place: placeOf(row.place) }));
+    return rows.map(({ effort, model, permissionMode, profile, ...row }) =>
+      Project.restore({
+        ...row,
+        defaults: defaultsOf({ effort, model, permissionMode, profile }),
+        place: placeOf(row.place),
+      }),
+    );
   }
 
   async nextId(): Promise<number> {
@@ -38,7 +60,10 @@ export class MikroOrmProjectRepository implements ProjectRepository {
 
   async save(projects: readonly Project[]): Promise<void> {
     const em = this.orm.em.fork();
-    for (const project of projects) await em.upsert(ProjectSchema, project.toSnapshot());
+    for (const project of projects) {
+      const { defaults, ...row } = project.toSnapshot();
+      await em.upsert(ProjectSchema, { ...row, ...defaults });
+    }
   }
 }
 
@@ -51,9 +76,10 @@ export class MikroOrmGroupRepository implements GroupRepository {
       em.find(ProjectGroupSchema, {}, { orderBy: { id: 'asc' } }),
       em.find(GroupProjectSchema, {}, { orderBy: { rank: 'asc' } }),
     ]);
-    return rows.map((row) =>
+    return rows.map(({ effort, model, permissionMode, profile, ...row }) =>
       Group.restore({
         ...row,
+        defaults: defaultsOf({ effort, model, permissionMode, profile }),
         projects: links.filter((link) => link.groupId === row.id).map((link) => link.projectId),
       }),
     );
@@ -75,8 +101,8 @@ export class MikroOrmGroupRepository implements GroupRepository {
   async save(groups: readonly Group[]): Promise<void> {
     await this.orm.em.fork().transactional(async (em) => {
       for (const group of groups) {
-        const { projects, ...row } = group.toSnapshot();
-        await em.upsert(ProjectGroupSchema, row);
+        const { defaults, projects, ...row } = group.toSnapshot();
+        await em.upsert(ProjectGroupSchema, { ...row, ...defaults });
         await em.nativeDelete(GroupProjectSchema, { groupId: row.id });
         for (const [rank, projectId] of projects.entries())
           await em.insert(GroupProjectSchema, { groupId: row.id, projectId, rank });

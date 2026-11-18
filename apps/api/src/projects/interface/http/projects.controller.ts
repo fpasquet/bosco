@@ -1,9 +1,11 @@
 import { Body, Controller, Delete, Get, HttpCode, Inject, Param, ParseIntPipe, Patch, Post } from '@nestjs/common';
 import { z } from 'zod';
 import type { FolderSuggestionDto, ProjectDetailDto, ProjectDto, ProjectsDto } from '@bosco/domain';
+import type { LevelDefaults } from '../../../shared/domain/session-settings.ts';
 import type { ProjectDetail, ProjectService, ProjectView } from '../../application/project.service.ts';
 import type { ProjectSnapshot } from '../../domain/project.ts';
 import type { Suggestion } from '../../domain/suggestions.ts';
+import { levelDefaultsSchema } from '../../../shared/interface/http/defaults-schema.ts';
 import { parseBody } from '../../../shared/interface/http/parse-body.ts';
 import { PROJECT_SERVICE } from '../../tokens.ts';
 import { settle } from './settle.ts';
@@ -16,11 +18,13 @@ const changeSchema = z.object({
   pinned: z.boolean().optional(),
   place: z.enum(['sandbox', 'workstation']).nullable().optional(),
   startBranch: z.string().max(200).nullable().optional(),
+  defaults: levelDefaultsSchema.optional(),
 });
 
 function presentProject(project: ProjectSnapshot | ProjectView): ProjectDto {
   const view = 'sessions' in project ? project : { ...project, lastSessionAt: null, sessions: 0 };
   return {
+    defaults: view.defaults,
     domains: view.domains,
     git: view.git,
     id: view.id,
@@ -77,7 +81,9 @@ export class ProjectsController {
   @Patch(':id')
   async changeProject(@Param('id', ParseIntPipe) id: number, @Body() body: unknown): Promise<ProjectDetailDto> {
     const changes = parseBody(changeSchema, body);
-    const project = await settle(() => this.projects.changeProject(id, changes));
+    const project = await settle(() =>
+      this.projects.changeProject(id, { ...changes, defaults: changes.defaults as Partial<LevelDefaults> | undefined }),
+    );
     return presentDetail(project);
   }
 

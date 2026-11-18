@@ -59,7 +59,7 @@ Feature: Groups of projects
     When I send PATCH request to "/api/groups/2" with the JSON "fixtures/groups/hidden-pro.json"
     And I send GET request to "/api/groups"
     Then the response property "groups.0.sidebar" should equal "false"
-    And the response property "groups.0.profile" should contain ".claude"
+    And the response property "groups.0.defaults.profile" should contain ".claude"
 
   @CA-CONT-140
   Scenario: The instructions keep one line per instruction, without the blank lines around them

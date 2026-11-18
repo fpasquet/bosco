@@ -16,6 +16,7 @@ interface SessionView {
     running: boolean;
     sandbox?: null | { branch: string; from: string; state: string };
     settings: { effort: null | string; model: null | string; permissionMode: string };
+    suspended?: null | { count: number; total: boolean };
   };
   project: null | { name: string };
   waiting:
@@ -140,6 +141,44 @@ Then('{string} should wait for the permission {string}', async ({ request }, ses
     (view) => view.waiting?.kind === 'permission' && view.waiting.detail === detailText,
   );
 });
+
+Then(
+  '{string} should have auto mode suspended after {int} refusals in a row',
+  async ({ request }, session: string, count: number) => {
+    await eventually(
+      request,
+      idOf(session),
+      (view) => view.pilot?.suspended?.count === count && !view.pilot.suspended.total,
+    );
+  },
+);
+
+/** Identifiant d'une source, d'après le dossier de son profil. */
+async function sourceOf(request: APIRequestContext, profile: string): Promise<string> {
+  const response = await request.get('/api/sources');
+  const { sources } = (await response.json()) as { sources: { id: string; path: string }[] };
+  const found = sources.find(({ path }) => path.endsWith(`/${profile}`));
+  if (!found) throw new Error(`No source for the profile ${profile}`);
+  return found.id;
+}
+
+When('I read the settings of the profile {string}', async ({ last, request }, profile: string) => {
+  const id = await sourceOf(request, profile);
+  const response = await request.get(`/api/sources/${id}/settings`);
+  last.response = { status: response.status(), body: (await response.json()) as unknown };
+});
+
+When(
+  'I set the defaults of the profile {string} with the JSON {string}',
+  async ({ bosco, last, request }, profile: string, file: string) => {
+    const id = await sourceOf(request, profile);
+    const data = JSON.parse(
+      readFileSync(join(FEATURES, file), 'utf8').replaceAll('{{profiles}}', bosco.profilesRoot),
+    ) as unknown;
+    const response = await request.put(`/api/sources/${id}/defaults`, { data });
+    last.response = { status: response.status(), body: (await response.json()) as unknown };
+  },
+);
 
 When('I allow the permission of {string}', async ({ request }, session: string) => {
   const view = await detail(request, idOf(session));

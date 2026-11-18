@@ -16,3 +16,4 @@ export const PILOT_SERVICE = Symbol('PilotService');
 export const SUGGESTION_SERVICE = Symbol('SuggestionService');
 export const CHANNEL_SERVICE = Symbol('ChannelService');
 export const CHANNEL_INSTALLER = Symbol('ChannelInstaller');
+export const SESSION_DEFAULTS_SERVICE = Symbol('SessionDefaultsService');

@@ -27,6 +27,7 @@ describe('Project', () => {
   it('is named after its folder, not pinned', () => {
     expect(add('/home/dev/www/api-tarifs', [])).toEqual({
       addedAt: AT,
+      defaults: { effort: null, model: null, permissionMode: null, profile: null },
       domains: [],
       git: true,
       id: 1,

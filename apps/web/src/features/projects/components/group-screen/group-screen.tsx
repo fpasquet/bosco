@@ -178,7 +178,7 @@ export function GroupScreen({ children, id, tab }: { children?: ReactNode; id: n
           onArrange={arrange}
           onBrowse={actions.browse}
           onDelete={() => setPending({ kind: 'delete' })}
-          onProfile={(profile) => change.mutate(() => changeGroup(id, { profile }))}
+          onProfile={(profile) => change.mutate(() => changeGroup(id, { defaults: { profile } }))}
           onSidebar={(sidebar) => change.mutate(() => changeGroup(id, { sidebar }))}
           onRename={(identity) => {
             setNameError(null);

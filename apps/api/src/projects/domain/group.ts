@@ -1,16 +1,17 @@
 import { DomainError } from '../../shared/domain/domain-error.ts';
+import { changedLevelDefaults, type LevelDefaults, NO_LEVEL_DEFAULTS } from '../../shared/domain/session-settings.ts';
 
 /** Nom du groupe système, qui contient toujours tous les projets */
 export const ALL_PROJECTS = 'Tous les projets';
 
 export interface GroupSnapshot {
+  /** Valeurs par défaut des sessions démarrées avec le groupe : elles passent avant celles de ses projets */
+  defaults: LevelDefaults;
   description: null | string;
   id: number;
   /** Texte libre, une consigne par ligne, transmis aux agents de chacun de ses projets */
   instructions: string;
   name: string;
-  /** Profil Claude Code (son dossier) des sessions démarrées avec le groupe ; null : hériter */
-  profile: null | string;
   /** Projets dans l'ordre, le premier étant le principal ; vide pour « Tous les projets », qui les contient tous */
   projects: number[];
   /** Montré dans la barre latérale */
@@ -21,9 +22,9 @@ export interface GroupSnapshot {
 
 /** Réglages d'un groupe que la personne change dans son onglet Réglages. */
 export interface GroupSettings {
+  defaults?: Partial<LevelDefaults>;
   description?: null | string;
   name?: string;
-  profile?: null | string;
   sidebar?: boolean;
 }
 
@@ -88,7 +89,7 @@ export class Group {
       name: checkName(input.name, input.others),
       description: input.description?.trim() || null,
       projects: [...new Set(input.projects)],
-      profile: null,
+      defaults: NO_LEVEL_DEFAULTS,
       sidebar: true,
       instructions: '',
       system: false,
@@ -102,7 +103,7 @@ export class Group {
       name: ALL_PROJECTS,
       description: null,
       projects: [],
-      profile: null,
+      defaults: NO_LEVEL_DEFAULTS,
       sidebar: false,
       instructions: cleanInstructions(instructions),
       system: true,
@@ -110,7 +111,7 @@ export class Group {
   }
 
   static restore(snapshot: GroupSnapshot): Group {
-    return new Group({ ...snapshot, projects: [...snapshot.projects] });
+    return new Group({ ...snapshot, defaults: { ...snapshot.defaults }, projects: [...snapshot.projects] });
   }
 
   get id(): number {
@@ -118,7 +119,7 @@ export class Group {
   }
 
   toSnapshot(): GroupSnapshot {
-    return { ...this.snapshot, projects: [...this.snapshot.projects] };
+    return { ...this.snapshot, defaults: { ...this.snapshot.defaults }, projects: [...this.snapshot.projects] };
   }
 
   /** Le projet principal : le dossier de travail des sessions démarrées avec le groupe ; null sans projet. */
@@ -138,7 +139,7 @@ export class Group {
     this.expectOwn();
     if (settings.name !== undefined) this.snapshot.name = checkName(settings.name, others);
     if (settings.description !== undefined) this.snapshot.description = settings.description?.trim() || null;
-    if (settings.profile !== undefined) this.snapshot.profile = settings.profile?.trim() || null;
+    if (settings.defaults) this.snapshot.defaults = changedLevelDefaults(this.snapshot.defaults, settings.defaults);
     if (settings.sidebar !== undefined) this.snapshot.sidebar = settings.sidebar;
   }
 

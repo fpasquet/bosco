@@ -22,6 +22,24 @@ export interface SourcesDto {
   sources: SourceDto[];
 }
 
+/**
+ * Réglages d'un profil (E4g) : son compte, les valeurs par défaut des sessions lancées dans Bosco avec lui (null :
+ * celle du profil Claude Code), ce que dit son settings.json, et ce qui l'utilise.
+ */
+export interface ProfileSettingsDto {
+  /** Compte de l'abonnement Claude ; null sans accès */
+  account: null | string;
+  /** Ce que dit le profil Claude Code (permissions.defaultMode, model, effortLevel), lu sans être modifié */
+  claude: Omit<SessionDefaultsDto, 'profile'>;
+  /** Réglés dans Bosco pour ce profil ; null : celui du profil Claude Code */
+  defaults: Omit<SessionDefaultsDto, 'profile'>;
+  /** Profil par défaut de Bosco, proposé à chaque nouvelle session (E11c) */
+  isDefault: boolean;
+  source: SourceDto;
+  /** Groupes dont il est le profil par défaut, et sessions ouvertes avec lui */
+  usedBy: { groups: { id: number; name: string }[]; openSessions: number };
+}
+
 export type SessionStateDto = 'ended' | 'inactive' | 'running' | 'waiting';
 
 /** Ce qu'attend une session qui t'attend : une autorisation (« Bash », « npm run db:migrate ») ou ta réponse au tour. */
@@ -39,8 +57,40 @@ export interface AgentQuestionDto {
   question: string;
 }
 
-export type PermissionModeDto = 'acceptEdits' | 'ask' | 'plan';
+/** Demander, Accepter les modifications, Plan, Approuver pour moi (auto), Accès complet (bypassPermissions). */
+export type PermissionModeDto = 'acceptEdits' | 'ask' | 'auto' | 'bypassPermissions' | 'plan';
 export type EffortDto = 'high' | 'low' | 'max' | 'medium' | 'xhigh';
+
+/** Valeurs par défaut d'une nouvelle session réglées à un niveau (profil, projet, groupe) ; null : hériter. */
+export interface SessionDefaultsDto {
+  effort: EffortDto | null;
+  model: null | string;
+  permissionMode: null | PermissionModeDto;
+  /** Profil Claude Code (son dossier) ; jamais réglé au niveau d'un profil */
+  profile: null | string;
+}
+
+/**
+ * D'où vient une valeur d'une nouvelle session : le choix fait pour elle, le groupe, le projet principal, les réglages
+ * du profil dans Bosco, le profil Claude Code, le défaut d'un bac à sable ou le profil par défaut de Bosco.
+ */
+export type DefaultOriginDto =
+  | { level: 'claudeProfile' | 'defaultProfile' | 'none' | 'sandbox' | 'session' }
+  | { level: 'group' | 'profile' | 'project'; name: string };
+
+export interface ResolvedDto<T> {
+  origin: DefaultOriginDto;
+  value: T;
+}
+
+/** Valeurs d'une nouvelle session avant tout choix, chacune avec son origine (GET /api/pilot/defaults). */
+export interface SessionDefaultsResolvedDto {
+  effort: ResolvedDto<EffortDto | null>;
+  model: ResolvedDto<null | string>;
+  permissionMode: ResolvedDto<PermissionModeDto>;
+  /** Profil (son dossier), et son nom court pour dire l'origine des autres valeurs */
+  profile: ResolvedDto<null | string>;
+}
 
 /** Réglages d'un tour piloté : mode d'autorisations, modèle (null : celui du profil), effort (null : celui du profil). */
 export interface PilotSettingsDto {
@@ -60,6 +110,11 @@ export interface PilotDto {
   sandbox: null | PilotSandboxDto;
   settings: PilotSettingsDto;
   since: string;
+  /**
+   * « Approuver pour moi » suspendu par Claude Code après des refus de suite (consecutive) ou au total : les demandes
+   * reviennent dans Bosco ; null tant qu'il ne l'a pas été
+   */
+  suspended: null | { at: string; count: number; total: boolean };
 }
 
 /** Bac à sable d'une session pilotée (E2j) : sa branche, l'état de son conteneur et sa récupération. */
@@ -106,9 +161,15 @@ export interface PilotMessageDto {
   text: string;
 }
 
-/** Nouvelle session (E16a) : projet (sa racine), profil Claude Code (son dossier ; null : celui du projet), premier message. */
-export interface StartSessionDto extends PilotMessageDto {
+/**
+ * Nouvelle session (E16a) : projet (sa racine), profil Claude Code (son dossier ; null : selon les valeurs par défaut),
+ * premier message, et les réglages choisis pour elle (null : selon les valeurs par défaut).
+ */
+export interface StartSessionDto extends Omit<PilotMessageDto, 'settings'> {
+  /** Groupe choisi (E16c) : ses valeurs par défaut passent avant celles du projet principal */
+  group?: null | number;
   profile: null | string;
+  settings: Omit<SessionDefaultsDto, 'profile'>;
   /** Projet principal (sa racine) : le dossier de travail de la session */
   project: string;
   /** Autres projets de la session, qu'elle voit en plus du principal (E16c) */
@@ -136,7 +197,6 @@ export interface PilotOptionsDto {
     branch: null | string;
     /** Fichiers modifiés du poste, non commités, qu'un bac à sable ne copie pas ; null sans git */
     changes: null | number;
-    defaultProfile: null | string;
     /** Domaines propres au projet, ajoutés à la liste générale pour ses bacs à sable */
     domains: string[];
     git: boolean;

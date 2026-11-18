@@ -1,0 +1,8 @@
+{
+  "group": 2,
+  "profile": null,
+  "text": "Affiche les tarifs sur chaque page de club",
+  "images": [],
+  "projects": ["{{profiles}}/site-clubs", "{{profiles}}/creneaux"],
+  "settings": { "permissionMode": "plan", "model": null, "effort": "low" }
+}

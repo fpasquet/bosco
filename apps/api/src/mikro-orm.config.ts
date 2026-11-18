@@ -30,6 +30,8 @@ import { Migration20261117230000 } from './migrations/Migration20261117230000.ts
 import { Migration20261118090000 } from './migrations/Migration20261118090000.ts';
 import { Migration20261118100000 } from './migrations/Migration20261118100000.ts';
 import { Migration20261118110000 } from './migrations/Migration20261118110000.ts';
+import { Migration20261118120000 } from './migrations/Migration20261118120000.ts';
+import { Migration20261118130000 } from './migrations/Migration20261118130000.ts';
 import {
   GroupProjectSchema,
   IgnoredFolderSchema,
@@ -38,6 +40,7 @@ import {
 } from './projects/infrastructure/persistence/projects.schema.ts';
 import { NotificationSchema } from './sessions/infrastructure/persistence/notification.schema.ts';
 import { PilotSchema } from './sessions/infrastructure/persistence/pilot.repository.ts';
+import { ProfileDefaultsSchema } from './sessions/infrastructure/persistence/profile-defaults.repository.ts';
 import {
   SessionEventSchema,
   SessionSchema,
@@ -74,6 +77,8 @@ export const MIGRATIONS = [
   { name: 'Migration20261118090000', class: Migration20261118090000 },
   { name: 'Migration20261118100000', class: Migration20261118100000 },
   { name: 'Migration20261118110000', class: Migration20261118110000 },
+  { name: 'Migration20261118120000', class: Migration20261118120000 },
+  { name: 'Migration20261118130000', class: Migration20261118130000 },
 ];
 
 export function ormConfig(dbName: string) {
@@ -93,6 +98,7 @@ export function ormConfig(dbName: string) {
       LinkSchema,
       NotificationSchema,
       PilotSchema,
+      ProfileDefaultsSchema,
       ProjectSchema,
       IgnoredFolderSchema,
       ProjectGroupSchema,

@@ -18,12 +18,16 @@ import type {
   RetrievedBranchesDto,
   SandboxBranchesDto,
   SandboxRefusalsDto,
+  SessionDefaultsResolvedDto,
   SuggestionDto,
 } from '@bosco/domain';
+import type { SessionDefaults } from '../../../shared/domain/session-settings.ts';
 import type { LiveSignalService } from '../../application/live-signal.service.ts';
 import type { PilotService } from '../../application/pilot.service.ts';
+import type { SessionDefaultsService } from '../../application/session-defaults.service.ts';
 import type { SuggestionService } from '../../application/suggestion.service.ts';
 import { DomainError } from '../../../shared/domain/domain-error.ts';
+import { sessionDefaultsSchema } from '../../../shared/interface/http/defaults-schema.ts';
 import { parseBody } from '../../../shared/interface/http/parse-body.ts';
 import { PermissionAlreadySettled } from '../../application/live-signal.service.ts';
 import {
@@ -36,7 +40,7 @@ import {
   PilotTargetNotFound,
 } from '../../domain/pilot.ts';
 import { SandboxError } from '../../domain/sandbox.ts';
-import { LIVE_SIGNAL_SERVICE, PILOT_SERVICE, SUGGESTION_SERVICE } from '../../tokens.ts';
+import { LIVE_SIGNAL_SERVICE, PILOT_SERVICE, SESSION_DEFAULTS_SERVICE, SUGGESTION_SERVICE } from '../../tokens.ts';
 
 const settingsSchema = z.object({
   effort: z.enum(EFFORTS as [string, ...string[]]).nullable(),
@@ -56,7 +60,11 @@ const messageSchema = z.object({
 const BRANCH = z.string().trim().max(200).nullable();
 
 const startSchema = messageSchema.extend({
+  /** Groupe choisi (E16c) : ses valeurs par défaut passent avant celles du projet principal */
+  group: z.number().int().positive().nullish(),
   profile: z.string().min(1).nullable(),
+  /** Réglages choisis pour la session ; null : selon les valeurs par défaut (règle 16) */
+  settings: sessionDefaultsSchema,
   /** Projet principal, dossier de travail de la session */
   project: z.string().min(1),
   /** Autres projets de la session, qu'elle voit en plus du principal (E16c) */
@@ -65,6 +73,14 @@ const startSchema = messageSchema.extend({
   sandbox: z
     .object({ branch: BRANCH, startBranch: BRANCH, startBranches: z.record(z.string(), BRANCH).optional() })
     .nullish(),
+});
+
+/** Ce qui décide des valeurs d'une nouvelle session : projet principal (sa racine), groupe, profil, bac à sable. */
+const defaultsQuery = z.object({
+  group: z.coerce.number().int().positive().optional(),
+  profile: z.string().min(1).optional(),
+  project: z.string().min(1).optional(),
+  sandbox: z.enum(['true', 'false']).optional(),
 });
 
 const retrieveSchema = z.object({ project: z.string().min(1).nullish() }).nullish();
@@ -107,7 +123,23 @@ export class PilotController {
     @Inject(PILOT_SERVICE) private readonly pilot: PilotService,
     @Inject(LIVE_SIGNAL_SERVICE) private readonly liveSignals: LiveSignalService,
     @Inject(SUGGESTION_SERVICE) private readonly suggestions: SuggestionService,
+    @Inject(SESSION_DEFAULTS_SERVICE) private readonly defaults: SessionDefaultsService,
   ) {}
+
+  /**
+   * Valeurs d'une nouvelle session avant tout choix (CA-SESS-156, CA-SESS-157) : profil, mode, modèle et effort, chacun
+   * avec son origine ; aussi ce dont héritent les réglages d'un projet ou d'un groupe (E21a, E22a).
+   */
+  @Get('pilot/defaults')
+  async resolveDefaults(@Query() query: unknown): Promise<SessionDefaultsResolvedDto> {
+    const input = parseBody(defaultsQuery, query);
+    return this.defaults.resolveDefaults({
+      group: input.group ?? null,
+      profile: input.profile ?? null,
+      project: input.project ?? null,
+      sandboxed: input.sandbox === 'true',
+    });
+  }
 
   /** Formulaire d'une nouvelle session (E16a) : projets et abonnements Claude. */
   @Get('pilot/options')
@@ -121,7 +153,9 @@ export class PilotController {
     const input = parseBody(startSchema, body);
     try {
       const sessionId = await this.pilot.start({
-        ...pilotMessage(input),
+        message: { images: input.images, text: input.text },
+        settings: input.settings as SessionDefaults,
+        group: input.group ?? null,
         profile: input.profile,
         project: input.project,
         projects: input.projects ?? [],

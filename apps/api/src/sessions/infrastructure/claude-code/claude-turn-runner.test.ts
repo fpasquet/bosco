@@ -1,7 +1,8 @@
-// Ce que les scénarios ne voient pas : la ligne de commande d'un tour piloté et le message reçu par l'agent (DT-31).
+// Ce que les scénarios ne voient pas : la ligne de commande d'un tour piloté, le message reçu par l'agent (DT-31) et la
+// raison exacte que Claude Code donne quand il suspend « Approuver pour moi ».
 import { describe, expect, it } from 'vitest';
 import type { TurnRequest } from '../../application/pilot.service.ts';
-import { turnArguments, userMessage } from './claude-turn-runner.ts';
+import { suspensionOf, turnArguments, userMessage } from './claude-turn-runner.ts';
 
 const request: TurnRequest = {
   addDirs: [],
@@ -43,5 +44,42 @@ describe('userMessage', () => {
         ],
       },
     });
+  });
+});
+
+describe('turnArguments with the five modes', () => {
+  it('names the modes as Claude Code does', () => {
+    const modes = (['ask', 'acceptEdits', 'plan', 'auto', 'bypassPermissions'] as const).map((permissionMode) => {
+      const args = turnArguments({ ...request, settings: { ...request.settings, permissionMode } });
+      return args[args.indexOf('--permission-mode') + 1];
+    });
+    expect(modes).toEqual(['default', 'acceptEdits', 'plan', 'auto', 'bypassPermissions']);
+  });
+});
+
+describe('suspensionOf', () => {
+  const ask = (reason: string) => ({
+    subtype: 'can_use_tool',
+    decision_reason: reason,
+    decision_reason_type: 'classifier',
+  });
+
+  it('CA-SESS-168 · reads the refusals in a row or in total after which Claude Code suspends auto mode', () => {
+    expect(
+      suspensionOf(
+        ask(
+          '3 consecutive actions were blocked. Please review the transcript before continuing. Latest blocked action: rm',
+        ),
+      ),
+    ).toEqual({ count: 3, total: false });
+    expect(suspensionOf(ask('20 actions were blocked this session. Please review the transcript.'))).toEqual({
+      count: 20,
+      total: true,
+    });
+  });
+
+  it('ignores any other permission request', () => {
+    expect(suspensionOf({ subtype: 'can_use_tool', tool_name: 'Bash' })).toBeNull();
+    expect(suspensionOf({ ...ask('3 consecutive actions were blocked'), decision_reason_type: 'rule' })).toBeNull();
   });
 });

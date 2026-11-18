@@ -143,7 +143,7 @@ export function GroupSettings({
 }: GroupSettingsProps) {
   const members = group.projects;
   const candidates = projects.filter(({ id }) => !members.some((member) => member.id === id));
-  const profile = profiles.find(({ path }) => path === group.profile);
+  const profile = profiles.find(({ path }) => path === group.defaults.profile);
   const sidebarHelp = useId();
   return (
     <div className="flex max-w-3xl flex-col gap-4">
@@ -206,7 +206,7 @@ export function GroupSettings({
           <span className="text-xs font-medium">Profil</span>
           <select
             className="select hidden w-64 md:inline-flex"
-            value={group.profile ?? ''}
+            value={group.defaults.profile ?? ''}
             disabled={busy}
             onChange={(event) => onProfile(event.target.value || null)}
           >
@@ -218,7 +218,7 @@ export function GroupSettings({
             ))}
           </select>
           <span className="md:hidden">{profile?.label ?? 'Hériter'}</span>
-          <span className="text-xs text-muted">{profileOrigin(group.profile, profile !== undefined)}</span>
+          <span className="text-xs text-muted">{profileOrigin(group.defaults.profile, profile !== undefined)}</span>
         </label>
       </Card>
       <Card title="Barre latérale">

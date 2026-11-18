@@ -201,10 +201,9 @@ function SandboxCopies({
   );
 }
 
-/** Origine de l'abonnement proposé : le groupe choisi, sinon le projet principal. */
-function profileOrigin(path: string, group: null | { profile: null | string }, project: OptionProject): string {
-  if (path === group?.profile) return ' · défaut du groupe';
-  return path === project.defaultProfile ? ' · défaut du projet' : '';
+/** Origine de l'abonnement proposé : le groupe choisi. */
+function profileOrigin(path: string, group: null | { profile: null | string }): string {
+  return path === group?.profile ? ' · défaut du groupe' : '';
 }
 
 /** Projets où une session du terminal est encore ouverte : un avertissement chacun, sauf en bac à sable. */
@@ -384,13 +383,12 @@ function startFrom(typed: Readonly<Record<string, string>>, project: OptionProje
   return typed[project.root] ?? project.startBranch ?? project.branch ?? '';
 }
 
-/** Abonnement proposé : celui du groupe choisi, sinon celui du projet principal, sinon le premier. */
+/** Abonnement proposé : celui du groupe choisi, sinon le premier. */
 function proposedProfile(
   group: null | { profile: null | string },
-  project: null | OptionProject,
   profiles: readonly { path: string }[],
 ): null | string {
-  return group?.profile ?? project?.defaultProfile ?? profiles[0]?.path ?? null;
+  return group?.profile ?? profiles[0]?.path ?? null;
 }
 
 /** Pourquoi le bac à sable est grisé : Docker, ou un projet de la session sans git ; null s'il est possible. */
@@ -447,8 +445,9 @@ export function NewSessionScreen({ origin }: { origin: NewSessionOrigin }) {
   const chosen = roots.flatMap((root) => options.projects.filter((candidate) => candidate.root === root));
   const project = chosen[0] ?? null;
   const others = chosen.slice(1);
-  const sessionGroup = chosenRoots === null && group ? group : chosenGroup;
-  const profile = chosenProfile ?? proposedProfile(sessionGroup, project, options.profiles);
+  const sessionGroup =
+    chosenRoots === null && group ? { id: group.id, name: group.name, profile: group.defaults.profile } : chosenGroup;
+  const profile = chosenProfile ?? proposedProfile(sessionGroup, options.profiles);
   // « Où elle tourne » reprend le dernier choix fait pour le projet principal
   const where = chosenWhere ?? project?.place ?? 'workstation';
   const sandboxUnavailable = sandboxReason(options.sandboxUnavailable, chosen);
@@ -494,7 +493,7 @@ export function NewSessionScreen({ origin }: { origin: NewSessionOrigin }) {
                     onAdd={(root) => changeProjects([...roots, root])}
                     onChooseGroup={(next) => {
                       changeProjects(groupProjects(next, options.projects));
-                      setGroup({ id: next.id, name: next.name, profile: next.profile });
+                      setGroup({ id: next.id, name: next.name, profile: next.defaults.profile });
                     }}
                     onDropGroup={() => {
                       setChosenRoots(roots);
@@ -522,7 +521,7 @@ export function NewSessionScreen({ origin }: { origin: NewSessionOrigin }) {
                       <option key={path} value={path}>
                         {label}
                         {account ? ` · ${account}` : ''}
-                        {profileOrigin(path, sessionGroup, project)}
+                        {profileOrigin(path, sessionGroup)}
                       </option>
                     ))}
                   </select>

@@ -34,7 +34,8 @@ export class ProjectsWiring implements OnModuleInit {
     });
     this.sessions.useProjects({
       list: () =>
-        this.projects.listProjects().map(({ domains, git, id, name, path, place, startBranch }) => ({
+        this.projects.listProjects().map(({ defaults, domains, git, id, name, path, place, startBranch }) => ({
+          defaults,
           domains,
           git,
           id,
@@ -43,6 +44,18 @@ export class ProjectsWiring implements OnModuleInit {
           root: path,
           startBranch,
         })),
+      // « Tous les projets » n'a que des instructions : il ne règle aucune valeur par défaut
+      groups: async () => {
+        const groups = await this.groups.listGroups();
+        return groups
+          .filter(({ system }) => !system)
+          .map(({ defaults, id, name, projects }) => ({
+            defaults,
+            id,
+            name,
+            projects: projects.map((project) => project.id),
+          }));
+      },
       placeOf: (gitRoot, path) => this.projects.placeOf(gitRoot, path),
       rememberPlace: (root, place) => this.projects.rememberPlace(root, place),
     });

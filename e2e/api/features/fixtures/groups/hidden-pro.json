@@ -1,1 +1,1 @@
-{ "sidebar": false, "profile": "{{profiles}}/.claude" }
+{ "sidebar": false, "defaults": { "profile": "{{profiles}}/.claude" } }

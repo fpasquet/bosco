@@ -1,7 +1,9 @@
 import { Body, Controller, Delete, Get, HttpCode, Inject, Param, ParseIntPipe, Patch, Post, Put } from '@nestjs/common';
 import { z } from 'zod';
 import type { GroupDto, GroupsDto } from '@bosco/domain';
+import type { LevelDefaults } from '../../../shared/domain/session-settings.ts';
 import type { GroupService, GroupView } from '../../application/group.service.ts';
+import { levelDefaultsSchema } from '../../../shared/interface/http/defaults-schema.ts';
 import { parseBody } from '../../../shared/interface/http/parse-body.ts';
 import { GROUP_SERVICE } from '../../tokens.ts';
 import { settle } from './settle.ts';
@@ -13,7 +15,7 @@ const createSchema = z.object({ name: NAME, description: DESCRIPTION.default(nul
 const changeSchema = z.object({
   name: NAME.optional(),
   description: DESCRIPTION.optional(),
-  profile: z.string().max(4096).nullable().optional(),
+  defaults: levelDefaultsSchema.optional(),
   sidebar: z.boolean().optional(),
 });
 const instructionsSchema = z.object({ instructions: z.string().max(20_000) });
@@ -21,11 +23,11 @@ const projectsSchema = z.object({ projects: PROJECTS });
 
 function present(group: GroupView): GroupDto {
   return {
+    defaults: group.defaults,
     description: group.description,
     id: group.id,
     instructions: group.instructions,
     name: group.name,
-    profile: group.profile,
     projects: group.projects.map(({ id, name }) => ({ id, name })),
     sidebar: group.sidebar,
     system: group.system,
@@ -59,7 +61,9 @@ export class GroupsController {
   @Patch(':id')
   async changeGroup(@Param('id', ParseIntPipe) id: number, @Body() body: unknown): Promise<GroupDto> {
     const settings = parseBody(changeSchema, body);
-    const group = await settle(() => this.groups.changeGroup(id, settings));
+    const group = await settle(() =>
+      this.groups.changeGroup(id, { ...settings, defaults: settings.defaults as Partial<LevelDefaults> | undefined }),
+    );
     return present(group);
   }
 
