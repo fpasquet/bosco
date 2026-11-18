@@ -20,7 +20,9 @@ const RECENT_QUESTION_MS = 2 * 60 * 1000;
 
 /** Avant que les projets soient branchés, toutes les sessions sont hors projet. */
 const NO_PROJECTS: ProjectCatalog = {
+  adopt: () => Promise.resolve([]),
   groups: () => Promise.resolve([]),
+  folderOf: (gitRoot, path) => gitRoot ?? path,
   list: () => [],
   placeOf: () => null,
   rememberPlace: () => Promise.resolve(),
@@ -34,6 +36,8 @@ export interface SessionView {
   changedFiles: FileChange[];
   /** Coût estimé en dollars ; unpriced : une partie des tokens vient d'un modèle sans tarif connu (« non chiffré ») */
   cost: { unpriced: boolean; usd: number };
+  /** Dossier d'une session hors projet, où l'Usage range son coût ; null dans un projet ou sans dossier connu */
+  folder: null | string;
   id: string;
   lastAction: null | string;
   lastEventAt: Date;
@@ -196,10 +200,29 @@ export class SessionService {
     const session = found ?? Session.discover(sessionId, sourceId, firstAt);
     for (const event of events) session.record(event);
     await this.sessionRepository.save(session, session.pullJournal());
-    const view = this.view(session);
+    let view = this.view(session);
+    if (view.folder) {
+      // Un dépôt où une session tourne pour la première fois devient un projet ; ses autres sessions le rejoignent
+      const { projectPath, projectRoot } = session.toSnapshot();
+      const adopted = await this.projects.adopt(projectRoot, projectPath);
+      if (adopted.length > 0) {
+        view = this.view(session);
+        await this.announceProjects(adopted, view.id);
+      }
+    }
     this.sessionEvents.sessionChanged(view);
     await this.notifyQuestions(view, events);
     return view;
+  }
+
+  /** Sessions déjà lues qui viennent de rejoindre des projets adoptés : leur vue change sans nouvel événement. */
+  private async announceProjects(projects: number[], except: string): Promise<void> {
+    const adopted = new Set(projects);
+    for (const other of await this.sessionRepository.list()) {
+      if (other.toSnapshot().id === except) continue;
+      const view = this.view(other);
+      if (view.project && adopted.has(view.project.id)) this.sessionEvents.sessionChanged(view);
+    }
   }
 
   /** Une question de l'agent qui vient d'être posée notifie ; ta demande suivante règle ce qui attendait. */
@@ -256,6 +279,7 @@ export class SessionService {
       title,
     } = snapshot;
     const { usage } = snapshot;
+    const project = this.projects.placeOf(snapshot.projectRoot, projectPath);
     return {
       addedProjects: (pilot?.projects ?? []).map((root) => {
         const place = this.projects.placeOf(root, root);
@@ -264,6 +288,7 @@ export class SessionService {
       branch,
       channel: this.pilots.channelOpen(snapshot.id),
       cost: { usd: costMicros / 1_000_000, unpriced: snapshot.unpricedTokens > 0 },
+      folder: project ? null : this.projects.folderOf(snapshot.projectRoot, projectPath),
       id,
       lastAction,
       lastEventAt,
@@ -273,7 +298,7 @@ export class SessionService {
       pilot,
       recentActions: snapshot.recentActions,
       projectPath,
-      project: this.projects.placeOf(snapshot.projectRoot, projectPath),
+      project,
       sourceId,
       startedAt,
       state,

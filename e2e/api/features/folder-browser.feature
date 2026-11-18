@@ -4,7 +4,7 @@ Feature: Folder browser
   I choose them from the workstation while Bosco never shows me a file nor a hidden folder.
 
   Background:
-    Given the Claude Code profile ".claude" has the transcript "session-site-perso-dependances.jsonl" for the session "a41f07c2"
+    Given the Claude Code profile ".claude" has the transcript "session-notes-clubs.jsonl" for the session "b52e18d3"
     And the home folder has the folders:
       | folder            | git |
       | www/site-clubs    | yes |

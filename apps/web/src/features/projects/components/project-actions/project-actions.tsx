@@ -159,7 +159,7 @@ export function ProjectActionsProvider({ children }: { children: ReactNode }) {
     change.mutate(async () => {
       await removeProject(project.id);
       push(`${project.name} retiré de ${APP_NAME}`, 'success');
-      // Le projet retiré revient en suggestion dans la liste des projets
+      // Le dossier du projet retiré se retrouve parmi les ignorés de la liste des projets
       router.push('/projects');
     });
   const confirmDelete = (group: GroupDto) =>

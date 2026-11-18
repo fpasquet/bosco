@@ -88,3 +88,18 @@ export function activityOf(
     );
   return { outside, projects, suggestions };
 }
+
+/**
+ * Dépôts git où une session a tourné hors de tout projet, ni exclus ni ignorés : Bosco en fait des projets d'eux-mêmes.
+ * Un dossier sans git reste proposé : en faire un projet rangerait sous lui tout ce qu'il contient.
+ */
+export function foldersToAdopt(
+  sessions: readonly SessionFolder[],
+  placement: ProjectPlacement,
+  ignored: ReadonlySet<string>,
+  unproposed: UnproposedFolders,
+): string[] {
+  return activityOf(sessions, placement, ignored, new Date(0), unproposed)
+    .suggestions.filter((suggestion) => suggestion.git && !suggestion.ignored)
+    .map((suggestion) => suggestion.path);
+}

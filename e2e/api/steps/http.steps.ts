@@ -7,9 +7,31 @@ import { join } from 'node:path';
 import { FEATURES } from '../paths.ts';
 import { type ApiResponse, Then, When } from './fixtures.ts';
 
-/** Corps d'une requête lu dans un fichier d'exemple ; {{profiles}} y désigne le dossier des profils du scénario. */
-function body(file: string, profilesRoot: string): unknown {
-  return JSON.parse(readFileSync(join(FEATURES, file), 'utf8').replaceAll('{{profiles}}', profilesRoot)) as unknown;
+const PROJECT = /"?\{\{project:([^}]+)\}\}"?/g;
+
+/**
+ * Remplace {{project:maison}} par l'identifiant du projet nommé : Bosco adopte les dépôts des sessions dans l'ordre où il
+ * les lit, l'identifiant d'un projet n'est pas fixé d'avance.
+ */
+async function withProjects(request: APIRequestContext, text: string): Promise<string> {
+  if (!text.includes('{{project:')) return text;
+  const { projects } = (await (await request.get('/api/projects')).json()) as {
+    projects: { id: number; name: string }[];
+  };
+  return text.replaceAll(PROJECT, (_, name: string) => {
+    const found = projects.find((project) => project.name === name);
+    if (!found) throw new Error(`No project ${name}`);
+    return String(found.id);
+  });
+}
+
+/**
+ * Corps d'une requête lu dans un fichier d'exemple ; {{profiles}} y désigne le dossier des profils du scénario,
+ * "{{project:maison}}" l'identifiant d'un projet.
+ */
+async function body(request: APIRequestContext, file: string, profilesRoot: string): Promise<unknown> {
+  const text = readFileSync(join(FEATURES, file), 'utf8').replaceAll('{{profiles}}', profilesRoot);
+  return JSON.parse(await withProjects(request, text)) as unknown;
 }
 
 async function send(
@@ -19,9 +41,9 @@ async function send(
   file?: string,
   profilesRoot = '',
 ): Promise<ApiResponse> {
-  const response = await request.fetch(path, {
+  const response = await request.fetch(await withProjects(request, path), {
     method,
-    ...(file ? { data: body(file, profilesRoot) } : {}),
+    ...(file ? { data: await body(request, file, profilesRoot) } : {}),
     timeout: 15_000,
   });
   const text = await response.text();

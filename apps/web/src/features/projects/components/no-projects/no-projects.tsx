@@ -32,7 +32,10 @@ export function NoProjects({ busy, home, onAdd, onBrowse, suggestions }: NoProje
           <FolderPlus aria-hidden className="size-6" />
         </span>
         <h2 className="font-display text-lg font-semibold">Aucun projet pour l’instant</h2>
-        <p className="max-w-measure text-muted">Ajoute les dossiers où tu travailles : Bosco y rangera tes sessions.</p>
+        <p className="max-w-measure text-muted">
+          Les dépôts git où tes sessions tournent deviennent des projets d’eux-mêmes ; ajoute aussi les autres dossiers
+          où tu travailles.
+        </p>
         <Button variant="primary" className="hidden md:inline-flex" onClick={onBrowse}>
           Ajouter des projets
         </Button>

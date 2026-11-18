@@ -3,16 +3,25 @@ import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Bosco } from './bosco.ts';
 
-/** Ajoute des dossiers (« maison », « www/site-clubs ») comme projets ; un dossier qui manque est créé, sans git. */
+/**
+ * Ajoute des dossiers (« maison », « www/site-clubs ») comme projets ; un dossier qui manque est créé, sans git. Un
+ * dépôt déjà adopté par Bosco, parce qu'une session y a tourné, est déjà un projet : il n'est pas ajouté de nouveau.
+ */
 export async function addProjects(bosco: Bosco, folders: readonly string[]): Promise<void> {
-  const paths = folders.map((folder) => join(bosco.profilesRoot, folder));
+  const known = (await (await fetch(`${bosco.url}/api/projects`)).json()) as { projects: { path: string }[] };
+  const paths = folders
+    .map((folder) => join(bosco.profilesRoot, folder))
+    .filter((path) => !known.projects.some((project) => project.path === path));
   for (const path of paths) mkdirSync(path, { recursive: true });
+  if (paths.length === 0) return;
   const response = await fetch(`${bosco.url}/api/projects`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ paths }),
   });
-  if (response.status !== 201) throw new Error(`POST /api/projects answered ${response.status}`);
+  // 409 : Bosco a adopté le dépôt entre-temps, en lisant une session
+  if (response.status !== 201 && response.status !== 409)
+    throw new Error(`POST /api/projects answered ${response.status}`);
 }
 
 /** Crée des dossiers dans le dossier personnel du scénario ; « git » en fait des dépôts. */

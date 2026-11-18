@@ -163,6 +163,11 @@ export interface CatalogProject {
 }
 
 export interface ProjectCatalog {
+  /**
+   * Fait un projet du dépôt git d'une session hors de tout projet, s'il n'est ni exclu ni ignoré ; rend les projets
+   * adoptés (aucun le plus souvent)
+   */
+  adopt(gitRoot: null | string, path: null | string): Promise<number[]>;
   /** Groupes de projets, sans « Tous les projets » */
   groups(): Promise<CatalogGroup[]>;
   list(): CatalogProject[];
@@ -173,6 +178,11 @@ export interface ProjectCatalog {
     gitRoot: null | string,
     path: null | string,
   ): null | { folder: string; id: number; name: string; root: string };
+  /**
+   * Dossier d'une session hors projet, où l'Usage range son coût : sa racine git (celle d'origine pour un worktree),
+   * sinon son dossier de travail ; null sans dossier connu
+   */
+  folderOf(gitRoot: null | string, path: null | string): null | string;
 }
 
 export interface Clock {

@@ -64,9 +64,9 @@ function SuggestionRow({
 }
 
 /**
- * Tous les projets : les dossiers ajoutés par la personne avec leurs groupes, la ligne « Hors projet » toujours
- * visible, et les dossiers où une session a tourné hors des projets, à ajouter d'un clic ou à ignorer. Sur le
- * téléphone, tout se lit.
+ * Tous les projets : les dépôts adoptés d'eux-mêmes et les dossiers ajoutés par la personne, avec leurs groupes, la
+ * ligne « Hors projet » toujours visible, et les dossiers sans git où une session a tourné, à ajouter d'un clic ou à
+ * ignorer, avec les dossiers ignorés (dont ceux des projets retirés). Sur le téléphone, tout se lit.
  */
 export function ProjectsList({
   busy,
@@ -182,7 +182,10 @@ export function ProjectsList({
               </h2>
               <span className="badge badge-ghost font-mono badge-sm">{suggestions.length}</span>
             </div>
-            <p className="mt-0.5 text-xs text-muted">Dossiers où une session a tourné, hors de tes projets</p>
+            <p className="mt-0.5 text-xs text-muted">
+              Dossiers sans git où une session a tourné, hors de tes projets : les dépôts git deviennent des projets
+              d’eux-mêmes
+            </p>
           </div>
           <ul aria-labelledby={ids.suggestions} className="divide-y divide-line">
             {suggestions.map((suggestion) => (
