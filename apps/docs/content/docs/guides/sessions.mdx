@@ -9,84 +9,88 @@ La vue d'ensemble (`/`) montre les sessions ouvertes du poste, de tous les profi
 
 La barre latérale range les sessions par lieu :
 
-- **« Vue d'ensemble »**, **« Historique »** et **« Usage »**, les pages de premier niveau ;
-- **« Groupes »** : les groupes affichés dans la barre latérale, par exemple « Club des Trois Lacs » ou « Perso ». Un clic ouvre la page du groupe ;
-- **« Projets »** : les projets qui ont une session ouverte, le plus urgent d'abord, puis les projets épinglés. « Tous les projets » et « Hors projet » ferment la liste ;
-- **« Profils Claude Code »** : chaque profil surveillé et son nombre de sessions ;
-- en pied, l'état des sources (« Suivi en direct actif »), les conteneurs en cours et « Réglages ».
+- **« Vue d'ensemble »**, **« Historique »** et **« Usage »**, les pages de premier niveau ;
+- **« Groupes »** : les groupes affichés dans la barre latérale, par exemple « Club des Trois Lacs » ou « Perso ». Un clic ouvre la page du groupe ;
+- **« Projets »** : les projets qui ont une session ouverte, le plus urgent d'abord, puis les projets épinglés. « Tous les projets » et « Hors projet » ferment la liste ;
+- **« Profils Claude Code »** : chaque profil surveillé et son nombre de sessions ;
+- en pied, l'état des sources (« Suivi en direct actif »), les conteneurs en cours et « Réglages ».
 
 Chaque ligne porte le nombre de sessions ouvertes. Une pastille ambre s'y ajoute quand au moins une session t'attend.
 
-Sur le téléphone, quatre onglets en bas remplacent la barre latérale : « Ensemble », « Historique », « Projets » et « Réglages ».
+Sur le téléphone, quatre onglets en bas remplacent la barre latérale : « Ensemble », « Historique », « Projets » et « Réglages ».
 
 ## Les états d'une session
 
 | État         | Couleur                  | Ce qu'il veut dire                                                                                  |
 | ------------ | ------------------------ | --------------------------------------------------------------------------------------------------- |
-| « T'attend » | ambre                    | Une autorisation est demandée, l'agent pose une question, ou il a fini son tour et te rend la main. |
-| « En cours » | bleu, pastille qui pulse | La session vient d'avoir un événement : l'agent travaille.                                          |
-| « Inactive » | gris                     | Aucun événement depuis le seuil d'inactivité, 15 minutes par défaut.                                |
-| « Terminée » | vert                     | Claude Code ne tient plus la session pour ouverte.                                                  |
+| « T'attend » | ambre                    | Une autorisation est demandée, l'agent pose une question, ou il a fini son tour et te rend la main. |
+| « En cours » | bleu, pastille qui pulse | La session vient d'avoir un événement : l'agent travaille.                                          |
+| « Inactive » | gris                     | Aucun événement depuis le seuil d'inactivité, 15 minutes par défaut.                                |
+| « Terminée » | vert                     | Claude Code ne tient plus la session pour ouverte.                                                  |
 
-Le seuil d'inactivité se règle dans Réglages › Sources, de 5 à 60 minutes. Une autorisation ou une question reste « T'attend » sans limite ; un tour terminé sans réponse passe « Inactive » après le seuil.
+Le seuil d'inactivité se règle dans Réglages › Sources, de 5 à 60 minutes. Une autorisation ou une question reste « T'attend » sans limite ; un tour terminé sans réponse passe « Inactive » après le seuil.
 
-## Ce qui fait passer une session en « T'attend »
+## Ce qui fait passer une session en « T'attend »
 
 Bosco le sait grâce au **suivi en direct**, les hooks HTTP qu'il ajoute aux réglages de chaque profil (Réglages › Sources) :
 
-- **autorisation demandée** : Claude Code demande l'accord avant un outil, par exemple « Bash · npm run db:migrate » ;
+- **autorisation demandée** : Claude Code demande l'accord avant un outil, par exemple « Bash · npm run db:migrate » ;
 - **tour terminé** : l'agent a fini et attend ta suite, avec son dernier message ;
 - **question de l'agent** : une question à choix, dans une session [pilotée par Bosco](/docs/guides/piloted-sessions).
 
-Sans suivi en direct, Bosco affiche « Sans suivi en direct, Bosco ne sait pas quand une session t'attend. » avec le lien « Installer le suivi en direct ».
+Sans suivi en direct, Bosco affiche « Sans suivi en direct, Bosco ne sait pas quand une session t'attend. » avec le lien « Installer le suivi en direct ».
 
 Une session qui t'attend apparaît à plusieurs endroits à la fois :
 
-1. **le bandeau** en tête de la vue d'ensemble, « 2 sessions attendent ta réponse », la plus ancienne attente d'abord, avec ce qu'elle attend et depuis quand ;
+1. **le bandeau** en tête de la vue d'ensemble, « 2 sessions attendent ta réponse », la plus ancienne attente d'abord, avec ce qu'elle attend et depuis quand ;
 2. **la pastille ambre** de son projet ou de son groupe dans la barre latérale ;
 3. **la carte** au bout du fil, dans le détail de la session ;
 4. **une notification**, selon tes [réglages](/docs/guides/notifications), et dans la barre système de l'[application du poste](/docs/desktop#la-barre-système).
 
 ## La vue d'ensemble
 
-L'en-tête propose « Regrouper par » « Projet », « Groupe » ou « État » (le choix est gardé), la recherche « Rechercher une session » (raccourci `/`), « Masquer les inactives » et « Nouvelle session ».
+![La vue d'ensemble regroupée par projet, avec le bandeau des sessions qui attendent](/screenshots/overview.png)
 
-Les indicateurs donnent le nombre de sessions « En cours », « Inactives », « Sessions aujourd'hui », et le « Coût du jour », toujours marqué « estimé » : c'est le tarif public de l'API appliqué aux tokens, pas ce que coûte ton abonnement.
+L'en-tête propose « Regrouper par » « Projet », « Groupe » ou « État » (le choix est gardé), la recherche « Rechercher une session » (raccourci `/`), « Masquer les inactives » et « Nouvelle session ».
 
-Le tableau liste les sessions avec leur état, leur titre, leur branche, leur dernière action, leur coût et leurs tokens, et leur activité. La marque d'un profil (« perso ») n'apparaît que pour un profil autre que `~/.claude`.
+Les indicateurs donnent le nombre de sessions « En cours », « Inactives », « Sessions aujourd'hui », et le « Coût du jour », toujours marqué « estimé » : c'est le tarif public de l'API appliqué aux tokens, pas ce que coûte ton abonnement.
 
-- **Par projet** : un intertitre par projet, « Hors projet » à la fin. Une session sur plusieurs projets se range sous son projet principal et s'affiche « api-tarifs +2 ».
-- **Par groupe** : un intertitre par groupe, avec « Réglages du groupe », puis « Sans groupe » et « Hors projet ». Une session dont le projet est dans plusieurs groupes porte « aussi dans… ».
-- **Par état** : trois colonnes, « T'attend », « En cours » et « Inactives ». Les cartes « En cours » montrent les trois dernières actions. Les sessions « Terminées aujourd'hui » suivent, avec « Voir l'historique ».
+Le tableau liste les sessions avec leur état, leur titre, leur branche, leur dernière action, leur coût et leurs tokens, et leur activité. La marque d'un profil (« perso ») n'apparaît que pour un profil autre que `~/.claude`.
+
+- **Par projet** : un intertitre par projet, « Hors projet » à la fin. Une session sur plusieurs projets se range sous son projet principal et s'affiche « api-tarifs +2 ».
+- **Par groupe** : un intertitre par groupe, avec « Réglages du groupe », puis « Sans groupe » et « Hors projet ». Une session dont le projet est dans plusieurs groupes porte « aussi dans… ».
+- **Par état** : trois colonnes, « T'attend », « En cours » et « Inactives ». Les cartes « En cours » montrent les trois dernières actions. Les sessions « Terminées aujourd'hui » suivent, avec « Voir l'historique ».
 
 La page d'un projet ou d'un groupe a le même bandeau, les mêmes indicateurs et le même tableau, limités à ce lieu (voir [Projets et groupes](/docs/guides/projects-and-groups)).
 
 ## Autoriser ou refuser
 
-Quand Claude Code demande l'accord pour une commande, Bosco montre une carte « Autorisation demandée · il y a 40 s », avec ce que l'agent a dit, l'outil, le dossier et la commande, par exemple `$ npm run db:migrate` dans `~/www/maison/packages/budget`.
+![La carte « Autorisation demandée » au bout du fil d'une session, avec le champ du motif du refus](/screenshots/session-permission.png)
 
-- **« Autoriser »** laisse la commande s'exécuter. Depuis le bandeau de la vue d'ensemble, la réponse part tout de suite, sans ouvrir la session.
-- **« Refuser »**, depuis la carte du détail, accepte un motif : « Motif du refus (facultatif, transmis à l'agent) ». L'agent reçoit « La personne a refusé cette commande depuis Bosco. Motif : … » et en tient compte pour la suite. Depuis le bandeau, « Refuser » ouvre le détail pour écrire ce motif.
+Quand Claude Code demande l'accord pour une commande, Bosco montre une carte « Autorisation demandée · il y a 40 s », avec ce que l'agent a dit, l'outil, le dossier et la commande, par exemple `$ npm run db:migrate` dans `~/www/maison/packages/budget`.
 
-Une autorisation vaut pour **cette commande seulement** : il n'y a pas de « toujours autoriser ». Sur le téléphone, « Autoriser » demande une confirmation, « L'autorisation ne vaut que pour cette commande. ».
+- **« Autoriser »** laisse la commande s'exécuter. Depuis le bandeau de la vue d'ensemble, la réponse part tout de suite, sans ouvrir la session.
+- **« Refuser »**, depuis la carte du détail, accepte un motif : « Motif du refus (facultatif, transmis à l'agent) ». L'agent reçoit « La personne a refusé cette commande depuis Bosco. Motif : … » et en tient compte pour la suite. Depuis le bandeau, « Refuser » ouvre le détail pour écrire ce motif.
 
-Un message bref confirme : « Autorisé · Ajouter les catégories au budget du foyer ». Si d'autres sessions t'attendent, Bosco revient à la vue d'ensemble.
+Une autorisation vaut pour **cette commande seulement** : il n'y a pas de « toujours autoriser ». Sur le téléphone, « Autoriser » demande une confirmation, « L'autorisation ne vaut que pour cette commande. ».
+
+Un message bref confirme : « Autorisé · Ajouter les catégories au budget du foyer ». Si d'autres sessions t'attendent, Bosco revient à la vue d'ensemble.
 
 ### Le terminal garde la main
 
 Pour une session lancée dans un terminal, le dialogue d'autorisation s'ouvre aussi dans le terminal. **La première réponse l'emporte** :
 
-- tu réponds dans le terminal : la carte de Bosco devient « Répondu ailleurs à 15:12 » ;
-- tu cliques trop tard dans Bosco : « Déjà répondu dans le terminal ».
+- tu réponds dans le terminal : la carte de Bosco devient « Répondu ailleurs à 15:12 » ;
+- tu cliques trop tard dans Bosco : « Déjà répondu dans le terminal ».
 
 Claude Code abandonne la demande faite à Bosco au bout de 10 minutes, son délai par défaut pour un hook : les boutons disparaissent de Bosco, et le dialogue reste dans le terminal. Si Bosco ne tourne pas, Claude Code continue comme sans lui, et tout se passe dans le terminal. Une autorisation en attente quand Bosco redémarre ne se donne plus que dans le terminal.
 
 ### Quand Bosco ne répond plus
 
-Si l'interface perd le service, un bandeau rouge dit « Bosco ne répond plus depuis … », avec l'heure des dernières informations et « Réessayer ». « Autoriser » et « Refuser » sont désactivés jusqu'au retour du service.
+Si l'interface perd le service, un bandeau rouge dit « Bosco ne répond plus depuis … », avec l'heure des dernières informations et « Réessayer ». « Autoriser » et « Refuser » sont désactivés jusqu'au retour du service.
 
 ## Le détail d'une session
 
-Le détail (`/sessions/<id>`) montre le fil de la session : tes messages, les réponses de l'agent, les outils lancés et leurs résultats. Le fil d'Ariane donne « Projets › api-tarifs », ou « Hors projet ».
+Le détail (`/sessions/<id>`) montre le fil de la session : tes messages, les réponses de l'agent, les outils lancés et leurs résultats. Le fil d'Ariane donne « Projets › api-tarifs », ou « Hors projet ».
 
 Pour une session ouverte dans un terminal, tu lis le fil et tu réponds aux autorisations. Pour lui écrire depuis Bosco, lance-la avec le [canal de Bosco](/docs/guides/mcp#canal-de-bosco). Pour la piloter entièrement, voir [Sessions pilotées](/docs/guides/piloted-sessions).

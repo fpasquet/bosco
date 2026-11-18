@@ -9,12 +9,14 @@ Bosco est un service local qui lit les sessions Claude Code du poste et les mont
 
 ## Ce que fait Bosco
 
-- **Découvrir les sessions.** Bosco lit les profils Claude Code du poste (`~/.claude`, `~/.claude-perso`…) et range chaque session sous son projet : `api-tarifs`, `creneaux`, `maison`… Il en suit l'état en direct : « T'attend », « En cours », « Inactive », « Terminée ».
-- **Voir celle qui t'attend.** Une autorisation demandée, une question de l'agent ou un tour terminé font passer la session en « T'attend ». Elle remonte en tête de la vue d'ensemble, une pastille s'allume dans la barre latérale et une notification part.
-- **Autoriser sans changer de fenêtre.** « Autoriser » ou « Refuser » depuis Bosco, avec un motif transmis à l'agent. Le terminal garde la main : la première réponse l'emporte.
+![La vue d'ensemble : une session attend l'autorisation de lancer npm run db:migrate, deux autres sont en cours](/screenshots/overview.png)
+
+- **Découvrir les sessions.** Bosco lit les profils Claude Code du poste (`~/.claude`, `~/.claude-perso`…) et range chaque session sous son projet : `api-tarifs`, `creneaux`, `maison`… Il en suit l'état en direct : « T'attend », « En cours », « Inactive », « Terminée ».
+- **Voir celle qui t'attend.** Une autorisation demandée, une question de l'agent ou un tour terminé font passer la session en « T'attend ». Elle remonte en tête de la vue d'ensemble, une pastille s'allume dans la barre latérale et une notification part.
+- **Autoriser sans changer de fenêtre.** « Autoriser » ou « Refuser » depuis Bosco, avec un motif transmis à l'agent. Le terminal garde la main : la première réponse l'emporte.
 - **Piloter une session.** Lancer une session depuis Bosco, lui écrire, l'arrêter, choisir son mode d'autorisation, son modèle et son effort, sur un ou plusieurs projets.
 - **Bac à sable.** Faire tourner une session pilotée dans un conteneur Docker, isolée du poste, sur sa propre branche, avec un réseau fermé aux seuls domaines permis. Tu récupères ensuite la branche dans ton dépôt.
-- **Projets et groupes.** Choisir ses projets dans un navigateur de dossiers, les réunir en groupes (« Club des Trois Lacs », « Gîtes du Haut-Vallon », « Perso ») et donner à chaque groupe des instructions que lisent les agents.
+- **Projets et groupes.** Choisir ses projets dans un navigateur de dossiers, les réunir en groupes (« Club des Trois Lacs », « Gîtes du Haut-Vallon », « Perso ») et donner à chaque groupe des instructions que lisent les agents.
 - **Historique et usage.** Retrouver une session passée, puis voir ce que consomment les sessions : tokens, coût estimé, quota de l'abonnement, PR créées.
 
 ## À qui il sert
@@ -55,7 +57,7 @@ Bosco tourne sous Linux. Le service et l'interface marchent aussi sous macOS, da
   <Card
     title="Vue d'ensemble et sessions"
     href="/docs/guides/sessions"
-    description="Les états, « T'attend », autoriser ou refuser une commande."
+    description="Les états, « T'attend », autoriser ou refuser une commande."
   />
   <Card
     title="Application du poste"

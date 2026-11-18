@@ -25,7 +25,7 @@ Le dossier `apps/mobile/android` n'est pas versionné : il est régénéré à c
 
 ### Le télécharger depuis la CI
 
-Le workflow « Apps » construit aussi l'APK, à chaque push sur `main` et sur chaque étiquette `v*` (voir [Télécharger le paquet depuis la CI](/docs/desktop#télécharger-le-paquet-depuis-la-ci)) :
+Le workflow « Apps » construit aussi l'APK, à chaque push sur `main` et sur chaque étiquette `v*` (voir [Télécharger le paquet depuis la CI](/docs/desktop#télécharger-le-paquet-depuis-la-ci)) :
 
 - dans l'onglet Actions, l'artefact `bosco-android` contient `bosco-android-<commit>.apk`, gardé 30 jours ;
 - sur une release `vX.Y.Z`, l'APK est joint tel quel.
@@ -61,58 +61,64 @@ L'accès du téléphone est fermé par défaut : Bosco n'écoute que sur `127.0.
 
 ### Ouvrir l'accès sur le poste
 
-Dans Bosco, sur le poste : Réglages › Téléphone, puis l'interrupteur « Accès depuis le téléphone ». La fenêtre d'appairage s'ouvre aussitôt. Plus tard, « Appairer un téléphone » la rouvre.
+Dans Bosco, sur le poste : Réglages › Téléphone, puis l'interrupteur « Accès depuis le téléphone ». La fenêtre d'appairage s'ouvre aussitôt. Plus tard, « Appairer un téléphone » la rouvre.
 
 </Step>
 <Step>
 
 ### Scanner le QR code
 
-Dans l'application, l'écran « Appairer Bosco » demande l'accès à la caméra, puis scanne le QR code du poste. Le QR contient l'adresse du poste sur le réseau local (par exemple `https://192.168.1.24:4871`), un code à six chiffres et l'empreinte du certificat que Bosco a créé.
+Dans l'application, l'écran « Appairer Bosco » demande l'accès à la caméra, puis scanne le QR code du poste. Le QR contient l'adresse du poste sur le réseau local (par exemple `https://192.168.1.24:4871`), un code à six chiffres et l'empreinte du certificat que Bosco a créé.
 
-L'application affiche « Poste trouvé », l'adresse, et « Certificat vérifié » avec l'empreinte. Elle ne fera confiance qu'à ce certificat-là, sans avertissement.
+L'application affiche « Poste trouvé », l'adresse, et « Certificat vérifié » avec l'empreinte. Elle ne fera confiance qu'à ce certificat-là, sans avertissement.
 
 </Step>
 <Step>
 
 ### Valider le code
 
-Le champ « Code affiché sur le poste » est déjà rempli : touche « Appairer ». Le code vaut 5 minutes, sert une seule fois et accepte 5 essais au plus ; « Générer un nouveau code » sur le poste invalide l'ancien.
+Le champ « Code affiché sur le poste » est déjà rempli : touche « Appairer ». Le code vaut 5 minutes, sert une seule fois et accepte 5 essais au plus ; « Générer un nouveau code » sur le poste invalide l'ancien.
 
-Sur le poste, la fenêtre passe à « Téléphone appairé ». Le téléphone apparaît dans « Téléphones appairés ».
+Sur le poste, la fenêtre passe à « Téléphone appairé ». Le téléphone apparaît dans « Téléphones appairés ».
 
 </Step>
 </Steps>
 
 Sans l'application, un navigateur de téléphone marche aussi : il ouvre l'adresse du QR code, accepte l'avertissement du certificat, puis saisit le code. Il n'a pas de notifications système.
 
-Si le scan ne marche pas, « Saisir l'adresse à la main » accepte le lien d'appairage copié depuis le poste.
+Si le scan ne marche pas, « Saisir l'adresse à la main » accepte le lien d'appairage copié depuis le poste.
 
 ### Ce que permet le téléphone
 
-Le téléphone voit les sessions, autorise ou refuse une commande, écrit à une session pilotée et lance une nouvelle session. Il ne modifie ni les réglages, ni les projets, ni les groupes : ces écrans sont en lecture seule, avec la mention « Modifiable depuis le poste ». Le navigateur de dossiers et l'appairage restent réservés au poste.
+<div className="mx-auto max-w-xs">
+
+![La vue d'ensemble sur le téléphone, avec la session qui attend une autorisation](/screenshots/phone-overview.png)
+
+</div>
+
+Le téléphone voit les sessions, autorise ou refuse une commande, écrit à une session pilotée et lance une nouvelle session. Il ne modifie ni les réglages, ni les projets, ni les groupes : ces écrans sont en lecture seule, avec la mention « Modifiable depuis le poste ». Le navigateur de dossiers et l'appairage restent réservés au poste.
 
 ### Retirer un téléphone
 
-Sur le poste, Réglages › Téléphone › « Retirer » sur sa ligne : l'accès est coupé aussitôt. Couper l'interrupteur « Accès depuis le téléphone » ferme l'écoute du réseau local pour tous.
+Sur le poste, Réglages › Téléphone › « Retirer » sur sa ligne : l'accès est coupé aussitôt. Couper l'interrupteur « Accès depuis le téléphone » ferme l'écoute du réseau local pour tous.
 
-Dans l'application, « Oublier ce poste » (dans « Réglages de l'application ») efface le poste du téléphone et revient à l'appairage, mais ne retire pas le téléphone côté poste : fais-le aussi dans Réglages › Téléphone.
+Dans l'application, « Oublier ce poste » (dans « Réglages de l'application ») efface le poste du téléphone et revient à l'appairage, mais ne retire pas le téléphone côté poste : fais-le aussi dans Réglages › Téléphone.
 
 ## Notifications
 
-L'interface ouverte dans l'application transmet ses notifications à Android, qui les affiche sur le canal « Bosco ». Toucher une notification ouvre la session. Une autorisation fait vibrer le téléphone, si « Vibrer pour une autorisation » est activé.
+L'interface ouverte dans l'application transmet ses notifications à Android, qui les affiche sur le canal « Bosco ». Toucher une notification ouvre la session. Une autorisation fait vibrer le téléphone, si « Vibrer pour une autorisation » est activé.
 
-Par défaut, les notifications n'arrivent que quand l'application est ouverte : en arrière-plan, Android la met en pause et les notifications attendent son retour. Pour les recevoir application fermée, active « Rester connecté en arrière-plan » dans « Réglages de l'application ». Android affiche alors une notification permanente, « Bosco suit tes sessions ».
+Par défaut, les notifications n'arrivent que quand l'application est ouverte : en arrière-plan, Android la met en pause et les notifications attendent son retour. Pour les recevoir application fermée, active « Rester connecté en arrière-plan » dans « Réglages de l'application ». Android affiche alors une notification permanente, « Bosco suit tes sessions ».
 
-La notification n'a pas encore de bouton « Autoriser » : touche-la pour ouvrir la session et répondre.
+La notification n'a pas encore de bouton « Autoriser » : touche-la pour ouvrir la session et répondre.
 
 ## Réglages de l'application
 
-On les ouvre depuis le menu de l'interface, entrée « Réglages de l'application » :
+On les ouvre depuis le menu de l'interface, entrée « Réglages de l'application » :
 
-- **Poste** : l'adresse, la date d'appairage et « Oublier ce poste ».
-- **Notifications** : « Rester connecté en arrière-plan » (désactivé par défaut), « Vibrer pour une autorisation » (activé par défaut), et « Choisir ce qui notifie », qui ouvre [Réglages › Notifications](/docs/guides/notifications) de Bosco.
+- **Poste** : l'adresse, la date d'appairage et « Oublier ce poste ».
+- **Notifications** : « Rester connecté en arrière-plan » (désactivé par défaut), « Vibrer pour une autorisation » (activé par défaut), et « Choisir ce qui notifie », qui ouvre [Réglages › Notifications](/docs/guides/notifications) de Bosco.
 
 ## Poste injoignable
 
-Si le poste ne répond pas (Bosco arrêté, autre réseau, Wi-Fi qui isole les appareils), l'application affiche l'adresse qu'elle essaie de joindre et réessaie seule toutes les 5 secondes, avec « Réessayer » et « Changer de poste ».
+Si le poste ne répond pas (Bosco arrêté, autre réseau, Wi-Fi qui isole les appareils), l'application affiche l'adresse qu'elle essaie de joindre et réessaie seule toutes les 5 secondes, avec « Réessayer » et « Changer de poste ».

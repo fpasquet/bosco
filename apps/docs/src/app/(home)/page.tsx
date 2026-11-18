@@ -19,7 +19,7 @@ const FEATURES: Feature[] = [
   },
   {
     description:
-      'Une commande demande votre accord : « Autoriser » ou « Refuser » depuis Bosco, le navigateur, la barre système ou le téléphone, sans revenir au terminal.',
+      'Une commande demande votre accord : « Autoriser » ou « Refuser » depuis Bosco, le navigateur, la barre système ou le téléphone, sans revenir au terminal.',
     href: `${DOCS_BASE_PATH}/guides/sessions#autoriser-ou-refuser`,
     icon: ShieldCheck,
     title: 'Autoriser sans changer de fenêtre',

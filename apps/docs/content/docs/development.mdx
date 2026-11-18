@@ -31,6 +31,7 @@ make e2e              # scénarios de l'API, puis parcours du web (ordinateur et
 make storybook        # http://localhost:6006
 make docs             # ce site sur http://127.0.0.1:4890
 make docs-build       # export statique de ce site dans apps/docs/out
+make docs-screenshots # captures de ce site, prises sur Bosco avec les données du fil rouge
 make db-migration     # écrit la migration qui amène la base aux entités
 make claude-compat    # vérifie les hooks et les tours pilotés sur le Claude Code installé
 ```
@@ -61,7 +62,7 @@ Les identifiants (écrans `E2`, états `E2b`, règles `RF-SESS-03`, critères `C
 Deux suites, lancées l'une sans l'autre :
 
 - **`e2e/api`**, en anglais : les routes de l'API, avec des phrases génériques (`I send GET request to "/api/health"`).
-- **`e2e/web`**, en français : les parcours comme les dirait la personne (`je clique sur le bouton « Autoriser »`), sur ordinateur et sur téléphone (`@mobile`). Chaque écran a un scénario qui finit par « la page est accessible » (axe, WCAG 2.2 AA).
+- **`e2e/web`**, en français : les parcours comme les dirait la personne (`je clique sur le bouton « Autoriser »`), sur ordinateur et sur téléphone (`@mobile`). Chaque écran a un scénario qui finit par « la page est accessible » (axe, WCAG 2.2 AA).
 
 ```bash
 make e2e-api          # scénarios de l'API, appels sortants rejoués
@@ -70,17 +71,19 @@ make e2e-record       # enregistre les appels sortants manquants, avec les vrais
 make e2e-clean        # supprime les enregistrements qu'aucun scénario n'utilise
 ```
 
-Chaque processus de test lance sa propre instance de Bosco, avec des données temporaires et un faux Claude Code (`e2e/shared/fake-claude.mjs`), remise à zéro entre deux scénarios. Les données reprennent le fil rouge des maquettes : projets `api-tarifs`, `creneaux`, `maison`, groupe « Club des Trois Lacs », session `c41e9a07`.
+Chaque processus de test lance sa propre instance de Bosco, avec des données temporaires et un faux Claude Code (`e2e/shared/fake-claude.mjs`), remise à zéro entre deux scénarios. Les données reprennent le fil rouge des maquettes : projets `api-tarifs`, `creneaux`, `maison`, groupe « Club des Trois Lacs », session `c41e9a07`.
 
 Les appels sortants sont rejoués depuis des enregistrements (`BOSCO_REPLAY=replay`, par défaut et en CI) : une requête inconnue fait échouer le test.
 
 ### Compatibilité avec Claude Code
 
-Le comportement des hooks n'est pas documenté par Claude Code. À chaque nouvelle version, `make claude-compat` lance de courtes sessions sur Haiku, sur l'abonnement : « Autoriser » doit laisser la commande s'exécuter, « Refuser » doit transmettre son motif à l'agent, la fin de session doit arriver, et les tours pilotés doivent marcher.
+Le comportement des hooks n'est pas documenté par Claude Code. À chaque nouvelle version, `make claude-compat` lance de courtes sessions sur Haiku, sur l'abonnement : « Autoriser » doit laisser la commande s'exécuter, « Refuser » doit transmettre son motif à l'agent, la fin de session doit arriver, et les tours pilotés doivent marcher.
 
 ## Ce site
 
 Le site vit dans `apps/docs` : les pages sont des fichiers MDX dans `content/docs`, rangés par `meta.json`. `make docs` le sert avec rechargement à chaud ; `make docs-build` produit l'export statique dans `apps/docs/out`, avec l'index de la recherche.
+
+Les captures de `apps/docs/public/screenshots` se reprennent avec `make docs-screenshots` : le script `e2e/docs/screenshots.ts` lance Bosco comme les tests du web, sur des données temporaires (projets, groupes et sessions du fil rouge, faux Claude Code), puis Playwright photographie chaque écran. Tes données de `~/.local/share/bosco` ne sont pas touchées.
 
 Pour le publier sous un sous-chemin, comme un site GitHub Pages de dépôt :
 

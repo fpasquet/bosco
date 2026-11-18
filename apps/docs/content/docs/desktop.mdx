@@ -34,9 +34,9 @@ make desktop-package-install   # l'installe avec apt (sudo)
 make desktop-update            # git pull, pnpm install, puis construit et installe le paquet (sudo)
 ```
 
-Installé pendant que Bosco tourne, le nouveau paquet se signale : une notification « Bosco a été mis à jour » s'affiche, et le menu de la barre système commence par « Relancer Bosco · version 0.1.0 · abc1234 installée ». Bosco ne se relance jamais seul : c'est toi qui choisis le moment, entre deux tours.
+Installé pendant que Bosco tourne, le nouveau paquet se signale : une notification « Bosco a été mis à jour » s'affiche, et le menu de la barre système commence par « Relancer Bosco · version 0.1.0 · abc1234 installée ». Bosco ne se relance jamais seul : c'est toi qui choisis le moment, entre deux tours.
 
-Une version plus ancienne refuse de démarrer sur des données qu'une plus récente a mises à jour. Elle affiche « Tes données viennent d'un Bosco plus récent » et propose `make desktop-update`.
+Une version plus ancienne refuse de démarrer sur des données qu'une plus récente a mises à jour. Elle affiche « Tes données viennent d'un Bosco plus récent » et propose `make desktop-update`.
 
 ## Essayer une branche : make beta
 
@@ -57,7 +57,7 @@ La branche se construit dans un worktree à part, `~/.cache/bosco/beta`, gardé 
 
 ## Télécharger le paquet depuis la CI
 
-Le workflow « Apps » de GitHub Actions (`.github/workflows/apps.yml`) construit le `.deb` et l'APK Android, pour chaque push sur `main`, chaque étiquette `v*`, ou à la main.
+Le workflow « Apps » de GitHub Actions (`.github/workflows/apps.yml`) construit le `.deb` et l'APK Android, pour chaque push sur `main`, chaque étiquette `v*`, ou à la main.
 
 <Callout type="info">
   Ce workflow est sur la branche `ci/build-desktop-and-android`. Il ne tourne qu'une fois cette branche fusionnée dans
@@ -66,11 +66,11 @@ Le workflow « Apps » de GitHub Actions (`.github/workflows/apps.yml`) construi
 
 | Job                           | Ce qu'il produit                                                                     | Artefact                                     |
 | ----------------------------- | ------------------------------------------------------------------------------------ | -------------------------------------------- |
-| « Desktop package (.deb) »    | `make desktop-package`                                                               | `bosco-desktop`, gardé 30 jours              |
-| « Android application (APK) » | `make android`, puis `bosco-android-<commit>.apk`                                    | `bosco-android`, gardé 30 jours              |
-| « Release »                   | sur une étiquette `v*` seulement : une release GitHub avec le `.deb` et l'APK joints | fichiers de la release, sans limite de durée |
+| « Desktop package (.deb) »    | `make desktop-package`                                                               | `bosco-desktop`, gardé 30 jours              |
+| « Android application (APK) » | `make android`, puis `bosco-android-<commit>.apk`                                    | `bosco-android`, gardé 30 jours              |
+| « Release »                   | sur une étiquette `v*` seulement : une release GitHub avec le `.deb` et l'APK joints | fichiers de la release, sans limite de durée |
 
-**Depuis l'onglet Actions** : ouvre une exécution du workflow « Apps » sur `https://github.com/fpasquet/bosco/actions`, puis télécharge `bosco-desktop` dans la section _Artifacts_. GitHub le livre en `.zip` qui contient le `.deb`.
+**Depuis l'onglet Actions** : ouvre une exécution du workflow « Apps » sur `https://github.com/fpasquet/bosco/actions`, puis télécharge `bosco-desktop` dans la section _Artifacts_. GitHub le livre en `.zip` qui contient le `.deb`.
 
 **Depuis une release** : sur `https://github.com/fpasquet/bosco/releases`, le `.deb` d'une étiquette `vX.Y.Z` est joint tel quel.
 
@@ -95,9 +95,9 @@ Si apt signale que `_apt` ne peut pas lire le fichier, copie-le d'abord dans `/t
 L'application cherche un service Bosco sur `http://127.0.0.1:4870` :
 
 - **aucun service ne répond** : elle démarre le sien, celui du paquet ;
-- **un service répond déjà**, par exemple le service systemd de [l'installation](/docs/installation#en-faire-un-service-de-lutilisateur) : la fenêtre « Bosco tourne déjà sur ce poste » propose « Se relier au service », « Remplacer le service par l'application » (qui désactive le service systemd) ou « Quitter ». Le choix est gardé.
+- **un service répond déjà**, par exemple le service systemd de [l'installation](/docs/installation#en-faire-un-service-de-lutilisateur) : la fenêtre « Bosco tourne déjà sur ce poste » propose « Se relier au service », « Remplacer le service par l'application » (qui désactive le service systemd) ou « Quitter ». Le choix est gardé.
 
-Si le service ne démarre pas, la fenêtre « Le service Bosco n'a pas démarré » montre ses dernières lignes d'erreur.
+Si le service ne démarre pas, la fenêtre « Le service Bosco n'a pas démarré » montre ses dernières lignes d'erreur.
 
 ## La fenêtre
 
@@ -105,22 +105,22 @@ La fenêtre affiche l'interface de Bosco, comme le navigateur. Les liens vers l'
 
 ## La barre système
 
-L'icône change dès qu'une session t'attend, et son infobulle dit combien : « Bosco · 2 sessions t'attendent ». Un clic sur l'icône ouvre la fenêtre. Le menu se lit de haut en bas :
+L'icône change dès qu'une session t'attend, et son infobulle dit combien : « Bosco · 2 sessions t'attendent ». Un clic sur l'icône ouvre la fenêtre. Le menu se lit de haut en bas :
 
-1. « Relancer Bosco · version … installée », seulement après une mise à jour.
-2. L'état : « Bosco · rien ne t'attend », « Bosco · 1 session t'attend » ou « Bosco · N sessions t'attendent ».
+1. « Relancer Bosco · version … installée », seulement après une mise à jour.
+2. L'état : « Bosco · rien ne t'attend », « Bosco · 1 session t'attend » ou « Bosco · N sessions t'attendent ».
 3. Une ligne par session qui t'attend, la plus ancienne d'abord, qui ouvre la session :
-   - une autorisation : « Ajouter les catégories au budget du foyer · Bash npm run db:migrate » ;
-   - une question : « Récapitulatif quotidien des réservations · question de l'agent » ;
-   - un tour terminé : « Migrer le logger vers OpenTelemetry · tour terminé ».
-4. « Ouvrir Bosco », « Nouvelle session » et la case « Suspendre les notifications 1 h ».
-5. La case « Lancer au démarrage » et « Quitter Bosco ».
+   - une autorisation : « Ajouter les catégories au budget du foyer · Bash npm run db:migrate » ;
+   - une question : « Récapitulatif quotidien des réservations · question de l'agent » ;
+   - un tour terminé : « Migrer le logger vers OpenTelemetry · tour terminé ».
+4. « Ouvrir Bosco », « Nouvelle session » et la case « Suspendre les notifications 1 h ».
+5. La case « Lancer au démarrage » et « Quitter Bosco ».
 
-« Lancer au démarrage » écrit `~/.config/autostart/bosco.desktop` : Bosco démarre avec ta session, fenêtre fermée, dans la barre système.
+« Lancer au démarrage » écrit `~/.config/autostart/bosco.desktop` : Bosco démarre avec ta session, fenêtre fermée, dans la barre système.
 
 ## Les notifications
 
-Quand l'application tourne, c'est elle qui affiche les notifications, avec celles du système : le service ne les envoie pas en double. Le titre dit le type et le projet, « Autorisation · maison », le texte donne le titre de la session et un extrait. Un clic ouvre la session dans la fenêtre.
+Quand l'application tourne, c'est elle qui affiche les notifications, avec celles du système : le service ne les envoie pas en double. Le titre dit le type et le projet, « Autorisation · maison », le texte donne le titre de la session et un extrait. Un clic ouvre la session dans la fenêtre.
 
 Une autorisation ou une question part en priorité critique : elle reste affichée jusqu'à ce que tu la fermes. Rien ne s'affiche quand la fenêtre est au premier plan (l'interface montre un message bref) ni pendant une suspension d'une heure. Ce qui notifie se règle dans [Réglages › Notifications](/docs/guides/notifications).
 
