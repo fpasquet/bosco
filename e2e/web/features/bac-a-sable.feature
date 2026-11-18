@@ -33,6 +33,7 @@ Fonctionnalité: Sessions en bac à sable
     Et je clique sur le bouton « Démarrer »
     Et je vois le texte « Reçu : Monte TypeScript en version 6 · mode acceptEdits · modèle défaut · effort défaut · images 0 »
     Alors le titre de la page porte « Bac à sable »
+    Et le titre de la page porte « Monte TypeScript en version 6 »
     Et je vois l’étiquette « Démarré »
     Et je vois le texte « 0,0 / 2 cœurs »
     Et je vois le texte « 1,3 / 4 Go »

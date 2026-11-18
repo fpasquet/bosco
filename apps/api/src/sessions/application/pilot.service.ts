@@ -502,7 +502,6 @@ export class PilotService {
     const unavailable = deps ? await deps.sandboxes.unavailable() : 'Bac à sable indisponible sur ce poste';
     if (!deps || unavailable) throw new SandboxError('sandboxUnavailable', unavailable ?? 'Bac à sable indisponible');
     const branch = checkSandboxBranch(choice.branch ?? sandboxBranchOf(message.text));
-    const source = await deps.ensureSource(deps.sandboxes.profile);
     // Branche de départ de chaque projet : celle choisie, sinon celle réglée pour le projet, sinon la courante
     const starts = [];
     for (const [index, { root, startBranch }] of projects.entries()) {
@@ -513,6 +512,9 @@ export class PilotService {
       });
     }
     const [principal, ...copies] = await deps.sandboxes.prepare({ branch, profile, projects: starts, sessionId });
+    // La source des bacs à sable se surveille une fois son dossier des conversations créé : sinon le premier bac à
+    // sable du poste ne serait lu qu'au redémarrage de Bosco
+    const source = await deps.ensureSource(deps.sandboxes.profile);
     const root = projects[0]?.root ?? '';
     const now = this.clock.now();
     return {
