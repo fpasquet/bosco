@@ -19,6 +19,8 @@ make android
 
 `make android` génère le projet Android avec Expo (`expo prebuild`), puis lance `./gradlew assembleRelease`. L'APK arrive dans `apps/mobile/android/app/build/outputs/apk/release/app-release.apk`.
 
+L'APK ne contient que le code natif arm64 (`buildArchs` de `apps/mobile/app.json`), celui de tous les téléphones récents : il est plus léger et se construit plus vite. Un émulateur x86_64 demande d'y ajouter `x86_64`.
+
 Il faut un **JDK 17** et le **SDK Android**. Le Makefile les cherche dans `~/.local/jdk-17` et `~/Android/Sdk` ; d'autres emplacements se passent en variables :
 
 ```bash
