@@ -22,6 +22,8 @@ const WORKSTATION_ONLY = [
   /^\/api\/presence/,
   // Le flux du canal de Bosco ne sert qu'aux sessions du terminal du poste (E2i)
   /^\/api\/channel\/stream/,
+  // Le navigateur de dossiers parcourt le poste : il ne s'ouvre pas depuis le téléphone, même pour lire
+  /^\/api\/folders/,
   /^\/__test\//,
 ];
 const SETTINGS = [
@@ -30,7 +32,8 @@ const SETTINGS = [
   /^\/api\/settings/,
   /^\/api\/isolation/,
   /^\/api\/rights/,
-  /^\/api\/projects\/[^/]+\/test-environment/,
+  // Les projets se lisent sur le téléphone ; ils s'ajoutent, s'ignorent et se retirent sur le poste
+  /^\/api\/projects/,
   /^\/api\/context/,
   /^\/api\/socles/,
   // Sur le téléphone, une décision proposée s'accepte ou se refuse ; le reste s'écrit sur le poste (E9b mobile)

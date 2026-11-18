@@ -4,6 +4,8 @@ import { AccessModule } from './access/access.module.ts';
 import { ContextModule } from './context/context.module.ts';
 import { IsolationModule } from './isolation/isolation.module.ts';
 import { PersistenceModule } from './persistence.module.ts';
+import { ProjectsWiring } from './projects-wiring.ts';
+import { ProjectsModule } from './projects/projects.module.ts';
 import { SandboxWiring } from './sandbox-wiring.ts';
 import { SessionsModule } from './sessions/sessions.module.ts';
 import { HealthController } from './shared/interface/http/health.controller.ts';
@@ -17,9 +19,9 @@ export class AppModule {
     return {
       module: AppModule,
       global: true,
-      imports: [PersistenceModule, SessionsModule, AccessModule, ContextModule, IsolationModule],
+      imports: [PersistenceModule, SessionsModule, ProjectsModule, AccessModule, ContextModule, IsolationModule],
       controllers: [HealthController, ...(config.testing ? [TestController] : [])],
-      providers: [{ provide: CONFIG, useValue: config }, SandboxWiring],
+      providers: [{ provide: CONFIG, useValue: config }, SandboxWiring, ProjectsWiring],
       exports: [CONFIG],
     };
   }

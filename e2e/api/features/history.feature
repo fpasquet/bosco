@@ -9,6 +9,7 @@ Feature: History and costs
     And the Claude Code profile ".claude-perso" has the transcript "session-labo-ia-bosco.jsonl" for the session "c41e9a07"
     And the Claude Code profile ".claude-perso" has the transcript "session-api-voix-fastify.jsonl" for the session "a41f07c2"
     And Bosco watches the profiles ".claude" and ".claude-perso"
+    And the folders "labo-ia,api-voix" are projects
 
   @CA-SESS-49
   Scenario: The history lists the days from the newest, each with its total

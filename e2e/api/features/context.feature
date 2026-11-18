@@ -8,6 +8,7 @@ Feature: Context of the agents
   Background:
     Given the Claude Code profile ".claude" has the transcript "session-labo-ia-rag.jsonl" for the session "5e0a91c3"
     And Bosco watches the profiles ".claude" and ".claude-perso"
+    And the folders "labo-ia,api-voix" are projects
 
   @CA-CONT-01
   @CA-CONT-25

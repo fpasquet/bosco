@@ -143,13 +143,10 @@ export function indicatorsOf(open: readonly SessionDto[], all: readonly SessionD
   };
 }
 
-/**
- * Projets de la barre latérale, dans l'ordre des intertitres, avec leur nombre de sessions ouvertes ; un projet masqué
- * dans les réglages n'y figure pas (CA-SESS-80).
- */
+/** Projets de la barre latérale, dans l'ordre des intertitres, avec leur nombre de sessions ouvertes. */
 export function projectsOf(open: readonly SessionDto[]): { count: number; name: string }[] {
   return groupByProject(open).flatMap(({ name, sessions }) =>
-    name === null || sessions[0]?.project?.hidden ? [] : [{ name, count: sessions.length }],
+    name === null ? [] : [{ name, count: sessions.length }],
   );
 }
 

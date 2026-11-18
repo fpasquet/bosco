@@ -104,7 +104,8 @@ export interface PilotOptionsDto {
   /** Profils Claude Code surveillés qui ont un accès, et celui du projet choisi */
   profiles: { account: null | string; label: string; path: string }[];
   /** Branche courante de chaque projet : le départ proposé d'un bac à sable (E16b) */
-  projects: { branch: null | string; defaultProfile: null | string; name: string; root: string }[];
+  /** git : sans git, un projet ne tourne pas en bac à sable */
+  projects: { branch: null | string; defaultProfile: null | string; git: boolean; name: string; root: string }[];
   /** null : le bac à sable est disponible ; sinon la raison (« Docker ne répond pas ») */
   sandboxUnavailable: null | string;
 }
@@ -131,11 +132,8 @@ export interface SessionDto {
   /** Trois dernières actions de l'agent, la plus récente en premier */
   recentActions: string[];
   projectPath: null | string;
-  /**
-   * Projet : nom de la racine git et dossier de travail à l'intérieur (« labo-ia », « packages/bosco ») ; hidden : masqué
-   * des listes dans les réglages (E4d), ses sessions restent visibles
-   */
-  project: { folder: string; hidden: boolean; name: string; root: string } | null;
+  /** Projet qui contient le dossier de travail, et ce dossier à l'intérieur (« packages/bosco ») ; null : hors projet */
+  project: { folder: string; id: number; name: string; root: string } | null;
   sourceId: string;
   startedAt: string;
   state: SessionStateDto;
@@ -277,24 +275,6 @@ export interface CostReportDto {
   sessions: number;
   totalUsd: number;
   workingDays: number;
-}
-
-/** Réglages des projets découverts (E4d). */
-export interface DiscoverySettingsDto {
-  attachWorktrees: boolean;
-  excluded: string[];
-  gitOnly: boolean;
-  /** Racines des projets masqués */
-  hidden: string[];
-  roots: string[];
-}
-
-/** Réglages › Projets (E4d) : réglages, projets trouvés (les plus récents d'abord) et sessions hors projet. */
-export interface ProjectSettingsDto {
-  home: string;
-  outside: number;
-  projects: { git: boolean; hidden: boolean; lastActivityAt: string; name: string; root: string }[];
-  settings: DiscoverySettingsDto;
 }
 
 /** Canal de Bosco dans un profil surveillé (E4f) : installé ou non, et la commande qui lance une session avec lui. */

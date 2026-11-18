@@ -291,7 +291,7 @@ export class PilotService {
   /** Formulaire d'une nouvelle session (E16a) : projets connus, abonnements et celui par défaut. */
   async options(): Promise<{
     profiles: { account: null | string; label: string; path: string }[];
-    projects: { branch: null | string; defaultProfile: null | string; name: string; root: string }[];
+    projects: { branch: null | string; defaultProfile: null | string; git: boolean; name: string; root: string }[];
     sandboxUnavailable: null | string;
   }> {
     const sources = await this.sources.list();
@@ -301,9 +301,9 @@ export class PilotService {
     const profiles = choices.filter(({ path }) => watched.has(path));
     const defaultProfile = effective && watched.has(effective) ? effective : null;
     const projects = [];
-    for (const { name, root } of known) {
-      const branch = this.sandbox ? await this.sandbox.sandboxes.currentBranch(root).catch(() => null) : null;
-      projects.push({ branch, defaultProfile, name, root });
+    for (const { git, name, root } of known) {
+      const branch = this.sandbox && git ? await this.sandbox.sandboxes.currentBranch(root).catch(() => null) : null;
+      projects.push({ branch, defaultProfile, git, name, root });
     }
     const sandboxUnavailable = this.sandbox
       ? await this.sandbox.sandboxes.unavailable()
@@ -324,6 +324,12 @@ export class PilotService {
     const known = await this.sessions.knownProjects();
     const project = known.find(({ root }) => root === input.project);
     if (!project) throw new PilotTargetNotFound(`Bosco ne connaît pas le projet ${input.project}.`);
+    // Un bac à sable copie le dépôt git du projet : un dossier sans git tourne seulement sur le poste
+    if (input.sandbox && !project.git)
+      throw new SandboxError(
+        'projectWithoutGit',
+        `Le projet ${project.name} n’est pas un dépôt git : pas de bac à sable.`,
+      );
     const accounts = await this.profiles.subscriptions();
     const profile = input.profile ?? accounts.effective;
     const sources = await this.sources.list();

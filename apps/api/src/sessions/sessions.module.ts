@@ -18,7 +18,6 @@ import { SessionService } from './application/session.service.ts';
 import { SettingsService } from './application/settings.service.ts';
 import { SourceService } from './application/source.service.ts';
 import { SuggestionService } from './application/suggestion.service.ts';
-import { ProjectDiscovery } from './domain/project-discovery.ts';
 import { ClaudeChannelInstaller } from './infrastructure/claude-code/channel-installer.ts';
 import { ClaudeTurnRunner } from './infrastructure/claude-code/claude-turn-runner.ts';
 import { FileConversationReader } from './infrastructure/claude-code/conversation-reader.ts';
@@ -28,7 +27,6 @@ import { FileSessionRegistry } from './infrastructure/claude-code/session-regist
 import { DiskSuggestions } from './infrastructure/claude-code/suggestions.ts';
 import { FileTranscriptWatcher } from './infrastructure/claude-code/transcript-watcher.ts';
 import { SessionEventsBus } from './infrastructure/events/session-events.bus.ts';
-import { GitWorktreeOrigins } from './infrastructure/git/worktree-origins.ts';
 import { loadHookSecret } from './infrastructure/hooks/hook-secret.ts';
 import { NotifySendAlerts, RecordingNotifier } from './infrastructure/notifications/desktop-notifier.ts';
 import { PresenceTracker } from './infrastructure/notifications/presence.ts';
@@ -71,7 +69,6 @@ import {
 const clock = { now: () => new Date() };
 const registry = new FileSessionRegistry();
 const conversations = new FileConversationReader();
-const worktrees = new GitWorktreeOrigins();
 
 /** Contexte des sessions : chaque port du domaine relié à son adaptateur. */
 @Module({
@@ -170,21 +167,10 @@ const worktrees = new GitWorktreeOrigins();
     },
     {
       provide: SESSION_SERVICE,
-      inject: [ORM, SESSION_EVENTS, SETTINGS_SERVICE, CONFIG],
-      useFactory: (orm: MikroORM, bus: SessionEventsBus, settings: SettingsService, config: Config) =>
-        new SessionService(
-          new MikroOrmSessionRepository(orm),
-          clock,
-          bus,
-          registry,
-          () => settings.inactivityDelayMs(),
-          (gitRoot, path) =>
-            new ProjectDiscovery(
-              settings.projects(),
-              config.profilesRoot,
-              (root) => worktrees.originOf(root),
-              (folder) => worktrees.rootOf(folder),
-            ).placeOf(gitRoot, path),
+      inject: [ORM, SESSION_EVENTS, SETTINGS_SERVICE],
+      useFactory: (orm: MikroORM, bus: SessionEventsBus, settings: SettingsService) =>
+        new SessionService(new MikroOrmSessionRepository(orm), clock, bus, registry, () =>
+          settings.inactivityDelayMs(),
         ),
     },
     {

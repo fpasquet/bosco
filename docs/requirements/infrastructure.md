@@ -39,7 +39,7 @@ Le service NestJS porte l'API, les flux SSE, Next.js et l'écoute HTTPS du tél�
 
 ## <a id="84-conteneurs-et-execution"></a>8.4 Conteneurs et exécution
 
-- **Image de l'agent** : `bosco-agent`, construite localement au premier usage : Claude Code, git, Node, Python, ripgrep. Une image par dépôt est possible ([E12a](lots/contexte.md#e12a)).
+- **Image de l'agent** : `bosco-agent`, construite localement au premier usage : Claude Code, git, Node, Python, ripgrep. Une image par dépôt est possible (E12a).
 - **Limites** : 4 Go de mémoire, 2 processeurs, 512 processus par agent ; 1 Go et 1 processeur par service.
 - **Capacité** : 4 agents au plus, 4 Go de mémoire gardés libres.
 - **Quota de l'abonnement** : un agent ne part que sous 50 % de la fenêtre de 5 h et 70 % de la semaine de son abonnement, et s'arrête au-delà de 80 % et 90 % (réglables, DT-39) ; plafond de 200 tours par défaut.

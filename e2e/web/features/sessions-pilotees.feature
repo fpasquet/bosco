@@ -8,6 +8,7 @@ Fonctionnalité: Sessions pilotées par Bosco
     Étant donné le profil Claude Code « .claude-perso » contient le transcript « session-labo-ia-bosco.jsonl » de la session « c41e9a07 »
     Et le profil Claude Code « .claude-perso » a accès à l’abonnement Claude de « camille@exemple.dev »
     Et Bosco surveille les profils « .claude » et « .claude-perso »
+    Et le dossier « labo-ia » est un projet
 
   @CA-SESS-91
   @CA-SESS-92

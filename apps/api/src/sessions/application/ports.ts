@@ -78,6 +78,16 @@ export interface ProfileSettings {
   uninstall(profilePath: string, endpoint: HookEndpoint): Promise<void>;
 }
 
+/** Projets choisis par la personne, branchés par le point de composition. */
+export interface ProjectCatalog {
+  list(): { git: boolean; name: string; root: string }[];
+  /** Projet qui contient le dossier de travail d'une session (sa racine git notée à la lecture) ; null hors projet */
+  placeOf(
+    gitRoot: null | string,
+    path: null | string,
+  ): null | { folder: string; id: number; name: string; root: string };
+}
+
 export interface Clock {
   now(): Date;
 }

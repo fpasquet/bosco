@@ -3,28 +3,15 @@ import type { SessionState, Waiting } from '../domain/session.ts';
 import type { JournalEntry, TranscriptEvent } from '../domain/transcript-event.ts';
 import type { NotificationService } from './notification.service.ts';
 import type { PilotView } from './pilot.service.ts';
-import type { Clock, SessionEvents, SessionRegistry, SessionRepository } from './ports.ts';
+import type { Clock, ProjectCatalog, SessionEvents, SessionRegistry, SessionRepository } from './ports.ts';
 import { ASKING } from '../domain/notification.ts';
-import { LEGACY_DISCOVERY, ProjectDiscovery, type ProjectPlace } from '../domain/project-discovery.ts';
 import { DEFAULT_INACTIVITY_DELAY_MS, Session } from '../domain/session.ts';
 
 /** Une question lue dans le transcript ne notifie que si elle vient d'être posée : jamais l'historique relu. */
 const RECENT_QUESTION_MS = 2 * 60 * 1000;
 
-/** Range une session dans son projet (E4d) : racine git notée à la lecture, dossier de travail. */
-export type ProjectPlaces = (gitRoot: null | string, path: null | string) => null | ProjectPlace;
-
-const LEGACY_PLACES: ProjectPlaces = (gitRoot, path) =>
-  new ProjectDiscovery(LEGACY_DISCOVERY, '', () => null).placeOf(gitRoot, path);
-
-/** Projet trouvé (E4d), avec la dernière activité de ses sessions. */
-export interface DiscoveredProject {
-  git: boolean;
-  hidden: boolean;
-  lastActivityAt: Date;
-  name: string;
-  root: string;
-}
+/** Avant que les projets soient branchés, toutes les sessions sont hors projet. */
+const NO_PROJECTS: ProjectCatalog = { list: () => [], placeOf: () => null };
 
 export interface SessionView {
   branch: null | string;
@@ -39,11 +26,8 @@ export interface SessionView {
   lastMessage: null | string;
   model: null | string;
   projectPath: null | string;
-  /**
-   * Projet de la session : nom de la racine git et dossier de travail à l'intérieur (« labo-ia », « packages/bosco ») ;
-   * hidden : masqué des listes (E4d), ses sessions restent visibles
-   */
-  project: { folder: string; hidden: boolean; name: string; root: string } | null;
+  /** Projet qui contient le dossier de travail, et ce dossier à l'intérieur (« packages/bosco ») ; null : hors projet */
+  project: { folder: string; id: number; name: string; root: string } | null;
   sourceId: string;
   startedAt: Date;
   state: SessionState;
@@ -79,6 +63,7 @@ export interface SessionDetail {
 export class SessionService {
   private notifications: null | Pick<NotificationService, 'notify' | 'settle'> = null;
   private pilots: PilotsView = NO_PILOTS;
+  private projects: ProjectCatalog = NO_PROJECTS;
 
   constructor(
     private readonly sessionRepository: SessionRepository,
@@ -90,45 +75,25 @@ export class SessionService {
     private readonly registry: Pick<SessionRegistry, 'isOpen'> = { isOpen: () => null },
     /** Seuil d'inactivité réglé dans les sources (CA-SESS-59) */
     private readonly inactivityDelayMs: () => number = () => DEFAULT_INACTIVITY_DELAY_MS,
-    /** Réglages des projets découverts (E4d), lus à chaque affichage (DT-27) */
-    private readonly places: ProjectPlaces = LEGACY_PLACES,
   ) {}
 
-  /**
-   * Projets où l'on prépare du travail (E6a, E9a) : les dépôts git affichés, d'après les sessions des profils
-   * surveillés, les plus récents d'abord (CA-SESS-81).
-   */
-  async knownProjects(): Promise<{ name: string; root: string }[]> {
-    const { projects } = await this.discoveredProjects();
-    return projects.filter(({ git, hidden }) => git && !hidden).map(({ name, root }) => ({ name, root }));
+  /** Projets choisis par la personne, branchés au démarrage : le projet d'une session se calcule à l'affichage. */
+  useProjects(projects: ProjectCatalog): void {
+    this.projects = projects;
   }
 
-  /** Projets trouvés (E4d), masqués compris, les plus récents d'abord ; outside : sessions hors projet. */
-  async discoveredProjects(): Promise<{ outside: number; projects: DiscoveredProject[] }> {
+  /** Projets où l'on démarre une session et dont on lit le contexte : ceux que la personne a ajoutés. */
+  knownProjects(): Promise<{ git: boolean; name: string; root: string }[]> {
+    return Promise.resolve(this.projects.list());
+  }
+
+  /** Dossiers de travail des sessions déjà lues, que les projets rangent et proposent. */
+  async sessionFolders(): Promise<{ gitRoot: null | string; lastEventAt: Date; path: null | string }[]> {
     const sessions = await this.sessionRepository.list();
-    const found = new Map<string, DiscoveredProject>();
-    let outside = 0;
-    for (const session of sessions) {
+    return sessions.map((session) => {
       const { lastEventAt, projectPath, projectRoot } = session.toSnapshot();
-      const place = this.places(projectRoot, projectPath);
-      if (!place) {
-        outside += 1;
-        continue;
-      }
-      const known = found.get(place.root);
-      if (!known || known.lastActivityAt < lastEventAt)
-        found.set(place.root, {
-          git: place.git,
-          hidden: place.hidden,
-          lastActivityAt: lastEventAt,
-          name: place.name,
-          root: place.root,
-        });
-    }
-    const projects = [...found.values()].toSorted(
-      (a, b) => b.lastActivityAt.getTime() - a.lastActivityAt.getTime() || a.name.localeCompare(b.name, 'fr'),
-    );
-    return { outside, projects };
+      return { gitRoot: projectRoot, lastEventAt, path: projectPath };
+    });
   }
 
   /** Sessions pilotées par Bosco, branchées au démarrage (le service de pilotage dépend de celui-ci). */
@@ -230,7 +195,7 @@ export class SessionService {
       pilot,
       recentActions: snapshot.recentActions,
       projectPath,
-      project: projectOf(this.places(snapshot.projectRoot, projectPath)),
+      project: this.projects.placeOf(snapshot.projectRoot, projectPath),
       sourceId,
       startedAt,
       state,
@@ -246,9 +211,4 @@ export class SessionService {
       },
     };
   }
-}
-
-/** Projet d'une session tel que les écrans le montrent. */
-function projectOf(place: null | ProjectPlace): SessionView['project'] {
-  return place && { folder: place.folder, hidden: place.hidden, name: place.name, root: place.root };
 }

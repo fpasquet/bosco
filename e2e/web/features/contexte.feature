@@ -8,6 +8,7 @@ Fonctionnalité: Contexte des agents
   Contexte:
     Étant donné le profil Claude Code « .claude » contient le transcript « session-labo-ia-rag.jsonl » de la session « 5e0a91c3 »
     Et Bosco surveille les profils « .claude » et « .claude-perso »
+    Et les dossiers « labo-ia » et « api-voix » sont des projets
 
   @CA-CONT-03
   @CA-CONT-06

@@ -30,7 +30,7 @@ function session(id: string, overrides: Partial<SessionDto> = {}): SessionDto {
     pilot: null,
     recentActions: [],
     projectPath: '/home/dev/www/labo-ia/packages/rag',
-    project: { folder: 'packages/rag', hidden: false, name: 'labo-ia', root: '/home/dev/www/labo-ia' },
+    project: { folder: 'packages/rag', id: 1, name: 'labo-ia', root: '/home/dev/www/labo-ia' },
     sourceId: 'pro',
     startedAt: new Date('2026-11-06T14:00:00').toISOString(),
     state: 'running',
@@ -44,7 +44,7 @@ function session(id: string, overrides: Partial<SessionDto> = {}): SessionDto {
 }
 
 const at = (time: string) => new Date(`2026-11-06T${time}`).toISOString();
-const outilsNode = { folder: '', hidden: false, name: 'outils-node', root: '/home/dev/www/outils-node' };
+const outilsNode = { folder: '', id: 2, name: 'outils-node', root: '/home/dev/www/outils-node' };
 
 describe('openSessions', () => {
   it('keeps running sessions and sessions active today, and leaves older ones to the history', () => {

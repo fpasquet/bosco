@@ -9,6 +9,7 @@ Fonctionnalité: Vue d'ensemble
     Étant donné le profil Claude Code « .claude » contient le transcript « session-labo-ia-rag.jsonl » de la session « 5e0a91c3 »
     Et le profil Claude Code « .claude-perso » contient le transcript « session-labo-ia-bosco.jsonl » de la session « c41e9a07 »
     Et le profil Claude Code « .claude » contient le transcript « session-api-voix-fastify.jsonl » de la session « a41f07c2 »
+    Et les dossiers « labo-ia » et « api-voix » sont des projets
 
   @CA-SESS-08
   @NF-18

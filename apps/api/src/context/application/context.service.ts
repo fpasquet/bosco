@@ -20,7 +20,7 @@ export interface ArchitectureStore {
   save(project: string, architecture: Architecture): Promise<void>;
 }
 
-/** Projets connus du poste, d'après les sessions des profils surveillés. */
+/** Projets ajoutés par la personne. */
 export interface KnownProjects {
   list(): Promise<{ name: string; root: string }[]>;
 }
@@ -63,10 +63,6 @@ export class ContextService {
     private readonly projects: KnownProjects,
     private readonly clock: { now(): Date },
   ) {}
-
-  listProjects(): Promise<{ name: string; root: string }[]> {
-    return this.projects.list();
-  }
 
   /** Projet d'un dossier de travail (le plus profond qui le contient) et son dossier relatif ; null hors des projets. */
   async projectOf(path: string): Promise<null | { folder: string; name: string }> {
