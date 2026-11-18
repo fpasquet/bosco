@@ -3,11 +3,11 @@ import { describe, expect, it } from 'vitest';
 import { InvalidVersion, planVersion, VersionAlreadyReleased, versionCode, VersionOutOfRange } from './version.ts';
 
 describe('planVersion', () => {
-  it('takes the version of the commits for a stable release', () => {
+  it('CA-APPS-13 · takes the version of the commits for a stable release', () => {
     expect(planVersion({ bumped: 'v0.2.0', channel: 'stable', requested: '', tags: ['v0.1.0'] })).toBe('0.2.0');
   });
 
-  it('numbers the betas of the next version one after the other', () => {
+  it('CA-APPS-13 · numbers the betas of the next version one after the other', () => {
     expect(planVersion({ bumped: 'v0.2.0', channel: 'beta', requested: '', tags: ['v0.1.0'] })).toBe('0.2.0-beta.1');
     expect(
       planVersion({
@@ -53,7 +53,7 @@ describe('planVersion', () => {
 });
 
 describe('versionCode', () => {
-  it('always grows, betas before their stable version', () => {
+  it('CA-APPS-13 · always grows, betas before their stable version', () => {
     const codes = ['0.1.0', '0.2.0-beta.1', '0.2.0-beta.2', '0.2.0', '0.2.1-beta.1', '0.2.1', '1.0.0'].map(versionCode);
     expect(codes).toEqual([10_099, 20_001, 20_002, 20_099, 20_101, 20_199, 1_000_099]);
   });

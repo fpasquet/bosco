@@ -28,7 +28,7 @@ describe('androidVersion', () => {
 });
 
 describe('downloadOf', () => {
-  it('offers the APK on the phone, the .deb on the workstation, nothing to the AppImage', () => {
+  it('CA-REGL-35 · offers the APK on the phone, the .deb on the workstation, nothing to the AppImage', () => {
     expect(downloadOf(available, { install: 'deb', phone: true })).toEqual({
       label: 'Télécharger l’APK',
       url: 'apk-url',

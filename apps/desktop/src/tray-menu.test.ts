@@ -68,7 +68,7 @@ describe('trayMenu', () => {
     ]);
   });
 
-  it('puts the restart of a downloaded update of the AppImage at the top of the menu', () => {
+  it('CA-APPS-11 · puts the restart of a downloaded update of the AppImage at the top of the menu', () => {
     const items = trayMenu([], { autostart: false, paused: false, downloaded: '0.3.0-beta.1' });
     expect(items.slice(0, 2)).toEqual([
       {

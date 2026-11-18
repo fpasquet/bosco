@@ -58,7 +58,7 @@ function setup(version = '0.2.0') {
 }
 
 describe('AboutService', () => {
-  it('looks for a new version at most once a day, and not at all when turned off', async () => {
+  it('CA-REGL-36 · looks for a new version at most once a day, and not at all when turned off', async () => {
     const { feed, now, service } = setup();
     const about = service();
     await about.checkIfDue();
@@ -76,7 +76,7 @@ describe('AboutService', () => {
     expect(feed.calls).toBe(2);
   });
 
-  it('announces the installed version once, after a launch on another version, never on the first launch', async () => {
+  it('CA-REGL-37 · announces the installed version once, after a launch on another version, never on the first launch', async () => {
     const { build, service } = setup('0.1.0');
     await service().load();
     const first = await service().describe();

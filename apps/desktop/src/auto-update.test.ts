@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { installKind, preferencesOf, updaterChannel } from './auto-update.ts';
 
 describe('the updates of the AppImage', () => {
-  it('follows the channel chosen in the settings, stable and enabled by default', () => {
+  it('CA-APPS-11 · follows the channel chosen in the settings, stable and enabled by default', () => {
     expect(preferencesOf({ updates: { channel: 'beta', enabled: false } })).toEqual({
       channel: 'beta',
       enabled: false,
