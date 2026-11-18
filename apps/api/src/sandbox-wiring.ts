@@ -9,6 +9,7 @@ import type { NotificationService } from './sessions/application/notification.se
 import type { PilotService } from './sessions/application/pilot.service.ts';
 import type { SessionDefaultsService } from './sessions/application/session-defaults.service.ts';
 import type { SourceService } from './sessions/application/source.service.ts';
+import { readDataServices } from './isolation/infrastructure/docker/compose-file.ts';
 import { DockerSandboxContainers } from './isolation/infrastructure/docker/docker-sandbox-containers.ts';
 import { AllowListFile } from './isolation/infrastructure/egress/allow-list-file.ts';
 import { DOCKER_ISOLATION, ISOLATION_SERVICE, QUOTA_SERVICE } from './isolation/tokens.ts';
@@ -49,7 +50,7 @@ export class SandboxWiring implements OnApplicationBootstrap, OnApplicationShutd
     const root = join(this.config.dataDir, 'sandboxes');
     // Dans les scénarios, des bacs à sable scriptés : ni Docker ni copie du projet
     const sandboxes = this.config.testing
-      ? new ScriptedSandboxes(root)
+      ? new ScriptedSandboxes(root, readDataServices)
       : new GitSandboxes(root, new DockerSandboxContainers(this.docker), (profile) => this.isolation.accessOf(profile));
     // Le profil des bacs à sable déjà lu comme un profil ordinaire est repris à part, toujours lu
     await this.sources.keepManaged(sandboxes.profile);

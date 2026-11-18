@@ -1,0 +1,20 @@
+# Une base sur une image toute faite, et une API qui se construit depuis le dépôt et monte ses sources
+x-db-env: &db-env
+  POSTGRES_USER: maison
+
+services:
+  db:
+    image: postgres:16.13-alpine
+    environment:
+      <<: *db-env
+    ports:
+      - '127.0.0.1:5435:5432'
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+  api:
+    build: .
+    volumes:
+      - .:/repo
+
+volumes:
+  postgres-data:

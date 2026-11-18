@@ -36,12 +36,15 @@ import {
 import {
   checkSandboxBranch,
   housekeepingOf,
+  NO_SANDBOX_SERVICES,
   retrievedCopy,
   type SandboxBranch,
   sandboxBranches,
   sandboxBranchOf,
   SandboxError,
   type SandboxInfo,
+  type SandboxServices,
+  servicesNote,
   stopsAt,
   unretrieved,
 } from '../domain/sandbox.ts';
@@ -71,6 +74,12 @@ export interface TurnRequest {
 }
 
 /** Exécution d'un tour ailleurs que sur le poste : le programme et ses premiers arguments, avant ceux du tour. */
+/** Un bac à sable prêt pour un tour : la commande du tour (null : sur le poste, scénarios) et ses services de données */
+export interface StartedSandbox {
+  launch: null | TurnLaunch;
+  services: SandboxServices;
+}
+
 export interface TurnLaunch {
   args: string[];
   file: string;
@@ -92,7 +101,7 @@ export interface Sandboxes {
    * principal d'abord) ; la commande d'un tour, null : sur le poste (scénarios)
    */
   /** env : variables du tour à transmettre au conteneur (le jeton longue durée de l'abonnement) */
-  ensure(sessionId: string, projectRoots: readonly string[], env?: readonly string[]): Promise<null | TurnLaunch>;
+  ensure(sessionId: string, projectRoots: readonly string[], env?: readonly string[]): Promise<StartedSandbox>;
   /** Une copie par projet, le principal d'abord, toutes sur la même branche ; refusée si un projet a déjà la branche */
   prepare(input: {
     branch: string;
@@ -220,6 +229,8 @@ export interface PilotView {
     from: string;
     removed: boolean;
     retrievedAt: Date | null;
+    /** Services de données du projet, démarrés avec le bac à sable */
+    services: SandboxServices;
     state: SandboxState;
     stopsAt: Date;
   };
@@ -280,6 +291,8 @@ export class PilotService {
   private quota: PilotQuota = NO_QUOTA;
   /** État de chaque conteneur, relu par l'entretien : la vue de la session le montre sans attendre Docker */
   private readonly sandboxStates = new Map<string, SandboxState>();
+  /** Services de données de chaque bac à sable, tels que son dernier démarrage les a laissés */
+  private readonly sandboxServices = new Map<string, SandboxServices>();
   private channel: Pick<ChannelService, 'isConnected' | 'send'> = { isConnected: () => false, send: () => false };
 
   constructor(
@@ -369,6 +382,9 @@ export class PilotService {
         from: sandbox.from,
         removed: sandbox.removedAt !== null,
         retrievedAt: sandbox.retrievedAt,
+        services: sandbox.removedAt
+          ? NO_SANDBOX_SERVICES
+          : (this.sandboxServices.get(sessionId) ?? NO_SANDBOX_SERVICES),
         state: sandbox.removedAt ? 'missing' : (this.sandboxStates.get(sessionId) ?? 'stopped'),
         stopsAt: stopsAt(sandbox),
       },
@@ -658,6 +674,7 @@ export class PilotService {
     const { deps, record, sandbox } = this.idleSandbox(sessionId);
     await deps.sandboxes.remove(sessionId);
     this.sandboxStates.set(sessionId, 'missing');
+    this.sandboxServices.delete(sessionId);
     await this.keep({ ...record, sandbox: { ...sandbox, removedAt: this.clock.now() } });
     await this.publish(sessionId);
   }
@@ -809,6 +826,7 @@ export class PilotService {
       if (record.sandbox && !record.sandbox.removedAt)
         await deps.sandboxes.remove(record.sessionId).catch(() => undefined);
     this.sandboxStates.clear();
+    this.sandboxServices.clear();
   }
 
   /** Arrête tous les tours (arrêt de Bosco, remise à zéro des scénarios). */
@@ -903,11 +921,13 @@ export class PilotService {
     const profile = record.sandbox?.profile ?? source.path;
     const tokenFile = await this.tokenFileOf(profile);
     const env = tokenFile ? [TOKEN_VARIABLE] : [];
-    const launch =
+    const started =
       record.sandbox && this.sandbox
         ? await this.sandbox.sandboxes.ensure(record.sessionId, [record.cwd, ...record.projects], env)
         : null;
+    const launch = started?.launch ?? null;
     if (record.sandbox) this.sandboxStates.set(record.sessionId, 'running');
+    if (started) this.sandboxServices.set(record.sessionId, started.services);
     const liveTracking = source.liveTracking && !record.sandbox;
     // Le tour commence : la session apparaît (ou reprend) tout de suite, sans attendre les hooks ni le transcript
     await this.signals.receive(origin, { kind: 'prompt' }, 'pilot');
@@ -921,7 +941,11 @@ export class PilotService {
       stopped: null,
     };
     const sandboxed = record.sandbox !== null;
-    const context = await this.launchContext(record);
+    // En bac à sable, l'agent apprend où il travaille : sans Docker, avec les services de données du projet à côté
+    const context =
+      [await this.launchContext(record), started ? servicesNote(started.services) : null]
+        .filter(Boolean)
+        .join('\n\n') || null;
     const request: TurnRequest = {
       // Les autres projets sont rejoués à chaque tour : une reprise ne les garde pas d'elle-même
       addDirs: [...record.projects],

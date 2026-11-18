@@ -2,8 +2,11 @@
 // factice, ses conversations dans le profil des bacs à sable ; le vrai bac à sable se vérifie sur le poste.
 import { mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
-import type { Sandboxes, SandboxState } from '../../application/pilot.service.ts';
+import type { Sandboxes, SandboxState, StartedSandbox } from '../../application/pilot.service.ts';
 import { SandboxError } from '../../domain/sandbox.ts';
+
+/** Services de données que le fichier Compose d'un projet donnerait, lus sans Docker */
+export type DataServicesReader = (projectDir: string) => Promise<{ image: string; name: string }[]>;
 
 export class ScriptedSandboxes implements Sandboxes {
   readonly profile: string;
@@ -11,7 +14,10 @@ export class ScriptedSandboxes implements Sandboxes {
   unavailableReason: null | string = null;
   private readonly states = new Map<string, SandboxState>();
 
-  constructor(root: string) {
+  constructor(
+    root: string,
+    private readonly dataServices: DataServicesReader = () => Promise.resolve([]),
+  ) {
     this.profile = join(root, 'profile');
   }
 
@@ -42,11 +48,16 @@ export class ScriptedSandboxes implements Sandboxes {
     return Promise.resolve(input.copy === 0 ? 2 : 0);
   }
 
-  ensure(sessionId: string): Promise<null> {
+  /** Le tour tourne sur le poste ; les services de données du fichier Compose du projet se disent prêts */
+  async ensure(sessionId: string, projectRoots: readonly string[]): Promise<StartedSandbox> {
     if (this.states.get(sessionId) === 'missing')
-      return Promise.reject(new SandboxError('sandboxRemoved', 'La copie du projet de ce bac à sable a disparu.'));
+      throw new SandboxError('sandboxRemoved', 'La copie du projet de ce bac à sable a disparu.');
     this.states.set(sessionId, 'running');
-    return Promise.resolve(null);
+    const services = await this.dataServices(projectRoots[0] ?? '');
+    return {
+      launch: null,
+      services: { error: null, services: services.map((service) => ({ ...service, error: null, state: 'ready' })) },
+    };
   }
 
   state(sessionId: string): Promise<SandboxState> {

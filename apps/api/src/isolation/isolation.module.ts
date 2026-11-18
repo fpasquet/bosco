@@ -13,6 +13,7 @@ import { CONFIG, ORM } from '../shared/tokens.ts';
 import { ContainersService, MEASURE_MS, type SandboxProbe } from './application/containers.service.ts';
 import { IsolationService } from './application/isolation.service.ts';
 import { QuotaService } from './application/quota.service.ts';
+import { SERVICE_LIMITS } from './domain/data-services.ts';
 import { ContainerEventsBus } from './infrastructure/container-events.bus.ts';
 import { FileClaudeProfiles } from './infrastructure/docker/claude-profiles.ts';
 import { DockerSandboxProbe } from './infrastructure/docker/docker-containers.ts';
@@ -95,10 +96,11 @@ const SCRIPTED_MEASURE_MS = 1000;
         // Dans les scénarios, pas de Docker : chaque bac à sable démarré d'une session donne la même mesure
         config.testing
           ? new ScriptedSandboxProbe(() =>
-              pilot
-                .sandboxedSessions()
-                .filter((sessionId) => pilot.pilotOf(sessionId)?.sandbox?.state === 'running')
-                .map((sessionId) => sandboxKeyOf(sessionId)),
+              pilot.sandboxedSessions().flatMap((sessionId) => {
+                const sandbox = pilot.pilotOf(sessionId)?.sandbox;
+                if (sandbox?.state !== 'running') return [];
+                return [{ key: sandboxKeyOf(sessionId), services: sandbox.services.services }];
+              }),
             )
           : new DockerSandboxProbe(),
     },
@@ -107,15 +109,23 @@ const SCRIPTED_MEASURE_MS = 1000;
       inject: [CONTAINER_EVENTS, PILOT_SERVICE, SESSION_SERVICE, SANDBOX_PROBE],
       useFactory: (events: ContainerEventsBus, pilot: PilotService, sessions: SessionService, probe: SandboxProbe) => {
         const processes = new ProcessTreeProbe();
-        const titles = async () => {
+        // Titre et projet de chaque session
+        const described = async () => {
           const views = await sessions.listSessions();
-          return new Map(views.map((view) => [view.id, view.title ?? `Session ${view.id.slice(0, 8)}`]));
+          return new Map(
+            views.map((view) => [
+              view.id,
+              { project: view.project?.name ?? null, title: view.title ?? `Session ${view.id.slice(0, 8)}` },
+            ]),
+          );
         };
+        const titles = async () => new Map([...(await described())].map(([id, { title }]) => [id, title]));
         return new ContainersService({
           clock,
           events,
           hostCpus: availableParallelism(),
           limits: { cpus: AGENT_LIMITS.cpus, memory: AGENT_LIMITS.memory },
+          serviceLimits: { cpus: SERVICE_LIMITS.cpus, memory: SERVICE_LIMITS.memory },
           // Un tour piloté sur le poste se mesure sur l'arbre des processus de son agent ; celui d'un bac à sable se
           // mesure avec son conteneur
           pilots: {
@@ -138,11 +148,12 @@ const SCRIPTED_MEASURE_MS = 1000;
           },
           probe,
           sandboxedSessions: async () => {
-            const named = await titles();
+            const named = await described();
             return pilot.sandboxedSessions().map((sessionId) => ({
               key: sandboxKeyOf(sessionId),
+              project: named.get(sessionId)?.project ?? null,
               sessionId,
-              title: named.get(sessionId) ?? `Session ${sessionId.slice(0, 8)}`,
+              title: named.get(sessionId)?.title ?? `Session ${sessionId.slice(0, 8)}`,
             }));
           },
         });

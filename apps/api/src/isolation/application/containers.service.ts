@@ -26,11 +26,29 @@ export interface Usage {
   memoryLimit: null | number;
 }
 
+/** Un service de données du projet, démarré avec son bac à sable */
+export interface ServiceView extends Usage {
+  image: string;
+  name: string;
+  since: Date | null;
+  state: 'failed' | 'ready' | 'starting';
+}
+
+export interface SandboxView extends Usage {
+  name: string;
+  /** Projet principal de la session */
+  project: null | string;
+  services: ServiceView[];
+  sessionId: null | string;
+  since: Date | null;
+  title: string;
+}
+
 export interface ContainersView {
   hostCpus: number;
   measuredAt: Date | null;
   piloted: (Usage & { sessionId: string; since: Date; title: string })[];
-  sandboxes: (Usage & { name: string; sessionId: null | string; title: string })[];
+  sandboxes: SandboxView[];
   totals: { cpu: number; memory: number; piloted: number; sandboxes: number };
   unreachableSince: Date | null;
 }
@@ -41,10 +59,12 @@ export interface ContainersDeps {
   hostCpus: number;
   /** Plafonds de chaque bac à sable */
   limits: { cpus: number; memory: number };
+  /** Plafonds de chaque service de données */
+  serviceLimits: { cpus: number; memory: number };
   pilots: PilotedTurnsProbe;
   probe: SandboxProbe;
-  /** Sessions en bac à sable, avec la clé de leurs conteneurs et leur titre */
-  sandboxedSessions: () => Promise<{ key: string; sessionId: string; title: string }[]>;
+  /** Sessions en bac à sable, avec la clé de leurs conteneurs, leur titre et leur projet */
+  sandboxedSessions: () => Promise<{ key: string; project: null | string; sessionId: string; title: string }[]>;
 }
 
 /**
@@ -96,19 +116,37 @@ export class ContainersService {
       return { ...this.view, piloted: pilotedView, unreachableSince: this.view.unreachableSince ?? now };
     }
     const sessions = await this.deps.sandboxedSessions().catch(() => []);
-    const sandboxes = samples.map((sample) => {
-      const session = sessions.find(({ key }) => key === sample.key);
-      return {
-        cpu: sample.cpu,
-        cpuLimit: this.deps.limits.cpus,
-        memory: sample.memory,
-        memoryLimit: this.deps.limits.memory,
-        name: sample.name,
-        sessionId: session?.sessionId ?? null,
-        title: session?.title ?? sample.name,
-      };
-    });
-    const usages: Usage[] = [...sandboxes, ...pilotedView];
+    const services = samples.filter(({ service }) => service !== null);
+    const sandboxes = samples
+      .filter(({ service }) => service === null)
+      .map((sample): SandboxView => {
+        const session = sessions.find(({ key }) => key === sample.key);
+        return {
+          cpu: sample.cpu,
+          cpuLimit: this.deps.limits.cpus,
+          memory: sample.memory,
+          memoryLimit: this.deps.limits.memory,
+          name: sample.name,
+          project: session?.project ?? null,
+          services: services
+            .filter(({ key }) => key === sample.key)
+            .map(({ cpu, memory, service, since }) => ({
+              cpu,
+              cpuLimit: this.deps.serviceLimits.cpus,
+              image: service?.image ?? '',
+              memory,
+              memoryLimit: this.deps.serviceLimits.memory,
+              name: service?.name ?? '',
+              since,
+              state: service?.state ?? 'ready',
+            })),
+          sessionId: session?.sessionId ?? null,
+          since: sample.since,
+          title: session?.title ?? sample.name,
+        };
+      });
+    // Les services de données pèsent sur le poste comme leur bac à sable
+    const usages: Usage[] = [...sandboxes, ...sandboxes.flatMap((sandbox) => sandbox.services), ...pilotedView];
     return {
       hostCpus: this.deps.hostCpus,
       measuredAt: now,

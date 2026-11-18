@@ -2,7 +2,7 @@
 import type { APIRequestContext } from '@playwright/test';
 import type { DataTable } from 'playwright-bdd';
 import { expect } from '@playwright/test';
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { copyFileSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { FEATURES } from '../paths.ts';
 import { Given, Then, When } from './fixtures.ts';
@@ -14,7 +14,12 @@ interface SessionView {
   pilot: null | {
     pending: null | { text: string };
     running: boolean;
-    sandbox?: null | { branch: string; from: string; state: string };
+    sandbox?: null | {
+      branch: string;
+      from: string;
+      services: { services: { image: string; name: string; state: string }[] };
+      state: string;
+    };
     settings: { effort: null | string; model: null | string; permissionMode: string };
   };
   project: null | { name: string };
@@ -323,6 +328,20 @@ Then(
         view.pilot.sandbox.from === from &&
         view.pilot.sandbox.state === state,
     );
+  },
+);
+
+Given('the project {string} has the Compose file {string}', ({ bosco }, project: string, file: string) => {
+  copyFileSync(join(FEATURES, file), join(bosco.profilesRoot, project, 'docker-compose.yml'));
+});
+
+Then(
+  '{string} should run the data service {string} on {string} in its sandbox',
+  async ({ request }, session: string, name: string, image: string) => {
+    await eventually(request, idOf(session), (view) => {
+      const services = view.pilot?.sandbox?.services.services ?? [];
+      return services.length === 1 && services[0]?.name === name && services[0].image === image;
+    });
   },
 );
 

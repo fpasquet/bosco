@@ -130,3 +130,43 @@ export function unretrieved(sandbox: SandboxInfo): boolean {
   const dates = [sandbox.retrievedAt, ...sandbox.copies.map(({ retrievedAt }) => retrievedAt)];
   return dates.some((date) => !date || date < sandbox.lastMessageAt);
 }
+
+/** Un service de données du projet dans le bac à sable : prêt, en démarrage, ou en échec avec sa raison */
+export interface SandboxService {
+  error: null | string;
+  image: string;
+  name: string;
+  state: 'failed' | 'ready' | 'starting';
+}
+
+/** Les services de données d'un bac à sable ; error : son fichier Compose ne se lit pas */
+export interface SandboxServices {
+  error: null | string;
+  services: SandboxService[];
+}
+
+export const NO_SANDBOX_SERVICES: SandboxServices = { error: null, services: [] };
+
+const SERVICE_STATES = { failed: "n'a pas démarré", ready: 'prêt', starting: 'en démarrage' } as const;
+
+/**
+ * Ce que l'agent d'un bac à sable apprend en plus du contexte du projet : il n'a pas Docker, Internet passe par le
+ * proxy, et les services de données du projet tournent à côté, joints par leur nom.
+ */
+export function servicesNote({ error, services }: SandboxServices): string {
+  const lines = [
+    '# Bac à sable de Bosco',
+    "Tu travailles dans un conteneur isolé : Docker n'y est pas disponible, et Internet ne passe que par le proxy, pour les domaines autorisés.",
+  ];
+  if (services.length > 0) {
+    lines.push(
+      'Les services de données du fichier Compose du projet tournent à côté, sur le même réseau privé : joins-les par leur nom de service et leur port habituel (par exemple db:5432), pas par localhost ni par les ports publiés du fichier Compose.',
+    );
+    for (const service of services) {
+      const reason = service.error ? ` · ${service.error}` : '';
+      lines.push(`- ${service.name} (${service.image}) : ${SERVICE_STATES[service.state]}${reason}`);
+    }
+  }
+  if (error) lines.push(`Les services de données du projet n'ont pas démarré : ${error}`);
+  return lines.join('\n');
+}

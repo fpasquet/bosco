@@ -19,6 +19,12 @@ Feature: Sessions in a sandbox
     When I write to "the started session" with the JSON "fixtures/pilot/schema.json"
     Then "the started session" should end its turn with "Reçu : Vérifie aussi le schéma de config · mode acceptEdits · modèle défaut · effort défaut · images 0"
 
+  @CA-SESS-192
+  Scenario: The data services of the Compose file start with the sandbox, not the services built from the repository
+    Given the project "maison" has the Compose file "fixtures/compose/docker-compose.yml"
+    When I start a session in the project "maison" with the JSON "fixtures/pilot/start-sandbox.json"
+    Then "the started session" should run the data service "db" on "postgres:16.13-alpine" in its sandbox
+
   @CA-SESS-185
   Scenario: The branch of a session is under the prefix of the sandboxes
     When I start a session in the project "maison" with the JSON "fixtures/pilot/start-sandbox-bad-branch.json"
@@ -68,7 +74,8 @@ Feature: Sessions in a sandbox
     Then the response should not contain "sandboxes/profile"
 
   @RF-CONT-01
+  @CA-SESS-193
   Scenario: A session in a sandbox, without the MCP server of Bosco, receives the context of its project at launch
     Given I send POST request to "/api/decisions" with the JSON "fixtures/context/project-decision.json"
     When I start a session in the project "maison" with the JSON "fixtures/pilot/start-context-sandbox.json"
-    Then "the started session" should end its turn with "Contexte reçu : # Contexte du projet maison · - DEC-1 Ranger chaque dépense dans une catégorie"
+    Then "the started session" should end its turn with "Contexte reçu : # Contexte du projet maison · - DEC-1 Ranger chaque dépense dans une catégorie · # Bac à sable de Bosco"

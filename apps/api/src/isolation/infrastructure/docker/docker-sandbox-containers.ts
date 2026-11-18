@@ -4,6 +4,7 @@
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { AGENT_IMAGE, DOCKER, type DockerIsolation, LIMITS, PROXY, UNPRIVILEGED } from './docker-isolation.ts';
+import { DockerSandboxServices, NO_SERVICES, type SandboxServices } from './docker-sandbox-services.ts';
 
 const run = promisify(execFile);
 
@@ -19,10 +20,13 @@ export function agentRunArgs(
     mounts: readonly { from: string; to: string }[];
     name: string;
     network: string;
+    /** Services de données du bac à sable : joints directement, jamais par le proxy */
+    services?: readonly string[];
     workdir: string;
   },
   options: { claudeBinary: string; user: string },
 ): string[] {
+  const direct = ['localhost', '127.0.0.1', ...(spec.services ?? [])].join(',');
   const proxyEnv = ['HTTPS_PROXY', 'HTTP_PROXY', 'https_proxy', 'http_proxy'].flatMap((key) => [
     '--env',
     `${key}=${PROXY}`,
@@ -44,9 +48,9 @@ export function agentRunArgs(
     ...UNPRIVILEGED,
     ...proxyEnv,
     '--env',
-    'NO_PROXY=localhost,127.0.0.1',
+    `NO_PROXY=${direct}`,
     '--env',
-    'no_proxy=localhost,127.0.0.1',
+    `no_proxy=${direct}`,
     // fetch de Node ignore HTTP(S)_PROXY sans ce réglage : sans lui, il ne résout aucun nom (EAI_AGAIN)
     '--env',
     'NODE_USE_ENV_PROXY=1',
@@ -83,7 +87,10 @@ export function agentRunArgs(
 }
 
 export class DockerSandboxContainers {
-  constructor(private readonly isolation: DockerIsolation) {}
+  constructor(
+    private readonly isolation: DockerIsolation,
+    private readonly services = new DockerSandboxServices(),
+  ) {}
 
   private names(key: string) {
     return { agent: `bosco-s-${key}-agent`, network: `bosco-s-${key}`, proxy: `bosco-s-${key}-egress` };
@@ -101,29 +108,49 @@ export class DockerSandboxContainers {
     return stdout.trim() === 'true' ? 'running' : 'stopped';
   }
 
-  /** Démarre le conteneur et son proxy ; les recrée s'ils ont disparu (prune, poste redémarré). */
+  /**
+   * Démarre le conteneur, son proxy et les services de données du projet ; les recrée s'ils ont disparu (prune, poste
+   * redémarré). Les services se lisent dans la copie du projet principal, avant l'agent, qui les joint sans proxy.
+   */
   async ensure(spec: {
     dir: string;
     key: string;
     mounts: { from: string; to: string }[];
     projects: readonly string[];
+    servicesFrom: string;
     workdir: string;
-  }) {
+  }): Promise<SandboxServices> {
     const names = this.names(spec.key);
     const state = await this.state(spec.key);
     if (state !== 'missing') {
       await run(DOCKER, ['start', names.proxy]).catch(() => undefined);
+      const services = await this.services.restart(spec);
       if (state === 'stopped') await run(DOCKER, ['start', names.agent]);
-      return;
+      return services;
     }
-    await this.remove(spec.key);
+    await this.remove(spec.key, spec.dir);
     const isolation = await this.isolation.isolation({
       name: names.network,
       label: `bosco.session=${spec.key}`,
       dir: spec.dir,
       projects: spec.projects,
     });
-    await run(DOCKER, agentRunArgs({ ...spec, name: names.agent, network: isolation.network }, this.isolation.options));
+    const services = await this.services
+      .start({ dir: spec.dir, key: spec.key, network: isolation.network, projectDir: spec.servicesFrom })
+      .catch((error: unknown) => ({ ...NO_SERVICES, error: error instanceof Error ? error.message : String(error) }));
+    await run(
+      DOCKER,
+      agentRunArgs(
+        {
+          ...spec,
+          name: names.agent,
+          network: isolation.network,
+          services: services.services.map(({ name }) => name),
+        },
+        this.isolation.options,
+      ),
+    );
+    return services;
   }
 
   exec(key: string, env: readonly string[] = []): { args: string[]; file: string } {
@@ -137,14 +164,17 @@ export class DockerSandboxContainers {
     };
   }
 
-  async stop(key: string): Promise<void> {
+  async stop(key: string, dir: string): Promise<void> {
     const names = this.names(key);
     await run(DOCKER, ['stop', '--time', '5', names.agent, names.proxy]).catch(() => undefined);
+    await this.services.stop({ dir, key });
   }
 
-  async remove(key: string): Promise<void> {
+  /** Conteneurs, services et leurs volumes, puis le réseau privé, qu'ils ne retiennent plus. */
+  async remove(key: string, dir: string): Promise<void> {
     const names = this.names(key);
     await run(DOCKER, ['rm', '--force', names.agent, names.proxy]).catch(() => undefined);
+    await this.services.remove({ dir, key });
     await run(DOCKER, ['network', 'rm', names.network]).catch(() => undefined);
   }
 }

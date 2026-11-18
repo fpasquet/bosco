@@ -1,5 +1,5 @@
 'use client';
-import { Download, Moon, Square, Trash2 } from 'lucide-react';
+import { Database, Download, Moon, Square, Trash2, TriangleAlert } from 'lucide-react';
 import { useState } from 'react';
 import type { PilotSandboxDto, UsageDto } from '@bosco/domain';
 import { coresOf, memoryUsageOf } from '@/shared/lib/usage';
@@ -18,6 +18,46 @@ export interface SandboxCardProps {
   usage?: null | UsageDto;
 }
 
+const SERVICE_STATES = {
+  ready: { badge: 'badge-success', label: 'Prêt' },
+  starting: { badge: 'badge-info', label: 'Démarre' },
+  failed: { badge: 'badge-error', label: 'En échec' },
+} as const;
+
+/**
+ * Services de données du projet (base, cache…), démarrés à côté de l'agent sur le réseau du bac à sable : il les joint
+ * par leur nom. Un service en échec dit pourquoi.
+ */
+function DataServices({ services }: { services: PilotSandboxDto['services'] }) {
+  if (services.services.length === 0 && !services.error) return null;
+  return (
+    <div className="mb-3">
+      <h3 className="mb-1 text-xs text-muted">Services de données</h3>
+      {services.error && (
+        <p className="flex items-start gap-1.5 text-xs text-warning">
+          <TriangleAlert aria-hidden className="mt-0.5 size-3.5 shrink-0" />
+          {services.error}
+        </p>
+      )}
+      <ul className="flex flex-col gap-1">
+        {services.services.map((service) => (
+          <li key={service.name} className="text-xs">
+            <p className="flex items-center gap-1.5">
+              <Database aria-hidden className="size-3.5 shrink-0 text-muted" />
+              <span className="font-mono">{service.name}</span>
+              <span className="min-w-0 truncate text-muted">{service.image}</span>
+              <span className={`ml-auto badge badge-soft badge-sm ${SERVICE_STATES[service.state].badge}`}>
+                {SERVICE_STATES[service.state].label}
+              </span>
+            </p>
+            {service.error && <p className="mt-0.5 pl-5 text-warning">{service.error}</p>}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 const STATES = {
   running: { badge: 'badge-success', label: 'Démarré' },
   stopped: { badge: 'badge-ghost', label: 'En veille' },
@@ -25,7 +65,7 @@ const STATES = {
 } as const;
 
 /**
- * Bac à sable d'une session : l'état de son conteneur, ce qu'il consomme et son arrêt prévu, la branche de la session et
+ * Bac à sable d'une session : l'état de son conteneur, ce qu'il consomme, ses services de données et son arrêt prévu, la branche de la session et
  * sa récupération dans le dépôt du poste, puis l'arrêt et la suppression, confirmée.
  */
 export function SandboxCard({ busy, onRemove, onRetrieve, onStop, sandbox, usage = null }: SandboxCardProps) {
@@ -51,6 +91,7 @@ export function SandboxCard({ busy, onRemove, onRetrieve, onStop, sandbox, usage
           </div>
         </dl>
       )}
+      {sandbox.state === 'running' && !sandbox.removed && <DataServices services={sandbox.services} />}
       <p className="font-mono text-xs">{sandbox.branch}</p>
       <p className="mt-1 text-xs text-muted">
         depuis {sandbox.from} ·{' '}
