@@ -10,7 +10,7 @@
 
 ## <a id="e4"></a>E4 · Sources et téléphone
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `reglages/e4.html` · implémentation : **Livré (Développé (feat/navigation-by-place, feat/session-defaults) : onglets Sources et Téléphone, « Gérer » d'un profil (E4g) avec ses valeurs par défaut.)**
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `reglages/e4.html` · implémentation : **Écart (Développé (jusqu'à feat/close-remaining-gaps) : onglets Sources et Téléphone, « Gérer » d'un profil (E4g), source « Bacs à sable » à part, lecture seule sur le téléphone (garde de l'API comprise), « Ajouter un dossier », « À mettre à jour » quand le suivi en direct vient d'une autre version de Bosco (CA-SESS-186), serveur MCP installé et retiré avec le suivi en direct. Écarts : « Ajouter un dossier » est un champ de chemin, sans navigateur de dossiers ; un format de session illisible ne fait pas encore passer la source « À mettre à jour » (CA-SESS-57).)**
 
 ### <a id="e4a"></a>E4a · Sources : profils surveillés et réglages
 
@@ -108,7 +108,7 @@ Règles de l'écran :
 
 ## <a id="e11"></a>E11 · Bac à sable et abonnement
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `reglages/e11.html` · implémentation : **Écart (Développé (feat/navigation-by-place, feat/multi-project-sessions) : barre à cinq onglets, domaines propres à chaque projet, réunis pour la sortie réseau d'un bac à sable. Écart : la carte de l'abonnement (E11c) ne renvoie pas encore aux réglages du profil (E4g).)**
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `reglages/e11.html` · implémentation : **Livré (Développé (feat/navigation-by-place, feat/multi-project-sessions, feat/session-defaults) : barre à cinq onglets, domaines propres à chaque projet, lien de l'abonnement par défaut vers les réglages du profil (E4g).)**
 
 ### <a id="e11a"></a>E11a · Isolation du bac à sable
 
@@ -193,6 +193,7 @@ Règles de l'écran :
 - **CA-REGL-07** · [E4c](#e4c) · Étant donné l'onglet « Téléphone » des Réglages, quand la personne l'ouvre, alors il montre l'interrupteur « Accès depuis le téléphone », l'adresse et la liste des téléphones appairés (aucun au départ), « Appairer un téléphone » ouvrant la fenêtre au-dessus de l'onglet, avec le fil d'Ariane « Réglages › Téléphone » (RF-SESS-07, RF-SESS-15).
 - **CA-SESS-56** · [E4a](#e4a) · Étant donné une source, quand la personne désactive son interrupteur, alors la lecture de ce dossier s'arrête, rien n'est effacé et les sessions déjà lues restent dans l'historique (RF-SESS-01).
 - **CA-SESS-57** · [E4a](#e4a) · Étant donné une version de Claude Code qui change le format des sessions, quand Bosco ne sait plus le lire, alors la source passe « À mettre à jour » et ses nouvelles sessions ne sont plus lues.
+- **CA-SESS-186** · [E4a](#e4a) · Étant donné un profil dont le suivi en direct a été installé par une autre version de Bosco (adresse, secret ou événements différents), quand la personne ouvre l'onglet Sources, alors le profil est « À mettre à jour » et « Mettre à jour » réinstalle le suivi en direct.
 - **CA-SESS-58** · [E4a](#e4a) · Étant donné un profil sans suivi en direct, quand la personne regarde sa ligne, alors « Installer » ouvre [E4b](#e4b) ; sinon « Vérifier le suivi en direct » y mène (RF-SESS-02, RF-SESS-03).
 - **CA-SESS-59** · [E4a](#e4a) · Étant donné le seuil d'inactivité, quand la personne le règle, alors il vaut 15 minutes par défaut et se règle de 5 à 60 minutes (RF-SESS-02).
 - **CA-SESS-60** · [E4c](#e4c) · Étant donné l'accès depuis le téléphone, quand la personne ouvre l'onglet « Téléphone » des Réglages pour la première fois, alors il est désactivé et l'activer ouvre la fenêtre d'appairage ; un téléphone appairé se retire d'un clic (RF-SESS-07).
