@@ -26,7 +26,7 @@ import { parseBody } from '../../../shared/interface/http/parse-body.ts';
 import { UnknownSource } from '../../application/live-tracking.service.ts';
 import { UnknownProfile } from '../../application/session-defaults.service.ts';
 import { SourceBusy } from '../../application/source-removal.service.ts';
-import { NotAProfile, SourceAlreadyKnown } from '../../application/source.service.ts';
+import { InvalidTokenFile, NotAProfile, SourceAlreadyKnown } from '../../application/source.service.ts';
 import { ManagedSource, type SourceSnapshot } from '../../domain/source.ts';
 import { SESSION_DEFAULTS_SERVICE, SOURCE_REMOVAL_SERVICE, SOURCE_SERVICE } from '../../tokens.ts';
 
@@ -37,6 +37,7 @@ const watchProfilesSchema = z.object({
 });
 const sourceSchema = z.object({ watched: z.boolean() }).strict();
 const folderSchema = z.object({ path: z.string().trim().min(1) }).strict();
+const tokenSchema = z.object({ path: z.string().trim().min(1).nullable() }).strict();
 
 /** Chemin écrit comme dans le terminal (~/.claude-pro) : le dossier personnel remplace ~. */
 function absolute(path: string): string {
@@ -103,6 +104,26 @@ export class SourcesController {
   async changeProfileDefaults(@Param('id') id: string, @Body() body: unknown): Promise<ProfileSettingsDto> {
     const changes = parseBody(sessionDefaultsSchema.partial(), body) as SessionDefaultsChanges;
     const view = await known(() => this.defaults.changeProfileDefaults(id, changes));
+    return presentProfile(view);
+  }
+
+  /**
+   * « Utiliser un jeton longue durée » : le fichier qui contient le jeton de `claude setup-token`, dont Bosco ne garde
+   * que le chemin ; null le retire. Rend les réglages du profil, accès compris.
+   */
+  @Put(':id/token')
+  async declareToken(@Param('id') id: string, @Body() body: unknown): Promise<ProfileSettingsDto> {
+    const { path } = parseBody(tokenSchema, body);
+    const source = await this.sourceService
+      .declareToken(id, path === null ? null : absolute(path))
+      .catch((error: unknown) => {
+        if (error instanceof InvalidTokenFile)
+          throw new BadRequestException({ code: error.code, message: error.message });
+        if (error instanceof ManagedSource) throw new ConflictException({ code: error.code, message: error.message });
+        throw error;
+      });
+    if (!source) throw new NotFoundException({ code: 'unknownSource' });
+    const view = await known(() => this.defaults.getProfileSettings(id));
     return presentProfile(view);
   }
 

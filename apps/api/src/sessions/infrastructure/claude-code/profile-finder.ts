@@ -4,6 +4,7 @@ import { readdir, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { ProfileFinder } from '../../application/ports.ts';
 import type { ProfileCandidate } from '../../domain/profile-candidate.ts';
+import { tokenFileProblem } from '../../../shared/infrastructure/claude-access.ts';
 
 const PROFILE_FOLDER = /^\.claude(-[\w.-]+)?$/;
 
@@ -34,6 +35,11 @@ export class FileProfileFinder implements ProfileFinder {
       ),
     );
     return markers.some(Boolean) ? { path, projectCount: 0, lastSessionAt: null } : null;
+  }
+
+  /** Le fichier se lit et n'est pas vide ; le jeton lui-même n'est pas gardé. */
+  tokenFileProblem(path: string): Promise<null | string> {
+    return tokenFileProblem(path);
   }
 
   private async preview(path: string): Promise<null | ProfileCandidate> {

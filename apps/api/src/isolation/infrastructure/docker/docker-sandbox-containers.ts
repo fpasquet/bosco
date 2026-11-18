@@ -113,10 +113,15 @@ export class DockerSandboxContainers {
     await run(DOCKER, agentRunArgs({ ...spec, name: names.agent, network: isolation.network }, this.isolation.options));
   }
 
-  exec(key: string): { args: string[]; file: string } {
+  exec(key: string, env: readonly string[] = []): { args: string[]; file: string } {
     // Les instructions (CLAUDE.md) des projets ajoutés par --add-dir ne se lisent qu'avec ce réglage
     const instructions = ['--env', 'CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1'];
-    return { file: DOCKER, args: ['exec', '--interactive', ...instructions, this.names(key).agent, 'claude'] };
+    // Une variable nommée sans valeur prend celle de l'environnement de docker : le jeton n'est pas dans les arguments
+    const passed = env.flatMap((name) => ['--env', name]);
+    return {
+      file: DOCKER,
+      args: ['exec', '--interactive', ...instructions, ...passed, this.names(key).agent, 'claude'],
+    };
   }
 
   async stop(key: string): Promise<void> {

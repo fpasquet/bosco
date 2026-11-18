@@ -8,6 +8,8 @@ export interface SourceSnapshot {
   /** Tenue par Bosco (le profil des bacs à sable) : toujours lue, sans suivi en direct ni canal à installer */
   managed: boolean;
   path: string;
+  /** Fichier où la personne a rangé le jeton longue durée du profil (`claude setup-token`) ; null : sa connexion */
+  tokenFile: null | string;
   watched: boolean;
 }
 
@@ -46,6 +48,16 @@ export class Source {
     return this.snapshot.managed;
   }
 
+  get tokenFile(): null | string {
+    return this.snapshot.tokenFile;
+  }
+
+  /** Jeton longue durée déclaré par son fichier, ou oublié (null) : Bosco ne garde que le chemin, jamais le jeton. */
+  declareToken(file: null | string): void {
+    if (this.managed) throw new ManagedSource(this.path);
+    this.snapshot = { ...this.snapshot, tokenFile: file };
+  }
+
   /** Le suivi en direct est installé dans le profil : T'attend et les autorisations deviennent possibles. */
   enableLiveTracking(): void {
     if (this.managed) throw new ManagedSource(this.path);
@@ -64,21 +76,44 @@ export class Source {
 
   /** Un profil retenu au premier lancement, ou laissé de côté : il garde sa place pour être activé plus tard. */
   static choose(id: string, path: string, watched: boolean): Source {
-    return new Source({ id, path, label: labelOf(path), watched, liveTracking: false, managed: false });
+    return new Source({
+      id,
+      path,
+      label: labelOf(path),
+      watched,
+      liveTracking: false,
+      managed: false,
+      tokenFile: null,
+    });
   }
 
   /** Le profil des bacs à sable, ajouté par Bosco au premier bac à sable : toujours lu, sous le nom « Bacs à sable ». */
   static manage(id: string, path: string): Source {
-    return new Source({ id, path, label: 'Bacs à sable', watched: true, liveTracking: false, managed: true });
+    return new Source({
+      id,
+      path,
+      label: 'Bacs à sable',
+      watched: true,
+      liveTracking: false,
+      managed: true,
+      tokenFile: null,
+    });
   }
 
   /** Un profil des bacs à sable lu avant que Bosco le tienne à part : il le reprend, sans changer son identifiant. */
   takeOver(): void {
-    this.snapshot = { ...this.snapshot, label: 'Bacs à sable', watched: true, liveTracking: false, managed: true };
+    this.snapshot = {
+      ...this.snapshot,
+      label: 'Bacs à sable',
+      watched: true,
+      liveTracking: false,
+      managed: true,
+      tokenFile: null,
+    };
   }
 
-  static restore(snapshot: SourceSnapshot): Source {
-    return new Source({ ...snapshot });
+  static restore(snapshot: Omit<SourceSnapshot, 'tokenFile'> & { tokenFile?: null | string }): Source {
+    return new Source({ ...snapshot, tokenFile: snapshot.tokenFile ?? null });
   }
 
   toSnapshot(): SourceSnapshot {

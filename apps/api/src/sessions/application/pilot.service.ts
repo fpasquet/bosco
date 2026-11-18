@@ -14,6 +14,7 @@ import type {
 } from './ports.ts';
 import type { SessionDefaultsService } from './session-defaults.service.ts';
 import type { SessionService } from './session.service.ts';
+import { TOKEN_VARIABLE } from '../../shared/domain/profile-access.ts';
 import {
   type AgentQuestion,
   answersOf,
@@ -57,6 +58,11 @@ export interface TurnRequest {
   message: PilotMessage;
   /** Commande d'un tour en bac à sable : l'agent tourne dans le conteneur de la session ; null : sur le poste */
   launch: null | TurnLaunch;
+  /**
+   * Fichier du jeton longue durée de l'abonnement du tour, lu au lancement et passé par CLAUDE_CODE_OAUTH_TOKEN ;
+   * null : la connexion du profil. Le chemin seulement : le jeton ne passe jamais par ici
+   */
+  tokenFile: null | string;
   /** false : une nouvelle session, créée avec cet identifiant */
   resume: boolean;
   sessionId: string;
@@ -84,7 +90,8 @@ export interface Sandboxes {
    * Démarre le conteneur, le crée s'il manque, avec la copie de chaque projet montée à son chemin du poste (le
    * principal d'abord) ; la commande d'un tour, null : sur le poste (scénarios)
    */
-  ensure(sessionId: string, projectRoots: readonly string[]): Promise<null | TurnLaunch>;
+  /** env : variables du tour à transmettre au conteneur (le jeton longue durée de l'abonnement) */
+  ensure(sessionId: string, projectRoots: readonly string[], env?: readonly string[]): Promise<null | TurnLaunch>;
   /** Une copie par projet, le principal d'abord, toutes sur la même branche ; refusée si un projet a déjà la branche */
   prepare(input: {
     branch: string;
@@ -170,11 +177,21 @@ export interface PilotRepository {
   save(record: PilotRecord): Promise<void>;
 }
 
-/** Abonnements Claude : les profils qui ont un accès, et celui par défaut. */
+/** Profil qui a un accès à l'abonnement : sa connexion, ou le fichier de son jeton longue durée. */
+export interface PilotSubscription {
+  access: 'login' | 'token';
+  account: null | string;
+  label: string;
+  path: string;
+  tokenFile: null | string;
+}
+
+/** Abonnements Claude : les profils qui ont un accès, ceux qui n'en ont pas (grisés), et celui par défaut. */
 export interface PilotProfiles {
   subscriptions(): Promise<{
-    choices: { account: null | string; label: string; path: string }[];
+    choices: PilotSubscription[];
     effective: null | string;
+    unavailable?: { label: string; path: string; problem: null | string; tokenFile: null | string }[];
   }>;
 }
 
@@ -355,7 +372,7 @@ export class PilotService {
 
   /** Formulaire d'une nouvelle session : projets connus, abonnements et celui par défaut. */
   async options(): Promise<{
-    profiles: { account: null | string; label: string; path: string }[];
+    profiles: { access: 'login' | 'token'; account: null | string; label: string; path: string }[];
     projects: {
       branch: null | string;
       /** Fichiers modifiés du poste, non commités, qu'un bac à sable ne copie pas ; null sans git */
@@ -369,12 +386,20 @@ export class PilotService {
       startBranch: null | string;
     }[];
     sandboxUnavailable: null | string;
+    /** Profils surveillés sans accès utilisable : grisés, avec la raison et la source pour aller les régler */
+    unavailableProfiles: { label: string; path: string; problem: null | string; sourceId: string }[];
   }> {
     const sources = await this.sources.list();
     const watched = new Set(sources.filter((source) => source.watched).map(({ path }) => path));
     const known = await this.sessions.knownProjects();
-    const { choices } = await this.profiles.subscriptions();
-    const profiles = choices.filter(({ path }) => watched.has(path));
+    const { choices, unavailable = [] } = await this.profiles.subscriptions();
+    const profiles = choices
+      .filter(({ path }) => watched.has(path))
+      .map(({ access, account, label, path }) => ({ access, account, label, path }));
+    const unavailableProfiles = unavailable.flatMap(({ label, path, problem }) => {
+      const source = sources.find((candidate) => candidate.path === path && candidate.watched);
+      return source ? [{ label, path, problem, sourceId: source.id }] : [];
+    });
     const projects = [];
     for (const { domains, git, id, name, place, root, startBranch } of known) {
       const sandboxes = this.sandbox && git ? this.sandbox.sandboxes : null;
@@ -389,7 +414,7 @@ export class PilotService {
     const sandboxUnavailable = this.sandbox
       ? await this.sandbox.sandboxes.unavailable()
       : 'Bac à sable indisponible sur ce poste';
-    return { profiles, projects, sandboxUnavailable };
+    return { profiles, projects, sandboxUnavailable, unavailableProfiles };
   }
 
   /**
@@ -810,6 +835,13 @@ export class PilotService {
     return context;
   }
 
+  /** Fichier du jeton longue durée d'un abonnement, déclaré dans ses réglages ; null : sa connexion. */
+  private async tokenFileOf(profile: string): Promise<null | string> {
+    const { choices, unavailable = [] } = await this.profiles.subscriptions();
+    const chosen = choices.find(({ path }) => path === profile) ?? unavailable.find(({ path }) => path === profile);
+    return chosen?.tokenFile ?? null;
+  }
+
   /** Une session dont Claude Code a effacé le transcript ne se reprend plus : le refus le dit, sans lancer de tour. */
   private async checkResumable(record: PilotRecord): Promise<void> {
     const sources = await this.sources.list();
@@ -838,9 +870,12 @@ export class PilotService {
     const origin = { cwd: record.cwd, sessionId: record.sessionId, sourceId: record.sourceId };
     // Le conteneur du bac à sable démarre (ou se recrée) avant le tour ; ses hooks ne joignent pas Bosco : c'est le
     // flux du tour qui dit sa fin
+    const profile = record.sandbox?.profile ?? source.path;
+    const tokenFile = await this.tokenFileOf(profile);
+    const env = tokenFile ? [TOKEN_VARIABLE] : [];
     const launch =
       record.sandbox && this.sandbox
-        ? await this.sandbox.sandboxes.ensure(record.sessionId, [record.cwd, ...record.projects])
+        ? await this.sandbox.sandboxes.ensure(record.sessionId, [record.cwd, ...record.projects], env)
         : null;
     if (record.sandbox) this.sandboxStates.set(record.sessionId, 'running');
     const liveTracking = source.liveTracking && !record.sandbox;
@@ -854,7 +889,6 @@ export class PilotService {
       startedAt: this.clock.now(),
       stopped: null,
     };
-    const profile = record.sandbox?.profile ?? source.path;
     const sandboxed = record.sandbox !== null;
     const context = await this.launchContext(record);
     const request: TurnRequest = {
@@ -867,6 +901,7 @@ export class PilotService {
       launch,
       message,
       resume,
+      tokenFile,
       sessionId: record.sessionId,
       settings: record.settings,
     };

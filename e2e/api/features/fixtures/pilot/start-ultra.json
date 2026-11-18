@@ -1,0 +1,6 @@
+{
+  "profile": "{{profiles}}/.claude-ultra",
+  "text": "Lis les catégories du budget",
+  "images": [],
+  "settings": { "permissionMode": "acceptEdits", "model": null, "effort": null }
+}

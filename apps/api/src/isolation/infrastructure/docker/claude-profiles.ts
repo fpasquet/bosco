@@ -1,6 +1,8 @@
 import { access, readFile } from 'node:fs/promises';
 import { basename, dirname, join } from 'node:path';
-import type { ClaudeProfiles } from '../../application/isolation.service.ts';
+import type { ProfileAccess } from '../../../shared/domain/profile-access.ts';
+import type { ClaudeProfile, ClaudeProfiles } from '../../application/isolation.service.ts';
+import { profileAccess } from '../../../shared/infrastructure/claude-access.ts';
 
 /** Compte d'un profil : `.claude.json` du profil, ou celui du dossier personnel pour le profil ~/.claude. */
 async function accountOf(profile: string): Promise<null | string> {
@@ -25,18 +27,23 @@ const exists = (path: string) =>
     () => false,
   );
 
-/** Profils Claude Code surveillés du poste : l'accès d'un profil à son abonnement est son `.credentials.json`. */
+/**
+ * Profils Claude Code surveillés du poste : l'accès d'un profil à son abonnement est son `.credentials.json`, ou le
+ * jeton longue durée du fichier qu'il a déclaré.
+ */
 export class FileClaudeProfiles implements ClaudeProfiles {
-  constructor(private readonly profilesOf: () => Promise<{ label: string; path: string }[]>) {}
+  constructor(private readonly profilesOf: () => Promise<ClaudeProfile[]>) {}
 
-  profiles(): Promise<{ label: string; path: string }[]> {
+  profiles(): Promise<ClaudeProfile[]> {
     return this.profilesOf();
   }
 
-  async account(profile: string): Promise<{ account: null | string; credentials: null | string }> {
-    const credentials = join(profile, '.credentials.json');
-    const present = await exists(credentials);
-    return { account: await accountOf(profile), credentials: present ? credentials : null };
+  async access(profile: ClaudeProfile): Promise<{ access: ProfileAccess; account: null | string }> {
+    const [account, access] = await Promise.all([
+      accountOf(profile.path),
+      profileAccess(profile.path, profile.tokenFile),
+    ]);
+    return { access, account };
   }
 
   exists(path: string): Promise<boolean> {

@@ -50,9 +50,7 @@ export class SandboxWiring implements OnApplicationBootstrap, OnApplicationShutd
     // Dans les scénarios, des bacs à sable scriptés : ni Docker ni copie du projet
     const sandboxes = this.config.testing
       ? new ScriptedSandboxes(root)
-      : new GitSandboxes(root, new DockerSandboxContainers(this.docker), (profile) =>
-          this.isolation.credentialsOf(profile),
-        );
+      : new GitSandboxes(root, new DockerSandboxContainers(this.docker), (profile) => this.isolation.accessOf(profile));
     // Le profil des bacs à sable déjà lu comme un profil ordinaire est repris à part, toujours lu
     await this.sources.keepManaged(sandboxes.profile);
     this.pilot.useSandboxes({
@@ -76,7 +74,11 @@ export class SandboxWiring implements OnApplicationBootstrap, OnApplicationShutd
     const profiles = {
       subscriptions: async () => {
         const { subscription } = await this.isolation.snapshot();
-        return { choices: subscription.choices, effective: subscription.profile };
+        return {
+          choices: subscription.choices,
+          effective: subscription.profile,
+          unavailable: subscription.unavailable,
+        };
       },
     };
     this.pilot.useProfiles(profiles);

@@ -7,6 +7,7 @@ import { mkdir } from 'node:fs/promises';
 import { extname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
+import type { SandboxAccess } from '../../../shared/domain/profile-access.ts';
 import { projectAllowFile } from '../egress/allow-list-file.ts';
 
 export const DOCKER = '/usr/bin/docker';
@@ -47,8 +48,8 @@ export interface DockerIsolationOptions {
   allowDir: string;
   /** Exécutable de Claude Code du poste, monté en lecture seule */
   claudeBinary: string;
-  /** Accès à l'abonnement par défaut : sans lui, aucun bac à sable ne démarre */
-  credentials: () => Promise<string>;
+  /** Accès à l'abonnement par défaut (connexion ou fichier du jeton) : sans lui, aucun bac à sable ne démarre */
+  access: () => Promise<SandboxAccess>;
   user: string;
 }
 
@@ -82,8 +83,9 @@ export class DockerIsolation {
       () => false,
     );
     if (!docker) return 'Docker ne répond pas';
-    const credentials = await this.options.credentials();
-    if (!existsSync(credentials)) return 'Accès à l’abonnement Claude introuvable';
+    const access = await this.options.access();
+    if (!existsSync(access.kind === 'login' ? access.credentials : access.tokenFile))
+      return 'Accès à l’abonnement Claude introuvable';
     if (!existsSync(this.options.claudeBinary)) return 'Claude Code introuvable sur le poste';
     return null;
   }

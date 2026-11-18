@@ -66,7 +66,7 @@ const SCRIPTED_MEASURE_MS = 1000;
           const view = await sources.listSources();
           return view.sources
             .filter(({ path }) => path !== worker && !path.startsWith(`${sandboxes}/`))
-            .map(({ label, path }) => ({ label, path }));
+            .map(({ label, path, tokenFile }) => ({ label, path, tokenFile }));
         };
         return new IsolationService(new MikroOrmIsolationStore(orm), new AllowListFile(egressDir(config)), {
           defaults: { credentials: config.worker.credentials },
@@ -82,7 +82,7 @@ const SCRIPTED_MEASURE_MS = 1000;
         return new DockerIsolation({
           allowDir: egressDir(config),
           claudeBinary: config.worker.claudeBinary,
-          credentials: () => isolation.credentialsOf(),
+          access: () => isolation.accessOf(),
           user: `${uid}:${gid}`,
         });
       },

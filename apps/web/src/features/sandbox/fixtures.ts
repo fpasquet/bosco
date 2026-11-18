@@ -13,14 +13,28 @@ export const STORY_ISOLATION: IsolationDto = {
   image: 'bosco-agent:1',
   limits: { cpus: 2, memory: 4 * GB, processes: 512 },
   subscription: {
+    access: 'login',
     account: 'camille@exemple.dev',
     available: true,
     choices: [
-      { account: 'camille@exemple.dev', label: '~/.claude', path: '/home/camille/.claude' },
-      { account: 'camille.perso@exemple.dev', label: '~/.claude-perso', path: '/home/camille/.claude-perso' },
+      {
+        access: 'login',
+        account: 'camille@exemple.dev',
+        label: '~/.claude',
+        path: '/home/camille/.claude',
+        tokenFile: null,
+      },
+      {
+        access: 'login',
+        account: 'camille.perso@exemple.dev',
+        label: '~/.claude-perso',
+        path: '/home/camille/.claude-perso',
+        tokenFile: null,
+      },
     ],
     label: '~/.claude',
     profile: '/home/camille/.claude',
+    unavailable: [],
   },
 };
 

@@ -13,6 +13,8 @@ export interface SourceDto {
   /** Tenue par Bosco (« Bacs à sable ») : toujours lue, sans interrupteur, suivi en direct ni canal */
   managed: boolean;
   path: string;
+  /** Fichier du jeton longue durée déclaré pour ce profil (`claude setup-token`) ; null : sa connexion */
+  tokenFile: null | string;
   /** Bosco ne sait plus lire le format de ses nouvelles sessions : « À mettre à jour », elles ne se lisent plus */
   unreadable: boolean;
   watched: boolean;
@@ -31,7 +33,12 @@ export interface SourcesDto {
  * celle du profil Claude Code), ce que dit son settings.json, et ce qui l'utilise.
  */
 export interface ProfileSettingsDto {
-  /** Compte de l'abonnement Claude ; null sans accès */
+  /**
+   * Accès du profil à son abonnement : sa connexion (/login), un jeton longue durée lu dans le fichier déclaré, ou aucun ;
+   * problem dit pourquoi le fichier d'un jeton déclaré ne sert pas. Jamais le jeton lui-même
+   */
+  access: { kind: 'login' | 'none' | 'token'; problem: null | string; tokenFile: null | string };
+  /** Compte de l'abonnement Claude ; null sans accès ou sans adresse connue */
   account: null | string;
   /** Ce que dit le profil Claude Code (permissions.defaultMode, model, effortLevel), lu sans être modifié */
   claude: Omit<SessionDefaultsDto, 'profile'>;
@@ -186,8 +193,8 @@ export interface StartSessionDto extends Omit<PilotMessageDto, 'settings'> {
 
 /** Ce que propose le formulaire d'une nouvelle session : les projets et les abonnements Claude. */
 export interface PilotOptionsDto {
-  /** Profils Claude Code surveillés qui ont un accès, et celui du projet choisi */
-  profiles: { account: null | string; label: string; path: string }[];
+  /** Profils Claude Code surveillés qui ont un accès (connexion ou jeton longue durée), et celui du projet choisi */
+  profiles: { access: 'login' | 'token'; account: null | string; label: string; path: string }[];
   /**
    * Projets ajoutés : branche courante (départ proposé d'un bac à sable, sauf branche réglée pour le projet), git (sans
    * git, pas de bac à sable) et dernier « Où elle tourne » choisi pour le projet
@@ -207,6 +214,8 @@ export interface PilotOptionsDto {
   }[];
   /** null : le bac à sable est disponible ; sinon la raison (« Docker ne répond pas ») */
   sandboxUnavailable: null | string;
+  /** Profils surveillés sans accès utilisable : grisés dans le choix, avec la raison et leur source pour les régler */
+  unavailableProfiles: { label: string; path: string; problem: null | string; sourceId: string }[];
 }
 
 /** Suggestion de l'éditeur : un fichier du projet après « @ », une commande ou un skill après « / ». */

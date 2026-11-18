@@ -138,6 +138,7 @@ function pilotedTurn(
         resume: false,
         sessionId: randomUUID(),
         settings: { effort: null, model: MODEL, permissionMode },
+        tokenFile: null,
       },
       {
         cancelled: () => undefined,

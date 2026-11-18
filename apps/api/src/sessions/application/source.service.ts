@@ -20,6 +20,13 @@ export class NotAProfile extends DomainError {
   }
 }
 
+/** Fichier refusé comme jeton longue durée : son message s'affiche tel quel. */
+export class InvalidTokenFile extends DomainError {
+  constructor(message: string) {
+    super('invalidTokenFile', message);
+  }
+}
+
 export class SourceAlreadyKnown extends DomainError {
   constructor(path: string) {
     super('sourceAlreadyKnown', `${path} is already a source`);
@@ -115,6 +122,23 @@ export class SourceService {
       await this.transcriptWatcher.unwatch(source.id);
       this.registry?.sessions.unwatch(source.id);
     }
+    return source.toSnapshot();
+  }
+
+  /**
+   * « Utiliser un jeton longue durée » : le fichier où la personne a rangé le jeton de `claude setup-token`, vérifié
+   * lisible et non vide ; Bosco n'en garde que le chemin. null : « Retirer », le profil revient à sa connexion.
+   */
+  async declareToken(sourceId: string, file: null | string): Promise<null | SourceSnapshot> {
+    const sources = await this.sourceRepository.list();
+    const source = sources.find((candidate) => candidate.id === sourceId);
+    if (!source) return null;
+    if (file) {
+      const problem = await this.profileFinder.tokenFileProblem(file);
+      if (problem) throw new InvalidTokenFile(problem);
+    }
+    source.declareToken(file);
+    await this.sourceRepository.save([source]);
     return source.toSnapshot();
   }
 

@@ -1,20 +1,27 @@
 // Isolation des bacs à sable et abonnement Claude : la sortie réseau, l'abonnement par défaut et son quota.
 
-/** Profil Claude Code qui a un accès à l'abonnement, avec son compte. */
+/** Profil Claude Code qui a un accès à l'abonnement : sa connexion ou un jeton longue durée, avec son compte. */
 export interface ClaudeProfileDto {
+  access: 'login' | 'token';
   account: null | string;
   label: string;
   path: string;
+  /** Fichier du jeton longue durée ; null pour une connexion */
+  tokenFile: null | string;
 }
 
 /** Abonnement Claude par défaut : celui que prend une nouvelle session qui n'en choisit pas d'autre. */
 export interface SubscriptionDto {
+  /** Forme de l'accès du profil par défaut ; null sans profil connu */
+  access: 'login' | 'token' | null;
   account: null | string;
   /** Un accès à l'abonnement existe : sans lui, aucun bac à sable ne démarre */
   available: boolean;
   choices: ClaudeProfileDto[];
   label: null | string;
   profile: null | string;
+  /** Profils surveillés sans accès utilisable ; problem dit pourquoi un jeton déclaré ne sert pas */
+  unavailable: { label: string; path: string; problem: null | string; tokenFile: null | string }[];
 }
 
 /** Isolation des bacs à sable : image et limites de l'agent, domaines joints par le proxy de sortie. */

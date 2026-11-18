@@ -1,5 +1,5 @@
 'use client';
-import { Folders, MessagesSquare, Monitor, SquareTerminal } from 'lucide-react';
+import { Folders, KeyRound, MessagesSquare, Monitor, SquareTerminal, TriangleAlert } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
@@ -18,10 +18,16 @@ import { DEFAULT_VALUE, permissionOptions } from '../composer/settings-options';
 
 export interface ProfileSettingsViewProps {
   busy: boolean;
+  /** « Retirer » le jeton longue durée : le profil revient à sa connexion */
+  onRemoveToken: () => void;
   onSave: (defaults: ProfileSettingsDto['defaults']) => void;
+  /** « Utiliser un jeton longue durée » ou « Changer de fichier » : ouvre le choix du fichier du jeton */
+  onUseToken: () => void;
   /** Chemin du profil écrit comme dans le terminal (~/.claude) */
   path: string;
   settings: ProfileSettingsDto;
+  /** Fichier du jeton longue durée écrit comme dans le terminal ; null sans jeton déclaré */
+  tokenPath: null | string;
 }
 
 interface Values {
@@ -58,13 +64,80 @@ function ReadOnly({ label, origin, value }: { label: string; origin: string; val
   );
 }
 
+/** Compte de l'abonnement : son adresse, sinon la forme de son accès. */
+function accountLine(settings: ProfileSettingsDto): string {
+  if (settings.account) return settings.account;
+  return settings.access.kind === 'token' ? 'Jeton longue durée' : 'Aucun accès à un abonnement Claude';
+}
+
+/**
+ * Accès du profil à son abonnement : sa connexion (/login), ou un jeton longue durée (claude setup-token) lu dans le
+ * fichier déclaré ; sans accès, les deux voies. Les boutons sont réservés au poste.
+ */
+function AccessLine({
+  access,
+  busy,
+  onRemoveToken,
+  onUseToken,
+  tokenPath,
+}: {
+  access: ProfileSettingsDto['access'];
+  busy: boolean;
+  onRemoveToken: () => void;
+  onUseToken: () => void;
+  tokenPath: null | string;
+}) {
+  const declared = access.tokenFile !== null;
+  let state = 'Aucun accès';
+  if (access.kind === 'login') state = 'Connexion Claude (/login)';
+  else if (declared) state = `Jeton longue durée (claude setup-token) · ${tokenPath ?? ''}`;
+  return (
+    <div className="mt-3 flex flex-wrap items-start gap-x-4 gap-y-2 border-t border-line pt-3">
+      <KeyRound aria-hidden className="mt-0.5 size-4 shrink-0 text-muted" />
+      <div className="min-w-0 flex-1">
+        <p className="font-medium">Accès à l’abonnement</p>
+        <p className="text-xs break-all text-muted">{state}</p>
+        {access.problem && (
+          <p role="alert" className="mt-1 flex items-start gap-1.5 text-xs text-warning">
+            <TriangleAlert aria-hidden className="mt-0.5 size-3.5 shrink-0" />
+            {access.problem}
+          </p>
+        )}
+        {access.kind === 'none' && !declared && (
+          <p className="mt-1 text-xs text-muted">
+            Connecte-toi avec <code>/login</code> dans ce profil, ou utilise un jeton longue durée.
+          </p>
+        )}
+      </div>
+      <div className="flex shrink-0 items-center gap-3 max-md:hidden">
+        <button type="button" className="link text-sm font-medium link-primary" disabled={busy} onClick={onUseToken}>
+          {declared ? 'Changer de fichier' : 'Utiliser un jeton longue durée'}
+        </button>
+        {declared && (
+          <button type="button" className="link text-sm text-muted" disabled={busy} onClick={onRemoveToken}>
+            Retirer<span className="sr-only"> le jeton longue durée</span>
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 /**
  * Réglages d'un profil : son compte, et les valeurs par défaut des sessions lancées dans Bosco avec lui
  * (autorisations, modèle, effort), chacune avec son origine ; sans réglage, ce que dit le profil Claude Code, lu sans
  * être modifié. « Utilisé par » dit les groupes et les sessions ouvertes, que l'enregistrement ne change pas. Sur le
  * téléphone, tout se lit.
  */
-export function ProfileSettingsView({ busy, onSave, path, settings }: ProfileSettingsViewProps) {
+export function ProfileSettingsView({
+  busy,
+  onRemoveToken,
+  onSave,
+  onUseToken,
+  path,
+  settings,
+  tokenPath,
+}: ProfileSettingsViewProps) {
   const { claude, defaults, source } = settings;
   const { control, handleSubmit, register, reset, setValue, formState } = useForm<Values>({
     defaultValues: valuesOf(defaults),
@@ -107,7 +180,7 @@ export function ProfileSettingsView({ busy, onSave, path, settings }: ProfileSet
         </div>
       </section>
       <SectionCard title="Abonnement">
-        <p className="font-medium">{settings.account ?? 'Aucun accès à un abonnement Claude'}</p>
+        <p className="font-medium">{accountLine(settings)}</p>
         <p className="flex flex-wrap items-center gap-2 text-xs text-muted">
           {settings.isDefault
             ? `Profil par défaut de ${APP_NAME} : proposé à chaque nouvelle session.`
@@ -116,6 +189,13 @@ export function ProfileSettingsView({ busy, onSave, path, settings }: ProfileSet
             Changer<span className="sr-only"> le profil par défaut</span>
           </Link>
         </p>
+        <AccessLine
+          access={settings.access}
+          busy={busy}
+          tokenPath={tokenPath}
+          onRemoveToken={onRemoveToken}
+          onUseToken={onUseToken}
+        />
       </SectionCard>
       <SectionCard title="Valeurs par défaut des sessions">
         <form className="hidden flex-col gap-4 md:flex" onSubmit={(event) => void submit(event)}>
