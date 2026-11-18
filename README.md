@@ -85,6 +85,7 @@ make e2e              # scénarios de l'API, puis parcours du web (ordinateur et
 make storybook        # http://localhost:6006
 make docs             # site de documentation sur http://127.0.0.1:4890
 make docs-build       # export statique du site dans apps/docs/out
+make docs-screenshots # captures du site, prises sur Bosco avec les données du fil rouge
 make format
 make tokens           # recopie les tokens des specs (../specs/bosco/ui)
 make requirements     # régénère docs/requirements depuis le cahier des charges

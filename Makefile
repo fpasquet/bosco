@@ -5,7 +5,7 @@ PROFILE ?= $(HOME)/.claude
 BETA_DIR ?= $(HOME)/.cache/bosco/beta
 
 .DEFAULT_GOAL := help
-.PHONY: help install dev start changelog desktop desktop-install desktop-package desktop-release desktop-package-install desktop-update beta android build check lint typecheck test format format-check e2e e2e-api e2e-web e2e-record e2e-clean storybook docs docs-build claude-compat db-migration service-install mcp-install mcp-install-dev mcp-remove skills tokens tokens-check requirements requirements-check
+.PHONY: help install dev start changelog desktop desktop-install desktop-package desktop-release desktop-package-install desktop-update beta android build check lint typecheck test format format-check e2e e2e-api e2e-web e2e-record e2e-clean storybook docs docs-build docs-screenshots claude-compat db-migration service-install mcp-install mcp-install-dev mcp-remove skills tokens tokens-check requirements requirements-check
 
 help: ## List the commands
 	@grep -E '^[a-z0-9-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN { FS = ":.*## " } { printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2 }'
@@ -112,6 +112,9 @@ docs: ## Start the documentation site on http://127.0.0.1:4890
 
 docs-build: ## Build the documentation site as static pages (apps/docs/out)
 	pnpm docs:build
+
+docs-screenshots: build ## Take the screenshots of the documentation site from Bosco, on the storyline data
+	pnpm --filter @bosco/e2e docs:screenshots
 
 claude-compat: build ## Check the hooks and the piloted turns against the installed Claude Code (six short Haiku sessions)
 	node e2e/compat/claude-code.ts
