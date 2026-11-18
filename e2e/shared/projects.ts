@@ -51,3 +51,23 @@ export async function writeGroupInstructions(bosco: Bosco, name: string, instruc
   if (!group) throw new Error(`No group ${name}`);
   await call(bosco, 'PUT', `/api/groups/${group.id}/instructions`, { instructions });
 }
+
+/** Règle les valeurs par défaut des sessions d'un projet ou d'un groupe, comme dans leurs réglages (E21a, E22a). */
+export async function setDefaults(
+  bosco: Bosco,
+  level: 'group' | 'project',
+  name: string,
+  defaults: Record<string, null | string>,
+): Promise<void> {
+  if (level === 'group') {
+    const { groups } = (await call(bosco, 'GET', '/api/groups')) as { groups: { id: number; name: string }[] };
+    const group = groups.find((candidate) => candidate.name === name);
+    if (!group) throw new Error(`No group ${name}`);
+    await call(bosco, 'PATCH', `/api/groups/${group.id}`, { defaults });
+    return;
+  }
+  const { projects } = (await call(bosco, 'GET', '/api/projects')) as { projects: { id: number; name: string }[] };
+  const project = projects.find((candidate) => candidate.name === name);
+  if (!project) throw new Error(`No project ${name}`);
+  await call(bosco, 'PATCH', `/api/projects/${project.id}`, { defaults });
+}
