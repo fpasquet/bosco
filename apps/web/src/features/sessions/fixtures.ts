@@ -61,9 +61,9 @@ export const STORY_SOURCES: SourceDto[] = [
 export const STORY_SESSIONS: SessionDto[] = [
   session({
     id: 'c41e9a07',
-    title: 'Specs du tableau de bord Bosco',
+    title: 'Ajouter les catégories au budget du foyer',
     sourceId: 'perso',
-    branch: 'feat/specs',
+    branch: 'feat/categories',
     project: maison('packages/budget'),
     model: 'claude-opus-5-5',
     lastAction: 'Bash · npm run db:migrate',
@@ -75,11 +75,11 @@ export const STORY_SESSIONS: SessionDto[] = [
   }),
   session({
     id: '5e0a91c3',
-    title: 'Corriger l’indexation des PDF dans Elasticsearch',
+    title: 'Corriger la recherche des recettes par ingrédient',
     project: maison('packages/recettes'),
     addedProjects: [{ id: 2, name: 'outils-node', root: '/home/dev/www/outils-node' }],
     lastAction: 'Bash · yarn test --forceExit',
-    recentActions: ['Bash · yarn test --forceExit', 'Modifie src/indexer/pdf.ts'],
+    recentActions: ['Bash · yarn test --forceExit', 'Modifie src/import/ingredients.ts'],
     cost: { unpriced: false, usd: 0.62 },
     usage: { cacheCreation: 4000, cacheRead: 60_000, input: 25_000, output: 5000 },
   }),
@@ -140,19 +140,23 @@ export const STORY_GROUPS: GroupDto[] = [
 export const STORY_WAITING: SessionDto[] = [
   session({
     id: '7a3e5f21',
-    title: 'Digest quotidien de la veille média',
-    branch: 'feat/digest',
+    title: 'Récapitulatif quotidien de l’agenda',
+    branch: 'feat/recap',
     project: maison('packages/agenda'),
     state: 'waiting',
     lastEventAt: ago(6 * 60),
-    waiting: { kind: 'turn', message: 'Le digest est généré. Veux-tu que je lance les tests ?', since: ago(6 * 60) },
+    waiting: {
+      kind: 'turn',
+      message: 'Le récapitulatif est généré. Veux-tu que je lance les tests ?',
+      since: ago(6 * 60),
+    },
     cost: { unpriced: false, usd: 0.38 },
   }),
   session({
     id: 'c41e9a07',
-    title: 'Specs du tableau de bord Bosco',
+    title: 'Ajouter les catégories au budget du foyer',
     sourceId: 'perso',
-    branch: 'feat/specs',
+    branch: 'feat/categories',
     project: maison('packages/budget'),
     state: 'waiting',
     lastEventAt: ago(40),
@@ -169,23 +173,28 @@ export const STORY_JOURNAL: JournalEntryDto[] = [
     seq: 1,
     at: at(38),
     kind: 'prompt',
-    text: 'Les PDF avec des tableaux sont coupés au mauvais endroit, regarde le découpage.',
+    text: 'Les recettes importées perdent des quantités, regarde l’import des ingrédients.',
   },
-  { seq: 2, at: at(37), kind: 'reply', text: 'Je relis le découpage des PDF, puis j’écris un test avec un tableau.' },
-  { seq: 3, at: at(36), kind: 'tool', text: 'Read · src/indexer/pdf.ts' },
+  {
+    seq: 2,
+    at: at(37),
+    kind: 'reply',
+    text: 'Je relis l’import des ingrédients, puis j’écris un test avec une quantité sur deux lignes.',
+  },
+  { seq: 3, at: at(36), kind: 'tool', text: 'Read · src/import/ingredients.ts' },
   {
     seq: 4,
     at: at(22),
     kind: 'reply',
-    text: 'Le découpage coupe au milieu des tableaux. Je regroupe les lignes d’un même tableau dans un seul bloc.',
+    text: 'L’import sépare une quantité de son ingrédient quand elle est sur deux lignes. Je les recolle avant la lecture.',
   },
-  { seq: 5, at: at(21), kind: 'tool', text: 'Edit · src/indexer/pdf.ts' },
-  { seq: 6, at: at(12), kind: 'tool', text: 'Edit · src/indexer/pdf.test.ts' },
+  { seq: 5, at: at(21), kind: 'tool', text: 'Edit · src/import/ingredients.ts' },
+  { seq: 6, at: at(12), kind: 'tool', text: 'Edit · src/import/ingredients.test.ts' },
   {
     seq: 7,
     at: at(3),
     kind: 'reply',
-    text: 'Le test du tableau est écrit. Je lance toute la suite pour vérifier que rien d’autre ne bouge.',
+    text: 'Le test de la quantité sur deux lignes est écrit. Je lance toute la suite pour vérifier que rien d’autre ne bouge.',
   },
   { seq: 8, at: at(0.2), kind: 'tool', text: 'Bash · yarn test --forceExit' },
 ];
@@ -196,8 +205,8 @@ export const STORY_RUNNING: SessionDto = {
   turns: 23,
   model: 'claude-sonnet-5-5',
   changedFiles: [
-    { path: 'src/indexer/pdf.ts', added: 24, removed: 6 },
-    { path: 'src/indexer/pdf.test.ts', added: 41, removed: 0 },
+    { path: 'src/import/ingredients.ts', added: 24, removed: 6 },
+    { path: 'src/import/ingredients.test.ts', added: 41, removed: 0 },
   ],
 };
 
@@ -225,10 +234,10 @@ function toolStep(
   };
 }
 
-const PDF_TS = `export function chunkPdf(pages: Page[]): Chunk[] {
-  const chunks: Chunk[] = [];
-  for (const page of pages) chunks.push(...splitBlocks(page.blocks));
-  return chunks;
+const INGREDIENTS_TS = `export function parseIngredients(lines: string[]): Ingredient[] {
+  const ingredients: Ingredient[] = [];
+  for (const line of lines) ingredients.push(...splitLine(line));
+  return ingredients;
 }`;
 
 /** Étapes du fil rouge, une par pattern d'AI Elements : outil, terminal, tests, pile d'appels, diff, plan, sous-agent. */
@@ -236,20 +245,20 @@ export const STORY_STEPS = {
   read: toolStep(
     't1',
     'Read',
-    { file_path: '/home/dev/www/maison/packages/recettes/src/indexer/pdf.ts' },
+    { file_path: '/home/dev/www/maison/packages/recettes/src/import/ingredients.ts' },
     36,
     35.99,
-    PDF_TS,
+    INGREDIENTS_TS,
   ),
-  grep: toolStep('t2', 'Grep', { pattern: 'splitBlocks' }, 35, 34.995, 'src/indexer/pdf.ts\nsrc/indexer/blocks.ts'),
+  grep: toolStep('t2', 'Grep', { pattern: 'splitLine' }, 35, 34.995, 'src/import/ingredients.ts\nsrc/import/lines.ts'),
   edit: toolStep(
     't3',
     'Edit',
     {
-      file_path: '/home/dev/www/maison/packages/recettes/src/indexer/pdf.ts',
-      old_string: '  for (const page of pages) chunks.push(...splitBlocks(page.blocks));',
+      file_path: '/home/dev/www/maison/packages/recettes/src/import/ingredients.ts',
+      old_string: '  for (const line of lines) ingredients.push(...splitLine(line));',
       new_string:
-        '  for (const page of pages) {\n    // Les lignes d’un même tableau restent dans un seul bloc\n    chunks.push(...splitBlocks(groupTables(page.blocks)));\n  }',
+        '  for (const line of joinQuantities(lines)) {\n    // Une quantité sur deux lignes reste avec son ingrédient\n    ingredients.push(...splitLine(line));\n  }',
     },
     21,
     20.99,
@@ -258,7 +267,7 @@ export const STORY_STEPS = {
   terminal: toolStep(
     't4',
     'Bash',
-    { command: 'yarn lint', description: 'Vérifie le lint du paquet rag' },
+    { command: 'yarn lint', description: 'Vérifie le lint du paquet recettes' },
     16,
     15.95,
     'yarn run v1.22.22\n$ eslint src\nDone in 2.84s.',
@@ -269,16 +278,16 @@ export const STORY_STEPS = {
     { command: 'yarn test --forceExit', description: 'Lance toute la suite de tests' },
     12,
     11.6,
-    ' ✓ src/indexer/blocks.test.ts (6 tests) 41ms\n ✓ keeps a table in one chunk 12ms\n × splits a long table across pages 8ms\n ↓ indexes scanned PDF [skipped]\n\n Tests  1 failed | 2 passed | 1 skipped (4)',
+    ' ✓ src/import/lines.test.ts (6 tests) 41ms\n ✓ keeps a quantity with its ingredient 12ms\n × reads a quantity split over two lines 8ms\n ↓ imports a scanned recipe [skipped]\n\n Tests  1 failed | 2 passed | 1 skipped (4)',
     true,
   ),
   stack: toolStep(
     't6',
     'Bash',
-    { command: 'node scripts/reindex.mjs', description: 'Réindexe les PDF de démonstration' },
+    { command: 'node scripts/import-recettes.mjs', description: 'Réimporte les recettes de démonstration' },
     3,
     2.98,
-    "TypeError: Cannot read properties of undefined (reading 'rows')\n    at groupTables (src/indexer/pdf.ts:14:31)\n    at chunkPdf (src/indexer/pdf.ts:4:47)\n    at parse (node_modules/pdfjs-dist/build/pdf.js:1022:12)\n    at process (node_modules/pdfjs-dist/build/pdf.js:988:5)",
+    "TypeError: Cannot read properties of undefined (reading 'unit')\n    at joinQuantities (src/import/ingredients.ts:14:31)\n    at parseIngredients (src/import/ingredients.ts:4:47)\n    at parse (node_modules/marked/lib/marked.cjs:1022:12)\n    at process (node_modules/marked/lib/marked.cjs:988:5)",
     true,
   ),
   plan: toolStep(
@@ -286,9 +295,9 @@ export const STORY_STEPS = {
     'TodoWrite',
     {
       todos: [
-        { content: 'Relire le découpage des PDF', status: 'completed' },
-        { content: 'Regrouper les lignes d’un tableau', status: 'completed' },
-        { content: 'Corriger le tableau sur deux pages', status: 'in_progress' },
+        { content: 'Relire l’import des ingrédients', status: 'completed' },
+        { content: 'Recoller les quantités sur deux lignes', status: 'completed' },
+        { content: 'Corriger la recette sans quantité', status: 'in_progress' },
         { content: 'Relancer toute la suite', status: 'pending' },
       ],
     },
@@ -301,8 +310,8 @@ export const STORY_STEPS = {
       't8',
       'Agent',
       {
-        description: 'Chercher les PDF de test',
-        prompt: 'Trouve les PDF de démonstration qui contiennent un tableau.',
+        description: 'Chercher les recettes de test',
+        prompt: 'Trouve les recettes de démonstration qui ont une quantité sur deux lignes.',
       },
       30,
       29.99,
@@ -310,7 +319,7 @@ export const STORY_STEPS = {
     ),
     subagent: {
       agentType: 'Explore',
-      description: 'Chercher les PDF de test',
+      description: 'Chercher les recettes de test',
       endedAt: at(29.2),
       finished: true,
       model: 'claude-sonnet-5-5',
@@ -318,15 +327,15 @@ export const STORY_STEPS = {
         toolStep(
           's1',
           'Glob',
-          { pattern: 'fixtures/**/*.pdf' },
+          { pattern: 'fixtures/**/*.md' },
           29.9,
           29.89,
-          'fixtures/devis.pdf\nfixtures/facture.pdf',
+          'fixtures/tarte-aux-pommes.md\nfixtures/gratin.md',
         ),
         toolStep(
           's2',
           'Bash',
-          { command: 'pdftotext fixtures/devis.pdf - | grep -c Total', description: 'Compte les tableaux du devis' },
+          { command: 'grep -c "^- " fixtures/tarte-aux-pommes.md', description: 'Compte les ingrédients de la tarte' },
           29.7,
           29.69,
           '2',
@@ -334,38 +343,39 @@ export const STORY_STEPS = {
         {
           at: at(29.2),
           kind: 'text' as const,
-          text: 'Deux fichiers contiennent un tableau : `fixtures/devis.pdf` et `fixtures/facture.pdf`.',
+          text: 'Deux recettes ont une quantité sur deux lignes : `fixtures/tarte-aux-pommes.md` et `fixtures/gratin.md`.',
         },
       ],
       partial: false,
-      prompt: 'Trouve les PDF de démonstration qui contiennent un tableau.',
-      result: 'Deux fichiers contiennent un tableau : `fixtures/devis.pdf` et `fixtures/facture.pdf`.',
+      prompt: 'Trouve les recettes de démonstration qui ont une quantité sur deux lignes.',
+      result:
+        'Deux recettes ont une quantité sur deux lignes : `fixtures/tarte-aux-pommes.md` et `fixtures/gratin.md`.',
       startedAt: at(29.95),
     },
   },
   search: toolStep(
     't11',
     'WebSearch',
-    { query: 'pdf.js extract table rows' },
+    { query: 'parse recipe ingredient quantity' },
     34,
     33.99,
-    'Web search results for query: "pdf.js extract table rows"\n\nLinks: [{"title":"PDF.js","url":"https://mozilla.github.io/pdf.js/"},{"title":"Extracting tables from PDFs","url":"https://github.com/mozilla/pdf.js/discussions/17000"},{"title":"pdfplumber tables","url":"https://pypi.org/project/pdfplumber/"}]',
+    'Web search results for query: "parse recipe ingredient quantity"\n\nLinks: [{"title":"Schema.org Recipe","url":"https://schema.org/Recipe"},{"title":"Ingredient phrase tagger","url":"https://github.com/nytimes/ingredient-phrase-tagger"},{"title":"recipe-ingredient-parser","url":"https://www.npmjs.com/package/recipe-ingredient-parser-v3"}]',
   ),
   fetch: toolStep(
     't12',
     'WebFetch',
-    { url: 'https://mozilla.github.io/pdf.js/', prompt: 'Comment lire un tableau ?' },
+    { url: 'https://schema.org/Recipe', prompt: 'Comment décrire un ingrédient ?' },
     33.5,
     33.49,
-    'PDF.js lit le texte et ses positions.',
+    'recipeIngredient liste chaque ingrédient avec sa quantité.',
   ),
   mcp: toolStep(
     't9',
     'mcp__github__get_issue',
-    { owner: 'maison', repo: 'rag', issue_number: 42 },
+    { owner: 'camille', repo: 'maison', issue_number: 42 },
     33,
     32.99,
-    '{ "title": "Tableaux coupés dans les PDF" }',
+    '{ "title": "Quantités perdues à l’import des recettes" }',
   ),
   running: toolStep('t10', 'Bash', { command: 'yarn test --forceExit' }, 0.2, null, null),
 };
@@ -382,7 +392,7 @@ export const STORY_CONVERSATION: SessionConversationDto = {
         {
           at: at(38),
           kind: 'text',
-          text: 'Les PDF avec des tableaux sont coupés au mauvais endroit, regarde le découpage.',
+          text: 'Les recettes importées perdent des quantités, regarde l’import des ingrédients.',
         },
       ],
     },
@@ -395,9 +405,13 @@ export const STORY_CONVERSATION: SessionConversationDto = {
           at: at(37),
           kind: 'reasoning',
           seconds: 4,
-          text: 'Le découpage travaille **bloc par bloc** : un tableau sur plusieurs blocs est coupé entre eux.',
+          text: 'L’import lit **ligne par ligne** : une quantité sur deux lignes est séparée de son ingrédient.',
         },
-        { at: at(37), kind: 'text', text: 'Je relis le découpage des PDF, puis j’écris un test avec un tableau.' },
+        {
+          at: at(37),
+          kind: 'text',
+          text: 'Je relis l’import des ingrédients, puis j’écris un test avec une quantité sur deux lignes.',
+        },
         STORY_STEPS.read,
         STORY_STEPS.grep,
         STORY_STEPS.search,
@@ -407,7 +421,7 @@ export const STORY_CONVERSATION: SessionConversationDto = {
         {
           at: at(22),
           kind: 'text',
-          text: 'Le découpage coupe au milieu des tableaux. Je regroupe les lignes d’un même tableau :\n\n```ts\nchunks.push(...splitBlocks(groupTables(page.blocks)));\n```\n\n| Fichier | Tableaux |\n| --- | --- |\n| `devis.pdf` | 2 |\n| `facture.pdf` | 1 |',
+          text: 'L’import sépare une quantité de son ingrédient. Je recolle les lignes avant la lecture :\n\n```ts\nfor (const line of joinQuantities(lines)) ingredients.push(...splitLine(line));\n```\n\n| Recette | Quantités coupées |\n| --- | --- |\n| `tarte-aux-pommes.md` | 2 |\n| `gratin.md` | 1 |',
         },
         STORY_STEPS.edit,
         { at: at(17), kind: 'reasoning', seconds: 2, text: '' },
@@ -418,7 +432,7 @@ export const STORY_CONVERSATION: SessionConversationDto = {
         {
           at: at(1),
           kind: 'text',
-          text: 'Le test du tableau sur deux pages échoue encore : `groupTables` ne gère pas une page **sans tableau**. Je corrige, puis je relance toute la suite.',
+          text: 'Le test de la quantité sur deux lignes échoue encore : `joinQuantities` ne gère pas une recette **sans quantité**. Je corrige, puis je relance toute la suite.',
         },
         STORY_STEPS.running,
       ],

@@ -7,7 +7,7 @@ Fonctionnalité: Sources et réglages
 
   Contexte:
     Étant donné le profil Claude Code « .claude-perso » contient le transcript « session-maison-budget.jsonl » de la session « c41e9a07 »
-    Et le profil Claude Code « .claude » contient le transcript « session-maison-rag.jsonl » de la session « 5e0a91c3 »
+    Et le profil Claude Code « .claude » contient le transcript « session-maison-recettes.jsonl » de la session « 5e0a91c3 »
     Et Bosco surveille les profils « .claude » et « .claude-perso »
 
   @CA-SESS-59
@@ -39,7 +39,7 @@ Fonctionnalité: Sources et réglages
   @RF-SESS-01
   @NF-18
   Scénario: « Ajouter un dossier » surveille un autre dossier de configuration de Claude Code
-    Étant donné le profil Claude Code « .claude-pro » contient le transcript « session-site-perso-fastify.jsonl » de la session « a41f07c2 »
+    Étant donné le profil Claude Code « .claude-pro » contient le transcript « session-site-perso-dependances.jsonl » de la session « a41f07c2 »
     Quand j'ouvre la page « /settings/sources »
     Et je clique sur le bouton « Ajouter un dossier »
     Et je clique sur le bouton radio « .claude-pro »

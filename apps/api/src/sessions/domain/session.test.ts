@@ -11,7 +11,7 @@ const reply = (time: string, usage: TokenUsage | null = null): TranscriptEvent =
   kind: 'reply',
   text: 'Je relis les specs.',
   cwd: '/home/dev/maison/packages/budget',
-  branch: 'feat/specs',
+  branch: 'feat/categories',
   model: 'claude-opus-5-5',
   projectRoot: '/home/dev/maison',
   usage,
@@ -82,12 +82,12 @@ describe('Session', () => {
     const edit = {
       ...reply('14:03:00', new TokenUsage(1, 1, 0, 0)),
       kind: 'tool' as const,
-      text: 'Edit · src/indexer/pdf.ts',
+      text: 'Edit · src/import/ingredients.ts',
     };
-    session.record({ ...edit, change: { path: 'src/indexer/pdf.ts', added: 24, removed: 6 } });
-    session.record({ ...edit, usage: null, change: { path: 'src/indexer/pdf.ts', added: 1, removed: 0 } });
+    session.record({ ...edit, change: { path: 'src/import/ingredients.ts', added: 24, removed: 6 } });
+    session.record({ ...edit, usage: null, change: { path: 'src/import/ingredients.ts', added: 1, removed: 0 } });
     const { changedFiles, turns } = session.toSnapshot();
-    expect([turns, changedFiles]).toEqual([1, [{ path: 'src/indexer/pdf.ts', added: 25, removed: 6 }]]);
+    expect([turns, changedFiles]).toEqual([1, [{ path: 'src/import/ingredients.ts', added: 25, removed: 6 }]]);
   });
 
   it('adds up the token usage, cache included', () => {
@@ -100,12 +100,12 @@ describe('Session', () => {
   it('numbers the journal without gaps across readings and keeps titles out of it', () => {
     const session = Session.discover('c41e9a07', 'pro', at('14:02:00'));
     session.record(reply('14:02:00'));
-    session.record({ ...reply('14:02:30'), kind: 'title', text: 'Specs du tableau de bord Bosco' });
+    session.record({ ...reply('14:02:30'), kind: 'title', text: 'Ajouter les catégories au budget du foyer' });
     expect(session.pullJournal().map((entry) => entry.seq)).toEqual([1]);
     const restored = Session.restore(session.toSnapshot());
     restored.record(reply('14:05:00'));
     expect(restored.pullJournal().map((entry) => entry.seq)).toEqual([2]);
-    expect(restored.toSnapshot().title).toBe('Specs du tableau de bord Bosco');
+    expect(restored.toSnapshot().title).toBe('Ajouter les catégories au budget du foyer');
   });
 });
 

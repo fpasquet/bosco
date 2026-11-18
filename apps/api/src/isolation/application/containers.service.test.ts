@@ -12,7 +12,15 @@ function setup(options: { failing?: boolean } = {}) {
     limits: { cpus: 2, memory: 4 * 1024 ** 3 },
     pilots: {
       list: () =>
-        Promise.resolve([{ cpu: 0.3, memory: 410 * 1024 ** 2, sessionId: 'c7e04a19', since: now, title: 'Lexique' }]),
+        Promise.resolve([
+          {
+            cpu: 0.3,
+            memory: 410 * 1024 ** 2,
+            sessionId: 'c7e04a19',
+            since: now,
+            title: 'Tarifs : test en échec sur develop',
+          },
+        ]),
     },
     probe: {
       list: () =>

@@ -14,7 +14,7 @@ const base: NotificationDto = {
   sessionId: 'c41e9a07',
   settled: null,
   taskId: null,
-  title: 'Specs du tableau de bord Bosco',
+  title: 'Ajouter les catégories au budget du foyer',
   turnMinutes: null,
 };
 
@@ -22,13 +22,16 @@ describe('nativeText', () => {
   it('titles with the kind and the project, the session on the first line', () => {
     expect(nativeText(base)).toEqual({
       title: 'Autorisation · maison',
-      body: 'Specs du tableau de bord Bosco\nBash · npm run db:migrate',
+      body: 'Ajouter les catégories au budget du foyer\nBash · npm run db:migrate',
     });
   });
 
   it('tells the length of a turn, and opens the task of a worker notification', () => {
     const turn = { ...base, kind: 'long-turn' as const, place: null, turnMinutes: 12, excerpt: null };
-    expect(nativeText(turn)).toEqual({ title: 'Fin de tour · 12 min · Specs du tableau de bord Bosco', body: '' });
+    expect(nativeText(turn)).toEqual({
+      title: 'Fin de tour · 12 min · Ajouter les catégories au budget du foyer',
+      body: '',
+    });
     expect([
       pathOf(base),
       pathOf({ ...base, taskId: 12 }),

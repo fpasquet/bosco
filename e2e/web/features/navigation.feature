@@ -6,7 +6,7 @@ Fonctionnalité: Navigation par lieux
   et de mes groupes, afin de savoir où je suis quelle que soit la façon d'y arriver.
 
   Contexte:
-    Étant donné le profil Claude Code « .claude » contient le transcript « session-maison-rag.jsonl » de la session « 5e0a91c3 »
+    Étant donné le profil Claude Code « .claude » contient le transcript « session-maison-recettes.jsonl » de la session « 5e0a91c3 »
     Et le profil Claude Code « .claude » contient le transcript « session-home-notes.jsonl » de la session « e7d2b410 »
     Et Bosco surveille les profils « .claude » et « .claude-perso »
     Et les dossiers « maison » et « site-perso » sont des projets

@@ -7,8 +7,8 @@ const meta = {
   component: SourcesList,
   args: {
     sources: [
-      { title: null, url: 'https://mozilla.github.io/pdf.js/' },
-      { title: 'Extracting tables from PDFs', url: 'https://github.com/mozilla/pdf.js/discussions/17000' },
+      { title: null, url: 'https://schema.org/Recipe' },
+      { title: 'Ingredient phrase tagger', url: 'https://github.com/nytimes/ingredient-phrase-tagger' },
     ],
   },
 } satisfies Meta<typeof SourcesList>;
@@ -22,6 +22,6 @@ export const Open: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await userEvent.click(canvas.getByRole('button', { name: /2 sources/ }));
-    await expect(canvas.getByRole('link', { name: /Extracting tables from PDFs/ })).toBeVisible();
+    await expect(canvas.getByRole('link', { name: /Ingredient phrase tagger/ })).toBeVisible();
   },
 };

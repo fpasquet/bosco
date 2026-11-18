@@ -6,7 +6,7 @@ Feature: Live tracking
   Background:
     Given the Claude Code profile ".claude-perso" has the settings "fixtures/settings-perso.json"
     And the Claude Code profile ".claude-perso" has the transcript "session-maison-budget.jsonl" for the session "c41e9a07"
-    And the Claude Code profile ".claude" has the transcript "session-maison-rag.jsonl" for the session "5e0a91c3"
+    And the Claude Code profile ".claude" has the transcript "session-maison-recettes.jsonl" for the session "5e0a91c3"
     And Bosco watches the profiles ".claude" and ".claude-perso"
 
   @CA-SESS-62
@@ -37,7 +37,7 @@ Feature: Live tracking
     When I send GET request to "/api/sessions"
     Then the response property "sessions.0.state" should equal "waiting"
     And the response property "sessions.0.waiting.kind" should equal "turn"
-    And the response property "sessions.0.waiting.message" should equal "Le digest est généré. Veux-tu que je lance les tests ?"
+    And the response property "sessions.0.waiting.message" should equal "Les catégories sont ajoutées. Veux-tu que je lance la migration ?"
     When Claude Code sends the hook "fixtures/hooks/user-prompt-submit.json" of the profile ".claude-perso"
     And I send GET request to "/api/sessions"
     Then the response property "sessions.0.state" should equal "running"

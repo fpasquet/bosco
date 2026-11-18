@@ -1,7 +1,7 @@
 {
   "session": {
     "addedProjects": [],
-    "branch": "feat/specs",
+    "branch": "feat/categories",
     "channel": false,
     "cost": {
       "usd": 0.045,
@@ -30,7 +30,7 @@
     "waiting": null,
     "turns": 1,
     "changedFiles": [],
-    "title": "Specs du tableau de bord Bosco",
+    "title": "Ajouter les catégories au budget du foyer",
     "usage": {
       "input": 1200,
       "output": 340,
@@ -43,7 +43,7 @@
       "at": "2026-11-06T14:02:00.000Z",
       "kind": "prompt",
       "seq": 1,
-      "text": "Écris les specs UI du tableau de bord."
+      "text": "Ajoute des catégories aux dépenses du budget."
     },
     {
       "at": "2026-11-06T14:02:05.000Z",

@@ -7,7 +7,7 @@ Fonctionnalité: Historique
 
   Contexte:
     Étant donné il est « 2026-11-06T15:10:00+01:00 » dans le navigateur
-    Et le profil Claude Code « .claude » contient le transcript « session-maison-rag.jsonl » de la session « 5e0a91c3 »
+    Et le profil Claude Code « .claude » contient le transcript « session-maison-recettes.jsonl » de la session « 5e0a91c3 »
     Et le profil Claude Code « .claude-perso » contient le transcript « session-maison-budget.jsonl » de la session « c41e9a07 »
     Et Bosco surveille les profils « .claude » et « .claude-perso »
     Et le dossier « maison » est un projet
@@ -18,11 +18,11 @@ Fonctionnalité: Historique
   Scénario: L'historique suit les jours, et la recherche porte sur les messages
     Quand j'ouvre la page « /history »
     Alors je vois le texte « 2 sessions »
-    Et je vois le lien « Specs du tableau de bord Bosco »
+    Et je vois le lien « Ajouter les catégories au budget du foyer »
     Et la page est accessible
-    Quand je saisis « indexation » dans le champ « Rechercher dans les titres, messages et commandes »
-    Alors je ne vois plus le texte « Specs du tableau de bord Bosco »
-    Et je vois le lien « Corriger l’indexation des PDF dans Elasticsearch »
+    Quand je saisis « recettes » dans le champ « Rechercher dans les titres, messages et commandes »
+    Alors je ne vois plus le texte « Ajouter les catégories au budget du foyer »
+    Et je vois le lien « Corriger la recherche des recettes par ingrédient »
 
   @CA-SESS-127
   Scénario: Le filtre de groupe garde les sessions de ses projets et se cumule avec les autres puces
@@ -33,9 +33,9 @@ Fonctionnalité: Historique
     Et je choisis « Club des Trois Lacs » dans la liste « Filtrer par groupe »
     Alors je vois le texte « Aucune session ne correspond. »
     Quand je choisis « Perso » dans la liste « Filtrer par groupe »
-    Et je saisis « indexation » dans le champ « Rechercher dans les titres, messages et commandes »
-    Alors je vois le lien « Corriger l’indexation des PDF dans Elasticsearch »
-    Et je ne vois plus le texte « Specs du tableau de bord Bosco »
+    Et je saisis « recettes » dans le champ « Rechercher dans les titres, messages et commandes »
+    Alors je vois le lien « Corriger la recherche des recettes par ingrédient »
+    Et je ne vois plus le texte « Ajouter les catégories au budget du foyer »
 
   @CA-SESS-149
   @CA-CONT-156

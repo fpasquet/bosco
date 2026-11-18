@@ -15,11 +15,11 @@ Fonctionnalité: Notifications
   @NF-18
   Scénario: Une question arrive en message bref devant Bosco, puis se retrouve dans le tiroir des notifications
     Quand j’ouvre Bosco au premier plan
-    Et la session « c41e9a07 » du profil « .claude-perso » termine son tour en disant « Le digest est généré. Veux-tu que je lance les tests ? »
-    Alors je vois le message « Question de fin de tour · Specs du tableau de bord Bosco »
+    Et la session « c41e9a07 » du profil « .claude-perso » termine son tour en disant « Les catégories sont ajoutées. Veux-tu que je lance la migration ? »
+    Alors je vois le message « Question de fin de tour · Ajouter les catégories au budget du foyer »
     Quand je clique sur le bouton « Notifications : 1 non lues »
     Alors je vois le titre « Notifications »
-    Et le tiroir des notifications montre « Le digest est généré. Veux-tu que je lance les tests ? »
+    Et le tiroir des notifications montre « Les catégories sont ajoutées. Veux-tu que je lance la migration ? »
     Et la page est accessible
     Quand je clique sur le bouton « Tout marquer comme lu »
     Alors je ne vois plus le texte « 1 non lue »
@@ -54,10 +54,10 @@ Fonctionnalité: Notifications
   @NF-18
   Scénario: Sur le téléphone, la cloche ouvre l'écran des notifications
     Quand j'ouvre la page « / »
-    Et la session « c41e9a07 » du profil « .claude-perso » termine son tour en disant « Le digest est généré. Veux-tu que je lance les tests ? »
+    Et la session « c41e9a07 » du profil « .claude-perso » termine son tour en disant « Les catégories sont ajoutées. Veux-tu que je lance la migration ? »
     Et je clique sur le bouton « Notifications : 1 non lues »
     Alors je suis sur la page « /notifications »
-    Et je vois le texte « Le digest est généré. Veux-tu que je lance les tests ? »
+    Et je vois le texte « Les catégories sont ajoutées. Veux-tu que je lance la migration ? »
     Et la page est accessible
 
   @mobile

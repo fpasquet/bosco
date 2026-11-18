@@ -4,5 +4,5 @@
   "cwd": "{{profiles}}/maison/packages/budget",
   "permission_mode": "default",
   "hook_event_name": "UserPromptSubmit",
-  "prompt": "Oui, lance les tests."
+  "prompt": "Oui, lance la migration."
 }

@@ -5,7 +5,7 @@ const meta = {
   title: 'Shared/HighlightedCode',
   component: HighlightedCode,
   args: {
-    code: 'export function chunkPdf(pages: Page[]): Chunk[] {\n  return pages.flatMap((page) => splitBlocks(page.blocks));\n}',
+    code: 'export function parseIngredients(lines: string[]): Ingredient[] {\n  return joinQuantities(lines).flatMap((line) => splitLine(line));\n}',
     language: 'typescript',
   },
   decorators: [
@@ -22,11 +22,11 @@ type Story = StoryObj<typeof meta>;
 
 export const Floating: Story = {};
 
-export const WithTitle: Story = { args: { title: 'src/indexer/pdf.ts' } };
+export const WithTitle: Story = { args: { title: 'src/import/ingredients.ts' } };
 
 export const Diff: Story = {
   args: {
-    code: '  for (const page of pages) chunks.push(...splitBlocks(page.blocks));\n  for (const page of pages) chunks.push(...splitBlocks(groupTables(page.blocks)));',
+    code: '  for (const line of lines) ingredients.push(...splitLine(line));\n  for (const line of joinQuantities(lines)) ingredients.push(...splitLine(line));',
     size: 'sm',
     variants: ['removed', 'added'],
   },

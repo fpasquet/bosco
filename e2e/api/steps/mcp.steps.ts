@@ -45,8 +45,8 @@ When(
     answer = await call(bosco.url, bosco.secret(), 'bosco_propose_decision', {
       path: join(bosco.profilesRoot, folder),
       title,
-      context: 'Les sigles arrivent avec ou sans points.',
-      decision: 'Retirer les points avant la recherche.',
+      context: 'Les quantités arrivent en grammes ou en cuillères.',
+      decision: 'Convertir chaque quantité en grammes avant la recherche.',
     });
   },
 );

@@ -44,7 +44,7 @@ export const STORY_CONTAINERS: ContainersDto = {
   piloted: [
     {
       sessionId: 'c7e04a19',
-      title: 'Relis le lexique des sigles',
+      title: 'Tarifs : test en échec sur develop',
       since: at('15:08'),
       cpu: 0.3,
       cpuLimit: null,
@@ -65,7 +65,7 @@ export const STORY_CONTAINERS: ContainersDto = {
     {
       name: 'bosco-s-2b9e04c1aa30-agent',
       sessionId: '2b9e04c1-aa30',
-      title: 'Corrige le cache des sigles',
+      title: 'Ajoute le bloc des tarifs sous chaque club',
       cpu: 0.4,
       cpuLimit: 2,
       memory: 1.1 * GB,

@@ -15,7 +15,7 @@ Feature: Piloted sessions
   Scenario: A session starts in the project with the settings of the toolbar, then runs a turn per message
     When I start a session in the project "maison" with the JSON "fixtures/pilot/start-maison.json"
     Then the response code should be 201
-    And "the started session" should end its turn with "Reçu : Lis le lexique · mode acceptEdits · modèle claude-opus-5-5 · effort high · images 0"
+    And "the started session" should end its turn with "Reçu : Lis les catégories du budget · mode acceptEdits · modèle claude-opus-5-5 · effort high · images 0"
     And "the started session" should be piloted with:
       | permissionMode | acceptEdits     |
       | model          | claude-opus-5-5 |
@@ -29,18 +29,18 @@ Feature: Piloted sessions
   @CA-SESS-93
   Scenario: A message sent during a turn waits for its end, a second one joins it, and Arrêter keeps it
     When I start a session in the project "maison" with the JSON "fixtures/pilot/start-long.json"
-    And I write to "the started session" with the JSON "fixtures/pilot/sigles.json"
+    And I write to "the started session" with the JSON "fixtures/pilot/recurring.json"
     Then the response property "status" should equal "queued"
-    And "the started session" should be running with the pending message "Pense aux sigles"
-    When I write to "the started session" with the JSON "fixtures/pilot/points.json"
-    Then "the started session" should be running with the pending message "Pense aux sigles\n\nEt les points"
+    And "the started session" should be running with the pending message "Pense aux dépenses récurrentes"
+    When I write to "the started session" with the JSON "fixtures/pilot/subscriptions.json"
+    Then "the started session" should be running with the pending message "Pense aux dépenses récurrentes\n\nEt aux abonnements"
     When I cancel the pending message of "the started session"
     Then the response code should be 204
     And "the started session" should have no pending message
-    When I write to "the started session" with the JSON "fixtures/pilot/sigles.json"
+    When I write to "the started session" with the JSON "fixtures/pilot/recurring.json"
     And I stop the turn of "the started session"
     Then the response code should be 204
-    And "the started session" should end its turn with "Reçu : Pense aux sigles · mode default · modèle défaut · effort défaut · images 0"
+    And "the started session" should end its turn with "Reçu : Pense aux dépenses récurrentes · mode default · modèle défaut · effort défaut · images 0"
 
   @CA-SESS-95
   Scenario: A permission of a piloted session is answered in Bosco
@@ -57,9 +57,9 @@ Feature: Piloted sessions
     Then "the started session" should ask the question "Quel correctif préfères-tu ?"
     When I answer the question of "the started session" with ""
     Then the response code should be 400
-    When I answer the question of "the started session" with "Corriger les entrées du lexique"
+    When I answer the question of "the started session" with "Corriger les grilles de tarifs"
     Then the response code should be 204
-    And "the started session" should end its turn with "Réponse reçue : Corriger les entrées du lexique"
+    And "the started session" should end its turn with "Réponse reçue : Corriger les grilles de tarifs"
     When I write to "the started session" with the JSON "fixtures/pilot/start-question.json"
     Then "the started session" should ask the question "Quel correctif préfères-tu ?"
     When I skip the question of "the started session"
@@ -99,13 +99,13 @@ Feature: Piloted sessions
   @CA-SESS-99
   Scenario: The editor suggests the files of the project and the commands of the profile
     Given the folder "maison/packages/budget" has the files:
-      | src/lexique/lexique.ts    |
-      | src/lexique/sigles.ts     |
-      | docs/lexique.md           |
-      | node_modules/x/lexique.js |
+      | src/categories/categories.ts |
+      | src/categories/depenses.ts   |
+      | docs/categories.md           |
+      | node_modules/x/categories.js |
     And the Claude Code profile ".claude-perso" has the skill "tdd" described as "Développer en commençant par les tests"
-    When I send GET request to "/api/pilot/suggestions?kind=file&q=lexi&session=c41e9a07"
-    Then the suggestions should be "docs/lexique.md, src/lexique/lexique.ts, src/lexique/sigles.ts"
+    When I send GET request to "/api/pilot/suggestions?kind=file&q=categ&session=c41e9a07"
+    Then the suggestions should be "docs/categories.md, src/categories/categories.ts, src/categories/depenses.ts"
     When I send GET request to "/api/pilot/suggestions?kind=command&q=t&session=c41e9a07"
     Then the response property "suggestions.0.value" should equal "tdd"
     And the response property "suggestions.0.origin" should equal "skill · profil perso"
@@ -115,8 +115,8 @@ Feature: Piloted sessions
   @RF-CONT-21
   Scenario: A project is not removed while a session piloted by Bosco runs in it, and keeps where it ran
     When I start a session in the project "maison" with the JSON "fixtures/pilot/start-long.json"
-    And I write to "the started session" with the JSON "fixtures/pilot/sigles.json"
-    Then "the started session" should be running with the pending message "Pense aux sigles"
+    And I write to "the started session" with the JSON "fixtures/pilot/recurring.json"
+    Then "the started session" should be running with the pending message "Pense aux dépenses récurrentes"
     When I send GET request to "/api/projects/1"
     Then the response property "running" should equal "1"
     And the response property "place" should equal "workstation"

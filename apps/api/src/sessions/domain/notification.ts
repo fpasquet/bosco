@@ -108,7 +108,7 @@ export interface NotificationRecord {
   taskId: null | number;
   /** Projet de la session ou de la tâche (« site-perso ») : il titre la notification du bureau */
   place: null | string;
-  /** Session ou tâche concernée (« T-12 · Ajouter la prononciation de « SNCF » au lexique ») */
+  /** Session ou tâche concernée (« Ajouter les catégories au budget du foyer ») */
   title: string;
   /** Durée du tour, pour une fin de long tour */
   turnMinutes: null | number;

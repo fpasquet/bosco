@@ -7,7 +7,7 @@ Feature: Context of the agents
   agent only proposes, never decides.
 
   Background:
-    Given the Claude Code profile ".claude" has the transcript "session-maison-rag.jsonl" for the session "5e0a91c3"
+    Given the Claude Code profile ".claude" has the transcript "session-maison-recettes.jsonl" for the session "5e0a91c3"
     And Bosco watches the profiles ".claude" and ".claude-perso"
     And the folders "maison,site-perso" are projects
 
@@ -40,17 +40,17 @@ Feature: Context of the agents
   @CA-CONT-28
   Scenario: A decision proposed by a session waits for a human, then is sent once accepted
     When the session calls the Bosco tool "bosco_propose_decision" with:
-      | path     | maison                                   |
-      | title    | Normaliser les sigles                    |
-      | context  | Les sigles arrivent avec ou sans points. |
-      | decision | Retirer les points avant la recherche.   |
+      | path     | maison                                                   |
+      | title    | Normaliser les unités des ingrédients                    |
+      | context  | Les quantités arrivent en grammes ou en cuillères.       |
+      | decision | Convertir chaque quantité en grammes avant la recherche. |
     Then the Bosco tool answers "DEC-1 proposée"
     When I send GET request to "/api/context/preview?project=maison"
     Then the response property "absent.proposed.0.id" should equal "1"
-    And the response property "text" should not contain "Normaliser les sigles"
+    And the response property "text" should not contain "Normaliser les unités des ingrédients"
     When I send POST request to "/api/decisions/1/accept"
     And I send GET request to "/api/context/preview?project=maison"
-    Then the response property "text" should contain "DEC-1 Normaliser les sigles"
+    Then the response property "text" should contain "DEC-1 Normaliser les unités des ingrédients"
 
   @CA-CONT-21
   @CA-CONT-22
@@ -61,14 +61,14 @@ Feature: Context of the agents
     And the response property "message" should equal "Écris une note pour dire ce qui change."
     When I send POST request to "/api/decisions/1/versions" with the JSON "fixtures/context/version.json"
     Then the response property "versions.length" should equal "2"
-    And the response property "versions.1.note" should equal "Les colonnes aussi"
+    And the response property "versions.1.note" should equal "Les sous-catégories aussi"
 
   @CA-CONT-10
   Scenario: A decision proposed by an agent names its session, and arrives as a notification
-    When a Claude Code session in "maison/packages/recettes" proposes the decision "Normaliser les sigles"
+    When a Claude Code session in "maison/packages/recettes" proposes the decision "Normaliser les unités des ingrédients"
     Then the Bosco tool answers "DEC-1 proposée"
     When I send GET request to "/api/decisions/1"
-    Then the response property "decision.versions.0.author" should equal "l’agent de la session « Corriger l’indexation des PDF dans Elasticsearch »"
+    Then the response property "decision.versions.0.author" should equal "l’agent de la session « Corriger la recherche des recettes par ingrédient »"
     And the response property "decision.versions.0.session.id" should equal "5e0a91c3"
     When I send GET request to "/api/notifications"
     Then the response property "notifications.0.kind" should equal "decision"
@@ -84,10 +84,10 @@ Feature: Context of the agents
     Given I send POST request to "/api/decisions" with the JSON "fixtures/context/project-decision.json"
     When I start a session in the project "maison" with the JSON "fixtures/pilot/start-context.json"
     Then the response code should be 201
-    And "the started session" should end its turn with "Contexte reçu : # Contexte du projet maison · - DEC-1 Découper les tableaux par ligne"
+    And "the started session" should end its turn with "Contexte reçu : # Contexte du projet maison · - DEC-1 Ranger chaque dépense dans une catégorie"
     When I send POST request to "/api/decisions" with the JSON "fixtures/context/maison-later-decision.json"
     And I write to "the started session" with the JSON "fixtures/pilot/context.json"
-    Then "the started session" should end its turn with "Contexte reçu : # Contexte du projet maison · - DEC-1 Découper les tableaux par ligne"
+    Then "the started session" should end its turn with "Contexte reçu : # Contexte du projet maison · - DEC-1 Ranger chaque dépense dans une catégorie"
 
   @CA-CONT-23
   Scenario: The agents launched after a new version receive it, those launched before keep the one they received
@@ -105,15 +105,15 @@ Feature: Context of the agents
   @CA-CONT-09
   Scenario: A refused decision keeps its reason and is never sent
     When the session calls the Bosco tool "bosco_propose_decision" with:
-      | path     | maison                                   |
-      | title    | Normaliser les sigles                    |
-      | context  | Les sigles arrivent avec ou sans points. |
-      | decision | Retirer les points avant la recherche.   |
+      | path     | maison                                                   |
+      | title    | Normaliser les unités des ingrédients                    |
+      | context  | Les quantités arrivent en grammes ou en cuillères.       |
+      | decision | Convertir chaque quantité en grammes avant la recherche. |
     And I send POST request to "/api/decisions/1/refuse" with the JSON "fixtures/context/refuse-reason.json"
     Then the response property "state" should equal "refused"
-    And the response property "reason" should equal "Les sigles gardent leurs points dans les titres."
+    And the response property "reason" should equal "Les recettes gardent les unités de leur auteur."
     When I send GET request to "/api/context/preview?project=maison"
-    Then the response property "text" should not contain "Normaliser les sigles"
+    Then the response property "text" should not contain "Normaliser les unités des ingrédients"
     And the response property "absent.proposed.length" should equal "0"
 
   @CA-CONT-17
@@ -122,10 +122,10 @@ Feature: Context of the agents
     And I send POST request to "/api/decisions/1/abandon" with the JSON "fixtures/context/abandon-reason.json"
     Then the response property "state" should equal "abandoned"
     When I send GET request to "/api/context/preview?project=maison"
-    Then the response property "text" should not contain "Découper les tableaux par ligne"
+    Then the response property "text" should not contain "Ranger chaque dépense dans une catégorie"
     When I send GET request to "/api/decisions/1"
-    Then the response property "decision.versions.0.title" should equal "Découper les tableaux par ligne"
-    And the response property "decision.reason" should equal "Les tableaux arrivent désormais découpés."
+    Then the response property "decision.versions.0.title" should equal "Ranger chaque dépense dans une catégorie"
+    And the response property "decision.reason" should equal "Les dépenses arrivent désormais rangées."
 
   @CA-CONT-104
   @CA-REGL-03

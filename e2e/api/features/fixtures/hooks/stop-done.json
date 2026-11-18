@@ -5,5 +5,5 @@
   "permission_mode": "default",
   "hook_event_name": "Stop",
   "stop_hook_active": false,
-  "last_assistant_message": "Le digest est généré et les tests passent."
+  "last_assistant_message": "Les catégories sont ajoutées et la migration est passée."
 }

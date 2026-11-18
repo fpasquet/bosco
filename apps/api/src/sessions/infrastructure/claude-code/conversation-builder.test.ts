@@ -18,8 +18,8 @@ function build(lines: string[]) {
 describe('ConversationBuilder', () => {
   it('turns a prompt and the agent work up to the next prompt into two turns', () => {
     const { turns } = build([
-      user(0, 'Corrige l’indexation des PDF.'),
-      assistant(4, { type: 'thinking', thinking: 'Le pipeline ignore les pièces jointes.', signature: 'x' }),
+      user(0, 'Corrige la recherche des recettes par ingrédient.'),
+      assistant(4, { type: 'thinking', thinking: 'La recherche ignore les ingrédients au pluriel.', signature: 'x' }),
       assistant(5, { type: 'tool_use', id: 't1', name: 'Bash', input: { command: 'yarn lint' } }),
       user(7, [{ type: 'tool_result', tool_use_id: 't1', content: 'Done in 1.2s' }]),
       assistant(8, { type: 'text', text: 'Le **lint** passe.' }),
@@ -29,7 +29,11 @@ describe('ConversationBuilder', () => {
       ['assistant', ['reasoning', 'tool', 'text']],
     ]);
     const [reasoning, tool] = turns[1]?.parts ?? [];
-    expect(reasoning).toMatchObject({ kind: 'reasoning', seconds: 4, text: 'Le pipeline ignore les pièces jointes.' });
+    expect(reasoning).toMatchObject({
+      kind: 'reasoning',
+      seconds: 4,
+      text: 'La recherche ignore les ingrédients au pluriel.',
+    });
     expect(tool).toMatchObject({
       error: false,
       endedAt: new Date(at(7)),

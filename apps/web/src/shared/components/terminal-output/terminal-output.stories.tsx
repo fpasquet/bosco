@@ -22,7 +22,8 @@ export const Output: Story = {};
 export const AnsiColours: Story = {
   args: {
     command: 'pnpm test',
-    output: '\u001b[32m✓\u001b[39m keeps a table in one chunk\n\u001b[31m×\u001b[39m splits a long table across pages',
+    output:
+      '\u001b[32m✓\u001b[39m keeps a quantity with its ingredient\n\u001b[31m×\u001b[39m reads a quantity split over two lines',
   },
 };
 

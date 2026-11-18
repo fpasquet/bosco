@@ -6,7 +6,7 @@ Feature: Chosen projects
 
   Background:
     Given the Claude Code profile ".claude" has the transcript "session-maison-budget.jsonl" for the session "c41e9a07"
-    And the Claude Code profile ".claude" has the transcript "session-site-perso-fastify.jsonl" for the session "a41f07c2"
+    And the Claude Code profile ".claude" has the transcript "session-site-perso-dependances.jsonl" for the session "a41f07c2"
     And the Claude Code profile ".claude" has the transcript "session-maison-worktree.jsonl" for the session "9b3c51f0"
     And the Claude Code profile ".claude" has the transcript "session-home-notes.jsonl" for the session "e7d2b410"
     And the home folder has the folders:

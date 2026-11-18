@@ -2,7 +2,7 @@
   "sessions": [
     {
       "addedProjects": [],
-      "branch": "feat/specs",
+      "branch": "feat/categories",
       "channel": false,
       "cost": {
         "usd": 0.045,
@@ -31,7 +31,7 @@
       "waiting": null,
       "turns": 1,
       "changedFiles": [],
-      "title": "Specs du tableau de bord Bosco",
+      "title": "Ajouter les catégories au budget du foyer",
       "usage": {
         "input": 1200,
         "output": 340,

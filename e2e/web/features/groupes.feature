@@ -7,7 +7,7 @@ Fonctionnalité: Groupes de projets
   chacun de leurs projets, afin d'écrire une seule fois ce qui vaut pour plusieurs projets.
 
   Contexte:
-    Étant donné le profil Claude Code « .claude » contient le transcript « session-maison-rag.jsonl » de la session « 5e0a91c3 »
+    Étant donné le profil Claude Code « .claude » contient le transcript « session-maison-recettes.jsonl » de la session « 5e0a91c3 »
     Et Bosco surveille les profils « .claude » et « .claude-perso »
     Et les dossiers « maison » et « site-perso » sont des projets
 

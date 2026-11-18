@@ -1,6 +1,6 @@
 {
   "profile": "{{profiles}}/.claude-perso",
-  "text": "Lis le lexique",
+  "text": "Lis les catégories du budget",
   "images": [],
   "settings": { "permissionMode": "acceptEdits", "model": "claude-opus-5-5", "effort": "high" }
 }

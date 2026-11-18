@@ -24,14 +24,14 @@ export const Turns: Story = {
         <MessageContent>
           <MessageHeader>Toi · 14:02</MessageHeader>
           <Bubble variant="tinted">
-            <BubbleContent>Les PDF avec des tableaux sont coupés au mauvais endroit.</BubbleContent>
+            <BubbleContent>Les recettes importées perdent des quantités.</BubbleContent>
           </Bubble>
         </MessageContent>
       </Message>
       <Message>
         <MessageContent>
           <MessageHeader className="px-0">Agent · 14:03</MessageHeader>
-          <p>Je relis le découpage des PDF, puis j’écris un test avec un tableau.</p>
+          <p>Je relis l’import des ingrédients, puis j’écris un test avec une quantité sur deux lignes.</p>
         </MessageContent>
       </Message>
     </div>

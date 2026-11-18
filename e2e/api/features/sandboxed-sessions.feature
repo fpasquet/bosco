@@ -71,4 +71,4 @@ Feature: Sessions in a sandbox
   Scenario: A session in a sandbox, without the MCP server of Bosco, receives the context of its project at launch
     Given I send POST request to "/api/decisions" with the JSON "fixtures/context/project-decision.json"
     When I start a session in the project "maison" with the JSON "fixtures/pilot/start-context-sandbox.json"
-    Then "the started session" should end its turn with "Contexte reçu : # Contexte du projet maison · - DEC-1 Découper les tableaux par ligne"
+    Then "the started session" should end its turn with "Contexte reçu : # Contexte du projet maison · - DEC-1 Ranger chaque dépense dans une catégorie"

@@ -6,7 +6,7 @@ Feature: Sources and settings
 
   Background:
     Given the Claude Code profile ".claude-perso" has the transcript "session-maison-budget.jsonl" for the session "c41e9a07"
-    And the Claude Code profile ".claude" has the transcript "session-site-perso-fastify.jsonl" for the session "a41f07c2"
+    And the Claude Code profile ".claude" has the transcript "session-site-perso-dependances.jsonl" for the session "a41f07c2"
     And Bosco watches the profiles ".claude" and ".claude-perso"
 
   @CA-SESS-59
@@ -27,7 +27,7 @@ Feature: Sources and settings
     And the Claude Code profile ".claude" has the transcript "session-unknown-format.jsonl" for the session "0d1e2f31"
     And the Claude Code profile ".claude" has the transcript "session-unknown-format.jsonl" for the session "0d1e2f32"
     Then Bosco should mark the profile ".claude" to update
-    Given the Claude Code profile ".claude" has the transcript "session-maison-rag.jsonl" for the session "5e0a91c3"
+    Given the Claude Code profile ".claude" has the transcript "session-maison-recettes.jsonl" for the session "5e0a91c3"
     Then Bosco should not read the session "5e0a91c3"
     When I send GET request to "/api/sessions/a41f07c2"
     Then the response code should be 200
@@ -36,7 +36,7 @@ Feature: Sources and settings
   Scenario: A source switched off is no longer read, and nothing is erased
     When I switch off the source of the profile ".claude"
     Then the response property "watched" should equal "false"
-    Given the Claude Code profile ".claude" has the transcript "session-maison-rag.jsonl" for the session "5e0a91c3"
+    Given the Claude Code profile ".claude" has the transcript "session-maison-recettes.jsonl" for the session "5e0a91c3"
     When I send GET request to "/api/sessions"
     Then the response property "sessions.length" should equal "2"
     When I switch on the source of the profile ".claude"
@@ -49,17 +49,17 @@ Feature: Sources and settings
     When I install live tracking for the profile ".claude-perso"
     And Claude Code sends the hook "fixtures/hooks/stop.json" of the profile ".claude-perso"
     Then the desktop notifications should be:
-      | title             | body                                                                                         |
-      | Question · maison | <b>Specs du tableau de bord Bosco</b>\nLe digest est généré. Veux-tu que je lance les tests ? |
+      | title             | body                                                                                                               |
+      | Question · maison | <b>Ajouter les catégories au budget du foyer</b>\nLes catégories sont ajoutées. Veux-tu que je lance la migration ? |
     When I send PUT request to "/api/settings" with the JSON "fixtures/settings-no-notifications.json"
     And Claude Code sends the hook "fixtures/hooks/permission-request.json" of the profile ".claude-perso" without waiting
     Then the desktop notifications should be:
-      | title             | body                                                                                         |
-      | Question · maison | <b>Specs du tableau de bord Bosco</b>\nLe digest est généré. Veux-tu que je lance les tests ? |
+      | title             | body                                                                                                               |
+      | Question · maison | <b>Ajouter les catégories au budget du foyer</b>\nLes catégories sont ajoutées. Veux-tu que je lance la migration ? |
 
   @RF-SESS-01
   Scenario: Another configuration folder of Claude Code is added as a source, and read
-    Given the Claude Code profile ".claude-pro" has the transcript "session-maison-rag.jsonl" for the session "5e0a91c3"
+    Given the Claude Code profile ".claude-pro" has the transcript "session-maison-recettes.jsonl" for the session "5e0a91c3"
     When I send POST request to "/api/sources/folder" with the JSON "fixtures/add-pro-folder.json"
     Then the response code should be 201
     And the response property "label" should equal "pro"

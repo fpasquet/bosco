@@ -80,7 +80,7 @@ describe('sessions and dayLabel', () => {
 
 describe('actionLabel and relativePath', () => {
   it('reads the actions of the agent in French and writes paths from the project root', () => {
-    expect(actionLabel('Read · src/indexer/pdf.ts')).toBe('Lit src/indexer/pdf.ts');
+    expect(actionLabel('Read · src/import/ingredients.ts')).toBe('Lit src/import/ingredients.ts');
     expect(actionLabel('Bash · yarn test --forceExit')).toBe('Bash · yarn test --forceExit');
     expect(relativePath('/home/dev/maison/src/a.ts', '/home/dev/maison')).toBe('src/a.ts');
     expect(relativePath('/etc/hosts', '/home/dev/maison')).toBe('/etc/hosts');

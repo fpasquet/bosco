@@ -1,9 +1,9 @@
 {
   "target": { "kind": "project", "name": "maison" },
   "text": {
-    "title": "Découper les tableaux par ligne",
-    "context": "Les tableaux des PDF arrivent fusionnés.",
-    "decision": "Découper chaque tableau par ligne avant l'indexation.",
+    "title": "Ranger chaque dépense dans une catégorie",
+    "context": "Les dépenses du mois arrivent sans catégorie.",
+    "decision": "Ranger chaque dépense dans une catégorie avant le bilan.",
     "consequences": null,
     "alternatives": null
   },

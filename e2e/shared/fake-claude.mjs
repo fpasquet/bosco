@@ -130,10 +130,10 @@ async function turn(content) {
           multiSelect: false,
           options: [
             {
-              label: 'Normaliser la casse à la lecture (Recommended)',
-              description: 'Les sigles gardent leur casse d’origine.',
+              label: 'Arrondir à la minute à la lecture (Recommended)',
+              description: 'Les créneaux gardent leur heure d’origine.',
             },
-            { label: 'Corriger les entrées du lexique', description: '12 entrées à reprendre à la main.' },
+            { label: 'Corriger les grilles de tarifs', description: '12 grilles à reprendre à la main.' },
           ],
         },
       ],

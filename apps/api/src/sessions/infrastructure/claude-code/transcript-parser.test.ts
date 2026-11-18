@@ -6,7 +6,7 @@ import { isSilentLine, TranscriptParser } from './transcript-parser.ts';
 const base = {
   sessionId: 'c41e9a07',
   cwd: '/home/dev/maison/packages/budget',
-  gitBranch: 'feat/specs',
+  gitBranch: 'feat/categories',
   timestamp: '2026-11-06T14:02:00Z',
 };
 const usage = { input_tokens: 10, output_tokens: 20, cache_creation_input_tokens: 30, cache_read_input_tokens: 40 };

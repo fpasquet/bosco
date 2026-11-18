@@ -13,7 +13,7 @@ describe('endsWithQuestion', () => {
   it('reads a final question mark, after quotes, emphasis or a closing parenthesis', () => {
     expect(
       [
-        'Le digest est généré. Veux-tu que je lance les tests ?',
+        'Le récapitulatif est généré. Veux-tu que je lance les tests ?',
         'Je lance les tests ? »',
         'On garde Jest (ou Vitest ?)',
         '**Je fusionne ?**',
@@ -57,7 +57,7 @@ describe('messageExcerpt', () => {
   });
 
   it('keeps a short message whole, and the end of a single long sentence from a word', () => {
-    const long = `Je ${'relis '.repeat(40)}le lexique`;
+    const long = `Je ${'relis '.repeat(40)}le budget`;
     const excerpt = messageExcerpt(long) ?? '';
     expect([messageExcerpt('Tests **verts**.'), excerpt.startsWith('…relis'), excerpt.length <= 180]).toEqual([
       'Tests verts.',
@@ -76,10 +76,9 @@ describe('plainText', () => {
 });
 
 describe('shortTitle', () => {
+  const TITLE = 'Corriger la recherche des recettes';
+
   it('cuts at the end of a word', () => {
-    expect([shortTitle('Corriger l’indexation des PDF', 60), shortTitle('Corriger l’indexation des PDF', 20)]).toEqual([
-      'Corriger l’indexation des PDF',
-      'Corriger…',
-    ]);
+    expect([shortTitle(TITLE, 60), shortTitle(TITLE, 20)]).toEqual([TITLE, 'Corriger la…']);
   });
 });
