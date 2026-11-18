@@ -11,8 +11,7 @@ Fonctionnalité: Sessions en bac à sable
     Et le dossier « maison » est un projet
 
   @NF-18
-  @CA-SESS-106
-  @CA-SESS-113
+  @CA-SESS-161
   Scénario: Une session démarre dans un bac à sable et se pilote comme les autres
     Quand j'ouvre la page « /sessions/new »
     Et je clique sur le bouton radio « Bac à sable »

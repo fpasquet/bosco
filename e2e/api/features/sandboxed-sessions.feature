@@ -9,8 +9,8 @@ Feature: Sessions in a sandbox
     And Bosco watches the profiles ".claude-perso"
     And the folder "maison" is a project
 
-  @CA-SESS-106
   @CA-SESS-109
+  @CA-SESS-161
   Scenario: A session starts in a sandbox on its own branch, and its turns run in its container
     When I start a session in the project "maison" with the JSON "fixtures/pilot/start-sandbox.json"
     Then the response code should be 201
@@ -19,7 +19,7 @@ Feature: Sessions in a sandbox
     When I write to "the started session" with the JSON "fixtures/pilot/schema.json"
     Then "the started session" should end its turn with "Reçu : Vérifie aussi le schéma de config · mode acceptEdits · modèle défaut · effort défaut · images 0"
 
-  @CA-SESS-106
+  @RF-SESS-12
   Scenario: The branch of a session is under the prefix of the sandboxes
     When I start a session in the project "maison" with the JSON "fixtures/pilot/start-sandbox-bad-branch.json"
     Then the response code should be 400
