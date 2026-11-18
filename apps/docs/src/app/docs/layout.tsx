@@ -5,7 +5,8 @@ import { source } from '@/lib/source';
 
 export default function Layout({ children }: { children: ReactNode }) {
   return (
-    <DocsLayout {...baseOptions} tree={source.getPageTree()}>
+    // Les liens de la barre de l'accueil doubleraient l'arborescence, qui a déjà sa page Télécharger
+    <DocsLayout {...baseOptions} links={[]} tree={source.getPageTree()}>
       {children}
     </DocsLayout>
   );
