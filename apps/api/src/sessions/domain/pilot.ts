@@ -86,7 +86,17 @@ export class QuotaHeld extends DomainError {
   }
 }
 
-/** Un projet, un profil ou une session que Bosco ne connaît pas, ou une session effacée par Claude Code. */
+/** Claude Code a effacé le transcript de la session : elle reste lisible dans Bosco, mais ne se reprend plus. */
+export class SessionErased extends DomainError {
+  constructor(sessionId: string) {
+    super(
+      'sessionErased',
+      `The transcript of the session ${sessionId} was erased by Claude Code: it cannot be resumed`,
+    );
+  }
+}
+
+/** Un projet, un profil ou une session que Bosco ne connaît pas. */
 export class PilotTargetNotFound extends DomainError {
   constructor(message: string) {
     super('pilotTargetNotFound', message);

@@ -1,6 +1,6 @@
 'use client';
 import { useQueryClient } from '@tanstack/react-query';
-import { Info, SquareTerminal } from 'lucide-react';
+import { Archive, Info, SquareTerminal } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 import type { PilotSettingsDto, SessionDto } from '@bosco/domain';
@@ -23,12 +23,21 @@ export function writable(session: SessionDto): boolean {
  * Sous le fil d'une session (E2e, E2f, E2g, E2a) : la zone de message d'une session pilotée ou close ; la bande
  * « Ouverte dans un terminal » sinon. Une session du worker se relit dans sa tâche : rien ici.
  */
-export function PilotPanel({ session }: { session: SessionDto }) {
+export function PilotPanel({ erased = false, session }: { erased?: boolean; session: SessionDto }) {
   const client = useQueryClient();
   const push = useNotices((state) => state.push);
   const [settings, setSettings] = useState<PilotSettingsDto>(session.pilot?.settings ?? DEFAULT_SETTINGS);
   const fullAccess = useFullAccess();
   const inTerminal = !writable(session);
+  // Claude Code a effacé son transcript : la session se lit encore, mais ne se reprend plus
+  if (erased && !session.pilot?.running) {
+    return (
+      <p className="flex items-center gap-2 border-t border-line bg-surface-alt px-4 py-3 text-sm text-muted">
+        <Archive aria-hidden className="size-4 shrink-0" />
+        Effacée par Claude Code : elle ne se reprend plus.
+      </p>
+    );
+  }
   if (inTerminal && !session.channel) {
     return (
       <p className="flex flex-wrap items-center gap-x-2 gap-y-1 border-t border-line bg-surface-alt px-4 py-3 text-sm text-muted">

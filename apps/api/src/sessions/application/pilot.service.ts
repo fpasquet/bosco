@@ -10,6 +10,7 @@ import type {
   SessionRegistry,
   SessionRepository,
   SourceRepository,
+  TranscriptFiles,
 } from './ports.ts';
 import type { SessionDefaultsService } from './session-defaults.service.ts';
 import type { SessionService } from './session.service.ts';
@@ -27,6 +28,7 @@ import {
   PilotTargetNotFound,
   questionsOf,
   QuotaHeld,
+  SessionErased,
   SessionOpenInTerminal,
 } from '../domain/pilot.ts';
 import {
@@ -258,6 +260,7 @@ export class PilotService {
     private readonly events: Pick<SessionEvents, 'sessionChanged'>,
     private readonly clock: Clock,
     private readonly ids: IdGenerator,
+    private readonly transcripts: TranscriptFiles = { exists: () => Promise.resolve(true) },
   ) {}
 
   /** Sessions pilotées connues, lues au démarrage (et après une remise à zéro des scénarios). */
@@ -655,6 +658,7 @@ export class PilotService {
       this.openInTerminal(record.sourceId, sessionId) ||
       (!this.records.has(sessionId) && (await this.isLive(sessionId)));
     if (inTerminal) return this.throughChannel(sessionId, message);
+    if (!this.turns.has(sessionId)) await this.checkResumable(record);
     await this.checkQuotaOf(record);
     // Un message repousse l'arrêt et la suppression du bac à sable (règle 12)
     const sandbox = record.sandbox && { ...record.sandbox, lastMessageAt: this.clock.now(), warnedAt: null };
@@ -741,6 +745,15 @@ export class PilotService {
       since: this.clock.now(),
       sourceId: snapshot.sourceId,
     };
+  }
+
+  /** Une session dont Claude Code a effacé le transcript ne se reprend plus : le refus le dit, sans lancer de tour. */
+  private async checkResumable(record: PilotRecord): Promise<void> {
+    const sources = await this.sources.list();
+    const source = sources.find(({ id }) => id === record.sourceId);
+    if (!source) return;
+    const kept = await this.transcripts.exists(source.path, record.sessionId);
+    if (!kept) throw new SessionErased(record.sessionId);
   }
 
   private async isLive(sessionId: string): Promise<boolean> {

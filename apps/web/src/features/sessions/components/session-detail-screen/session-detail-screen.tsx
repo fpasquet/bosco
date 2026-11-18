@@ -118,8 +118,9 @@ export function SessionDetailScreen({ id }: { id: string }) {
   }
   if (!data || !sources) return <PageSkeleton variant="detail" rows={8} />;
   const { journal, session } = data;
-  // Une session en bac à sable ne se reprend que dans Bosco (règle 12)
-  const resume = session.pilot?.sandbox ? null : resumeCommand(session, sources.sources, sources.home);
+  // Effacée par Claude Code, la session ne se reprend plus ; en bac à sable, elle ne se reprend que dans Bosco
+  const erased = !conversationPending && conversation === null;
+  const resume = session.pilot?.sandbox || erased ? null : resumeCommand(session, sources.sources, sources.home);
   // Une session à plusieurs projets a la carte « Projets », « Branches » en bac à sable (E2k)
   const several = session.addedProjects.length > 0;
   const untracked = missingLiveTracking(session, sources.sources);
@@ -191,7 +192,7 @@ export function SessionDetailScreen({ id }: { id: string }) {
                 )}
               </>
             }
-            footer={<PilotPanel key={session.id} session={session} />}
+            footer={<PilotPanel key={session.id} session={session} erased={erased} />}
           />
         </div>
         {shown === 'projects' && (

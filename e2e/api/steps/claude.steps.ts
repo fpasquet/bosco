@@ -1,5 +1,5 @@
 // Phrases Claude Code : des profils et des transcripts écrits comme le fait Claude Code, dans le dossier du scénario.
-import { copyFileSync, mkdirSync, utimesSync, writeFileSync } from 'node:fs';
+import { copyFileSync, mkdirSync, rmSync, utimesSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { TRANSCRIPTS } from '../../shared/transcripts.ts';
 
@@ -25,6 +25,12 @@ Given(
     utimesSync(file, at, at);
   },
 );
+
+Given('Claude Code erased the transcript of the session {string}', ({}, sessionId: string) => {
+  const file = written.get(sessionId);
+  if (!file) throw new Error(`No transcript written for the session ${sessionId}`);
+  rmSync(file);
+});
 
 Given('the project {string} has the test services file {string}', ({ bosco }, project: string, fixture: string) => {
   copyFileSync(join(COMPOSE, fixture), join(bosco.profilesRoot, project, 'compose.yaml'));

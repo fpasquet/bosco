@@ -29,6 +29,7 @@ import { FileProfileFinder } from './infrastructure/claude-code/profile-finder.t
 import { FileProfileSettings } from './infrastructure/claude-code/profile-settings.ts';
 import { FileSessionRegistry } from './infrastructure/claude-code/session-registry.ts';
 import { DiskSuggestions } from './infrastructure/claude-code/suggestions.ts';
+import { FileTranscriptFiles } from './infrastructure/claude-code/transcript-files.ts';
 import { FileTranscriptReplay } from './infrastructure/claude-code/transcript-replay.ts';
 import { FileTranscriptWatcher } from './infrastructure/claude-code/transcript-watcher.ts';
 import { SessionEventsBus } from './infrastructure/events/session-events.bus.ts';
@@ -239,6 +240,7 @@ const conversations = new FileConversationReader();
           bus,
           clock,
           { next: randomUUID },
+          new FileTranscriptFiles(),
         ),
     },
     {

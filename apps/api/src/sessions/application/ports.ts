@@ -183,6 +183,11 @@ export interface UsageRepository {
   listTurns(from: Date | null): Promise<RecordedTurn[]>;
 }
 
+/** Le transcript d'une session existe-t-il encore dans son profil ? */
+export interface TranscriptFiles {
+  exists(profile: string, sessionId: string): Promise<boolean>;
+}
+
 /** Relit tout le transcript d'une session ; null quand il n'existe plus. */
 export interface TranscriptReplay {
   read(profile: string, sessionId: string): Promise<null | TranscriptEvent[]>;

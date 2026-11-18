@@ -83,3 +83,13 @@ Fonctionnalité: Détail d'une session
     Alors je vois le texte « Trouve les PDF de démonstration qui contiennent un tableau. »
     Et je vois le texte « Deux fichiers contiennent un tableau »
     Et la page est accessible
+
+  @CA-SESS-51
+  @CA-SESS-97
+  Scénario: Une session effacée par Claude Code se lit encore, sans se reprendre
+    Étant donné la session « c41e9a07 » du profil « .claude-perso » se termine
+    Et Claude Code a effacé le transcript de la session « c41e9a07 »
+    Quand j'ouvre la page « /sessions/c41e9a07 »
+    Alors je vois le texte « Effacée par Claude Code : elle ne se reprend plus. »
+    Et je ne vois plus le texte « claude --resume c41e9a07 »
+    Et je ne vois pas le bouton « Envoyer »
