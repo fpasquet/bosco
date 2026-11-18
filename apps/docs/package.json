@@ -8,7 +8,8 @@
     "docs:dev": "fumadocs-mdx && next dev --port 4890 --hostname 127.0.0.1",
     "build": "next build",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
     "@bosco/domain": "workspace:*",
@@ -31,6 +32,7 @@
     "@types/react-dom": "19.3.0",
     "eslint": "10.14.0",
     "tailwindcss": "4.3.3",
-    "typescript": "6.0.3"
+    "typescript": "6.0.3",
+    "vitest": "5.1.0"
   }
 }

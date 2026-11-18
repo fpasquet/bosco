@@ -14,7 +14,8 @@
     "build": {
       "dependsOn": ["^build", "generate"],
       "env": ["BOSCO_DOCS_BASE_PATH"],
-      "outputs": ["out/**", ".next/**", "!.next/cache/**"]
+      "outputs": ["out/**", ".next/**", "!.next/cache/**"],
+      "passThroughEnv": ["GITHUB_TOKEN"]
     }
   }
 }

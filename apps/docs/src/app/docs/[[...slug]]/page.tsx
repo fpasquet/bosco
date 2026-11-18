@@ -6,6 +6,7 @@ import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
 import { DocsBody, DocsDescription, DocsPage, DocsTitle } from 'fumadocs-ui/layouts/docs/page';
 import defaultMdxComponents from 'fumadocs-ui/mdx';
 import { notFound } from 'next/navigation';
+import { Downloads } from '@/components/downloads';
 import { source } from '@/lib/source';
 
 interface PageProps {
@@ -34,7 +35,7 @@ export default async function Page({ params }: PageProps) {
       <DocsTitle>{page.data.title}</DocsTitle>
       <DocsDescription>{page.data.description}</DocsDescription>
       <DocsBody>
-        <Mdx components={{ ...defaultMdxComponents, Callout, Card, Cards, Step, Steps, Tab, Tabs }} />
+        <Mdx components={{ ...defaultMdxComponents, Callout, Card, Cards, Downloads, Step, Steps, Tab, Tabs }} />
       </DocsBody>
     </DocsPage>
   );

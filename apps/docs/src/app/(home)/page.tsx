@@ -40,7 +40,7 @@ const FEATURES: Feature[] = [
   },
   {
     description:
-      'Des projets choisis dans un navigateur de dossiers, réunis en groupes avec leurs instructions, et un contexte envoyé à chaque session.',
+      'Les dépôts de tes sessions deviennent des projets d’eux-mêmes, réunis en groupes avec leurs instructions, et un contexte envoyé à chaque session.',
     href: `${DOCS_BASE_PATH}/guides/projects-and-groups`,
     icon: FolderTree,
     title: 'Projets et groupes',
@@ -70,9 +70,15 @@ export default function HomePage() {
         <div className="flex flex-wrap gap-3">
           <Link
             className="rounded-lg bg-fd-primary px-5 py-2.5 text-sm font-semibold text-fd-primary-foreground"
+            href={`${DOCS_BASE_PATH}/download`}
+          >
+            Télécharger {SITE_NAME}
+          </Link>
+          <Link
+            className="rounded-lg border border-fd-border bg-fd-card px-5 py-2.5 text-sm font-semibold"
             href={`${DOCS_BASE_PATH}/installation`}
           >
-            Installer {SITE_NAME}
+            Installer depuis le dépôt
           </Link>
           <Link
             className="rounded-lg border border-fd-border bg-fd-card px-5 py-2.5 text-sm font-semibold"
