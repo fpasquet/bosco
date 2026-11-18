@@ -332,9 +332,12 @@ export interface ImportProgressDto {
 /** Une notification du centre de notifications (E15a). */
 export interface NotificationDto {
   at: string;
+  /** Décision proposée par un agent, à valider : la notification l'ouvre */
+  decisionId: null | number;
   excerpt: null | string;
   id: number;
-  kind: 'ended' | 'failed' | 'long-turn' | 'permission' | 'question' | 'review' | 'sandbox' | 'turn-question';
+  kind:
+    'decision' | 'ended' | 'failed' | 'long-turn' | 'permission' | 'question' | 'review' | 'sandbox' | 'turn-question';
   /** Projet de la session ou de la tâche (« site-perso ») */
   place: null | string;
   readAt: null | string;

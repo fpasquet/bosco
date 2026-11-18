@@ -114,6 +114,18 @@ export class SessionService {
     return this.projects.rememberPlace(root, place);
   }
 
+  /**
+   * Session la plus récemment active dans un dossier : celle dont l'agent vient d'appeler le serveur MCP de Bosco
+   * depuis ce dossier, pour nommer l'auteur d'une décision proposée.
+   */
+  async latestIn(path: string): Promise<null | { id: string; title: null | string }> {
+    const sessions = await this.listSessions();
+    const [latest] = sessions
+      .filter((session) => session.projectPath === path)
+      .toSorted((a, b) => b.lastEventAt.getTime() - a.lastEventAt.getTime());
+    return latest ? { id: latest.id, title: latest.title } : null;
+  }
+
   /** Dossiers de travail des sessions déjà lues, que les projets rangent et proposent. */
   async sessionFolders(): Promise<{ gitRoot: null | string; lastEventAt: Date; path: null | string }[]> {
     const sessions = await this.sessionRepository.list();

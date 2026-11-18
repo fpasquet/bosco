@@ -11,6 +11,8 @@ import {
 
 /** Ce que la notification désigne : une session ou une tâche, son titre, et un extrait. */
 export interface NotificationSubject {
+  /** Décision proposée à valider, que la notification ouvre */
+  decisionId?: null | number;
   excerpt: null | string;
   /** Projet de la session ou de la tâche */
   place: null | string;
@@ -28,7 +30,7 @@ export interface NotificationRepository {
   purge(before: Date): Promise<void>;
   /** Marque traitées les notifications encore à traiter de cette session ou de cette tâche */
   settle(
-    match: { kinds: readonly NotificationKind[]; sessionId?: string; taskId?: number },
+    match: { decisionId?: number; kinds: readonly NotificationKind[]; sessionId?: string; taskId?: number },
     note: string,
   ): Promise<number>;
 }
@@ -76,6 +78,7 @@ export class NotificationService {
     const at = this.clock.now();
     const notification = await this.repository.add({
       at,
+      decisionId: subject.decisionId ?? null,
       excerpt: subject.excerpt,
       kind,
       place: subject.place,
@@ -95,7 +98,7 @@ export class NotificationService {
 
   /** Une attente a reçu sa réponse, une tâche a été relue : ses notifications sortent de « À traiter ». */
   async settle(
-    match: { kinds: readonly NotificationKind[]; sessionId?: string; taskId?: number },
+    match: { decisionId?: number; kinds: readonly NotificationKind[]; sessionId?: string; taskId?: number },
     note: string,
   ): Promise<void> {
     const count = await this.repository.settle(match, note);
@@ -117,6 +120,7 @@ export class NotificationService {
   }
 
   private urlOf(notification: NotificationRecord): string {
+    if (notification.decisionId !== null) return `${this.baseUrl}/context/decisions/${notification.decisionId}`;
     if (notification.taskId !== null) return `${this.baseUrl}/tasks/${notification.taskId}`;
     return notification.sessionId ? `${this.baseUrl}/sessions/${notification.sessionId}` : this.baseUrl;
   }

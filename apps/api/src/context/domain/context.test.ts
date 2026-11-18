@@ -27,7 +27,7 @@ const GROUPS: GroupInstructions[] = [
 describe('context', () => {
   const jest = Decision.write(3, { kind: 'project', name: 'api-tarifs' }, text('Garder Jest'), { accept: true, at });
   const elsewhere = Decision.write(5, { kind: 'project', name: 'creneaux' }, text('Fastify'), { accept: true, at });
-  const proposed = Decision.propose(4, 'api-tarifs', text('Normaliser les fuseaux horaires'), 12, at);
+  const proposed = Decision.propose(4, 'api-tarifs', text('Normaliser les fuseaux horaires'), null, at);
   const decisions = [jest, elsewhere, proposed].map((decision) => decision.toSnapshot());
 
   it('sends the common instructions, then each group of the project, then its decisions, which prevail', () => {

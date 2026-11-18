@@ -19,11 +19,25 @@ export interface DecisionText {
 }
 
 /** Version d'une décision : chaque changement garde son auteur, sa date et sa note (RF-CONT-10). */
+/** Session dont l'agent a proposé une décision : son titre la nomme, son identifiant y mène. */
+export interface ProposingSession {
+  id: string;
+  title: null | string;
+}
+
 export interface DecisionVersion extends DecisionText {
   at: Date;
-  /** « toi », ou l'agent d'une tâche (« agent de T-12 ») */
+  /** « toi », ou l'agent d'une session (« l’agent de la session « Monter TypeScript en version 6 » ») */
   author: string;
   note: string;
+  /** Session dont l'agent a écrit cette version ; absente pour une version écrite par toi */
+  session?: null | ProposingSession;
+}
+
+/** Auteur d'une proposition : l'agent de la session qui l'a écrite, nommée par son titre quand elle en a un. */
+function proposer(session: null | ProposingSession): string {
+  if (!session) return 'une session';
+  return session.title ? `l’agent de la session « ${session.title} »` : 'l’agent d’une session';
 }
 
 export interface DecisionSnapshot {
@@ -85,19 +99,23 @@ export class Decision {
     });
   }
 
-  /** Proposée par l'agent d'une tâche : elle attend ta validation, et n'est transmise à personne (RF-CONT-02). */
-  static propose(id: number, project: string, text: DecisionText, taskId: null | number, at: Date): Decision {
+  /** Proposée par l'agent d'une session : elle attend ta validation, et n'est transmise à personne. */
+  static propose(
+    id: number,
+    project: string,
+    text: DecisionText,
+    session: null | ProposingSession,
+    at: Date,
+  ): Decision {
     return new Decision({
       id,
       target: { kind: 'project', name: project },
       state: 'proposed',
-      fromTask: taskId,
+      fromTask: null,
       reason: null,
       replacedBy: null,
       specifies: [],
-      versions: [
-        { ...checkText(text), at, author: taskId ? `l’agent de T-${taskId}` : 'une session', note: 'Proposition' },
-      ],
+      versions: [{ ...checkText(text), at, author: proposer(session), note: 'Proposition', session }],
     });
   }
 

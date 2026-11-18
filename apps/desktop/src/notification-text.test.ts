@@ -5,6 +5,7 @@ import { nativeText, pathOf } from './notification-text.ts';
 
 const base: NotificationDto = {
   at: '2026-11-06T15:13:00Z',
+  decisionId: null,
   excerpt: 'Bash · npm run db:migrate',
   id: 6,
   kind: 'permission',
@@ -28,6 +29,10 @@ describe('nativeText', () => {
   it('tells the length of a turn, and opens the task of a worker notification', () => {
     const turn = { ...base, kind: 'long-turn' as const, place: null, turnMinutes: 12, excerpt: null };
     expect(nativeText(turn)).toEqual({ title: 'Fin de tour · 12 min · Specs du tableau de bord Bosco', body: '' });
-    expect([pathOf(base), pathOf({ ...base, taskId: 12 })]).toEqual(['/sessions/c41e9a07', '/tasks/12']);
+    expect([
+      pathOf(base),
+      pathOf({ ...base, taskId: 12 }),
+      pathOf({ ...base, kind: 'decision', decisionId: 6 }),
+    ]).toEqual(['/sessions/c41e9a07', '/tasks/12', '/context/decisions/6']);
   });
 });

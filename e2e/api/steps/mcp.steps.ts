@@ -39,6 +39,18 @@ When(
   },
 );
 
+When(
+  'a Claude Code session in {string} proposes the decision {string}',
+  async ({ bosco }, folder: string, title: string) => {
+    answer = await call(bosco.url, bosco.secret(), 'bosco_propose_decision', {
+      path: join(bosco.profilesRoot, folder),
+      title,
+      context: 'Les sigles arrivent avec ou sans points.',
+      decision: 'Retirer les points avant la recherche.',
+    });
+  },
+);
+
 When('a program without the secret calls the Bosco tool {string}', async ({ bosco }, name: string) => {
   answer = await call(bosco.url, null, name, {});
 });

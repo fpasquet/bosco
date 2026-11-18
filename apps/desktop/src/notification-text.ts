@@ -3,6 +3,7 @@
 import type { NotificationDto } from '@bosco/domain';
 
 const KIND_LABELS: Record<NotificationDto['kind'], string> = {
+  decision: 'Décision proposée',
   ended: 'Session terminée',
   failed: 'En échec',
   'long-turn': 'Fin de tour',
@@ -33,8 +34,9 @@ export function nativeText(notification: NotificationDto): { body: string; title
   return { title: `${label} · ${notification.place}`, body: [subject, excerpt].filter(Boolean).join('\n') };
 }
 
-/** Adresse que la notification ouvre dans la fenêtre : la tâche, la session, ou la vue d'ensemble. */
+/** Adresse que la notification ouvre dans la fenêtre : la décision proposée, la tâche, la session, ou la vue d'ensemble. */
 export function pathOf(notification: NotificationDto): string {
+  if (notification.decisionId !== null) return `/context/decisions/${notification.decisionId}`;
   if (notification.taskId !== null) return `/tasks/${notification.taskId}`;
   return notification.sessionId ? `/sessions/${notification.sessionId}` : '/';
 }

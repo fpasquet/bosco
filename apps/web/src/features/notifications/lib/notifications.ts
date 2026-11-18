@@ -6,6 +6,7 @@ export type NotificationKind = NotificationDto['kind'];
 export const ASKING: readonly NotificationKind[] = ['permission', 'question', 'turn-question'];
 
 const LABELS: Record<NotificationKind, string> = {
+  decision: 'Décision proposée',
   ended: 'Session terminée',
   failed: 'En échec',
   'long-turn': 'Fin de tour',
@@ -24,15 +25,17 @@ export function kindLabel(notification: Pick<NotificationDto, 'kind' | 'turnMinu
     : label;
 }
 
-/** Où mène une notification : sa session. */
-export function hrefOf(notification: Pick<NotificationDto, 'sessionId'>): string {
+/** Où mène une notification : la décision proposée à valider, ou sa session. */
+export function hrefOf(notification: Pick<NotificationDto, 'decisionId' | 'sessionId'>): string {
+  if (notification.decisionId !== null) return `/context/decisions/${notification.decisionId}`;
   return notification.sessionId ? `/sessions/${encodeURIComponent(notification.sessionId)}` : '/';
 }
 
 /** « À traiter » : ce qui attend encore une réponse ou une relecture. */
 export function toHandle(notifications: readonly NotificationDto[]): NotificationDto[] {
   return notifications.filter(
-    ({ kind, settled }) => settled === null && (ASKING.includes(kind) || kind === 'review' || kind === 'failed'),
+    ({ kind, settled }) =>
+      settled === null && (ASKING.includes(kind) || kind === 'review' || kind === 'failed' || kind === 'decision'),
   );
 }
 

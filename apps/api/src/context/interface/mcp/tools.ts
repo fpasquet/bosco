@@ -83,7 +83,7 @@ const HANDLERS: Record<string, (deps: ToolDeps, args: unknown) => Promise<ToolRe
       consequences: input.consequences ?? null,
       alternatives: input.alternatives ?? null,
     };
-    const decision = await context.propose(project.name, text, null);
+    const decision = await context.propose(project.name, text, trim(input.path));
     return { text: `DEC-${decision.id} proposée : elle attend la validation de la personne dans Bosco.` };
   },
 };

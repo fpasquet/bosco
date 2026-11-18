@@ -112,3 +112,14 @@ Fonctionnalité: Contexte des agents
     Quand j'ouvre la page « /projects/1/context/decisions/1 »
     Alors je vois le texte « Modifier, remplacer ou abandonner une décision se fait depuis le poste. »
     Et la page est accessible
+
+  @CA-CONT-10
+  Scénario: Une décision proposée arrive en notification et nomme la session de son agent, avec un lien vers elle
+    Quand j'ouvre la page « / »
+    Et la session du dossier « maison/packages/recettes » propose la décision « Normaliser les sigles »
+    Et je clique sur le bouton « Notifications : 1 non lues »
+    Alors le tiroir des notifications montre « Décision proposée »
+    Quand je clique sur le bouton « Normaliser les sigles » du tiroir
+    Alors je vois le texte « Proposée par l’agent de la session »
+    Quand je clique sur le lien « Corriger l’indexation des PDF dans Elasticsearch » de la page
+    Alors je suis sur la page « /sessions/5e0a91c3 »

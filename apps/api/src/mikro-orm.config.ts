@@ -34,6 +34,7 @@ import { Migration20261118120000 } from './migrations/Migration20261118120000.ts
 import { Migration20261118130000 } from './migrations/Migration20261118130000.ts';
 import { Migration20261118140000 } from './migrations/Migration20261118140000.ts';
 import { Migration20261118150000 } from './migrations/Migration20261118150000.ts';
+import { Migration20261118160000 } from './migrations/Migration20261118160000.ts';
 import {
   GroupProjectSchema,
   IgnoredFolderSchema,
@@ -85,6 +86,7 @@ export const MIGRATIONS = [
   { name: 'Migration20261118130000', class: Migration20261118130000 },
   { name: 'Migration20261118140000', class: Migration20261118140000 },
   { name: 'Migration20261118150000', class: Migration20261118150000 },
+  { name: 'Migration20261118160000', class: Migration20261118160000 },
 ];
 
 export function ormConfig(dbName: string) {

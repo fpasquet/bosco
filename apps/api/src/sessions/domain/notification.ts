@@ -5,7 +5,7 @@ import { DomainError } from '../../shared/domain/domain-error.ts';
  * question) et ce qui est fini (tâche du worker à relire ou en échec, fin d'un long tour, session terminée).
  */
 export type NotificationKind =
-  'ended' | 'failed' | 'long-turn' | 'permission' | 'question' | 'review' | 'sandbox' | 'turn-question';
+  'decision' | 'ended' | 'failed' | 'long-turn' | 'permission' | 'question' | 'review' | 'sandbox' | 'turn-question';
 
 /** Ce qui attend une réponse : ces notifications passent en priorité haute et restent affichées. */
 export const ASKING: readonly NotificationKind[] = ['permission', 'question', 'turn-question'];
@@ -75,6 +75,8 @@ export type NotificationEvent =
   | { kind: 'ended' | 'failed' | 'permission' | 'question' | 'review' }
   /** Bac à sable supprimé demain avec du travail non récupéré (CA-SESS-115) : toujours notifié */
   | { kind: 'sandbox' }
+  /** Décision proposée par un agent, à valider : toujours notifiée, les réglages n'en ont pas */
+  | { kind: 'decision' }
   | { kind: 'turn'; message: null | string; minutes: null | number };
 
 /**
@@ -83,7 +85,7 @@ export type NotificationEvent =
  * tour a été long, ou toujours selon le réglage. Un tour de durée inconnue (Bosco redémarré) compte comme long.
  */
 export function notificationOf(event: NotificationEvent, settings: NotificationSettings): NotificationKind | null {
-  if (event.kind === 'sandbox') return 'sandbox';
+  if (event.kind === 'sandbox' || event.kind === 'decision') return event.kind;
   if (event.kind !== 'turn') return settings[event.kind] ? event.kind : null;
   if (endsWithQuestion(event.message)) return settings.turnQuestion ? 'turn-question' : null;
   if (settings.turn === 'never') return null;
@@ -94,6 +96,8 @@ export function notificationOf(event: NotificationEvent, settings: NotificationS
 /** Une notification gardée 7 jours dans le centre de notifications (E15a). */
 export interface NotificationRecord {
   at: Date;
+  /** Décision proposée à valider ; elle s'ouvre au clic */
+  decisionId: null | number;
   excerpt: null | string;
   id: number;
   kind: NotificationKind;
@@ -165,6 +169,7 @@ export function shortTitle(title: string, max: number): string {
 
 /** Libellé du type, en tête de la notification (E15a, E15b). */
 export const KIND_LABELS: Record<NotificationKind, string> = {
+  decision: 'Décision proposée',
   ended: 'Session terminée',
   failed: 'En échec',
   'long-turn': 'Fin de tour',

@@ -36,7 +36,7 @@ export class MikroOrmNotificationRepository implements NotificationRepository {
   }
 
   settle(
-    match: { kinds: readonly NotificationKind[]; sessionId?: string; taskId?: number },
+    match: { decisionId?: number; kinds: readonly NotificationKind[]; sessionId?: string; taskId?: number },
     note: string,
   ): Promise<number> {
     return this.orm.em.fork().nativeUpdate(
@@ -46,6 +46,7 @@ export class MikroOrmNotificationRepository implements NotificationRepository {
         kind: { $in: [...match.kinds] },
         ...(match.sessionId !== undefined && { sessionId: match.sessionId }),
         ...(match.taskId !== undefined && { taskId: match.taskId }),
+        ...(match.decisionId !== undefined && { decisionId: match.decisionId }),
       },
       { settled: note },
     );

@@ -2,6 +2,7 @@ import { EntitySchema } from '@mikro-orm/core';
 
 export interface NotificationRow {
   at: Date;
+  decisionId: null | number;
   excerpt: null | string;
   id: number;
   kind: string;
@@ -23,6 +24,7 @@ export const NotificationSchema = new EntitySchema<NotificationRow>({
     kind: { type: 'string' },
     sessionId: { type: 'string', fieldName: 'session_id', nullable: true, index: true },
     taskId: { type: 'integer', fieldName: 'task_id', nullable: true },
+    decisionId: { type: 'integer', fieldName: 'decision_id', nullable: true },
     place: { type: 'string', nullable: true },
     title: { type: 'text' },
     excerpt: { type: 'text', nullable: true },

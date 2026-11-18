@@ -11,6 +11,7 @@ const base = {
   sessionId: 'a',
   settled: null,
   taskId: null,
+  decisionId: null,
   turnMinutes: null,
 };
 

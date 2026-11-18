@@ -19,6 +19,8 @@ export interface DecisionVersionDto extends DecisionTextDto {
   at: string;
   author: string;
   note: string;
+  /** Session dont l'agent a écrit cette version : son titre et le lien vers elle ; absente pour toi */
+  session?: null | { id: string; title: null | string };
 }
 
 export interface DecisionDto {

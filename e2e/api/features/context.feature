@@ -70,6 +70,21 @@ Feature: Context of the agents
     And I send GET request to "/api/context/projects"
     Then the response property "projects" should equal "maison"
 
+  @CA-CONT-10
+  Scenario: A decision proposed by an agent names its session, and arrives as a notification
+    When a Claude Code session in "maison/packages/recettes" proposes the decision "Normaliser les sigles"
+    Then the Bosco tool answers "DEC-1 proposée"
+    When I send GET request to "/api/decisions/1"
+    Then the response property "decision.versions.0.author" should equal "l’agent de la session « Corriger l’indexation des PDF dans Elasticsearch »"
+    And the response property "decision.versions.0.session.id" should equal "5e0a91c3"
+    When I send GET request to "/api/notifications"
+    Then the response property "notifications.0.kind" should equal "decision"
+    And the response property "notifications.0.decisionId" should equal "1"
+    And the response property "notifications.0.sessionId" should equal "5e0a91c3"
+    When I send POST request to "/api/decisions/1/accept"
+    And I send GET request to "/api/notifications"
+    Then the response property "notifications.0.settled" should equal "Acceptée"
+
   Scenario: A session reads the context of the project it works in, and nothing outside of the known ones
     When I send POST request to "/api/decisions" with the JSON "fixtures/context/project-decision.json"
     And a Claude Code session in "maison/packages/recettes" calls the Bosco tool "bosco_context"
