@@ -1,6 +1,7 @@
 'use client';
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ChevronRight, FolderPlus, Monitor } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useState, useSyncExternalStore } from 'react';
 import { PageSkeleton } from '@/shared/components/page-skeleton';
 import { postToAndroidApp, useAndroidApp } from '@/shared/hooks/use-android-app';
@@ -14,13 +15,22 @@ import { channelProfilesQuery, installChannel, uninstallChannel } from '../../ap
 import { installLiveTracking, liveTrackingQuery, uninstallLiveTracking } from '../../api/live-tracking';
 import { sessionsQuery } from '../../api/sessions';
 import { type SettingsDto, settingsQuery, updateSettings } from '../../api/settings';
-import { addSource, FolderRefused, profileFoldersQuery, setSourceWatched, sourcesQuery } from '../../api/sources';
+import {
+  addSource,
+  FolderRefused,
+  profileFoldersQuery,
+  removeSource,
+  setSourceWatched,
+  sourceRemovalQuery,
+  sourcesQuery,
+} from '../../api/sources';
 import { useCopy } from '../../hooks/use-copy';
 import { displayPath } from '../../lib/format';
 import { sandboxActivity } from '../../lib/sources';
 import { AddFolderDialog } from '../add-folder-dialog';
 import { ChannelPanel } from '../channel-panel';
 import { LiveTrackingPanel, type LiveTrackingStep } from '../live-tracking-panel';
+import { RemoveSourceDialog } from '../remove-source-dialog';
 import { SettingsPanel } from '../settings-panel';
 import { ManagedSourceCard, SourceCard } from '../source-card';
 
@@ -140,6 +150,22 @@ export function SourcesScreen() {
       push(`Dossier ajouté : ${source.label} est surveillé.`, 'success');
     },
   });
+  // « Retirer la source » : la confirmation dit ce qui change ; la dernière source retirée ramène au premier lancement
+  const router = useRouter();
+  const [removing, setRemoving] = useState<null | SourceDto>(null);
+  const { data: removal } = useQuery({ ...sourceRemovalQuery(removing?.id ?? ''), enabled: removing !== null });
+  const remove = useMutation({
+    mutationFn: (source: SourceDto) => removeSource(source.id),
+    onSuccess: async (_, source) => {
+      setRemoving(null);
+      // Ses sessions, son usage et ses notifications disparaissent : tout ce qui vient du serveur se relit
+      await client.invalidateQueries();
+      const next = client.getQueryData<{ sources: SourceDto[] }>(sourcesQuery.queryKey);
+      push(`Source retirée : ${APP_NAME} ne lit plus ${source.label}.`, 'success');
+      if (!next?.sources.some(({ managed }) => !managed)) router.push('/');
+    },
+    onError: () => push('La source n’a pas pu être retirée.', 'warning'),
+  });
   const switchSource = useMutation({
     mutationFn: ({ id, watched }: { id: string; watched: boolean }) => setSourceWatched(id, watched),
     onSuccess: refresh,
@@ -205,6 +231,7 @@ export function SourcesScreen() {
                 watched={source.watched}
                 readOnly={phone}
                 onWatchedChange={(watched) => switchSource.mutate({ id: source.id, watched })}
+                onRemove={phone ? undefined : () => setRemoving(source)}
                 lastSignalAt={signal ? new Date(signal) : null}
                 now={now}
                 onOpenLiveTracking={() => {
@@ -218,7 +245,7 @@ export function SourcesScreen() {
       </section>
       <p className="flex items-center gap-3 rounded-card border border-dashed border-line-strong px-3 py-2 text-xs text-muted md:hidden">
         <Monitor aria-hidden className="size-4 shrink-0" />
-        Pour ajouter un dossier, ouvre {APP_NAME} sur le poste.
+        Pour ajouter ou retirer une source, ouvre {APP_NAME} sur le poste.
       </p>
       {settings && (
         <SettingsPanel
@@ -239,6 +266,14 @@ export function SourcesScreen() {
           <ChevronRight aria-hidden className="size-4 text-muted" />
         </button>
       )}
+      <RemoveSourceDialog
+        open={removing !== null}
+        displayPath={removing ? displayPath(removing.path, data.home) : ''}
+        removal={removing && removal?.path === removing.path ? removal : null}
+        busy={remove.isPending}
+        onCancel={() => setRemoving(null)}
+        onConfirm={() => removing && remove.mutate(removing)}
+      />
       <AddFolderDialog
         open={adding}
         listing={folderListing ?? null}

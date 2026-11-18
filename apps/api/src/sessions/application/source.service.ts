@@ -1,14 +1,17 @@
 import type { ProfileCandidate } from '../domain/profile-candidate.ts';
 import type {
   Clock,
+  HistoryPeriodStore,
   IdGenerator,
   ProfileFinder,
   SessionRegistry,
+  SourceRecords,
   SourceRepository,
   TranscriptWatcher,
 } from './ports.ts';
 import type { SessionService } from './session.service.ts';
 import { DomainError } from '../../shared/domain/domain-error.ts';
+import { type HistoryPeriod, historyStart } from '../../shared/domain/history-period.ts';
 import { Source, type SourceSnapshot } from '../domain/source.ts';
 
 export class NotAProfile extends DomainError {
@@ -23,9 +26,6 @@ export class SourceAlreadyKnown extends DomainError {
   }
 }
 
-/** Profils lus au premier lancement : les 30 derniers jours. */
-export const HISTORY_DAYS = 30;
-
 export interface SourcesView {
   /** Dossiers trouvés sur le poste, proposés tant qu'aucun profil n'est choisi (premier lancement) */
   candidates: ProfileCandidate[];
@@ -35,20 +35,38 @@ export interface SourcesView {
   })[];
 }
 
+export interface HistoryView {
+  importing: boolean;
+  /** Sessions plus anciennes que la période, encore dans les profils surveillés, et les profils qui les gardent */
+  older: { profiles: string[]; sessions: number };
+  oldestSessionAt: Date | null;
+  period: HistoryPeriod;
+  sessions: number;
+}
+
 export class SourceService {
+  /** Lecture en cours des transcripts plus anciens, après le passage à tout l'historique */
+  private importing: null | Promise<void> = null;
+  private generation = 0;
+
   constructor(
     private readonly sourceRepository: SourceRepository,
     private readonly profileFinder: ProfileFinder,
     private readonly transcriptWatcher: TranscriptWatcher,
     private readonly idGenerator: IdGenerator,
     private readonly clock: Clock,
+    private readonly history: HistoryPeriodStore,
+    private readonly records: Pick<SourceRecords, 'countSessions'>,
     private readonly registry?: { service: Pick<SessionService, 'refreshSessions'>; sessions: SessionRegistry },
   ) {}
 
   /** Profils déjà choisis, ou, au premier lancement, les dossiers trouvés et leur aperçu, sans rien lire d'autre. */
   async listSources(): Promise<SourcesView> {
     const sources = await this.sourceRepository.list();
-    const candidates = sources.length === 0 ? await this.profileFinder.findCandidates() : [];
+    // Sans profil choisi, la dernière source retirée comprise, Bosco propose de nouveau les profils du poste ; la source
+    // des bacs à sable, tenue par Bosco, ne compte pas
+    const chosen = sources.some(({ managed }) => !managed);
+    const candidates = chosen ? [] : await this.profileFinder.findCandidates();
     return {
       sources: sources.map((source) => ({
         ...source.toSnapshot(),
@@ -58,8 +76,12 @@ export class SourceService {
     };
   }
 
-  /** Premier lancement : retient les profils cochés, garde les autres de côté, puis lit les premiers. */
-  async watchProfiles(paths: string[]): Promise<SourceSnapshot[]> {
+  /**
+   * Premier lancement : retient les profils cochés, garde les autres de côté, puis lit les premiers, sur la période
+   * choisie (les 30 derniers jours, ou tout l'historique).
+   */
+  async watchProfiles(paths: string[], period?: HistoryPeriod): Promise<SourceSnapshot[]> {
+    if (period) await this.history.save(period);
     const candidates = await this.profileFinder.findCandidates();
     const sources = candidates.map((candidate) =>
       Source.choose(this.idGenerator.next(), candidate.path, paths.includes(candidate.path)),
@@ -122,10 +144,74 @@ export class SourceService {
     return known.toSnapshot();
   }
 
+  /**
+   * Historique importé : sa période, les sessions gardées et la plus ancienne, et la lecture des transcripts plus
+   * anciens quand elle est en cours.
+   */
+  async describeHistory(): Promise<HistoryView> {
+    const period = await this.history.load();
+    const { count, oldestAt } = await this.records.countSessions();
+    const older = { profiles: [] as string[], sessions: 0 };
+    if (period !== 'all') {
+      const since = historyStart(period, this.clock.now());
+      const sources = await this.sourceRepository.list();
+      for (const source of sources.filter(({ managed, watched }) => watched && !managed)) {
+        const unread = await this.transcriptWatcher.countUnread(source, since);
+        if (unread === 0) continue;
+        older.sessions += unread;
+        older.profiles.push(source.label);
+      }
+    }
+    return { importing: this.importing !== null, older, oldestSessionAt: oldestAt, period, sessions: count };
+  }
+
+  /**
+   * Période de l'historique : passer à tout l'historique lit en arrière-plan les transcripts plus anciens des profils
+   * surveillés, sans relire ceux déjà lus ; revenir aux 30 derniers jours n'efface rien.
+   */
+  async chooseHistory(period: HistoryPeriod): Promise<void> {
+    await this.history.save(period);
+    if (period !== 'all' || this.importing) return;
+    const sources = await this.sourceRepository.list();
+    const since = historyStart(period, this.clock.now());
+    const generation = this.generation;
+    const importing = (async () => {
+      for (const source of sources.filter(({ watched }) => watched)) {
+        // Une remise à zéro arrête l'import entre deux profils
+        if (generation !== this.generation) return;
+        await this.transcriptWatcher.readSince(source, since);
+      }
+    })();
+    this.importing = importing
+      .catch((error: unknown) => {
+        console.warn(`history import stopped: ${error instanceof Error ? error.message : String(error)}`);
+      })
+      .finally(() => {
+        this.importing = null;
+      });
+  }
+
+  /** Remise à zéro : l'import de l'historique s'arrête après le profil en cours de lecture. */
+  async stopImport(): Promise<void> {
+    this.generation += 1;
+    await this.importing;
+  }
+
+  /** Réinitialisation : l'import s'arrête et plus aucun profil n'est lu ; rien n'est effacé ici. */
+  async stopWatching(): Promise<void> {
+    await this.stopImport();
+    const sources = await this.sourceRepository.list();
+    for (const source of sources) {
+      await this.transcriptWatcher.unwatch(source.id);
+      this.registry?.sessions.unwatch(source.id);
+    }
+  }
+
   /** Au démarrage du service : reprend la lecture des profils surveillés là où elle s'était arrêtée. */
   async resumeWatching(sources?: Source[]): Promise<void> {
     const watched = (sources ?? (await this.sourceRepository.list())).filter((source) => source.watched);
-    const since = new Date(this.clock.now().getTime() - HISTORY_DAYS * 24 * 60 * 60 * 1000);
+    const period = await this.history.load();
+    const since = historyStart(period, this.clock.now());
     for (const source of watched) {
       // Le registre d'abord : les sessions lues ensuite ont déjà leur état ouvert ou terminé
       const registry = this.registry;

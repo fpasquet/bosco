@@ -1,0 +1,12 @@
+{
+  "channel": false,
+  "defaultSubscription": true,
+  "groups": [],
+  "label": "perso",
+  "liveTracking": true,
+  "path": "<profiles>/.claude-perso",
+  "projects": [],
+  "running": 0,
+  "sessions": 1,
+  "subscription": "claude"
+}

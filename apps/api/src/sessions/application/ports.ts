@@ -1,3 +1,4 @@
+import type { HistoryPeriod } from '../../shared/domain/history-period.ts';
 import type { LevelDefaults, SessionDefaults } from '../../shared/domain/session-settings.ts';
 import type { Conversation } from '../domain/conversation.ts';
 import type { ProfileCandidate } from '../domain/profile-candidate.ts';
@@ -38,6 +39,30 @@ export interface TranscriptWatcher {
   /** Arrête la lecture d'un profil ; rien n'est effacé */
   unwatch(sourceId: string): Promise<void>;
   watch(source: Source, since: Date): Promise<void>;
+  /** Source retirée : la lecture s'arrête et ce qui en était gardé en mémoire s'oublie, sans toucher aux fichiers */
+  forget(source: Source): Promise<void>;
+  /** Transcripts du profil modifiés avant cette date et jamais lus */
+  countUnread(source: Source, before: Date): Promise<number>;
+  /** Lit aussi les transcripts depuis une date plus ancienne ; un transcript déjà lu n'est pas relu */
+  readSince(source: Source, since: Date): Promise<void>;
+}
+
+/** Ce que Bosco garde d'une source, oublié quand elle est retirée ; rien n'est effacé dans le dossier du profil. */
+export interface SourceRecords {
+  /** Sessions gardées, d'une source ou de toutes, et la date de début de la plus ancienne */
+  countSessions(sourceId?: string): Promise<{ count: number; oldestAt: Date | null }>;
+  sessionIds(sourceId: string): Promise<string[]>;
+  /**
+   * Efface la source, ses sessions et ce qui s'y rattache (tours, PR, journal, recherche, notifications, sessions
+   * pilotées), les positions de lecture de ses transcripts et ses valeurs par défaut
+   */
+  forget(source: { id: string; path: string }): Promise<void>;
+}
+
+/** Période de l'historique importé, gardée d'un démarrage à l'autre. */
+export interface HistoryPeriodStore {
+  load(): Promise<HistoryPeriod>;
+  save(period: HistoryPeriod): Promise<void>;
 }
 
 export interface SettingsRepository {

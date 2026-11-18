@@ -11,12 +11,12 @@ Fonctionnalité: Réglages
   @CA-REGL-01
   @CA-REGL-04
   @NF-18
-  Scénario: « Réglages » s'ouvre sur les sources, dans cinq onglets, sans l'accès du téléphone
+  Scénario: « Réglages » s'ouvre sur les sources, dans six onglets, sans l'accès du téléphone
     Quand j'ouvre la page « /settings »
     Alors je suis sur la page « /settings/sources »
     Et le fil d’Ariane est « Réglages › Sources »
     Et l’entrée « Réglages » de la barre latérale est active
-    Et les onglets « Onglets des réglages » sont « Sources, Téléphone, Notifications, Abonnement Claude, Bac à sable »
+    Et les onglets « Onglets des réglages » sont « Sources, Téléphone, Notifications, Abonnement Claude, Bac à sable, Données »
     Et je ne vois plus le texte « Accès depuis le téléphone »
     Et la page est accessible
 
@@ -38,10 +38,10 @@ Fonctionnalité: Réglages
   @mobile
   @CA-REGL-05
   @NF-18
-  Scénario: Sur le téléphone, l'onglet Réglages liste les cinq onglets puis les conteneurs, avant les sources
+  Scénario: Sur le téléphone, l'onglet Réglages liste les six onglets puis les conteneurs, avant les sources
     Quand j'ouvre la page « / »
     Et je clique sur le lien « Réglages »
     Alors je suis sur la page « /settings/sources »
-    Et les onglets « Réglages du poste » sont « Sources, Téléphone, Notifications, Abonnement Claude, Bac à sable, Conteneurs en cours »
+    Et les onglets « Réglages du poste » sont « Sources, Téléphone, Notifications, Abonnement Claude, Bac à sable, Données, Conteneurs en cours »
     Et je vois le texte « Seuil d’inactivité »
     Et la page est accessible

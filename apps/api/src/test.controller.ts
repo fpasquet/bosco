@@ -12,6 +12,7 @@ import type { LiveSignalService } from './sessions/application/live-signal.servi
 import type { PilotService } from './sessions/application/pilot.service.ts';
 import type { SessionService } from './sessions/application/session.service.ts';
 import type { SettingsService } from './sessions/application/settings.service.ts';
+import type { SourceService } from './sessions/application/source.service.ts';
 import type { FileTranscriptWatcher } from './sessions/infrastructure/claude-code/transcript-watcher.ts';
 import type { RecordingNotifier } from './sessions/infrastructure/notifications/desktop-notifier.ts';
 import type { PresenceTracker } from './sessions/infrastructure/notifications/presence.ts';
@@ -26,6 +27,7 @@ import {
   PRESENCE,
   SESSION_SERVICE,
   SETTINGS_SERVICE,
+  SOURCE_SERVICE,
   TRANSCRIPT_WATCHER,
 } from './sessions/tokens.ts';
 import { ORM } from './shared/tokens.ts';
@@ -53,6 +55,7 @@ export class TestController {
     @Inject(PILOT_SERVICE) private readonly pilot: PilotService,
     @Inject(SANDBOX_PROBE) private readonly docker: ScriptedSandboxProbe,
     @Inject(CONTAINERS_SERVICE) private readonly containers: ContainersService,
+    @Inject(SOURCE_SERVICE) private readonly sources: SourceService,
   ) {}
 
   /** Simule un Docker qui ne répond plus, ou qui répond de nouveau, à la mesure suivante des conteneurs. */
@@ -85,6 +88,8 @@ export class TestController {
     for (let waited = 0; this.pilot.runningTurns().length > 0 && waited < TURN_SETTLE_MS; waited += 50)
       await new Promise((resolve) => setTimeout(resolve, 50));
     this.pilot.stopAll();
+    // Un import de tout l'historique du scénario précédent s'arrête avant de vider la base
+    await this.sources.stopImport();
     this.docker.reachable = true;
     await this.watcher.close();
     await this.access.disable();

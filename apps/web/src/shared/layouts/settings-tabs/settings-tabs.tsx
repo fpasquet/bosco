@@ -4,15 +4,16 @@ import Link from 'next/link';
 import { Breadcrumbs } from '@/shared/ui/breadcrumbs';
 import { LinkTabs } from '@/shared/ui/link-tabs';
 
-export type SettingsTab = 'notifications' | 'phone' | 'sandbox' | 'sources' | 'subscription';
+export type SettingsTab = 'data' | 'notifications' | 'phone' | 'sandbox' | 'sources' | 'subscription';
 
-/** Les cinq onglets des Réglages, dans l'ordre ; ce qui ne vaut que pour un projet ou un groupe se règle dans sa page. */
+/** Les six onglets des Réglages, dans l'ordre ; ce qui ne vaut que pour un projet ou un groupe se règle dans sa page. */
 export const SETTINGS_TABS: readonly { href: string; key: SettingsTab; label: string }[] = [
   { key: 'sources', href: '/settings/sources', label: 'Sources' },
   { key: 'phone', href: '/settings/phone', label: 'Téléphone' },
   { key: 'notifications', href: '/settings/notifications', label: 'Notifications' },
   { key: 'subscription', href: '/settings/subscription', label: 'Abonnement Claude' },
   { key: 'sandbox', href: '/settings/sandbox', label: 'Bac à sable' },
+  { key: 'data', href: '/settings/data', label: 'Données' },
 ];
 
 /** Racine des Réglages sur le téléphone : l'onglet Sources, dont le contenu suit la liste des onglets. */
@@ -27,7 +28,7 @@ export interface SettingsHeaderProps {
 }
 
 /**
- * En-tête des Réglages : « Réglages › Sources » et les cinq onglets. Sur le téléphone, l'onglet Sources est la
+ * En-tête des Réglages : « Réglages › Sources » et les six onglets. Sur le téléphone, l'onglet Sources est la
  * racine de l'onglet « Réglages » du bas : la liste des onglets, puis « Conteneurs en cours » ; les autres onglets sont
  * des écrans poussés, dont le fil devient le retour.
  */

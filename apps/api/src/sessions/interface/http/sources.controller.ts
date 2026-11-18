@@ -3,7 +3,9 @@ import {
   Body,
   ConflictException,
   Controller,
+  Delete,
   Get,
+  HttpCode,
   Inject,
   NotFoundException,
   Param,
@@ -17,15 +19,22 @@ import { z } from 'zod';
 import type { ProfileSettingsDto } from '@bosco/domain';
 import type { SessionDefaultsChanges } from '../../../shared/domain/session-settings.ts';
 import type { ProfileSettingsView, SessionDefaultsService } from '../../application/session-defaults.service.ts';
+import type { SourceRemoval, SourceRemovalService } from '../../application/source-removal.service.ts';
 import type { SourceService, SourcesView } from '../../application/source.service.ts';
 import { sessionDefaultsSchema } from '../../../shared/interface/http/defaults-schema.ts';
 import { parseBody } from '../../../shared/interface/http/parse-body.ts';
+import { UnknownSource } from '../../application/live-tracking.service.ts';
 import { UnknownProfile } from '../../application/session-defaults.service.ts';
+import { SourceBusy } from '../../application/source-removal.service.ts';
 import { NotAProfile, SourceAlreadyKnown } from '../../application/source.service.ts';
 import { ManagedSource, type SourceSnapshot } from '../../domain/source.ts';
-import { SESSION_DEFAULTS_SERVICE, SOURCE_SERVICE } from '../../tokens.ts';
+import { SESSION_DEFAULTS_SERVICE, SOURCE_REMOVAL_SERVICE, SOURCE_SERVICE } from '../../tokens.ts';
 
-const watchProfilesSchema = z.object({ paths: z.array(z.string().min(1)) });
+const watchProfilesSchema = z.object({
+  paths: z.array(z.string().min(1)),
+  // Premier lancement : les 30 derniers jours (par défaut) ou tout l'historique des profils
+  history: z.enum(['30-days', 'all']).optional(),
+});
 const sourceSchema = z.object({ watched: z.boolean() }).strict();
 const folderSchema = z.object({ path: z.string().trim().min(1) }).strict();
 
@@ -37,6 +46,18 @@ function absolute(path: string): string {
 /** Réglages d'un profil tels que l'interface les lit ; une valeur absente du profil Claude Code reste null. */
 function presentProfile(view: ProfileSettingsView): ProfileSettingsDto {
   return view;
+}
+
+/** Retrait d'une source : inconnue, 404 ; tenue par Bosco ou avec un tour en cours, 409. */
+async function removable<T>(action: () => Promise<T>): Promise<T> {
+  try {
+    return await action();
+  } catch (error) {
+    if (error instanceof UnknownSource) throw new NotFoundException({ code: error.code, message: error.message });
+    if (error instanceof ManagedSource || error instanceof SourceBusy)
+      throw new ConflictException({ code: error.code, message: error.message });
+    throw error;
+  }
 }
 
 /** Un profil inconnu de Bosco répond 404. */
@@ -54,7 +75,21 @@ export class SourcesController {
   constructor(
     @Inject(SOURCE_SERVICE) private readonly sourceService: SourceService,
     @Inject(SESSION_DEFAULTS_SERVICE) private readonly defaults: SessionDefaultsService,
+    @Inject(SOURCE_REMOVAL_SERVICE) private readonly removal: SourceRemovalService,
   ) {}
+
+  /** Ce que retirer la source changerait : sessions oubliées, ce qui est retiré du profil, ce qui l'utilise. */
+  @Get(':id/removal')
+  async previewRemoval(@Param('id') id: string): Promise<SourceRemoval> {
+    return removable(() => this.removal.previewRemoval(id));
+  }
+
+  /** « Retirer la source » : Bosco l'oublie avec ses sessions, sans rien supprimer dans le dossier du profil. */
+  @Delete(':id')
+  @HttpCode(204)
+  async removeSource(@Param('id') id: string): Promise<void> {
+    await removable(() => this.removal.removeSource(id));
+  }
 
   /** Réglages d'un profil : son compte, ses valeurs par défaut et leur origine, ce qui l'utilise. */
   @Get(':id/settings')
@@ -80,8 +115,8 @@ export class SourcesController {
 
   @Post()
   async watchProfiles(@Body() body: unknown): Promise<{ sources: SourceSnapshot[] }> {
-    const { paths } = parseBody(watchProfilesSchema, body);
-    const sources = await this.sourceService.watchProfiles(paths);
+    const { history, paths } = parseBody(watchProfilesSchema, body);
+    const sources = await this.sourceService.watchProfiles(paths, history);
     return { sources };
   }
 

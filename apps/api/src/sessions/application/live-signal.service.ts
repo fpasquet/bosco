@@ -224,6 +224,17 @@ export class LiveSignalService {
   }
 
   /** Oublie les demandes en cours et les derniers signaux (remise à zéro des scénarios). */
+  /** Sessions oubliées (source retirée) : leurs demandes en attente se ferment sans réponse. */
+  forgetSessions(sessionIds: readonly string[]): void {
+    for (const sessionId of sessionIds) {
+      this.pending.get(sessionId)?.resolve(null);
+      this.pending.delete(sessionId);
+      this.questions.get(sessionId)?.resolve(null);
+      this.questions.delete(sessionId);
+      this.turnStarts.delete(sessionId);
+    }
+  }
+
   forget(): void {
     for (const entry of this.pending.values()) entry.resolve(null);
     this.pending.clear();

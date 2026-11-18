@@ -17,6 +17,7 @@ import { PilotService } from './application/pilot.service.ts';
 import { SessionDefaultsService } from './application/session-defaults.service.ts';
 import { SessionService } from './application/session.service.ts';
 import { SettingsService } from './application/settings.service.ts';
+import { SourceRemovalService } from './application/source-removal.service.ts';
 import { SourceService } from './application/source.service.ts';
 import { SuggestionService } from './application/suggestion.service.ts';
 import { UsageBackfillService } from './application/usage-backfill.service.ts';
@@ -36,11 +37,13 @@ import { SessionEventsBus } from './infrastructure/events/session-events.bus.ts'
 import { loadHookSecret } from './infrastructure/hooks/hook-secret.ts';
 import { NotifySendAlerts, RecordingNotifier } from './infrastructure/notifications/desktop-notifier.ts';
 import { PresenceTracker } from './infrastructure/notifications/presence.ts';
+import { MikroOrmHistoryPeriodStore } from './infrastructure/persistence/history-period.store.ts';
 import { MikroOrmNotificationRepository } from './infrastructure/persistence/notification.repository.ts';
 import { MikroOrmPilotRepository } from './infrastructure/persistence/pilot.repository.ts';
 import { MikroOrmProfileDefaultsRepository } from './infrastructure/persistence/profile-defaults.repository.ts';
 import { MikroOrmSessionRepository } from './infrastructure/persistence/session.repository.ts';
 import { MikroOrmSettingsRepository } from './infrastructure/persistence/settings.repository.ts';
+import { MikroOrmSourceRecords } from './infrastructure/persistence/source-records.ts';
 import { MikroOrmSourceRepository } from './infrastructure/persistence/source.repository.ts';
 import { TranscriptCursorStore } from './infrastructure/persistence/transcript-cursor.store.ts';
 import { ChannelController } from './interface/http/channel.controller.ts';
@@ -70,6 +73,7 @@ import {
   SESSION_EVENTS,
   SESSION_SERVICE,
   SETTINGS_SERVICE,
+  SOURCE_REMOVAL_SERVICE,
   SOURCE_SERVICE,
   SUGGESTION_SERVICE,
   TRANSCRIPT_WATCHER,
@@ -284,7 +288,31 @@ const conversations = new FileConversationReader();
           watcher,
           { next: randomUUID },
           clock,
+          new MikroOrmHistoryPeriodStore(orm),
+          new MikroOrmSourceRecords(orm),
           { service: sessionService, sessions: registry },
+        ),
+    },
+    {
+      provide: SOURCE_REMOVAL_SERVICE,
+      inject: [ORM, TRANSCRIPT_WATCHER, LIVE_TRACKING_SERVICE, CHANNEL_INSTALLER, PILOT_SERVICE, LIVE_SIGNAL_SERVICE],
+      useFactory: (
+        orm: MikroORM,
+        watcher: FileTranscriptWatcher,
+        liveTracking: LiveTrackingService,
+        channel: ClaudeChannelInstaller,
+        pilot: PilotService,
+        liveSignals: LiveSignalService,
+      ) =>
+        new SourceRemovalService(
+          new MikroOrmSourceRepository(orm),
+          new MikroOrmSourceRecords(orm),
+          watcher,
+          registry,
+          liveTracking,
+          channel,
+          pilot,
+          liveSignals,
         ),
     },
   ],
@@ -297,6 +325,9 @@ const conversations = new FileConversationReader();
     SETTINGS_SERVICE,
     SESSION_SERVICE,
     SOURCE_SERVICE,
+    SOURCE_REMOVAL_SERVICE,
+    LIVE_TRACKING_SERVICE,
+    CHANNEL_INSTALLER,
     HOOK_SECRET,
     PILOT_SERVICE,
     SESSION_DEFAULTS_SERVICE,

@@ -1,6 +1,9 @@
-import { Box, Radio, RadioTower, SquareTerminal, TriangleAlert } from 'lucide-react';
+import { Box, Ellipsis, Radio, RadioTower, SquareTerminal, Trash2, TriangleAlert } from 'lucide-react';
 import Link from 'next/link';
-import { Button } from '@/shared/ui/button';
+import { DropdownMenu } from 'radix-ui';
+import { cn } from '@/lib/cn';
+import { Button, buttonVariants } from '@/shared/ui/button';
+import { MENU_CONTENT, MENU_ITEM } from '@/shared/ui/menu';
 import { APP_NAME } from '@bosco/domain';
 import { sinceNow } from '../../lib/format';
 
@@ -17,6 +20,8 @@ export interface SourceCardProps {
   manageHref?: string;
   now: Date;
   onOpenLiveTracking: () => void;
+  /** « Retirer la source » du menu ⋯ ; absent (téléphone) : pas de menu */
+  onRemove?: () => void;
   onWatchedChange: (watched: boolean) => void;
   /** Chemin écrit comme dans le terminal (~/.claude-perso) */
   path: string;
@@ -157,6 +162,32 @@ export function SourceCard(props: SourceCardProps) {
         {liveTrackingAction(liveTracking, outdated)}
         {outdated && <span className="sr-only"> le suivi en direct du profil {label}</span>}
       </Button>
+      {props.onRemove && <SourceMenu label={label} onRemove={props.onRemove} />}
     </li>
+  );
+}
+
+/**
+ * Menu ⋯ d'un profil : « Retirer la source », qui demande une confirmation. Contrairement à l'interrupteur, qui met la
+ * lecture en pause, Bosco oublie le dossier et ses sessions.
+ */
+function SourceMenu({ label, onRemove }: { label: string; onRemove: () => void }) {
+  return (
+    <DropdownMenu.Root modal={false}>
+      <DropdownMenu.Trigger
+        aria-label={`Plus d’actions sur ${label}`}
+        className={cn(buttonVariants({ variant: 'ghost', size: 'icon' }), 'shrink-0 text-muted max-md:hidden')}
+      >
+        <Ellipsis aria-hidden className="size-4" />
+      </DropdownMenu.Trigger>
+      <DropdownMenu.Portal>
+        <DropdownMenu.Content align="end" sideOffset={4} collisionPadding={8} className={MENU_CONTENT}>
+          <DropdownMenu.Item className={cn(MENU_ITEM, 'text-danger')} onSelect={onRemove}>
+            <Trash2 aria-hidden className="size-4" />
+            Retirer la source…
+          </DropdownMenu.Item>
+        </DropdownMenu.Content>
+      </DropdownMenu.Portal>
+    </DropdownMenu.Root>
   );
 }

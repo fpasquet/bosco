@@ -1,0 +1,27 @@
+{
+  "database": {
+    "bytes": "<masked>",
+    "dataDir": "<masked>"
+  },
+  "history": {
+    "importing": false,
+    "older": {
+      "profiles": [
+        "perso"
+      ],
+      "sessions": 1
+    },
+    "oldestSessionAt": "<masked>",
+    "period": "30-days",
+    "sessions": 1
+  },
+  "reset": {
+    "branches": [],
+    "profiles": [],
+    "sources": 1,
+    "groups": 0,
+    "projects": 2,
+    "sessions": 1
+  },
+  "home": "<masked>"
+}

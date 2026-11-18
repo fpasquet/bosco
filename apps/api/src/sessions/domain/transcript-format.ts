@@ -41,8 +41,14 @@ export class TranscriptFormats {
     return this.outdated.has(sourceId);
   }
 
-  forget(): void {
-    this.inARow.clear();
-    this.outdated.clear();
+  /** Oublie le jugement d'une source (retirée), ou de toutes. */
+  forget(sourceId?: string): void {
+    if (sourceId === undefined) {
+      this.inARow.clear();
+      this.outdated.clear();
+      return;
+    }
+    this.inARow.delete(sourceId);
+    this.outdated.delete(sourceId);
   }
 }

@@ -1,6 +1,6 @@
 import { expect } from '@playwright/test';
 // Phrases des profils de Claude Code, écrits dans le dossier du scénario comme le fait Claude Code.
-import { copyFileSync, mkdirSync, writeFileSync } from 'node:fs';
+import { copyFileSync, mkdirSync, utimesSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { TRANSCRIPTS } from '../../shared/transcripts.ts';
 import { Given } from './fixtures.ts';
@@ -11,6 +11,13 @@ Given(
     transcripts.set(sessionId, bosco.writeProfileTranscript(profile, join(TRANSCRIPTS, transcript), sessionId));
   },
 );
+
+Given('le transcript de la session {texte} date de {int} jours', ({ transcripts }, sessionId: string, days: number) => {
+  const file = transcripts.get(sessionId);
+  if (!file) throw new Error(`No transcript written for the session ${sessionId}`);
+  const at = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+  utimesSync(file, at, at);
+});
 
 Given(
   'une nouvelle version de Claude Code écrit les sessions du profil {texte} dans un format inconnu',

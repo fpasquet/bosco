@@ -2,11 +2,18 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Check, History, Radar, SquareTerminal } from 'lucide-react';
 import { useState } from 'react';
-import type { ProfileCandidateDto } from '@bosco/domain';
+import type { HistoryPeriodDto, ProfileCandidateDto } from '@bosco/domain';
 import { Button } from '@/shared/ui/button';
+import { Segmented } from '@/shared/ui/segmented';
 import { APP_NAME } from '@bosco/domain';
 import { sourcesQuery, watchProfiles } from '../../api/sources';
 import { displayPath, projects, sinceNow } from '../../lib/format';
+
+/** Sessions passées importées : les 30 derniers jours d'office, ou tout ce que gardent les profils cochés. */
+const HISTORY_OPTIONS = [
+  { value: '30-days', label: 'les 30 derniers jours' },
+  { value: 'all', label: 'tout l’historique' },
+] as const;
 
 interface ProfileChoiceProps {
   candidates: ProfileCandidateDto[];
@@ -20,8 +27,9 @@ interface ProfileChoiceProps {
 export function ProfileChoice({ candidates, home }: ProfileChoiceProps) {
   const queryClient = useQueryClient();
   const [selected, setSelected] = useState(() => new Set(candidates.map((candidate) => candidate.path)));
+  const [history, setHistory] = useState<HistoryPeriodDto>('30-days');
   const watch = useMutation({
-    mutationFn: () => watchProfiles([...selected]),
+    mutationFn: () => watchProfiles([...selected], history),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: sourcesQuery.queryKey }),
   });
   const now = new Date();
@@ -77,10 +85,19 @@ export function ProfileChoice({ candidates, home }: ProfileChoiceProps) {
           );
         })}
       </ul>
-      <p className="flex items-center gap-2 px-6 pt-4 text-xs text-muted">
-        <History aria-hidden className="size-3.5 shrink-0" />
-        Les sessions des 30 derniers jours sont importées dans l’historique.
-      </p>
+      <div className="flex flex-col gap-1.5 px-6 pt-4 text-xs text-muted md:flex-row md:items-center md:gap-3">
+        <p className="flex items-center gap-2">
+          <History aria-hidden className="size-3.5 shrink-0" />
+          Importer dans l’historique
+        </p>
+        <Segmented
+          label="Importer dans l’historique"
+          value={history}
+          onChange={setHistory}
+          options={HISTORY_OPTIONS}
+          className="max-md:w-full max-md:*:flex-1"
+        />
+      </div>
       <div className="flex items-center gap-3 px-6 pt-4 pb-6">
         <Button disabled={watch.isPending} onClick={() => watch.mutate()}>
           <Check aria-hidden className="size-4" />

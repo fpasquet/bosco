@@ -1,6 +1,6 @@
 // Phrases Claude Code : des profils et des transcripts écrits comme le fait Claude Code, dans le dossier du scénario.
 import { expect } from '@playwright/test';
-import { copyFileSync, mkdirSync, rmSync, utimesSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, rmSync, utimesSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { TRANSCRIPTS } from '../../shared/transcripts.ts';
 
@@ -67,4 +67,19 @@ Then('Bosco should not read the session {string}', async ({ bosco }, sessionId: 
   await new Promise((resolve) => setTimeout(resolve, NOT_READ_MS));
   const response = await fetch(`${bosco.url}/api/sessions/${sessionId}`);
   expect(response.status).toBe(404);
+});
+
+/** Délai laissé à une lecture en arrière-plan (tout l'historique) pour atteindre une session. */
+const READ_MS = 10_000;
+
+Then('Bosco should read the session {string}', async ({ bosco }, sessionId: string) => {
+  await expect
+    .poll(async () => (await fetch(`${bosco.url}/api/sessions/${sessionId}`)).status, { timeout: READ_MS })
+    .toBe(200);
+});
+
+Then('the transcript of the session {string} should still be in its profile', ({}, sessionId: string) => {
+  const file = written.get(sessionId);
+  if (!file) throw new Error(`No transcript written for the session ${sessionId}`);
+  expect(existsSync(file)).toBe(true);
 });

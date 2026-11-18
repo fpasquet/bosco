@@ -29,3 +29,12 @@ Fonctionnalité: Premier lancement
     Quand j'ouvre la page « / »
     Et je clique sur le bouton « Plus tard »
     Alors je finis par ne plus voir le bouton « Plus tard »
+
+  @CA-SESS-187
+  Scénario: Tout l'historique choisi au premier lancement devient la période importée
+    Quand j'ouvre la page « / »
+    Et je clique sur le bouton « tout l’historique »
+    Et je clique sur le bouton « Surveiller ces profils »
+    Et je finis par ne plus voir le bouton « Surveiller ces profils »
+    Et j'ouvre la page « /settings/data »
+    Alors le bouton « Tout l’historique » est enfoncé

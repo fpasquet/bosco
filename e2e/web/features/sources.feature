@@ -33,7 +33,7 @@ Fonctionnalité: Sources et réglages
     Alors l’interrupteur « Lire le profil perso » n’est pas modifiable
     Et je vois le texte « 15 min »
     Et je vois le texte « Le suivi en direct s’installe depuis le poste »
-    Et je vois le texte « Pour ajouter un dossier, ouvre Bosco sur le poste. »
+    Et je vois le texte « Pour ajouter ou retirer une source, ouvre Bosco sur le poste. »
     Et je ne vois pas le bouton « Ajouter un dossier »
 
   @RF-SESS-01
@@ -76,3 +76,31 @@ Fonctionnalité: Sources et réglages
     Et je clique sur le bouton « Vérifier le suivi en direct » de la source « perso »
     Alors je vois le titre « Suivi en direct · perso »
     Et je vois le texte « Signal reçu d’une session ouverte »
+
+  @CA-REGL-24
+  @CA-REGL-25
+  @NF-18
+  Scénario: Le menu ⋯ d'un profil ouvre la confirmation du retrait, et « Annuler » ne change rien
+    Quand j'ouvre la page « /settings/sources »
+    Et je clique sur le bouton « Plus d’actions sur perso »
+    Et je clique sur l’élément de menu « Retirer la source… »
+    Alors je vois le titre « Retirer la source perso ? »
+    Et je vois le texte « Bosco arrête de lire ce dossier et oublie sa session »
+    Et la page est accessible
+    Quand je clique sur le bouton « Annuler » de la confirmation
+    Alors l’interrupteur « Lire le profil perso » est « activé »
+
+  @CA-REGL-25
+  Scénario: Une source retirée disparaît de la liste
+    Quand j'ouvre la page « /settings/sources »
+    Et je clique sur le bouton « Plus d’actions sur perso »
+    Et je clique sur l’élément de menu « Retirer la source… »
+    Et je clique sur le bouton « Retirer la source » de la confirmation
+    Alors je vois le texte « Source retirée : Bosco ne lit plus perso. »
+    Et je ne vois pas l’interrupteur « Lire le profil perso »
+
+  @mobile
+  @CA-REGL-24
+  Scénario: Sur le téléphone, une source ne se retire pas
+    Quand j'ouvre la page « /settings/sources »
+    Alors je ne vois pas le bouton « Plus d’actions sur perso »

@@ -4,20 +4,23 @@
 
 ## <a id="regles-fonctionnelles-du-lot"></a>Règles fonctionnelles du lot
 
-- **RF-REGL-01** · **Un seul endroit** : les réglages globaux de Bosco sont réunis sous « Réglages », en bas de la barre latérale, en cinq onglets : Sources, Téléphone, Notifications, Abonnement Claude, Bac à sable. Ce qui ne concerne qu'un projet ou un groupe se règle dans sa page, jamais ici.
+- **RF-REGL-01** · **Un seul endroit** : les réglages globaux de Bosco sont réunis sous « Réglages », en bas de la barre latérale, en six onglets : Sources, Téléphone, Notifications, Abonnement Claude, Bac à sable, Données. Ce qui ne concerne qu'un projet ou un groupe se règle dans sa page, jamais ici.
 - **RF-REGL-02** · **Réservés à toi** : les réglages sont réservés à toi et valent tout de suite ; sur le téléphone ils se lisent seulement, sauf ce que chaque écran permet (règle 7 du lot 1).
 - **RF-REGL-03** · **Réglages d'un profil** : chaque profil surveillé règle dans Bosco les autorisations, le modèle et l'effort par défaut des sessions qu'on y lance avec lui ([E4g](#e4g)). Sans réglage, la valeur est celle du profil Claude Code, affichée avec son origine ; Bosco garde ces réglages sans modifier le profil. Ils cèdent à ceux du projet, du groupe et de la session (règle 16 du lot 1).
+- **RF-REGL-04** · **Retirer une source** : « Retirer la source », dans le menu ⋯ de la ligne d'un profil ([E4h](#e4h)), arrête sa lecture et fait oublier à Bosco ses sessions (historique, usage, notifications) et ses réglages ; ce que Bosco avait installé dans le profil en est retiré, réglages d'avant remis. Les groupes et les sessions en bac à sable qui l'utilisaient reprennent l'abonnement par défaut. Rien n'est supprimé dans le dossier de Claude Code, et le profil se rajoute avec « Ajouter un dossier ». Impossible tant qu'un tour d'une session de ce profil tourne, pour la source « Bacs à sable » et depuis le téléphone.
+- **RF-REGL-05** · **Historique importé** : Bosco importe les sessions des 30 derniers jours des profils surveillés, ou tout leur historique encore présent sur le poste, au choix, au premier lancement ([E1a](sessions.md#e1a)) ou dans l'onglet Données ([E4i](#e4i)). Le choix vaut pour tous les profils, ceux ajoutés ensuite et chaque redémarrage ; passer à tout l'historique lit les sessions plus anciennes en arrière-plan, revenir aux 30 jours garde ce qui est déjà importé.
+- **RF-REGL-06** · **Réinitialiser Bosco** : depuis l'onglet Données, après avoir écrit « RÉINITIALISER » ([E4j](#e4j)), Bosco efface tout ce qu'il a gardé (sources, projets et groupes, sessions lues et pilotées, usage, notifications, contexte, téléphones appairés, réglages), retire de chaque profil ce qu'il y avait installé, arrête les bacs à sable et supprime leurs copies, puis revient au premier lancement. Les dossiers et les sessions de Claude Code ne sont jamais touchés ; une branche de bac à sable pas encore récupérée est signalée avant. Réservé au poste.
 
-## <a id="e4"></a>E4 · Sources et téléphone
+## <a id="e4"></a>E4 · Sources, téléphone et données
 
-[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `reglages/e4.html` · implémentation : **Livré (Développé (jusqu'à feat/finish-sandbox-and-sources) : onglets Sources et Téléphone, « Gérer » d'un profil (E4g), source « Bacs à sable » à part, lecture seule sur le téléphone (garde de l'API comprise), « Ajouter un dossier » par le navigateur de dossiers (dossiers cachés visibles), « À mettre à jour » quand le suivi en direct vient d'une autre version de Bosco ou que 3 transcripts de suite sont illisibles (état gardé jusqu'au redémarrage), serveur MCP installé et retiré avec le suivi en direct.)**
+[specs](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1) · `reglages/e4.html` · implémentation : **Livré (Développé (feat/data-management, fpasquet/bosco#63) : menu ⋯ « Retirer la source » (E4h), sixième onglet Données (E4i) avec période importée, taille du dossier de données et réinitialisation (E4j), lecture seule sur le téléphone.)**
 
 ### <a id="e4a"></a>E4a · Sources : profils surveillés et réglages
 
 Premier onglet des Réglages : les dossiers que Bosco lit, le suivi en direct, le canal de Bosco et le seuil d'inactivité. L'accès depuis le téléphone a son propre onglet (E4c). Chaque source montre si le suivi en direct est installé et quand le dernier signal est arrivé : c'est ici qu'on voit d'un coup d'œil que tout est branché.
 
 - **Depuis** « Réglages » en bas de la barre latérale (onglet Sources par défaut) · [E1a](sessions.md#e1a) après « Surveiller ces profils » · la ligne d'état des sources, en pied de la barre latérale
-- **Ensuite** [E4b](#e4b) au clic sur « Vérifier le suivi en direct » · [E4c](#e4c) l'onglet Téléphone · [E1b](sessions.md#e1b) en revenant à la vue d'ensemble
+- **Ensuite** [E4b](#e4b) au clic sur « Vérifier le suivi en direct » · [E4h](#e4h) avec « Retirer la source » du menu ⋯ · [E4i](#e4i) l'onglet Données · [E4c](#e4c) l'onglet Téléphone · [E1b](sessions.md#e1b) en revenant à la vue d'ensemble
 
 Règles de l'écran :
 
@@ -29,11 +32,12 @@ Règles de l'écran :
 6. « Ajouter un dossier » ajoute une source : un autre dossier de configuration de Claude Code, à surveiller comme un profil. Il n'existe que sur le poste : sur le téléphone, la liste renvoie à l'ordinateur (pastille 6 du mobile).
 7. Bosco garde sa propre copie des sessions : Claude Code efface ses fichiers après 30 jours par défaut, mais l'historique reste lisible dans Bosco. Une session effacée par Claude Code ne se reprend plus (règle 10).
 8. Le canal de Bosco, lui aussi installé profil par profil, permet d'écrire depuis Bosco à une session ouverte dans un terminal. « Installer » ouvre [E4f](#e4f).
-9. Sur le téléphone, « Réglages » est un onglet de la barre du bas, dont cet écran est la racine : la liste des cinq onglets des Réglages (Sources, Téléphone, Notifications, Abonnement Claude, Bac à sable) puis « Conteneurs en cours » ([E19a](#e19a)), chacun ouvrant son écran en lecture seule. Le contenu de Sources suit la liste. Les projets et les groupes ont leur propre onglet « Projets » ([E20a](contexte.md#e20a)).
+9. Sur le téléphone, « Réglages » est un onglet de la barre du bas, dont cet écran est la racine : la liste des six onglets des Réglages (Sources, Téléphone, Notifications, Abonnement Claude, Bac à sable, Données) puis « Conteneurs en cours » ([E19a](#e19a)), chacun ouvrant son écran en lecture seule. Le contenu de Sources suit la liste. Les projets et les groupes ont leur propre onglet « Projets » ([E20a](contexte.md#e20a)).
 10. La source « Bacs à sable » est tenue par Bosco : il l'ajoute au premier bac à sable et elle porte le fil des sessions en bac à sable. La désactiver les ferait disparaître, d'où l'absence d'interrupteur et de « Gérer ». Elle n'a ni suivi en direct à installer ni canal : c'est Bosco qui lance ces sessions, d'où « Piloté par Bosco ».
 11. « Gérer » sur la ligne d'un profil (pro, perso) ouvre ses réglages ([E4g](#e4g)) : compte, autorisations, modèle et effort par défaut des sessions. La ligne « Bacs à sable » n'a pas de « Gérer » : Bosco la tient lui-même.
+12. « ⋯ » sur la ligne d'un profil ouvre « Plus d'actions », dont « Retirer la source » (en rouge), qui ouvre la confirmation [E4h](#e4h) (règle 4 du lot). Contrairement à l'interrupteur, qui met la lecture en pause, retirer une source fait oublier à Bosco le dossier et ses sessions. La ligne « Bacs à sable » n'a pas ce menu, et le téléphone non plus.
 
-**Mobile** : racine de l'onglet « Réglages » du téléphone (pastille 9). Les sources deviennent des cartes, les réglages une liste d'options à ouvrir, en lecture seule (règle 2 du lot). L'ajout d'un dossier n'existe que sur le poste, avec un renvoi explicite à l'ordinateur (pastille 6) ; l'appairage d'un téléphone se déclenche aussi depuis le poste.
+**Mobile** : racine de l'onglet « Réglages » du téléphone (pastille 9). Les sources deviennent des cartes, les réglages une liste d'options à ouvrir, en lecture seule (règle 2 du lot). L'ajout d'un dossier n'existe que sur le poste, avec un renvoi explicite à l'ordinateur (pastille 6) ; l'appairage d'un téléphone et le retrait d'une source se font aussi depuis le poste.
 
 ### <a id="e4b"></a>E4b · Sources : installation du suivi en direct
 
@@ -105,6 +109,61 @@ Règles de l'écran :
 6. Sur le téléphone, écran poussé en lecture seule depuis la ligne du profil : les valeurs et leur origine s'affichent, sans sélecteur ni bouton ; le renvoi dit « Modifiable depuis le poste ».
 
 **Mobile** : écran poussé en lecture seule (pastille 6) ; les modifications se font depuis le poste.
+
+### <a id="e4h"></a>E4h · Sources : retirer une source
+
+La confirmation avant de retirer un profil des sources. Contrairement à l'interrupteur, qui met la lecture en pause, Bosco oublie le dossier et ses sessions, et retire du profil ce qu'il y avait installé. Rien n'est supprimé dans le dossier de Claude Code.
+
+- **Depuis** [E4a](#e4a) avec « Retirer la source » du menu ⋯ de la ligne d'un profil
+- **Ensuite** [E4a](#e4a) sans la source, après « Retirer la source » ou « Annuler » · [E1a](sessions.md#e1a) si c'était la dernière source surveillée
+
+Règles de l'écran :
+
+1. Retirer une source arrête sa lecture et fait oublier à Bosco ses sessions : historique, usage, notifications (règle 4 du lot). C'est ce qui la distingue de l'interrupteur d'[E4a](#e4a), qui met la lecture en pause en gardant tout. Le nombre de sessions est celui que Bosco a lues dans ce profil.
+2. Ce que Bosco a installé dans le profil en est retiré, comme avec « Désinstaller » ([E4b](#e4b), [E4f](#e4f)) : suivi en direct, canal et serveur de Bosco, avec les réglages d'avant remis. La ligne n'apparaît que si quelque chose était installé.
+3. Les groupes dont ce profil était le profil par défaut ([E22a](contexte.md#e22a)) reprennent l'abonnement par défaut de Bosco ([E11c](#e11c)), comme les sessions en bac à sable qui l'utilisaient. Si c'était l'abonnement par défaut, le profil surveillé suivant le devient, et la ligne le dit. Ses réglages ([E4g](#e4g)) sont oubliés.
+4. Rien n'est supprimé sur le poste : Bosco ne modifie jamais les sessions de Claude Code (règle 1 du lot 1). « Ajouter un dossier » rajoute le profil, et son historique est relu selon la période choisie dans l'onglet Données ([E4i](#e4i)).
+5. Une session de ce profil dont un tour tourne dans Bosco empêche de le retirer : le bouton est grisé et une ligne dit « Une session de ce profil tourne : arrête-la d'abord ». Il n'y en a pas dans cet exemple. Après le retrait, la liste d'[E4a](#e4a) s'affiche sans la source ; si c'était la dernière, Bosco revient au premier lancement ([E1a](sessions.md#e1a)).
+6. Sur le téléphone, les sources se lisent seulement : pas de menu ⋯ ni de retrait, le renvoi dit « Modifiable depuis le poste ».
+
+**Mobile** : pas de retrait depuis le téléphone (règle 2 du lot) : la maquette est la liste des sources en lecture seule, sans menu ⋯.
+
+### <a id="e4i"></a>E4i · Données : historique importé et réinitialisation
+
+Sixième onglet des Réglages : ce que Bosco garde de tes sessions et où. On y choisit la période importée depuis les profils (les 30 derniers jours, ou tout l'historique encore présent sur le poste), et on y trouve la réinitialisation de Bosco, qui efface tout ce que Bosco a gardé sans toucher à Claude Code.
+
+- **Depuis** l'onglet « Données » des Réglages · la ligne « Données » de la racine des Réglages du téléphone
+- **Ensuite** [E4j](#e4j) avec « Réinitialiser Bosco… » · [E1e](sessions.md#e1e) (bandeau d'import) après « Tout l'historique »
+
+Règles de l'écran :
+
+1. « Données » est le sixième onglet des Réglages, après « Bac à sable », avec le fil d'Ariane « Réglages › Données » (règle 1 du lot).
+2. La période importée vaut pour tous les profils surveillés : « 30 derniers jours » par défaut, ou « Tout l'historique », choisi aussi au premier lancement ([E1a](sessions.md#e1a)). Elle vaut tout de suite, pour les profils ajoutés ensuite et à chaque redémarrage (règle 5 du lot).
+3. Le nombre de sessions importées et la date de la plus ancienne disent ce que Bosco a déjà lu ; la ligne suivante, ce que « Tout l'historique » ajouterait : les sessions plus anciennes encore présentes dans les profils (Claude Code efface les siennes après 30 jours par défaut, règle 10 du lot 1).
+4. Passer à « Tout l'historique » lit en arrière-plan les sessions plus anciennes, les plus récentes d'abord : elles rejoignent l'historique et l'usage au fil de la lecture, avec le bandeau d'import ([E1e](sessions.md#e1e)). Revenir à « 30 derniers jours » garde ce qui est déjà importé : seules les lectures suivantes s'en tiennent aux 30 derniers jours.
+5. La base de Bosco : son dossier, écrit comme dans le terminal, et sa taille, bacs à sable compris. Bosco garde sa propre copie des sessions qu'il a lues.
+6. « Réinitialiser Bosco… » ouvre la confirmation [E4j](#e4j) (règle 6 du lot). La carte dit, avant tout clic, ce qui est effacé, ce qui est retiré des profils et ce qui reste : les dossiers et les sessions de Claude Code ne sont jamais touchés.
+7. Sur le téléphone, écran poussé en lecture seule : la période, le nombre de sessions, la plus ancienne et la base. Ni choix de la période ni réinitialisation : « Modifiable depuis le poste ».
+
+**Mobile** : écran poussé en lecture seule (pastille 7), sans la carte « Réinitialiser Bosco ».
+
+### <a id="e4j"></a>E4j · Données : réinitialiser Bosco
+
+La confirmation avant de tout effacer. Elle chiffre ce qui part, prévient de ce qui serait perdu (une branche de bac à sable pas encore récupérée) et demande d'écrire un mot pour confirmer : l'action ne se défait pas.
+
+- **Depuis** [E4i](#e4i) avec « Réinitialiser Bosco… »
+- **Ensuite** [E1a](sessions.md#e1a) (premier lancement) après « Tout effacer » · [E4i](#e4i) avec « Annuler »
+
+Règles de l'écran :
+
+1. Tout ce que Bosco a gardé est effacé, chiffré pour qu'on sache ce qui part : sources, projets et groupes, sessions lues et leur usage, sessions pilotées, notifications, contexte des projets, téléphones appairés et réglages (règle 6 du lot).
+2. Ce que Bosco a installé dans chaque profil en est retiré, comme avec « Désinstaller » ([E4b](#e4b), [E4f](#e4f)), réglages d'avant remis : un profil ne garde rien qui pointe vers un Bosco vidé. La ligne nomme les profils concernés.
+3. Les bacs à sable sont arrêtés et leurs copies supprimées. Une branche pas encore récupérée ([E2j](sessions.md#e2j)) serait perdue : l'avertissement la nomme, et n'apparaît que s'il y en a une.
+4. Pour confirmer, on écrit « RÉINITIALISER » (sans tenir compte des majuscules ni des accents) : un clic de trop ne suffit pas à tout effacer.
+5. « Tout effacer » reste grisé tant que le mot n'est pas écrit. Une session dont un tour tourne dans Bosco est arrêtée avant l'effacement. Ensuite, Bosco s'ouvre sur le premier lancement ([E1a](sessions.md#e1a)), qui propose de nouveau les profils trouvés sur le poste.
+6. Pas de réinitialisation depuis le téléphone. Comme les téléphones appairés sont effacés, un téléphone perd son accès après une réinitialisation et revient à l'appairage ([E18a](apps.md#e18a)).
+
+**Mobile** : la réinitialisation n'existe que sur le poste (pastille 6) : l'onglet Données du téléphone se lit seulement.
 
 ## <a id="e11"></a>E11 · Bac à sable et abonnement
 
@@ -182,13 +241,13 @@ Règles de l'écran :
 
 ## <a id="criteres-dacceptation"></a>Critères d'acceptation
 
-### <a id="e4-sources-et-telephone"></a>E4 · Sources et téléphone
+### <a id="e4-sources-telephone-et-donnees"></a>E4 · Sources, téléphone et données
 
-- **CA-REGL-01** · [E4a](#e4a) · Étant donné « Réglages » en bas de la barre latérale, quand la personne l'ouvre, alors la page s'ouvre sur l'onglet Sources et propose cinq onglets, dans l'ordre : Sources, Téléphone, Notifications, Abonnement Claude, Bac à sable, avec le fil d'Ariane « Réglages › Sources » et « Réglages » actif dans la barre latérale (RF-REGL-01, RF-SESS-15).
-- **CA-REGL-02** · [E4a](#e4a) · Étant donné un réglage qui ne concerne qu'un projet ou un groupe (abonnement par défaut du groupe, instructions, domaines du projet, « Où elle tourne »), quand la personne cherche où le régler, alors il se trouve dans la page du projet ou du groupe et jamais dans les cinq onglets de « Réglages » (RF-REGL-01).
+- **CA-REGL-01** · [E4a](#e4a) · Étant donné « Réglages » en bas de la barre latérale, quand la personne l'ouvre, alors la page s'ouvre sur l'onglet Sources et propose six onglets, dans l'ordre : Sources, Téléphone, Notifications, Abonnement Claude, Bac à sable, Données, avec le fil d'Ariane « Réglages › Sources » et « Réglages » actif dans la barre latérale (RF-REGL-01, RF-SESS-15).
+- **CA-REGL-02** · [E4a](#e4a) · Étant donné un réglage qui ne concerne qu'un projet ou un groupe (abonnement par défaut du groupe, instructions, domaines du projet, « Où elle tourne »), quand la personne cherche où le régler, alors il se trouve dans la page du projet ou du groupe et jamais dans les six onglets de « Réglages » (RF-REGL-01).
 - **CA-REGL-03** · [E4a](#e4a) · Étant donné un réglage modifié sur le poste, quand la personne l'enregistre ou le change, alors il vaut tout de suite, et aucune session ni aucun agent ne peut le modifier (RF-REGL-02, RF-CONT-09).
 - **CA-REGL-04** · [E4a](#e4a) · Étant donné l'onglet Sources, quand la personne le lit, alors l'accès depuis le téléphone n'y est plus réglé et se trouve dans l'onglet « Téléphone », celui des notifications ayant aussi son propre onglet ([E4c](#e4c), [E15b](sessions.md#e15b)) (RF-REGL-01).
-- **CA-REGL-05** · [E4a](#e4a) · Étant donné le téléphone, quand la personne touche l'onglet « Réglages » de la barre du bas, alors la racine liste les cinq onglets (Sources, Téléphone, Notifications, Abonnement Claude, Bac à sable) puis « Conteneurs en cours » ([E19a](#e19a)), chacun ouvrant son écran en lecture seule, le contenu de Sources suivant la liste, et les projets et les groupes ayant leur propre onglet « Projets » (RF-REGL-02, RF-SESS-07).
+- **CA-REGL-05** · [E4a](#e4a) · Étant donné le téléphone, quand la personne touche l'onglet « Réglages » de la barre du bas, alors la racine liste les six onglets (Sources, Téléphone, Notifications, Abonnement Claude, Bac à sable, Données) puis « Conteneurs en cours » ([E19a](#e19a)), chacun ouvrant son écran en lecture seule, le contenu de Sources suivant la liste, et les projets et les groupes ayant leur propre onglet « Projets » (RF-REGL-02, RF-SESS-07).
 - **CA-REGL-06** · [E4a](#e4a) · Étant donné le téléphone, quand la personne regarde les sources, alors elles sont des cartes en lecture seule, l'ajout d'un dossier et l'installation du suivi en direct renvoient à l'ordinateur et l'appairage d'un téléphone se déclenche depuis le poste (RF-REGL-02).
 - **CA-REGL-07** · [E4c](#e4c) · Étant donné l'onglet « Téléphone » des Réglages, quand la personne l'ouvre, alors il montre l'interrupteur « Accès depuis le téléphone », l'adresse et la liste des téléphones appairés (aucun au départ), « Appairer un téléphone » ouvrant la fenêtre au-dessus de l'onglet, avec le fil d'Ariane « Réglages › Téléphone » (RF-SESS-07, RF-SESS-15).
 - **CA-SESS-56** · [E4a](#e4a) · Étant donné une source, quand la personne désactive son interrupteur, alors la lecture de ce dossier s'arrête, rien n'est effacé et les sessions déjà lues restent dans l'historique (RF-SESS-01).
@@ -230,6 +289,23 @@ Règles de l'écran :
 - **CA-REGL-20** · [E4g](#e4g) · Étant donné une session lancée dans Bosco, quand ses autorisations, son modèle ou son effort sont lus, alors le choix de la session l'emporte sur le groupe choisi, puis sur le projet principal, puis sur ces réglages du profil, puis sur ce que dit le profil Claude Code, et chaque champ et chaque puce disent d'où vient leur valeur (« défaut du profil pro ») (RF-REGL-03, RF-SESS-16).
 - **CA-REGL-21** · [E4g](#e4g) · Étant donné « Utilisé par », quand la personne le lit, alors il liste les groupes dont ce profil est le profil par défaut et le nombre de sessions ouvertes, et enregistrer ne change pas ces sessions ouvertes : les réglages valent pour les suivantes (RF-REGL-03).
 - **CA-REGL-22** · [E4g](#e4g) · Étant donné le téléphone, quand la personne ouvre un profil depuis sa ligne, alors l'écran est poussé en lecture seule, avec les valeurs et leur origine, sans sélecteur ni bouton, et la mention « Modifiable depuis le poste » (RF-REGL-02, RF-REGL-03).
+
+### <a id="e4h-retirer-une-source"></a>E4h · Retirer une source
+
+- **CA-REGL-24** · [E4h](#e4h) · Étant donné la ligne d'un profil de l'onglet Sources sur le poste, quand la personne ouvre son menu ⋯ et choisit « Retirer la source », alors une confirmation s'ouvre avec le chemin du profil, le nombre de sessions que Bosco oubliera, ce qui sera retiré du profil et les groupes qui reprendront l'abonnement par défaut ; la source « Bacs à sable » et le téléphone n'ont pas ce menu (RF-REGL-04).
+- **CA-REGL-25** · [E4h](#e4h) · Étant donné la confirmation, quand la personne clique sur « Retirer la source », alors la source disparaît de la liste, ses sessions de l'historique, de l'usage et des notifications, ses réglages (E4g) sont oubliés et le suivi en direct, le canal et le serveur de Bosco sont retirés du profil avec ses réglages d'avant remis, sans qu'aucun fichier de session de Claude Code ne soit modifié ni supprimé ; « Annuler » ne change rien (RF-REGL-04).
+- **CA-REGL-26** · [E4h](#e4h) · Étant donné un profil retiré qui était le profil par défaut d'un groupe, d'une session en bac à sable ou de Bosco, quand la personne lance ensuite une session, alors elle part avec l'abonnement par défaut, le profil surveillé suivant devenant l'abonnement par défaut s'il le fallait ; une session de ce profil dont un tour tourne empêche le retrait, bouton grisé avec « Une session de ce profil tourne : arrête-la d'abord » (RF-REGL-04).
+- **CA-REGL-27** · [E4h](#e4h) · Étant donné un profil retiré, quand la personne le rajoute avec « Ajouter un dossier », alors il revient comme une nouvelle source et ses sessions sont relues selon la période importée (RF-REGL-04, RF-REGL-05).
+
+### <a id="e4i-donnees"></a>E4i · Données
+
+- **CA-REGL-28** · [E4i](#e4i) · Étant donné l'onglet « Données » des Réglages, quand la personne l'ouvre, alors il montre la période importée (« 30 derniers jours » par défaut, ou « Tout l'historique »), le nombre de sessions importées et la date de la plus ancienne, le nombre de sessions plus anciennes encore présentes dans les profils surveillés, le dossier et la taille de la base de Bosco, et la carte « Réinitialiser Bosco », avec le fil d'Ariane « Réglages › Données » ; sur le téléphone, l'écran est en lecture seule, sans réinitialisation (RF-REGL-01, RF-REGL-05).
+- **CA-REGL-29** · [E4i](#e4i) · Étant donné « 30 derniers jours », quand la personne choisit « Tout l'historique », alors les sessions plus anciennes des profils surveillés sont lues en arrière-plan avec le bandeau d'import et rejoignent l'historique et l'usage, puis le choix vaut pour les profils ajoutés ensuite et après un redémarrage ; revenir à « 30 derniers jours » ne retire aucune session déjà importée (RF-REGL-05).
+
+### <a id="e4j-reinitialiser-bosco"></a>E4j · Réinitialiser Bosco
+
+- **CA-REGL-30** · [E4j](#e4j) · Étant donné « Réinitialiser Bosco… », quand la personne l'ouvre, alors la confirmation chiffre ce qui sera effacé, nomme les profils dont le suivi en direct, le canal ou le serveur de Bosco seront retirés et chaque branche de bac à sable pas encore récupérée, et « Tout effacer » reste grisé tant que « RÉINITIALISER » n'est pas écrit (RF-REGL-06).
+- **CA-REGL-31** · [E4j](#e4j) · Étant donné le mot écrit, quand la personne clique sur « Tout effacer », alors les tours en cours sont arrêtés, les bacs à sable arrêtés et leurs copies supprimées, ce que Bosco a installé est retiré de chaque profil (réglages d'avant remis), toutes les données de Bosco sont effacées (sources, projets, groupes, sessions, usage, notifications, contexte, téléphones appairés, réglages) et Bosco s'ouvre sur le premier lancement ; aucun fichier des dossiers de Claude Code n'est modifié ni supprimé (RF-REGL-06).
 
 ### <a id="e11a-isolation-du-bac-a-sable"></a>E11a · Isolation du bac à sable
 
