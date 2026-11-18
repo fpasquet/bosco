@@ -31,6 +31,9 @@ type Story = StoryObj<typeof meta>;
 
 export const Installed: Story = {};
 
+/** Sur le poste, le menu ⋯ propose « Retirer la source ». */
+export const WithMenu: Story = { args: { onRemove: fn() } };
+
 export const NotInstalled: Story = {
   args: { label: 'pro', path: '~/.claude', liveTracking: false, lastSignalAt: null },
 };

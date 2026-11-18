@@ -110,10 +110,13 @@ function LiveOverview({ sources, title }: OverviewProps & { sources: SourcesDto 
   );
 }
 
-/** Vue d'ensemble : premier lancement tant qu'aucun profil n'est choisi, puis les sessions en direct. */
+/**
+ * Vue d'ensemble : premier lancement tant qu'aucun profil n'est choisi (la dernière source retirée comprise ; la
+ * source des bacs à sable ne compte pas), puis les sessions en direct.
+ */
 export function OverviewScreen({ title }: OverviewProps) {
   const { data } = useQuery(sourcesQuery);
-  const watching = (data?.sources.length ?? 0) > 0;
+  const watching = data?.sources.some(({ managed }) => !managed) ?? false;
   useLiveEvents(watching);
   if (!data) return <PageSkeleton variant="list" indicators />;
   if (!watching) {
