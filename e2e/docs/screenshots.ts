@@ -2,7 +2,7 @@
 // les projets et groupes du fil rouge, puis photographié par Playwright. `make docs-screenshots`, après `make build`.
 import { type Browser, type BrowserContextOptions, chromium, devices } from '@playwright/test';
 import { type ChildProcess, spawn } from 'node:child_process';
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { type Bosco, ROOT, startBosco } from '../shared/bosco.ts';
 import { sendHook, sourceIdOf } from '../shared/hooks.ts';
@@ -25,9 +25,9 @@ const SESSIONS: Session[] = [
   { id: 'c41e9a07', profile: '.claude-perso', transcript: 'session-maison-budget', agoMinutes: 1 },
   { id: '5b2d81e4', profile: '.claude', transcript: 'session-creneaux-usage', agoMinutes: 0.2 },
   { id: '8e14c2b7', profile: '.claude', transcript: 'session-sejours-usage', agoMinutes: 0.5 },
-  { id: '5e0a91c3', profile: '.claude', transcript: 'session-maison-rag', agoMinutes: 47 },
+  { id: '5e0a91c3', profile: '.claude', transcript: 'session-maison-recettes', agoMinutes: 47 },
   { id: 'd93b51f0', profile: '.claude', transcript: 'session-api-tarifs-usage' },
-  { id: 'a41f07c2', profile: '.claude-perso', transcript: 'session-site-perso-fastify' },
+  { id: 'a41f07c2', profile: '.claude-perso', transcript: 'session-site-perso-dependances' },
 ];
 
 /** Décale les dates d'un transcript pour que son dernier événement date de `ago` millisecondes. */
@@ -145,10 +145,59 @@ async function seed(bosco: Bosco): Promise<{ children: ChildProcess[]; pending: 
   return { children, pending };
 }
 
+/** Réponse de l'agent du bac à sable, reprise du fil rouge. */
+const SANDBOX_REPLY =
+  'Le schéma de config passe avec TypeScript 6. Je n’ai pas pu lire la base de configuration partagée en ligne (accès refusé) : j’ai gardé les options actuelles du tsconfig. Tout est prêt sur la branche.';
+
+/** Une session en bac à sable sur api-tarifs, au conteneur démarré et mesuré (des bacs à sable scriptés, sans Docker). */
+async function startSandbox(bosco: Bosco): Promise<string> {
+  const { sessionId } = (await call(bosco, 'POST', '/api/pilot/sessions', {
+    images: [],
+    profile: join(bosco.profilesRoot, '.claude-perso'),
+    project: join(bosco.profilesRoot, 'api-tarifs'),
+    sandbox: { branch: 'bosco/s-typescript-6', startBranch: 'develop' },
+    settings: { effort: null, model: null, permissionMode: 'acceptEdits' },
+    text: 'Monte TypeScript en version 6, et vérifie que le schéma de config passe.',
+  })) as { sessionId: string };
+  for (let attempt = 0; attempt < 40; attempt++) {
+    const view = (await call(bosco, 'GET', '/api/containers')) as { sandboxes: unknown[] };
+    const detail = (await call(bosco, 'GET', `/api/sessions/${sessionId}`)) as {
+      session: { pilot: { running: boolean } };
+    };
+    if (view.sandboxes.length > 0 && !detail.session.pilot.running) break;
+    await new Promise((resolve) => setTimeout(resolve, 250));
+  }
+  // Le faux Claude Code répond en rappelant ce qu'il a reçu : son transcript prend le titre et la réponse du fil rouge
+  const { sources } = (await call(bosco, 'GET', '/api/sources')) as { sources: { managed: boolean; path: string }[] };
+  const profile = sources.find(({ managed }) => managed)?.path ?? '';
+  const projects = join(profile, 'projects');
+  for (const folder of readdirSync(projects)) {
+    const file = join(projects, folder, `${sessionId}.jsonl`);
+    if (!existsSync(file)) continue;
+    const lines = readFileSync(file, 'utf8')
+      .split('\n')
+      .map((line) => line.replace(/"text":"Reçu : [^"]*"/, `"text":"${SANDBOX_REPLY}"`));
+    const title = JSON.stringify({
+      type: 'ai-title',
+      aiTitle: 'Monter TypeScript en version 6',
+      sessionId,
+      timestamp: new Date().toISOString(),
+    });
+    writeFileSync(file, `${lines.join('\n').trimEnd()}\n${title}\n`);
+  }
+  // Le temps que Bosco lise le titre ajouté au transcript
+  for (let attempt = 0; attempt < 40; attempt++) {
+    const detail = (await call(bosco, 'GET', `/api/sessions/${sessionId}`)) as { session: { title: null | string } };
+    if (detail.session.title) break;
+    await new Promise((resolve) => setTimeout(resolve, 250));
+  }
+  return sessionId;
+}
+
 async function shoot(
   browser: Browser,
   bosco: Bosco,
-  shots: { name: string; path: string }[],
+  shots: { name: string; path: string; tab?: string }[],
   options: BrowserContextOptions,
 ): Promise<void> {
   const context = await browser.newContext({
@@ -159,9 +208,10 @@ async function shoot(
     reducedMotion: 'reduce',
   });
   const page = await context.newPage();
-  for (const { name, path } of shots) {
+  for (const { name, path, tab } of shots) {
     await page.goto(`${bosco.url}${path}`);
     await page.getByRole('main').waitFor();
+    if (tab) await page.getByRole('tab', { name: tab, exact: true }).click();
     // Le temps que les requêtes de la page arrivent et que les squelettes de chargement disparaissent
     await page.waitForTimeout(1500);
     await page.screenshot({ path: join(OUT, `${name}.png`) });
@@ -184,7 +234,8 @@ try {
     [
       { name: 'overview', path: '/' },
       { name: 'session-permission', path: '/sessions/c41e9a07' },
-      // Pas de « Nouvelle session » : son champ Projets montre le chemin absolu du dossier du scénario
+      // Le dossier personnel du service est celui du scénario : les chemins s'écrivent depuis « ~ »
+      { name: 'new-session', path: `/sessions/new?project=${apiTarifs}` },
       { name: 'projects', path: '/projects' },
       { name: 'group-instructions', path: `/groups/${club}/instructions` },
       { name: 'project-context', path: `/projects/${apiTarifs}/context` },
@@ -195,6 +246,14 @@ try {
     { viewport: { width: 1440, height: 900 } },
   );
   await shoot(browser, bosco, [{ name: 'phone-overview', path: '/' }], devices['Pixel 7']);
+  // Le bac à sable vient après : la vue d'ensemble garde les sessions du fil rouge
+  const sandboxed = await startSandbox(bosco);
+  await shoot(browser, bosco, [{ name: 'session-sandbox', path: `/sessions/${sandboxed}` }], {
+    viewport: { width: 1440, height: 900 },
+  });
+  await shoot(browser, bosco, [{ name: 'phone-session-sandbox', path: `/sessions/${sandboxed}`, tab: 'Bac à sable' }], {
+    ...devices['Pixel 7'],
+  });
 } finally {
   await browser.close();
   seeded?.pending.abort();
