@@ -2,9 +2,9 @@
 
 Poste de pilotage local des sessions Claude Code : Bosco découvre les sessions du poste, dit laquelle attend une réponse, permet d'autoriser une commande sans changer de fenêtre, et fait tourner une session dans un bac à sable, isolée du poste, sur sa propre branche. Le bosco est le maître d'équipage d'un navire : ici, l'équipage, ce sont les sessions.
 
+- Documentation et téléchargement des applications : [bosco-c5q.pages.dev](https://bosco-c5q.pages.dev) ([Télécharger](https://bosco-c5q.pages.dev/docs/download)).
 - Specs UI et cahier des charges : dépôt de specs `fpasquet/specs`, dossier `bosco/` (artifacts : [specs UI](https://claude.ai/artifact/Uxbwu4Wk8Qs3SVn4RjZFz1), [cahier des charges](https://claude.ai/artifact/8ze73zWxiHUVDx99xfQqC4)).
 - Exigences de développement exportées : [`docs/requirements/`](docs/requirements/README.md).
-- Site de documentation : [bosco-c5q.pages.dev](https://bosco-c5q.pages.dev).
 - Instructions des agents : [`AGENTS.md`](AGENTS.md).
 
 ## Démarrer
@@ -37,7 +37,7 @@ make android                  # APK de l'application Android (JDK 17 et SDK Andr
 
 Le paquet s'installe avec `make desktop-package-install` : l'application va dans `/opt/Bosco`, son entrée dans le menu des applications, et son bac à sable est configuré à l'installation. Elle garde les données de `~/.local/share/bosco`, comme le service lancé depuis le dépôt. Chaque paquet porte la version de l'application suivie de la date et du commit, toujours plus récente pour apt. Installé pendant que Bosco tourne, il se signale dans la barre système : « Relancer Bosco » passe à la nouvelle version. Une version plus ancienne refuse de démarrer sur des données qu'une plus récente a mises à jour.
 
-Sans rien construire sur le poste, les applications se téléchargent depuis les [releases GitHub](https://github.com/fpasquet/bosco/releases) : le paquet `.deb`, l'AppImage (qui se met à jour seule, depuis les mêmes releases) et l'APK Android, signé avec la clé de release. Une beta paraît en pre-release. Réglages › À propos dit la version qui tourne, cherche une fois par jour au plus une version plus récente (sur le canal stable ou bêta, sans identifiant, désactivable) et affiche le journal des versions.
+Sans rien construire sur le poste, les applications se téléchargent depuis la page [Télécharger](https://bosco-c5q.pages.dev/docs/download) du site, qui donne les fichiers de la dernière version stable et de la dernière bêta, ou depuis les [releases GitHub](https://github.com/fpasquet/bosco/releases) : le paquet `.deb`, l'AppImage (qui se met à jour seule, depuis les mêmes releases) et l'APK Android, signé avec la clé de release. Une beta paraît en pre-release. Réglages › À propos dit la version qui tourne, cherche une fois par jour au plus une version plus récente (sur le canal stable ou bêta, sans identifiant, désactivable) et affiche le journal des versions.
 
 L'AppImage se lance sans le bac à sable de Chromium (`--no-sandbox`, ajouté par son lanceur) : une AppImage ne peut pas installer le `chrome-sandbox` privilégié ni le profil AppArmor qu'Ubuntu exige depuis la 23.10. Le paquet `.deb` les configure à l'installation : préfère-le si tu veux ce bac à sable.
 
