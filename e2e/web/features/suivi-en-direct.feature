@@ -72,3 +72,13 @@ Fonctionnalité: Suivi en direct
     Alors je vois le titre « Autoriser la commande »
     Quand je clique sur le bouton « Autoriser » de la fenêtre
     Alors Claude Code reçoit la décision « allow »
+
+  @CA-SESS-32
+  Scénario: Une session d'un profil sans suivi en direct propose seulement de l'installer
+    Étant donné la session « 5e0a91c3 » a agi il y a quelques secondes
+    Quand j'ouvre la page « /sessions/5e0a91c3 »
+    Alors je vois le texte « Suivi en direct non installé dans le profil claude »
+    Et je ne vois pas le bouton « Autoriser »
+    Quand je clique sur le lien « Installer le suivi en direct »
+    Alors je suis sur la page « /settings/sources »
+    Et je vois le texte « Suivi en direct · claude »

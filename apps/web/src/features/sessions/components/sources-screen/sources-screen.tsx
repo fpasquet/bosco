@@ -55,7 +55,16 @@ export function SourcesScreen() {
   const sources = data?.sources ?? [];
   const { data: sessions } = useQuery(sessionsQuery);
   const { data: settings } = useQuery(settingsQuery);
-  const [selected, setSelected] = useState<null | SourceDto>(null);
+  const [chosen, setSelected] = useState<null | SourceDto>(null);
+  // « ?suivi=<source> » (depuis le détail d'une session) : le panneau s'ouvre sur le suivi en direct de ce profil
+  const [trackingDismissed, setTrackingDismissed] = useState(false);
+  const trackingLink = useSyncExternalStore(
+    noSubscription,
+    () => new URLSearchParams(globalThis.location.search).get('suivi'),
+    () => null,
+  );
+  const linkedSource = sources.find((source) => source.id === trackingLink && !source.managed) ?? null;
+  const selected = chosen ?? (trackingDismissed ? null : linkedSource);
   const [step, setStep] = useState<LiveTrackingStep>('intro');
   // La source des bacs à sable n'a pas de suivi en direct à installer : son état ne se lit pas
   const statuses = useQueries({
@@ -82,6 +91,7 @@ export function SourcesScreen() {
     onSuccess: async () => {
       await refresh();
       setSelected(null);
+      setTrackingDismissed(true);
       push('Suivi en direct retiré : les réglages d’avant sont remis.', 'info');
     },
   });
@@ -252,7 +262,10 @@ export function SourcesScreen() {
         now={now}
         busy={install.isPending || uninstall.isPending}
         onStepChange={setStep}
-        onClose={() => setSelected(null)}
+        onClose={() => {
+          setSelected(null);
+          setTrackingDismissed(true);
+        }}
         onInstall={(backup) => selected && install.mutate({ backup, id: selected.id })}
         onUninstall={() => selected && uninstall.mutate(selected.id)}
       />

@@ -52,6 +52,16 @@ export function durationEnd(session: SessionDto, now: Date): Date {
 }
 
 /** Profil d'une session, par son nom court (« pro », « perso »). */
+/**
+ * Profil d'une session du terminal encore ouverte, sans suivi en direct : rien ne signale qu'elle attend, Bosco
+ * propose de l'installer. null pour une session pilotée, terminée, ou d'un profil déjà suivi.
+ */
+export function missingLiveTracking(session: SessionDto, sources: readonly SourceDto[]): null | SourceDto {
+  if (session.pilot !== null || session.state === 'ended') return null;
+  const source = sources.find((candidate) => candidate.id === session.sourceId);
+  return source && !source.liveTracking && !source.managed ? source : null;
+}
+
 export function profileOf(session: SessionDto, sources: readonly SourceDto[]): null | string {
   return sources.find((candidate) => candidate.id === session.sourceId)?.label ?? null;
 }
