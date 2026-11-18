@@ -22,6 +22,8 @@ export interface SettingsHeaderProps {
   /** À droite du titre : « Réservé à toi » */
   aside?: ReactNode;
   current: SettingsTab;
+  /** Page sous l'onglet (« pro », les réglages d'un profil) : elle donne le titre, et le fil d'Ariane remonte à l'onglet */
+  page?: string;
 }
 
 /**
@@ -29,16 +31,16 @@ export interface SettingsHeaderProps {
  * racine de l'onglet « Réglages » du bas : la liste des onglets, puis « Conteneurs en cours » ; les autres onglets sont
  * des écrans poussés, dont le fil devient le retour.
  */
-export function SettingsHeader({ aside, current }: SettingsHeaderProps) {
+export function SettingsHeader({ aside, current, page }: SettingsHeaderProps) {
   const tab = SETTINGS_TABS.find(({ key }) => key === current) ?? SETTINGS_TABS[0];
+  const items = page
+    ? [{ href: ROOT, label: 'Réglages' }, { href: tab?.href ?? ROOT, label: tab?.label ?? '' }, { label: page }]
+    : [{ href: ROOT, label: 'Réglages' }, { label: tab?.label ?? '' }];
   return (
     <div className="flex flex-col gap-3">
-      <Breadcrumbs
-        phoneBack={current !== 'sources'}
-        items={[{ href: ROOT, label: 'Réglages' }, { label: tab?.label ?? '' }]}
-      />
+      <Breadcrumbs phoneBack={current !== 'sources' || Boolean(page)} items={items} />
       <div className="flex flex-wrap items-center gap-3">
-        <h1 className="font-display text-2xl font-semibold tracking-tight">{tab?.label}</h1>
+        <h1 className="font-display text-2xl font-semibold tracking-tight">{page ?? tab?.label}</h1>
         {aside}
       </div>
       <LinkTabs
@@ -47,7 +49,7 @@ export function SettingsHeader({ aside, current }: SettingsHeaderProps) {
         tabs={SETTINGS_TABS}
         className="max-md:hidden"
       />
-      {current === 'sources' && (
+      {current === 'sources' && !page && (
         <nav
           aria-label="Réglages du poste"
           className="flex flex-col divide-y divide-line rounded-card border border-line bg-surface shadow-card md:hidden"
