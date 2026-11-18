@@ -1,5 +1,6 @@
 {
   "name": "bosco",
+  "version": "0.1.0",
   "private": true,
   "description": "Bosco : poste de pilotage local des sessions Claude Code. Specs et cahier des charges dans le dépôt de specs (bosco/), export du cahier des charges dans docs/requirements.",
   "type": "module",
@@ -30,6 +31,7 @@
     "@bosco/configs": "workspace:*",
     "@commitlint/cli": "21.2.4",
     "@commitlint/config-conventional": "21.2.4",
+    "git-cliff": "2.14.2",
     "husky": "9.1.7",
     "lint-staged": "17.6.0",
     "prettier": "3.9.10",

@@ -1,0 +1,67 @@
+# Journal des versions de Bosco, tiré des Conventional Commits de main (git-cliff, version épinglée dans package.json).
+# `make changelog` régénère CHANGELOG.md ; le workflow Release en reprend la section de la version pour les notes.
+# Les étiquettes beta (v0.3.0-beta.1) sont ignorées : une beta décrit tout ce qui a changé depuis la dernière stable,
+# et la stable reprend ensuite toute la série.
+
+[changelog]
+header = """
+# Journal des versions
+
+Ce qui change d'une version de Bosco à l'autre, tiré des messages de commit de `main`. Les versions beta paraissent en pre-release sur GitHub ; ici, la dernière beta décrit tout ce qui a changé depuis la dernière version stable.
+
+"""
+body = """
+{%- macro remote_url() -%}
+  https://github.com/fpasquet/bosco
+{%- endmacro -%}
+{% if version -%}
+## [{{ version | trim_start_matches(pat="v") }}]{% if previous.version %}({{ self::remote_url() }}/compare/{{ previous.version }}...{{ version }}){% else %}({{ self::remote_url() }}/releases/tag/{{ version }}){% endif %} - {{ timestamp | date(format="%Y-%m-%d") }}
+{% else -%}
+## À venir
+{% endif %}
+{%- for group, commits in commits | group_by(attribute="group") %}
+### {{ group | striptags | trim }}
+{% for commit in commits %}
+- {% if commit.scope %}**{{ commit.scope }}** · {% endif %}{{ commit.message | split(pat="\n") | first | trim | upper_first }}
+{%- endfor %}
+{% endfor %}
+{%- if version and previous.version %}
+**Comparatif complet** : [{{ previous.version }}...{{ version }}]({{ self::remote_url() }}/compare/{{ previous.version }}...{{ version }})
+{% endif %}
+"""
+trim = true
+footer = ""
+postprocessors = []
+
+[git]
+conventional_commits = true
+filter_unconventional = true
+split_commits = false
+protect_breaking_commits = true
+commit_preprocessors = [
+  # « (#66) » à la fin du titre d'une PR fusionnée : un lien vers la PR
+  { pattern = '\(#(\d+)\)', replace = "([#${1}](https://github.com/fpasquet/bosco/pull/${1}))" },
+]
+commit_parsers = [
+  { message = "^chore\\(release\\)", skip = true },
+  { message = "^feat", group = "<!-- 0 -->Nouveautés" },
+  { message = "^fix", group = "<!-- 1 -->Corrections" },
+  { message = "^perf", group = "<!-- 2 -->Performances" },
+  { message = "^refactor", group = "<!-- 3 -->Remaniements" },
+  { message = "^docs", group = "<!-- 4 -->Documentation" },
+  { message = "^(build|ci)", group = "<!-- 5 -->Construction et CI" },
+  # Tests, formatage et entretien : utiles dans l'historique git, pas dans les notes d'une version
+  { message = "^(chore|test|style)", skip = true },
+  { message = "^revert", group = "<!-- 6 -->Retours en arrière" },
+]
+filter_commits = false
+tag_pattern = "v[0-9]+\\.[0-9]+\\.[0-9]+.*"
+ignore_tags = "v[0-9]+\\.[0-9]+\\.[0-9]+-beta\\.[0-9]+"
+topo_order = false
+sort_commits = "newest"
+
+[bump]
+# Avant la 1.0, une nouveauté monte la version mineure et une rupture aussi, jamais la majeure
+features_always_bump_minor = true
+breaking_always_bump_major = false
+initial_tag = "v0.1.0"

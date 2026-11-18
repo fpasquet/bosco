@@ -6,6 +6,7 @@ import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 import { type BridgeMessage, pageUrl, parseBridgeMessage } from '../lib/bridge';
 import { colors } from '../lib/theme';
 import { updateTime } from '../lib/unreachable';
+import { APP_VERSION, userAgentName } from '../lib/version';
 import { UnreachableScreen } from './unreachable-screen';
 
 export interface BoscoHandle {
@@ -51,8 +52,8 @@ export const BoscoScreen = forwardRef<BoscoHandle, BoscoScreenProps>(function Bo
     <View style={styles.screen}>
       <BoscoWebView
         source={{ uri: source }}
-        // L'application se présente à la page : elle transmet les notifications et ouvre ses réglages
-        applicationNameForUserAgent="BoscoAndroid/1.0"
+        // L'application se présente à la page, avec sa version : elle transmet les notifications et ouvre ses réglages
+        applicationNameForUserAgent={userAgentName(APP_VERSION)}
         sharedCookiesEnabled
         onMessage={(event: WebViewMessageEvent) => {
           const message = parseBridgeMessage(event.nativeEvent.data);

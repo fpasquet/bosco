@@ -19,7 +19,8 @@
 | **NF-13** | Sécurité | Sans accès téléphone activé, Bosco n'écoute sur aucune interface réseau autre que la boucle locale et le pont des conteneurs | Vérification des ports ouverts |
 | **NF-14** | Sécurité | Un téléphone n'accède à rien avant l'appairage ; le code vaut 5 min, un seul usage, 5 essais | Test automatisé |
 | **NF-15** | Sécurité | Aucun accès d'intégration ni identifiant du poste n'apparaît dans un journal ou chez un agent | Revue et test de recherche de secrets |
-| **NF-16** | Données | Rien ne quitte le poste, hors les appels de Claude Code et des intégrations configurées | Revue des appels sortants |
+| **NF-16** | Données | Rien ne quitte le poste, hors les appels de Claude Code, des intégrations configurées et la recherche des releases (NF-20) | Revue des appels sortants |
 | **NF-17** | Conservation | Tout l'historique est conservé, même après effacement par Claude Code (30 jours par défaut) | Test sur une session purgée |
 | **NF-18** | Accessibilité | WCAG 2.2 AA sur les écrans desktop | Contrôle automatisé puis revue |
 | **NF-19** | Qualité | Chaque critère d'acceptation est couvert par un test qui le cite | `trace.mjs` |
+| **NF-20** | Données | La recherche d'une version plus récente est un GET en lecture aux releases publiques de GitHub, une fois par jour au plus, sans identifiant ni cookie, avec un agent utilisateur générique ; elle se coupe dans l'onglet À propos | Test du rythme sur une horloge factice, revue de l'appel |

@@ -1,12 +1,15 @@
 // `make desktop-package` : le paquet .deb de l'application du poste (Linux). Il embarque le service construit, l'interface
 // et Node 26 : une fois installé, Bosco ne dépend plus du dépôt ni du Node du poste. Le service,
 // l'interface et l'application doivent être construits (`make desktop-package` lance `make build` avant).
+// Le workflow Release le lance avec `--release --target deb --target AppImage` : la version exacte du dépôt, l'AppImage
+// en plus du .deb, et les fichiers de mise à jour d'electron-updater (latest-linux.yml, beta-linux.yml).
 import { execFileSync } from 'node:child_process';
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { arch, homedir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { parseArgs } from 'node:util';
 
 const app = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const repo = resolve(app, '..', '..');
@@ -14,6 +17,14 @@ const out = join(app, 'out');
 const stage = join(out, 'stage');
 const NODE_MAJOR = 26;
 const requireFromApp = createRequire(join(app, 'package.json'));
+const { values: options } = parseArgs({
+  options: {
+    release: { type: 'boolean', default: false },
+    target: { type: 'string', multiple: true, default: ['deb'] },
+  },
+});
+const targets = options.target;
+if (targets.some((target) => !['deb', 'AppImage'].includes(target))) fail(`Unknown target: ${targets.join(', ')}`);
 
 function fail(message) {
   console.error(message);
@@ -41,13 +52,14 @@ const embeddedNode =
 if (!embeddedNode) fail(`Node ${NODE_MAJOR} is required: install it with nvm, or give its path in BOSCO_NODE.`);
 
 rmSync(stage, { recursive: true, force: true });
-// Un seul paquet dans out : celui que `make desktop-update` installe
+// Un seul paquet de chaque sorte dans out : celui que `make desktop-update` installe, et ses fichiers de mise à jour
 for (const file of existsSync(out) ? readdirSync(out) : []) {
-  if (file.endsWith('.deb')) rmSync(join(out, file));
+  if (/\.(?:deb|AppImage|yml)$/.test(file)) rmSync(join(out, file));
 }
 
-// Version du paquet : celle de l'application, suivie de la date et du commit (« 0.1.0+git20261109073400.3118cb5 »),
-// pour que chaque construction soit plus récente que la précédente pour apt ; « .dev… » si le dépôt a des changements
+// Version du paquet : celle du dépôt, suivie de la date et du commit (« 0.1.0+git20261109073400.3118cb5 »),
+// pour que chaque construction soit plus récente que la précédente pour apt ; « .dev… » si le dépôt a des changements.
+// Une release garde la version exacte : c'est elle que comparent apt et electron-updater
 function git(...args) {
   // Le git du poste, celui du dépôt construit
   // eslint-disable-next-line sonarjs/no-os-command-from-path
@@ -57,8 +69,10 @@ const commit = git('log', '-1', '--format=%cd.%h', '--date=format:%Y%m%d%H%M%S')
 const changed = git('status', '--porcelain', '--untracked-files=no') !== '';
 const now = new Date().toISOString().replaceAll(/\D/g, '').slice(0, 14);
 const desktop = readJson(join(app, 'package.json'));
+const repoVersion = readJson(join(repo, 'package.json')).version;
 const dev = changed ? '.dev' + now : '';
-const version = `${desktop.version}+git${commit}${dev}`;
+if (options.release && changed) fail('A release is built from a clean checkout: commit the version first.');
+const version = options.release ? repoVersion : `${repoVersion}+git${commit}${dev}`;
 
 // 1. Le service : une copie réduite du dépôt (service, interface, contrats), installée sans les outils de développement
 const service = join(stage, 'service');
@@ -78,6 +92,12 @@ writeFileSync(
 );
 copy('pnpm-lock.yaml');
 copy('patches');
+// Le journal des versions, que Réglages › À propos affiche, et ce que le service dit de sa construction
+copy('CHANGELOG.md');
+writeFileSync(
+  join(service, 'build.json'),
+  JSON.stringify({ version, commit: git('rev-parse', '--short', 'HEAD'), release: options.release }, null, 2),
+);
 for (const file of ['package.json', 'dist']) copy(join('apps/api', file));
 for (const file of ['package.json', 'dist']) copy(join('packages/domain', file));
 for (const file of ['package.json', 'public']) copy(join('apps/web', file));
@@ -146,18 +166,28 @@ writeFileSync(
       desktopName: 'bosco-desktop.desktop',
       author: desktop.author,
       homepage: 'https://github.com/fpasquet/bosco',
+      // Seule dépendance à l'exécution : la mise à jour de l'AppImage
+      dependencies: { 'electron-updater': desktop.dependencies['electron-updater'] },
     },
     null,
     2,
   ),
 );
+// npm et non pnpm : un node_modules à plat, que l'application lit sans le dépôt
+// eslint-disable-next-line sonarjs/no-os-command-from-path
+execFileSync('npm', ['install', '--omit=dev', '--no-package-lock', '--no-audit', '--no-fund'], {
+  cwd: shell,
+  stdio: 'inherit',
+});
 
 // 4. Le paquet .deb : l'exécutable bosco-desktop dans /opt/Bosco, son entrée dans le menu des applications, et le bac à
 // sable d'Electron configuré à l'installation (chrome-sandbox appartient à root, avec le bit SUID)
 const electron = requireFromApp('electron/package.json');
 const { build, Platform } = requireFromApp('electron-builder');
 const artifacts = await build({
-  targets: Platform.LINUX.createTarget(['deb']),
+  targets: Platform.LINUX.createTarget(targets),
+  // Les fichiers de mise à jour sont écrits dans out ; c'est le workflow Release qui les joint à la release GitHub
+  publish: 'never',
   config: {
     appId: 'dev.bosco.desktop',
     productName: 'Bosco',
@@ -178,6 +208,9 @@ const artifacts = await build({
         cpSync(from, join(appOutDir, 'resources', to), { recursive: true, verbatimSymlinks: true });
       }
     },
+    // latest-linux.yml, et beta-linux.yml pour qui suit les betas : l'AppImage se met à jour depuis les releases GitHub
+    publish: [{ provider: 'github', owner: 'fpasquet', repo: 'bosco', releaseType: 'release' }],
+    generateUpdatesFilesForAllChannels: true,
     linux: {
       icon: join(app, 'assets', 'icon-256.png'),
       category: 'Development',
@@ -189,4 +222,5 @@ const artifacts = await build({
     deb: { compression: 'xz', fpm: ['--version', version] },
   },
 });
-for (const artifact of artifacts) console.log(`\nBuilt ${artifact}\nInstall it with: make desktop-package-install`);
+for (const artifact of artifacts) console.log(`Built ${artifact}`);
+if (targets.includes('deb')) console.log('Install the .deb with: make desktop-package-install');

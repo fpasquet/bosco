@@ -1,5 +1,6 @@
 import { type DynamicModule, Module } from '@nestjs/common';
 import type { Config } from './config.ts';
+import { AboutModule } from './about/about.module.ts';
 import { AccessModule } from './access/access.module.ts';
 import { ContextModule } from './context/context.module.ts';
 import { IsolationModule } from './isolation/isolation.module.ts';
@@ -29,6 +30,7 @@ export class AppModule {
         ContextModule,
         IsolationModule,
         MaintenanceModule,
+        AboutModule,
       ],
       controllers: [HealthController, ...(config.testing ? [TestController] : [])],
       providers: [{ provide: CONFIG, useValue: config }, SandboxWiring, ProjectsWiring, MaintenanceWiring],

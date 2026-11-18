@@ -90,9 +90,20 @@ export type RunningService = Readonly<{ errors: () => string; exited: () => bool
 const ERRORS_KEPT = 4000;
 
 /** Démarre le service avec ce Node, sur son port, l'interface servie depuis son dossier. */
-export function startService(options: { apiMain: string; node: string; port: number; webDir: string }): RunningService {
+export function startService(options: {
+  apiMain: string;
+  install: 'appimage' | 'deb' | 'source';
+  node: string;
+  port: number;
+  webDir: string;
+}): RunningService {
   const child = spawn(options.node, [options.apiMain], {
-    env: { ...process.env, BOSCO_PORT: String(options.port), BOSCO_WEB_DIR: options.webDir },
+    env: {
+      ...process.env,
+      BOSCO_INSTALL: options.install,
+      BOSCO_PORT: String(options.port),
+      BOSCO_WEB_DIR: options.webDir,
+    },
     stdio: ['ignore', 'inherit', 'pipe'],
   });
   let errors = '';

@@ -5,7 +5,15 @@ import { Notices } from '@/shared/components/notices';
 import { APP_NAME } from '@bosco/domain';
 import { MOBILE_TABS, NAV_ITEMS, SETTINGS_ITEM, type ShellPlace } from './nav-items';
 import { NavLink } from './nav-link';
-import { ShellBell, ShellContainers, ShellDock, ShellPlaceProvider, ShellSidebar, ShellStatus } from './shell-slots';
+import {
+  ShellBanner,
+  ShellBell,
+  ShellContainers,
+  ShellDock,
+  ShellPlaceProvider,
+  ShellSidebar,
+  ShellStatus,
+} from './shell-slots';
 
 interface AppShellProps {
   children: ReactNode;
@@ -67,6 +75,7 @@ export function AppShell({ children, place, title }: AppShellProps) {
               <ShellBell />
             </span>
           </header>
+          <ShellBanner />
           <main className="min-h-0 flex-1 overflow-y-auto">{children}</main>
           <ShellDock />
           <nav

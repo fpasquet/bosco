@@ -4,6 +4,7 @@ packages:
   - apps/*
   - packages/*
   - e2e
+  - tools/*
 minimumReleaseAgeExclude:
   - '@mikro-orm/core@7.2.8'
   - '@mikro-orm/migrations@7.2.8'

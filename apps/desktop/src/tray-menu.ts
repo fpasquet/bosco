@@ -4,6 +4,7 @@ import { displayVersion } from './update.ts';
 
 export type TrayAction =
   | { kind: 'autostart' }
+  | { kind: 'install-update' }
   | { kind: 'new-session' }
   | { kind: 'open'; path: string }
   | { kind: 'pause' }
@@ -33,21 +34,25 @@ export function waitingSessions(sessions: Iterable<SessionDto>): SessionDto[] {
 
 export function trayMenu(
   waiting: SessionDto[],
-  options: { autostart: boolean; paused: boolean; update?: null | string },
+  options: { autostart: boolean; downloaded?: null | string; paused: boolean; update?: null | string },
 ): TrayItem[] {
   const count = waiting.length;
   const header = `Bosco · ${waitingCount(count)}`;
-  // Une mise à jour installée passe en tête du menu, jusqu'à la relance
-  const update: TrayItem[] = options.update
-    ? [
-        {
-          type: 'normal',
-          label: `Relancer Bosco · version ${displayVersion(options.update)} installée`,
-          action: { kind: 'relaunch' },
-        },
-        { type: 'separator' },
-      ]
-    : [];
+  // Une mise à jour installée (paquet) ou téléchargée (AppImage) passe en tête du menu, jusqu'à la relance
+  const update: TrayItem[] = [];
+  if (options.update)
+    update.push({
+      type: 'normal',
+      label: `Relancer Bosco · version ${displayVersion(options.update)} installée`,
+      action: { kind: 'relaunch' },
+    });
+  else if (options.downloaded)
+    update.push({
+      type: 'normal',
+      label: `Relancer pour mettre à jour · version ${displayVersion(options.downloaded)}`,
+      action: { kind: 'install-update' },
+    });
+  if (update.length > 0) update.push({ type: 'separator' });
   return [
     ...update,
     { type: 'header', label: header },

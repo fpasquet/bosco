@@ -4,3 +4,4 @@ docs/requirements/
 **/__snapshots__/
 **/migrations/
 apps/web/src/styles/tokens.css
+CHANGELOG.md

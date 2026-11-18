@@ -1,0 +1,25 @@
+{
+  "version": "0.2.0",
+  "commit": null,
+  "release": true,
+  "install": "deb",
+  "updates": {
+    "enabled": true,
+    "channel": "stable",
+    "checkedAt": "<masked>",
+    "error": null,
+    "available": {
+      "version": "0.3.0",
+      "publishedAt": "2026-11-20T10:00:00.000Z",
+      "notes": "### Nouveautés\n\n- **about** · Show the version and the changelog in the settings",
+      "url": "https://github.com/fpasquet/bosco/releases/tag/v0.3.0",
+      "downloads": {
+        "apk": "https://github.com/fpasquet/bosco/releases/download/v0.3.0/bosco-android-0.3.0.apk",
+        "appImage": "https://github.com/fpasquet/bosco/releases/download/v0.3.0/bosco-desktop_0.3.0_x86_64.AppImage",
+        "deb": "https://github.com/fpasquet/bosco/releases/download/v0.3.0/bosco-desktop_0.3.0_amd64.deb"
+      }
+    },
+    "dismissed": false
+  },
+  "installed": null
+}

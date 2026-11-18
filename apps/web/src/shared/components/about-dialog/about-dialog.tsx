@@ -1,5 +1,6 @@
 'use client';
-import { X } from 'lucide-react';
+import { ChevronRight, X } from 'lucide-react';
+import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/shared/ui/button';
 import { Logo } from '@/shared/ui/logo';
@@ -50,6 +51,14 @@ export function AboutDialog({ onClose, open }: AboutDialogProps) {
             <b className="font-semibold">D’où vient le nom ?</b> Le bosco est le maître d’équipage d’un navire : il
             veille sur l’équipage et l’appelle au sifflet quand il faut. {APP_NAME} en fait autant avec tes sessions.
           </p>
+          <Link
+            href="/settings/about"
+            className="flex items-center justify-between rounded-control border border-line px-3 py-2.5 text-sm font-medium focus-ring"
+            onClick={onClose}
+          >
+            Version, mises à jour et nouveautés
+            <ChevronRight aria-hidden className="size-4 text-muted" />
+          </Link>
         </div>
       )}
       <form method="dialog" className="modal-backdrop">

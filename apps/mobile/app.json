@@ -2,7 +2,7 @@
   "expo": {
     "name": "Bosco",
     "slug": "bosco",
-    "version": "1.0.0",
+    "version": "0.1.0",
     "orientation": "portrait",
     "icon": "./assets/bosco-icon.png",
     "userInterfaceStyle": "light",
@@ -38,7 +38,8 @@
             "usesCleartextTraffic": false
           }
         }
-      ]
+      ],
+      "./plugins/release-signing.mjs"
     ]
   }
 }

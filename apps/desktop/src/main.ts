@@ -16,6 +16,7 @@ import { fileURLToPath } from 'node:url';
 // (ou se relie à celui qui tourne déjà), montre l'interface dans sa fenêtre, tient l'icône de la barre système et
 // montre les notifications en natif. Facultative : Bosco se lance toujours dans le navigateur.
 import type { NotificationDto, SessionDto } from '@bosco/domain';
+import { installKind, preferencesOf, updaterChannel } from './auto-update.ts';
 import { isAutostart, setAutostart } from './autostart.ts';
 import { LiveEvents } from './events.ts';
 import { nativeText, pathOf } from './notification-text.ts';
@@ -44,6 +45,8 @@ const PRESENCE_MS = 15_000;
 const PAUSE_MS = 60 * 60 * 1000;
 /** L'application regarde à ce rythme si un paquet plus récent a été installé */
 const UPDATE_CHECK_MS = 30_000;
+/** L'AppImage cherche une nouvelle version une fois par jour */
+const APPIMAGE_CHECK_MS = 24 * 60 * 60 * 1000;
 
 let window: BrowserWindow | null = null;
 let tray: null | Tray = null;
@@ -53,6 +56,9 @@ let pausedUntil = 0;
 let waiting: SessionDto[] = [];
 /** Version installée par un paquet plus récent, en attente de relance */
 let update: null | string = null;
+/** Version de l'AppImage téléchargée par electron-updater, installée à la relance */
+let downloaded: null | string = null;
+let installUpdate: (() => void) | null = null;
 const hidden = process.argv.includes('--hidden');
 
 function show(path = '/'): void {
@@ -109,6 +115,10 @@ function act(action: TrayAction): void {
     case 'relaunch':
       void relaunch();
       break;
+    case 'install-update':
+      quitting = true;
+      installUpdate?.();
+      break;
   }
 }
 
@@ -121,7 +131,12 @@ function launchCommand(): string {
 
 function refreshTray(): void {
   if (!tray) return;
-  const items = trayMenu(waiting, { autostart: isAutostart(homedir()), paused: pausedUntil > Date.now(), update });
+  const items = trayMenu(waiting, {
+    autostart: isAutostart(homedir()),
+    downloaded,
+    paused: pausedUntil > Date.now(),
+    update,
+  });
   const template = items.map((item): MenuItemConstructorOptions => {
     if (item.type === 'separator') return { type: 'separator' };
     if (item.type === 'header') return { label: item.label, enabled: false };
@@ -173,6 +188,45 @@ function checkUpdate(): void {
   native.show();
 }
 
+/**
+ * L'AppImage se met à jour seule : electron-updater cherche une fois par jour sur le canal choisi dans Réglages ›
+ * À propos, télécharge en arrière-plan, puis le menu propose « Relancer pour mettre à jour ».
+ */
+async function startAutoUpdate(): Promise<void> {
+  if (!process.env.APPIMAGE) return;
+  const { autoUpdater } = (await import('electron-updater')).default;
+  autoUpdater.autoDownload = true;
+  autoUpdater.autoInstallOnAppQuit = true;
+  autoUpdater.on('update-downloaded', (info: { version: string }) => {
+    downloaded = info.version;
+    refreshTray();
+    if (!Notification.isSupported()) return;
+    const native = new Notification({
+      title: 'Mise à jour de Bosco prête',
+      body: `La version ${info.version} est téléchargée : relance Bosco pour l’installer.`,
+      icon: nativeImage.createFromPath(join(ASSETS, 'icon-256.png')),
+    });
+    native.on('click', () => act({ kind: 'install-update' }));
+    native.show();
+  });
+  autoUpdater.on('error', (error: Error) => console.error(`Update check failed: ${error.message}`));
+  installUpdate = () => autoUpdater.quitAndInstall();
+  const check = async () => {
+    const about: unknown = await fetch(`${BASE}/api/about`)
+      .then((response) => response.json())
+      .catch(() => null);
+    const preferences = preferencesOf(about);
+    if (!preferences.enabled) return;
+    autoUpdater.channel = updaterChannel(preferences.channel);
+    autoUpdater.allowPrerelease = preferences.channel === 'beta';
+    // Choisir un canal autorise un retour en arrière : une beta ne redescend pas d'elle-même vers la stable
+    autoUpdater.allowDowngrade = false;
+    await autoUpdater.checkForUpdates().catch(() => undefined);
+  };
+  void check();
+  setInterval(() => void check(), APPIMAGE_CHECK_MS);
+}
+
 /** Un service répond déjà : s'y relier (par défaut) ou le remplacer ; le choix est gardé. */
 async function serviceChoice(): Promise<ServiceChoice> {
   const preferences = loadPreferences(app.getPath('userData'));
@@ -202,7 +256,13 @@ async function ensureService(): Promise<boolean> {
     });
     return false;
   }
-  const started = startService({ node, port: PORT, apiMain: layout.apiMain, webDir: layout.webDir });
+  const started = startService({
+    node,
+    port: PORT,
+    apiMain: layout.apiMain,
+    webDir: layout.webDir,
+    install: installKind({ appImage: process.env.APPIMAGE, packaged: app.isPackaged }),
+  });
   service = started;
   const up = await waitFor(async () => started.exited() || (await healthy(BASE)), 60_000);
   if (up && !started.exited()) return true;
@@ -253,6 +313,7 @@ else {
       }).catch(() => undefined);
     present();
     setInterval(present, PRESENCE_MS);
-    if (app.isPackaged) setInterval(checkUpdate, UPDATE_CHECK_MS);
+    if (app.isPackaged && !process.env.APPIMAGE) setInterval(checkUpdate, UPDATE_CHECK_MS);
+    void startAutoUpdate();
   });
 }

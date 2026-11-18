@@ -67,4 +67,16 @@ describe('trayMenu', () => {
       { type: 'header', label: 'Bosco · rien ne t’attend' },
     ]);
   });
+
+  it('CA-APPS-11 · puts the restart of a downloaded update of the AppImage at the top of the menu', () => {
+    const items = trayMenu([], { autostart: false, paused: false, downloaded: '0.3.0-beta.1' });
+    expect(items.slice(0, 2)).toEqual([
+      {
+        type: 'normal',
+        label: 'Relancer pour mettre à jour · version 0.3.0-beta.1',
+        action: { kind: 'install-update' },
+      },
+      { type: 'separator' },
+    ]);
+  });
 });
