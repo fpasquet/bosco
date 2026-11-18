@@ -86,8 +86,6 @@ export class TestController {
       await new Promise((resolve) => setTimeout(resolve, 50));
     this.pilot.stopAll();
     this.docker.reachable = true;
-    // Un Docker coupé au scénario précédent répond de nouveau tout de suite, sans attendre l'essai suivant
-    await this.containers.measure();
     await this.watcher.close();
     await this.access.disable();
     this.liveSignals.forget();
@@ -102,6 +100,10 @@ export class TestController {
     await this.quota.load();
     await this.projects.load();
     await this.groups.load();
+    // Les sessions pilotées du scénario précédent sont oubliées : leurs bacs à sable ne se mesurent plus
+    await this.pilot.load();
+    // Un Docker coupé au scénario précédent répond de nouveau tout de suite, sans attendre l'essai suivant
+    await this.containers.measure();
     (globalThis as { boscoReplayReset?: () => void }).boscoReplayReset?.();
   }
 }
