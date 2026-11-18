@@ -53,9 +53,13 @@ L'agent reçoit une erreur 403, « Domaine refusé par Bosco : raw.githubuserco
 
 ## Récupérer la branche
 
+![Le détail d'une session en bac à sable : la sortie refusée dans le fil, la carte du bac à sable et sa consommation](/screenshots/session-sandbox.png)
+
 La carte « Bac à sable » du détail de la session montre l'état du conteneur (« Démarré », « En veille », « Supprimé »), ce qu'il consomme quand il est démarré (« Processeur 0,0 / 2 cœurs », « Mémoire 1,3 / 4 Go », mesurés comme dans [les conteneurs en cours](#les-conteneurs-en-cours)), l'heure à laquelle il s'arrêtera sans nouveau message, sa branche, et « jamais récupérée » ou « récupérée à 16:20 ».
 
 Sur le téléphone, le détail d'une session en bac à sable a un onglet de plus : « Fil », « Bac à sable », « Usage ». L'onglet « Bac à sable » porte la carte, sa consommation et ses actions ; ajouter un domaine à la liste ne se fait que sur le poste.
+
+![Sur le téléphone, l'onglet « Bac à sable » du détail d'une session](/screenshots/phone-session-sandbox.png)
 
 « Récupérer la branche » commite le travail en cours dans la copie (« Travail en cours de la session »), puis le rapatrie dans ton dépôt par `git fetch`, sans toucher à ta branche courante. Si la branche a avancé sur le poste entre-temps, Bosco la récupère sous un autre nom (`…-2`) et le dit. Avec plusieurs projets : « Récupérer les branches », ou projet par projet.
 
