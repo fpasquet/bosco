@@ -126,3 +126,17 @@ Fonctionnalité: Contexte des agents
     Alors je vois le texte « Proposée par l’agent de la session »
     Quand je clique sur le lien « Corriger l’indexation des PDF dans Elasticsearch » de la page
     Alors je suis sur la page « /sessions/5e0a91c3 »
+
+  @CA-CONT-04
+  Scénario: Sans décision à valider, l'onglet Contexte n'a pas de bandeau
+    Étant donné le projet « maison » a la décision acceptée « Garder Jest pour les tests »
+    Quand j'ouvre la page « /projects/1/context »
+    Alors je vois le lien « DEC-1 Garder Jest pour les tests »
+    Et je ne vois plus le texte « attend ta validation »
+
+  @mobile
+  @CA-CONT-24
+  Scénario: Sur le téléphone, modifier une décision renvoie vers le poste
+    Étant donné le projet « maison » a la décision acceptée « Garder Jest pour les tests »
+    Quand j'ouvre la page « /projects/1/context/decisions/1/edit »
+    Alors je vois le texte « Une décision se modifie depuis le poste. »

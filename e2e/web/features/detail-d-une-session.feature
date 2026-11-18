@@ -26,7 +26,6 @@ Fonctionnalité: Détail d'une session
     Quand la session « 5e0a91c3 » lance la commande « yarn lint »
     Alors je vois le texte « Lance yarn lint »
 
-  @CA-SESS-42
   Scénario: Une session close donne sa commande de reprise, avec le dossier du profil perso
     Étant donné la session « c41e9a07 » du profil « .claude-perso » se termine
     Quand j'ouvre la page « /sessions/c41e9a07 »

@@ -58,3 +58,14 @@ Fonctionnalité: Sources et réglages
     Et je clique sur le bouton « Mettre à jour » de la fenêtre
     Alors je vois le texte « Suivi en direct · perso »
     Et je ne vois plus le texte « À mettre à jour »
+
+  @CA-SESS-58
+  Scénario: « Installer » ouvre le suivi en direct d'un profil, « Vérifier le suivi en direct » sa vérification
+    Étant donné le suivi en direct est installé dans le profil « .claude-perso »
+    Quand j'ouvre la page « /settings/sources »
+    Et je clique sur le bouton « Installer » de la source « claude »
+    Alors je vois le titre « Suivi en direct · claude »
+    Quand j’appuie sur Échap
+    Et je clique sur le bouton « Vérifier le suivi en direct » de la source « perso »
+    Alors je vois le titre « Suivi en direct · perso »
+    Et je vois le texte « Signal reçu d’une session ouverte »

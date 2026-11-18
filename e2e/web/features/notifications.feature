@@ -59,3 +59,10 @@ Fonctionnalité: Notifications
     Alors je suis sur la page « /notifications »
     Et je vois le texte « Le digest est généré. Veux-tu que je lance les tests ? »
     Et la page est accessible
+
+  @mobile
+  @CA-SESS-151
+  Scénario: Sur le téléphone, les réglages des notifications se lisent sans se modifier
+    Quand j'ouvre la page « /settings/notifications »
+    Alors je vois le texte « Modifiable depuis le poste. »
+    Et je ne vois pas l’interrupteur « Envoyer des notifications du bureau »

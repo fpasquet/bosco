@@ -55,6 +55,22 @@ When('a program without the secret calls the Bosco tool {string}', async ({ bosc
   answer = await call(bosco.url, null, name, {});
 });
 
+let tools: string[] = [];
+
+When('a Claude Code session lists the Bosco tools', async ({ bosco }) => {
+  const response = await fetch(`${bosco.url}/mcp`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', authorization: `Bearer ${bosco.secret()}` },
+    body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list' }),
+  });
+  const body = (await response.json()) as { result: { tools: { name: string }[] } };
+  tools = body.result.tools.map(({ name }) => name);
+});
+
+Then('the Bosco tools are {string}', ({}, names: string) => {
+  expect(tools.toSorted((a, b) => a.localeCompare(b))).toEqual(names.split(','));
+});
+
 Then('the Bosco tool answers {string}', ({}, text: string) => {
   expect(answer.text).toContain(text);
 });
