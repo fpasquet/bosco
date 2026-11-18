@@ -1,6 +1,7 @@
 'use client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { type ReactNode, useState } from 'react';
+import { UpdateNotice } from '@/features/about/components/update-notice';
 import { NotificationBell } from '@/features/notifications/components/notification-bell';
 import { NotificationsLive } from '@/features/notifications/components/notifications-live';
 import { ProjectActionsProvider } from '@/features/projects/components/project-actions';
@@ -16,6 +17,7 @@ export function Providers({ children }: { children: ReactNode }) {
     <QueryClientProvider client={client}>
       <NotificationsLive />
       <ShellSlotsProvider
+        banner={<UpdateNotice />}
         bell={<NotificationBell />}
         containers={<ContainersSummary />}
         dock={<ContainersDock />}

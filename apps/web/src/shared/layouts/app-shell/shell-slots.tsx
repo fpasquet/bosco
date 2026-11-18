@@ -3,11 +3,14 @@ import { createContext, type ReactNode, useContext } from 'react';
 import type { ShellPlace } from './nav-items';
 
 /**
- * Ce que l'application place dans la coquille sans que la coquille le connaisse : la cloche des notifications,
+ * Ce que l'application place dans la coquille sans que la coquille le connaisse : le bandeau des mises à jour, la
+ * cloche des notifications,
  * les groupes, projets et profils de la barre latérale, l'état des sources en pied, le résumé des conteneurs et leur
  * panneau en bas de page.
  */
 interface Slots {
+  /** Bandeau en haut de la page : une mise à jour installée ou disponible */
+  banner: ReactNode;
   bell: ReactNode;
   containers: ReactNode;
   dock: ReactNode;
@@ -15,7 +18,7 @@ interface Slots {
   status: ReactNode;
 }
 
-const EMPTY: Slots = { bell: null, containers: null, dock: null, sidebar: null, status: null };
+const EMPTY: Slots = { banner: null, bell: null, containers: null, dock: null, sidebar: null, status: null };
 
 const ShellSlots = createContext<Slots>(EMPTY);
 const Place = createContext<ShellPlace>({ kind: 'other' });
@@ -31,6 +34,10 @@ export function ShellPlaceProvider({ children, place }: { children: ReactNode; p
 
 export function useShellPlace(): ShellPlace {
   return useContext(Place);
+}
+
+export function ShellBanner() {
+  return useContext(ShellSlots).banner;
 }
 
 export function ShellBell() {

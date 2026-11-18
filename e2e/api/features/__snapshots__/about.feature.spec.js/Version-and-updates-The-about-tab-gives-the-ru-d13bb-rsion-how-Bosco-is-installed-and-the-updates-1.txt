@@ -1,0 +1,15 @@
+{
+  "version": "0.2.0",
+  "commit": null,
+  "release": true,
+  "install": "deb",
+  "updates": {
+    "enabled": true,
+    "channel": "stable",
+    "checkedAt": null,
+    "error": null,
+    "available": null,
+    "dismissed": false
+  },
+  "installed": null
+}

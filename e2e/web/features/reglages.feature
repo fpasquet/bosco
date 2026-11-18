@@ -16,7 +16,7 @@ Fonctionnalité: Réglages
     Alors je suis sur la page « /settings/sources »
     Et le fil d’Ariane est « Réglages › Sources »
     Et l’entrée « Réglages » de la barre latérale est active
-    Et les onglets « Onglets des réglages » sont « Sources, Téléphone, Notifications, Abonnement Claude, Bac à sable, Données »
+    Et les onglets « Onglets des réglages » sont « Sources, Téléphone, Notifications, Abonnement Claude, Bac à sable, Données, À propos »
     Et je ne vois plus le texte « Accès depuis le téléphone »
     Et la page est accessible
 
@@ -42,6 +42,6 @@ Fonctionnalité: Réglages
     Quand j'ouvre la page « / »
     Et je clique sur le lien « Réglages »
     Alors je suis sur la page « /settings/sources »
-    Et les onglets « Réglages du poste » sont « Sources, Téléphone, Notifications, Abonnement Claude, Bac à sable, Données, Conteneurs en cours »
+    Et les onglets « Réglages du poste » sont « Sources, Téléphone, Notifications, Abonnement Claude, Bac à sable, Données, À propos, Conteneurs en cours »
     Et je vois le texte « Seuil d’inactivité »
     Et la page est accessible
