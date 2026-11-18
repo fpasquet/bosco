@@ -1,0 +1,6 @@
+{
+  "profile": "{{profiles}}/.claude-perso",
+  "text": "Demande deux autorisations",
+  "images": [],
+  "settings": { "permissionMode": "acceptEdits", "model": null, "effort": null }
+}

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import type { PilotSettingsDto, SessionDto } from '@bosco/domain';
 import { useNotices } from '@/shared/hooks/use-notices';
-import { interruptTurn, sendMessage, suggestions } from '../../api/pilot';
+import { interruptTurn, changeSettings as saveSettings, sendMessage, suggestions } from '../../api/pilot';
 import { useFullAccess } from '../../hooks/use-full-access';
 import { Composer, type ComposerValue } from '../composer';
 import { FullAccessDialog } from '../full-access-dialog';
@@ -65,11 +65,24 @@ export function PilotPanel({ erased = false, session }: { erased?: boolean; sess
       throw error;
     }
   };
-  // Sur le poste, passer à l'accès complet ouvre la confirmation ; il vaut dès le tour suivant
+  // Une session pilotée garde ses réglages tout de suite : le mode d'autorisations vaut aussi pour le tour en cours, et la
+  // demande qui attend passe si le nouveau mode la couvre. Une session close les reçoit avec son prochain message
+  const apply = (next: PilotSettingsDto) => {
+    const previous = settings;
+    setSettings(next);
+    if (!session.pilot) return;
+    saveSettings(session.id, next)
+      .then(() => client.invalidateQueries({ queryKey: ['session', session.id] }))
+      .catch((error: unknown) => {
+        setSettings(previous);
+        push(error instanceof Error ? error.message : 'Le réglage n’a pas changé.', 'warning');
+      });
+  };
+  // Sur le poste, passer à l'accès complet ouvre la confirmation
   const changeSettings = (next: PilotSettingsDto) => {
     const toFullAccess = next.permissionMode === 'bypassPermissions' && settings.permissionMode !== next.permissionMode;
-    if (toFullAccess && !session.pilot?.sandbox) fullAccess.ask(() => setSettings(next));
-    else setSettings(next);
+    if (toFullAccess && !session.pilot?.sandbox) fullAccess.ask(() => apply(next));
+    else apply(next);
   };
   const stop = () => {
     interruptTurn(session.id).catch((error: unknown) =>

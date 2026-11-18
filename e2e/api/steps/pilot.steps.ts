@@ -210,6 +210,16 @@ When('I allow the permission of {string}', async ({ request }, session: string) 
   expect(response.status()).toBe(204);
 });
 
+When(
+  'I switch {string} to the permission mode {string}',
+  async ({ request }, session: string, permissionMode: string) => {
+    const view = await detail(request, idOf(session));
+    const settings = { ...(view.pilot?.settings ?? { effort: null, model: null }), permissionMode };
+    const response = await request.put(`/api/sessions/${idOf(session)}/settings`, { data: settings });
+    expect(response.status()).toBe(204);
+  },
+);
+
 Then('{string} should ask the question {string}', async ({ request }, session: string, question: string) => {
   await eventually(
     request,

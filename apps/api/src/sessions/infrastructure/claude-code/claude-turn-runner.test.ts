@@ -27,7 +27,7 @@ const request: TurnRequest = {
 describe('turnArguments', () => {
   it('resumes the session with the settings of the message, permissions through the control protocol', () => {
     expect(turnArguments(request).join(' ')).toBe(
-      '-p --input-format stream-json --output-format stream-json --verbose --permission-prompt-tool stdio --permission-mode plan --model claude-opus-5-5 --effort high --resume c7e04a19',
+      '-p --input-format stream-json --output-format stream-json --verbose --permission-prompt-tool stdio --permission-mode plan --allow-dangerously-skip-permissions --model claude-opus-5-5 --effort high --resume c7e04a19',
     );
   });
 
@@ -37,7 +37,13 @@ describe('turnArguments', () => {
       resume: false,
       settings: { effort: null, model: null, permissionMode: 'ask' },
     });
-    expect(args.slice(-4)).toEqual(['--permission-mode', 'default', '--session-id', 'c7e04a19']);
+    expect(args.slice(-5)).toEqual([
+      '--permission-mode',
+      'default',
+      '--allow-dangerously-skip-permissions',
+      '--session-id',
+      'c7e04a19',
+    ]);
   });
 
   it('CA-CONT-07 · adds the context of the projects to the system prompt, the same at each turn', () => {

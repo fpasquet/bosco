@@ -3,6 +3,7 @@ import type {
   IsolationDto,
   PilotMessageDto,
   PilotOptionsDto,
+  PilotSettingsDto,
   ProjectDetailDto,
   RetrievedBranchesDto,
   SandboxBranchesDto,
@@ -90,6 +91,14 @@ export async function sendMessage(sessionId: string, message: PilotMessageDto): 
   });
   const body = (await response.json()) as { status: 'channel' | 'queued' | 'sent' };
   return body.status;
+}
+
+/** Réglages de la barre d'outils : le mode d'autorisations change aussi le tour en cours. */
+export async function changeSettings(sessionId: string, settings: PilotSettingsDto): Promise<void> {
+  await call(`/api/sessions/${encodeURIComponent(sessionId)}/settings`, {
+    method: 'PUT',
+    body: JSON.stringify(settings),
+  });
 }
 
 export async function cancelPending(sessionId: string): Promise<void> {

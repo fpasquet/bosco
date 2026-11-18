@@ -104,7 +104,7 @@ Fonctionnalité: Valeurs par défaut des sessions et modes d'autorisation
 
   @CA-SESS-166
   @CA-SESS-169
-  Scénario: Dans une session, le mode change pour le tour suivant, et l'accès complet se confirme
+  Scénario: Dans une session, le mode change pour les tours suivants, et l'accès complet se confirme
     Quand j'ouvre la page « /sessions/new »
     Et je saisis « Lis les catégories du budget » dans le champ « Premier message »
     Et je clique sur le bouton « Démarrer »
@@ -114,6 +114,16 @@ Fonctionnalité: Valeurs par défaut des sessions et modes d'autorisation
     Et je saisis « Et les tests » dans le champ « Message à l’agent »
     Et je clique sur le bouton « Envoyer »
     Alors je vois le texte « Reçu : Et les tests · mode bypassPermissions »
+
+  @CA-SESS-191
+  Scénario: Passer à l'accès complet pendant un tour autorise la demande qui attend et les suivantes
+    Quand j'ouvre la page « /sessions/new »
+    Et je saisis « Lance deux autorisations » dans le champ « Premier message »
+    Et je clique sur le bouton « Démarrer »
+    Alors je vois le bouton « Autoriser »
+    Quand je choisis « Accès complet » dans le menu des réglages « Autorisations »
+    Et je clique sur le bouton « Donner l’accès complet » de la confirmation
+    Alors je vois le texte « Deux commandes lancées · mode bypassPermissions »
 
   @CA-SESS-168
   Scénario: Quand Claude Code suspend « Approuver pour moi », le fil le dit et la demande revient dans Bosco

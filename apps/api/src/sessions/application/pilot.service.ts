@@ -17,6 +17,7 @@ import type { SessionService } from './session.service.ts';
 import { TOKEN_VARIABLE } from '../../shared/domain/profile-access.ts';
 import {
   type AgentQuestion,
+  allowedByMode,
   answersOf,
   checkPilotMessage,
   DEFAULT_PILOT_SETTINGS,
@@ -141,6 +142,8 @@ export interface RunningTurn {
   interrupt(): void;
   /** Processus de l'agent sur le poste, pour mesurer ce qu'il consomme ; null s'il n'a pas démarré */
   pid: null | number;
+  /** Change le mode d'autorisations du tour en cours */
+  setPermissionMode(mode: PilotSettings['permissionMode']): void;
 }
 
 export interface TurnRunner {
@@ -227,6 +230,8 @@ export interface PilotView {
 interface Turn {
   /** Demandes en cours (autorisation, question) et ce qui les abandonne si le tour s'arrête */
   abandons: Map<string, () => void>;
+  /** Outil de l'autorisation qui attend la personne : un changement de mode peut la régler */
+  asking: null | string;
   /** Écriture en cours d'une suspension dans le journal : la demande qui la suit attend qu'elle soit enregistrée */
   noting: Promise<void>;
   process: RunningTurn;
@@ -236,7 +241,7 @@ interface Turn {
   stopped: null | string;
 }
 
-type Signals = Pick<LiveSignalService, 'receive' | 'requestAnswers' | 'requestPermission'>;
+type Signals = Pick<LiveSignalService, 'allowPending' | 'receive' | 'requestAnswers' | 'requestPermission'>;
 
 const NO_PROFILES: PilotProfiles = { subscriptions: () => Promise.resolve({ choices: [], effective: null }) };
 
@@ -743,6 +748,23 @@ export class PilotService {
     await this.publish(sessionId);
   }
 
+  /**
+   * Réglages changés dans la barre d'outils : ils valent pour les tours suivants, et le mode d'autorisations aussi pour
+   * le tour en cours. La demande qui attend passe d'elle-même si le nouveau mode l'autorise (Accès complet, ou une
+   * modification de fichier en Accepter les modifications).
+   */
+  async changeSettings(sessionId: string, settings: PilotSettings): Promise<void> {
+    const record = await this.recordOf(sessionId);
+    await this.keep({ ...record, settings });
+    const turn = this.turns.get(sessionId);
+    if (turn && settings.permissionMode !== record.settings.permissionMode) {
+      turn.process.setPermissionMode(settings.permissionMode);
+      if (turn.asking && allowedByMode(settings.permissionMode, turn.asking))
+        await this.signals.allowPending(sessionId, 'Autorisé par le changement de mode');
+    }
+    await this.publish(sessionId);
+  }
+
   /** « Arrêter » : le tour s'interrompt, le message en attente reste. */
   interrupt(sessionId: string): void {
     const turn = this.turns.get(sessionId);
@@ -883,6 +905,7 @@ export class PilotService {
     await this.signals.receive(origin, { kind: 'prompt' }, 'pilot');
     const turn: Turn = {
       abandons: new Map(),
+      asking: null,
       noting: Promise.resolve(),
       process: undefined as unknown as RunningTurn,
       result: false,
@@ -944,16 +967,24 @@ export class PilotService {
     tool: string,
     input: Record<string, unknown>,
   ): void {
+    // Passée à l'accès complet pendant le tour : si Claude Code demande encore, Bosco autorise sans te solliciter
+    const mode = this.records.get(origin.sessionId)?.settings.permissionMode;
+    if (mode === 'bypassPermissions') {
+      turn.process.allow(requestId, input);
+      return;
+    }
     void turn.noting
-      .then(() =>
-        this.signals.requestPermission(
+      .then(() => {
+        turn.asking = tool;
+        return this.signals.requestPermission(
           origin,
           { tool, detail: detailOf(input) },
           (onAbandon) => turn.abandons.set(requestId, () => onAbandon('Tour arrêté')),
           'pilot',
-        ),
-      )
+        );
+      })
       .then((answer: null | PermissionAnswer) => {
+        turn.asking = null;
         turn.abandons.delete(requestId);
         if (answer?.behavior === 'allow') turn.process.allow(requestId, input);
         else if (answer) turn.process.deny(requestId, answer.reason ?? 'Refusé dans Bosco.');

@@ -1,6 +1,7 @@
 // Ce que les scénarios ne voient pas : les règles d'un message et des réponses à une question (E2e, E2f).
 import { describe, expect, it } from 'vitest';
 import {
+  allowedByMode,
   answersOf,
   checkPilotMessage,
   InvalidAnswers,
@@ -73,5 +74,22 @@ describe('questions of the agent', () => {
     expect(() => answersOf(questions, [['A', 'B'], ['Unitaires']])).toThrow(InvalidAnswers);
     expect(() => answersOf(questions, [[' '], ['Unitaires']])).toThrow('Réponds');
     expect(() => answersOf(questions, [['A']])).toThrow('Une réponse par question');
+  });
+});
+
+describe('allowedByMode', () => {
+  it('allows every waiting request in full access', () => {
+    expect(allowedByMode('bypassPermissions', 'Bash')).toBe(true);
+  });
+
+  it('allows only file edits when edits are accepted', () => {
+    expect(allowedByMode('acceptEdits', 'Write')).toBe(true);
+    expect(allowedByMode('acceptEdits', 'Bash')).toBe(false);
+  });
+
+  it('leaves the request to the person in the other modes', () => {
+    expect(allowedByMode('ask', 'Edit')).toBe(false);
+    expect(allowedByMode('plan', 'Bash')).toBe(false);
+    expect(allowedByMode('auto', 'Bash')).toBe(false);
   });
 });
