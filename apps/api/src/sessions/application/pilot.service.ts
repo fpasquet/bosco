@@ -49,6 +49,8 @@ import { settingsOf } from '../domain/session-defaults.ts';
 export interface TurnRequest {
   /** Autres projets de la session, passés par --add-dir à chaque tour (règle 14) */
   addDirs: string[];
+  /** Contexte des projets de la session, ajouté au prompt système ; null hors des projets connus */
+  appendSystemPrompt: null | string;
   /** Dossier de configuration du profil Claude Code */
   configDir: string;
   cwd: string;
@@ -140,6 +142,11 @@ export interface TurnRunner {
 
 /** Une session pilotée par Bosco : où elle tourne et ses réglages, gardés d'un tour à l'autre. */
 export interface PilotRecord {
+  /**
+   * Contexte transmis au premier tour lancé par Bosco, repris tel quel aux suivants : les décisions acceptées ensuite
+   * n'atteignent que les sessions lancées après. null : pas encore fixé, ou hors des projets connus
+   */
+  context?: null | string;
   /** Projet principal : le dossier de travail de la session */
   cwd: string;
   /** Autres projets de la session (règle 14), passés par --add-dir à chaque tour ; [] : un seul projet */
@@ -150,6 +157,12 @@ export interface PilotRecord {
   settings: PilotSettings;
   since: Date;
   sourceId: string;
+}
+
+/** Contexte des projets d'une session : instructions des groupes, décisions acceptées, place dans l'architecture. */
+export interface PilotContext {
+  /** Le projet principal d'abord, puis les autres, coupé à 10 000 caractères ; null hors des projets connus */
+  textOf(cwd: string, projects: readonly string[]): Promise<null | string>;
 }
 
 export interface PilotRepository {
@@ -238,6 +251,7 @@ export class PilotService {
   private readonly turns = new Map<string, Turn>();
   private readonly pending = new Map<string, PilotMessage>();
   private defaults: null | Pick<SessionDefaultsService, 'resolveDefaults'> = null;
+  private context: PilotContext = { textOf: () => Promise.resolve(null) };
   private profiles: PilotProfiles = NO_PROFILES;
   private sandbox: null | SandboxDeps = null;
   /** Usage de l'abonnement lu dans le flux d'un tour, rangé par profil Claude, et ses seuils (DT-39) */
@@ -280,6 +294,11 @@ export class PilotService {
   }
 
   /** Valeurs par défaut des nouvelles sessions (règle 16), branchées au démarrage. */
+  /** Contexte des projets, branché au démarrage : chaque session pilotée le reçoit dès son premier tour. */
+  useContext(context: PilotContext): void {
+    this.context = context;
+  }
+
   useDefaults(defaults: Pick<SessionDefaultsService, 'resolveDefaults'>): void {
     this.defaults = defaults;
   }
@@ -747,6 +766,17 @@ export class PilotService {
     };
   }
 
+  /**
+   * Contexte transmis à la session, fixé à son premier tour lancé par Bosco, sur le poste comme en bac à sable : une
+   * session en bac à sable n'a pas le serveur MCP de Bosco pour le lire.
+   */
+  private async launchContext(record: PilotRecord): Promise<null | string> {
+    if (record.context) return record.context;
+    const context = await this.context.textOf(record.cwd, record.projects);
+    if (context) await this.keep({ ...(this.records.get(record.sessionId) ?? record), context });
+    return context;
+  }
+
   /** Une session dont Claude Code a effacé le transcript ne se reprend plus : le refus le dit, sans lancer de tour. */
   private async checkResumable(record: PilotRecord): Promise<void> {
     const sources = await this.sources.list();
@@ -793,9 +823,12 @@ export class PilotService {
     };
     const profile = record.sandbox?.profile ?? source.path;
     const sandboxed = record.sandbox !== null;
+    const context = await this.launchContext(record);
     const request: TurnRequest = {
       // Les autres projets sont rejoués à chaque tour : une reprise ne les garde pas d'elle-même
       addDirs: [...record.projects],
+      // Le même texte à chaque tour : Claude Code garde le premier, et le reprend si la conversation est compactée
+      appendSystemPrompt: context,
       configDir: source.path,
       cwd: record.cwd,
       launch,

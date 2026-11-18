@@ -1,0 +1,11 @@
+{
+  "target": { "kind": "project", "name": "maison" },
+  "text": {
+    "title": "Indexer les PDF scannés",
+    "context": "Les PDF scannés n'ont pas de texte.",
+    "decision": "Passer les PDF scannés par la reconnaissance de caractères avant l'indexation.",
+    "consequences": null,
+    "alternatives": null
+  },
+  "accept": true
+}

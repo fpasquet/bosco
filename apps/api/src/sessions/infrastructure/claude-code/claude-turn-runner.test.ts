@@ -1,11 +1,12 @@
-// Ce que les scénarios ne voient pas : la ligne de commande d'un tour piloté, le message reçu par l'agent (DT-31) et la
-// raison exacte que Claude Code donne quand il suspend « Approuver pour moi ».
+// Ce que les scénarios ne voient pas : la ligne de commande d'un tour piloté, son contexte, le message reçu par l'agent
+// (DT-31) et la raison exacte que Claude Code donne quand il suspend « Approuver pour moi ».
 import { describe, expect, it } from 'vitest';
 import type { TurnRequest } from '../../application/pilot.service.ts';
 import { suspensionOf, turnArguments, userMessage } from './claude-turn-runner.ts';
 
 const request: TurnRequest = {
   addDirs: [],
+  appendSystemPrompt: null,
   launch: null,
   configDir: '/home/dev/.claude-perso',
   cwd: '/home/dev/site-perso',
@@ -29,6 +30,12 @@ describe('turnArguments', () => {
       settings: { effort: null, model: null, permissionMode: 'ask' },
     });
     expect(args.slice(-4)).toEqual(['--permission-mode', 'default', '--session-id', 'c7e04a19']);
+  });
+
+  it('CA-CONT-07 · adds the context of the projects to the system prompt, the same at each turn', () => {
+    const context = '# Contexte du projet site-perso\n\n## Décisions du projet\n\nDEC-1 Garder Jest pour les tests';
+    const args = turnArguments({ ...request, appendSystemPrompt: context });
+    expect(args.slice(args.indexOf('--append-system-prompt'), -2)).toEqual(['--append-system-prompt', context]);
   });
 });
 

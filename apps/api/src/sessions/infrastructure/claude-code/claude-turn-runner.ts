@@ -72,6 +72,7 @@ export function turnArguments(request: TurnRequest): string[] {
     ...(model ? ['--model', model] : []),
     ...(effort ? ['--effort', effort] : []),
     ...request.addDirs.flatMap((dir) => ['--add-dir', dir]),
+    ...(request.appendSystemPrompt ? ['--append-system-prompt', request.appendSystemPrompt] : []),
     ...(request.resume ? ['--resume', request.sessionId] : ['--session-id', request.sessionId]),
   ];
 }

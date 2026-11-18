@@ -1,0 +1,7 @@
+{
+  "profile": "{{profiles}}/.claude-perso",
+  "text": "Quel contexte as-tu reçu ?",
+  "images": [],
+  "settings": { "permissionMode": "acceptEdits", "model": null, "effort": null },
+  "sandbox": { "branch": "bosco/s-contexte", "startBranch": "develop" }
+}

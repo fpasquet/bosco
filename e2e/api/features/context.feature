@@ -75,6 +75,17 @@ Feature: Context of the agents
     And I send GET request to "/api/notifications"
     Then the response property "notifications.0.settled" should equal "Acceptée"
 
+  @CA-CONT-07
+  @RF-CONT-01
+  Scenario: A piloted session receives the context of its project at launch, and keeps it
+    Given I send POST request to "/api/decisions" with the JSON "fixtures/context/project-decision.json"
+    When I start a session in the project "maison" with the JSON "fixtures/pilot/start-context.json"
+    Then the response code should be 201
+    And "the started session" should end its turn with "Contexte reçu : # Contexte du projet maison · - DEC-1 Découper les tableaux par ligne"
+    When I send POST request to "/api/decisions" with the JSON "fixtures/context/maison-later-decision.json"
+    And I write to "the started session" with the JSON "fixtures/pilot/context.json"
+    Then "the started session" should end its turn with "Contexte reçu : # Contexte du projet maison · - DEC-1 Découper les tableaux par ligne"
+
   Scenario: A session reads the context of the project it works in, and nothing outside of the known ones
     When I send POST request to "/api/decisions" with the JSON "fixtures/context/project-decision.json"
     And a Claude Code session in "maison/packages/recettes" calls the Bosco tool "bosco_context"

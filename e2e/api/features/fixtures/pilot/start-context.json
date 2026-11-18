@@ -1,0 +1,6 @@
+{
+  "profile": "{{profiles}}/.claude",
+  "text": "Quel contexte as-tu reçu ?",
+  "images": [],
+  "settings": { "permissionMode": "acceptEdits", "model": null, "effort": null }
+}

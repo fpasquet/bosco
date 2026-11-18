@@ -12,6 +12,8 @@ type StoredSandbox = Partial<Record<'copies', StoredCopy[]>> &
   Record<Exclude<keyof SandboxInfo, 'copies'>, null | string>;
 
 export interface PilotRow {
+  /** Contexte transmis au premier tour, repris aux suivants */
+  context: null | string;
   cwd: string;
   /** Autres projets de la session, en JSON ; [] : un seul projet */
   projects: string[];
@@ -32,6 +34,7 @@ export const PilotSchema = new EntitySchema<PilotRow>({
     sessionId: { type: 'string', fieldName: 'session_id', primary: true },
     sourceId: { type: 'string', fieldName: 'source_id' },
     cwd: { type: 'text' },
+    context: { type: 'text', nullable: true },
     projects: { type: 'json', default: '[]' },
     sandbox: { type: 'json', nullable: true },
     settings: { type: 'json' },
@@ -49,7 +52,7 @@ export class MikroOrmPilotRepository implements PilotRepository {
 
   async save(record: PilotRecord): Promise<void> {
     const sandbox = record.sandbox ? (JSON.parse(JSON.stringify(record.sandbox)) as StoredSandbox) : null;
-    await this.orm.em.fork().upsert(PilotSchema, { ...record, sandbox });
+    await this.orm.em.fork().upsert(PilotSchema, { ...record, context: record.context ?? null, sandbox });
   }
 }
 

@@ -2,11 +2,12 @@ import type { MikroORM } from '@mikro-orm/sqlite';
 import { Module } from '@nestjs/common';
 import type { GroupService } from '../projects/application/group.service.ts';
 import type { NotificationService } from '../sessions/application/notification.service.ts';
+import type { PilotService } from '../sessions/application/pilot.service.ts';
 import type { SessionService } from '../sessions/application/session.service.ts';
 import { ProjectsModule } from '../projects/projects.module.ts';
 import { GROUP_SERVICE } from '../projects/tokens.ts';
 import { SessionsModule } from '../sessions/sessions.module.ts';
-import { NOTIFICATION_SERVICE, SESSION_SERVICE } from '../sessions/tokens.ts';
+import { NOTIFICATION_SERVICE, PILOT_SERVICE, SESSION_SERVICE } from '../sessions/tokens.ts';
 import { ORM } from '../shared/tokens.ts';
 import { ContextService } from './application/context.service.ts';
 import {
@@ -23,7 +24,7 @@ const capitalized = (text: string) => text.charAt(0).toLocaleUpperCase('fr') + t
 
 /**
  * Contexte des agents : instructions des groupes, décisions et architecture, lus par les sessions par le serveur MCP
- * de Bosco ; les projets et leurs groupes sont ceux que la personne a réglés.
+ * de Bosco ou dès le premier tour d'une session pilotée ; les projets et leurs groupes sont ceux que la personne a réglés.
  */
 @Module({
   imports: [SessionsModule, ProjectsModule],
@@ -31,12 +32,13 @@ const capitalized = (text: string) => text.charAt(0).toLocaleUpperCase('fr') + t
   providers: [
     {
       provide: CONTEXT_SERVICE,
-      inject: [ORM, SESSION_SERVICE, GROUP_SERVICE, NOTIFICATION_SERVICE],
+      inject: [ORM, SESSION_SERVICE, GROUP_SERVICE, NOTIFICATION_SERVICE, PILOT_SERVICE],
       useFactory: (
         orm: MikroORM,
         sessions: SessionService,
         groups: GroupService,
         notifications: NotificationService,
+        pilot: PilotService,
       ) => {
         const context = new ContextService(
           new MikroOrmDecisionRepository(orm),
@@ -64,6 +66,8 @@ const capitalized = (text: string) => text.charAt(0).toLocaleUpperCase('fr') + t
           },
           settled: (decision, note) => notifications.settle({ decisionId: decision.id, kinds: ['decision'] }, note),
         });
+        // Une session pilotée reçoit le contexte de ses projets dès son premier tour, même sans le serveur MCP
+        pilot.useContext({ textOf: (cwd, projects) => context.sessionContext(cwd, [...projects]) });
         return context;
       },
     },

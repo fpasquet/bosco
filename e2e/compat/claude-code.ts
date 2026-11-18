@@ -130,6 +130,7 @@ function pilotedTurn(
     const turn = new ClaudeTurnRunner(isolated).start(
       {
         addDirs: [],
+        appendSystemPrompt: null,
         configDir: join(homedir(), '.claude'),
         cwd,
         launch: null,

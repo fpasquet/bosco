@@ -3,7 +3,7 @@
 // Il écrit le transcript dans le profil comme Claude Code, rappelle les dossiers ajoutés (--add-dir) et s'il lit leurs
 // instructions, demande une autorisation si le message parle
 // d'« autorisation », pose une question s'il parle de « question », attend « Arrêter » s'il parle d'un « long » travail,
-// rend la main à Bosco comme après 3 refus du vérificateur s'il parle de « refus » en « Approuver pour moi », et répond en rappelant ce qu'il a reçu (réglages du tour, images) pour que les scénarios le vérifient.
+// rend la main à Bosco comme après 3 refus du vérificateur s'il parle de « refus » en « Approuver pour moi », redit le contexte reçu au lancement s'il parle de « contexte », et répond en rappelant ce qu'il a reçu (réglages du tour, images) pour que les scénarios le vérifient.
 import { randomUUID } from 'node:crypto';
 import { appendFileSync, mkdirSync } from 'node:fs';
 import { homedir } from 'node:os';
@@ -80,6 +80,13 @@ function finish(text, subtype = 'success') {
   out({ type: 'result', subtype, is_error: subtype !== 'success', result: text, session_id: sessionId });
 }
 
+/** Le contexte des projets reçu au lancement (--append-system-prompt) : ses titres, pour que les scénarios le lisent. */
+function receivedContext() {
+  const context = option('--append-system-prompt');
+  const titles = context ? context.split('\n').filter((line) => /^(# |- DEC-)/.test(line)) : [];
+  return `Contexte reçu : ${titles.length > 0 ? titles.join(' · ') : 'aucun'}`;
+}
+
 async function turn(content) {
   const text = content
     .filter((block) => block.type === 'text')
@@ -149,6 +156,7 @@ async function turn(content) {
         : 'Question passée.',
     );
   }
+  if (/contexte/i.test(text)) return finish(receivedContext());
   if (/long/i.test(text)) {
     await new Promise((resolve) => {
       interrupted = resolve;
