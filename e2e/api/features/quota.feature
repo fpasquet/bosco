@@ -4,10 +4,10 @@ Feature: Quota of the Claude subscription
   never uses up the 5 h window or the week without me knowing.
 
   Background:
-    Given the Claude Code profile ".claude-perso" has the transcript "session-labo-ia-bosco.jsonl" for the session "c41e9a07"
+    Given the Claude Code profile ".claude-perso" has the transcript "session-maison-budget.jsonl" for the session "c41e9a07"
     And the Claude Code profile ".claude-perso" has an access to the Claude subscription of "camille@exemple.dev"
     And Bosco watches the profiles ".claude-perso"
-    And the folder "labo-ia" is a project
+    And the folder "maison" is a project
 
   @CA-CONT-99
   Scenario: The thresholds keep each wait under its stop
@@ -24,11 +24,11 @@ Feature: Quota of the Claude subscription
   @CA-SESS-116
   Scenario: Above its wait threshold, the subscription starts no sandbox, and leaves the workstation alone
     Given the Claude subscription of ".claude-perso" is at 52 % of its 5 h window
-    When I start a session in the project "labo-ia" with the JSON "fixtures/pilot/start-sandbox.json"
+    When I start a session in the project "maison" with the JSON "fixtures/pilot/start-sandbox.json"
     Then the response code should be 409
     And the response property "code" should equal "quotaHeld"
     And the response property "message" should contain "Quota de l’abonnement : 5 h à 52 %"
-    When I start a session in the project "labo-ia" with the JSON "fixtures/pilot/start-labo-ia.json"
+    When I start a session in the project "maison" with the JSON "fixtures/pilot/start-maison.json"
     Then the response code should be 201
 
   @CA-SESS-117
@@ -36,6 +36,6 @@ Feature: Quota of the Claude subscription
     Given the Claude subscription of ".claude-perso" is at 52 % of its 5 h window
     When I send PUT request to "/api/quota/scope" with the JSON "fixtures/quota/all-sessions.json"
     Then the response property "scope" should equal "all"
-    When I start a session in the project "labo-ia" with the JSON "fixtures/pilot/start-labo-ia.json"
+    When I start a session in the project "maison" with the JSON "fixtures/pilot/start-maison.json"
     Then the response code should be 409
     And the response property "code" should equal "quotaHeld"

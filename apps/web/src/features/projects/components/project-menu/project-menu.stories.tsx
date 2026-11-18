@@ -7,7 +7,7 @@ const meta = {
   component: ProjectMenu,
   parameters: { docs: { story: { inline: false, height: '420px' } } },
   args: {
-    project: { id: 2, name: 'labo-ia', pinned: true },
+    project: { id: 2, name: 'maison', pinned: true },
     proposals: 1,
     groups: [{ id: 3, name: 'Node.js' }],
     variant: 'header',
@@ -28,5 +28,5 @@ export const Open: Story = { args: { defaultOpen: true } };
 
 /** Un projet pas encore épinglé, sans décision à valider. */
 export const NotPinned: Story = {
-  args: { defaultOpen: true, project: { id: 4, name: 'api-voix', pinned: false }, proposals: 0 },
+  args: { defaultOpen: true, project: { id: 4, name: 'site-perso', pinned: false }, proposals: 0 },
 };

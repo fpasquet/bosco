@@ -6,7 +6,7 @@ import { PageSkeleton } from '@/shared/components/page-skeleton';
 import { projectsOverviewQuery } from '../../api/projects';
 
 /**
- * Ancienne vue d'ensemble filtrée sur un projet (« /?project=labo-ia ») : elle mène à la page du projet
+ * Ancienne vue d'ensemble filtrée sur un projet (« /?project=maison ») : elle mène à la page du projet
  *, ou à la liste des projets quand il n'existe plus.
  */
 export function ProjectRedirect({ name }: { name: string }) {

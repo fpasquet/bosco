@@ -1,5 +1,5 @@
 {
-  "target": { "kind": "project", "name": "labo-ia" },
+  "target": { "kind": "project", "name": "maison" },
   "text": {
     "title": "Découper les tableaux par ligne",
     "context": "Les tableaux des PDF arrivent fusionnés.",

@@ -7,9 +7,9 @@ Feature: Context of the agents
   agent only proposes, never decides.
 
   Background:
-    Given the Claude Code profile ".claude" has the transcript "session-labo-ia-rag.jsonl" for the session "5e0a91c3"
+    Given the Claude Code profile ".claude" has the transcript "session-maison-rag.jsonl" for the session "5e0a91c3"
     And Bosco watches the profiles ".claude" and ".claude-perso"
-    And the folders "labo-ia,api-voix" are projects
+    And the folders "maison,site-perso" are projects
 
   @CA-CONT-01
   @CA-CONT-25
@@ -20,12 +20,12 @@ Feature: Context of the agents
     Given I send PUT request to "/api/groups/1/instructions" with the JSON "fixtures/groups/all-instructions.json"
     And I send POST request to "/api/groups" with the JSON "fixtures/groups/node.json"
     And I send PUT request to "/api/groups/2/instructions" with the JSON "fixtures/groups/node-instructions.json"
-    And I send POST request to "/api/groups" with the JSON "fixtures/groups/medias.json"
-    And I send PUT request to "/api/groups/3/instructions" with the JSON "fixtures/groups/medias-instructions.json"
+    And I send POST request to "/api/groups" with the JSON "fixtures/groups/perso.json"
+    And I send PUT request to "/api/groups/3/instructions" with the JSON "fixtures/groups/perso-instructions.json"
     And I send POST request to "/api/decisions" with the JSON "fixtures/context/project-decision.json"
-    When I send GET request to "/api/context/preview?project=labo-ia"
+    When I send GET request to "/api/context/preview?project=maison"
     Then the response should match snapshot except for "at"
-    When I send GET request to "/api/context?project=labo-ia"
+    When I send GET request to "/api/context?project=maison"
     Then the response property "groups" should match the names "Tous les projets,Node.js"
 
   @CA-CONT-11
@@ -38,15 +38,15 @@ Feature: Context of the agents
   @CA-CONT-06
   Scenario: A decision proposed by a session waits for a human, then is sent once accepted
     When the session calls the Bosco tool "bosco_propose_decision" with:
-      | path     | labo-ia                                  |
+      | path     | maison                                   |
       | title    | Normaliser les sigles                    |
       | context  | Les sigles arrivent avec ou sans points. |
       | decision | Retirer les points avant la recherche.   |
     Then the Bosco tool answers "DEC-1 proposée"
-    When I send GET request to "/api/context/preview?project=labo-ia"
+    When I send GET request to "/api/context/preview?project=maison"
     Then the response property "absent.proposed.0.id" should equal "1"
     When I send POST request to "/api/decisions/1/accept"
-    And I send GET request to "/api/context/preview?project=labo-ia"
+    And I send GET request to "/api/context/preview?project=maison"
     Then the response property "text" should contain "DEC-1 Normaliser les sigles"
 
   @CA-CONT-21
@@ -63,16 +63,16 @@ Feature: Context of the agents
   @CA-CONT-86
   Scenario: Only the projects with a decision of their own, proposed or accepted, are offered
     When I send POST request to "/api/decisions" with the JSON "fixtures/context/project-decision.json"
-    And I send POST request to "/api/decisions" with the JSON "fixtures/context/proposed-api-voix.json"
+    And I send POST request to "/api/decisions" with the JSON "fixtures/context/proposed-site-perso.json"
     And I send GET request to "/api/context/projects"
-    Then the response property "projects" should equal "api-voix,labo-ia"
+    Then the response property "projects" should equal "maison,site-perso"
     When I send POST request to "/api/decisions/2/refuse"
     And I send GET request to "/api/context/projects"
-    Then the response property "projects" should equal "labo-ia"
+    Then the response property "projects" should equal "maison"
 
   Scenario: A session reads the context of the project it works in, and nothing outside of the known ones
     When I send POST request to "/api/decisions" with the JSON "fixtures/context/project-decision.json"
-    And a Claude Code session in "labo-ia/packages/rag" calls the Bosco tool "bosco_context"
+    And a Claude Code session in "maison/packages/recettes" calls the Bosco tool "bosco_context"
     Then the Bosco tool answers "DEC-1"
     When a Claude Code session in "ailleurs" calls the Bosco tool "bosco_context"
     Then the Bosco tool answers "Ce dossier n’est dans aucun projet connu de Bosco."

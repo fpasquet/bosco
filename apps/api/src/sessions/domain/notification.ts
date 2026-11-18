@@ -102,7 +102,7 @@ export interface NotificationRecord {
   /** Traitée : répondue, relue, relancée ; elle sort de « À traiter » */
   settled: null | string;
   taskId: null | number;
-  /** Projet de la session ou de la tâche (« api-voix ») : il titre la notification du bureau */
+  /** Projet de la session ou de la tâche (« site-perso ») : il titre la notification du bureau */
   place: null | string;
   /** Session ou tâche concernée (« T-12 · Ajouter la prononciation de « SNCF » au lexique ») */
   title: string;

@@ -3,7 +3,7 @@ import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Bosco } from './bosco.ts';
 
-/** Ajoute des dossiers (« labo-ia », « www/site-clubs ») comme projets ; un dossier qui manque est créé, sans git. */
+/** Ajoute des dossiers (« maison », « www/site-clubs ») comme projets ; un dossier qui manque est créé, sans git. */
 export async function addProjects(bosco: Bosco, folders: readonly string[]): Promise<void> {
   const paths = folders.map((folder) => join(bosco.profilesRoot, folder));
   for (const path of paths) mkdirSync(path, { recursive: true });

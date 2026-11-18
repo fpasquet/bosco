@@ -5,8 +5,8 @@ Feature: Live tracking
 
   Background:
     Given the Claude Code profile ".claude-perso" has the settings "fixtures/settings-perso.json"
-    And the Claude Code profile ".claude-perso" has the transcript "session-labo-ia-bosco.jsonl" for the session "c41e9a07"
-    And the Claude Code profile ".claude" has the transcript "session-labo-ia-rag.jsonl" for the session "5e0a91c3"
+    And the Claude Code profile ".claude-perso" has the transcript "session-maison-budget.jsonl" for the session "c41e9a07"
+    And the Claude Code profile ".claude" has the transcript "session-maison-rag.jsonl" for the session "5e0a91c3"
     And Bosco watches the profiles ".claude" and ".claude-perso"
 
   @CA-SESS-62

@@ -8,7 +8,7 @@ const meta = {
   parameters: { docs: { story: { inline: false, height: '520px' } } },
   globals: { viewport: { value: 'mobile1' } },
   args: {
-    project: { id: 2, name: 'labo-ia', path: '~/www/labo-ia · develop' },
+    project: { id: 2, name: 'maison', path: '~/www/maison · develop' },
     proposals: 1,
     onClose: fn(),
   },

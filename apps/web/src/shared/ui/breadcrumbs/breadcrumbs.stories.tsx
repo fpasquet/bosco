@@ -4,7 +4,7 @@ import { Breadcrumbs } from './breadcrumbs';
 const meta = {
   title: 'UI/Navigation/Breadcrumbs',
   component: Breadcrumbs,
-  args: { items: [{ href: '/projects', label: 'Projets' }, { label: 'api-voix' }] },
+  args: { items: [{ href: '/projects', label: 'Projets' }, { label: 'site-perso' }] },
 } satisfies Meta<typeof Breadcrumbs>;
 
 export default meta;
@@ -17,7 +17,7 @@ export const Deep: Story = {
   args: {
     items: [
       { href: '/projects', label: 'Projets' },
-      { href: '/projects/2/context', label: 'labo-ia' },
+      { href: '/projects/2/context', label: 'maison' },
       { label: 'DEC-6' },
     ],
   },

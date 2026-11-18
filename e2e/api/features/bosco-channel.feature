@@ -4,7 +4,7 @@ Feature: Bosco channel
   without going back to its terminal.
 
   Background:
-    Given the Claude Code profile ".claude-perso" has the transcript "session-labo-ia-bosco.jsonl" for the session "c41e9a07"
+    Given the Claude Code profile ".claude-perso" has the transcript "session-maison-budget.jsonl" for the session "c41e9a07"
     And Bosco watches the profiles ".claude-perso"
 
   @CA-SESS-102

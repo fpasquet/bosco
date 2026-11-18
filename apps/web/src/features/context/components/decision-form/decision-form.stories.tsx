@@ -10,7 +10,7 @@ const meta = {
   args: {
     mode: 'new',
     initial: null,
-    targetLabel: 'api-voix',
+    targetLabel: 'site-perso',
     busy: false,
     serverError: null,
     onCancel: fn(),
@@ -22,7 +22,7 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const NewDecision: Story = {
-  args: { targetChoices: ['api-voix', 'labo-ia', 'outils-node'], onTargetChange: fn() },
+  args: { targetChoices: ['site-perso', 'maison', 'outils-node'], onTargetChange: fn() },
 };
 
 /** La cible est fixe : un remplacement, ou une décision ouverte depuis un projet. */

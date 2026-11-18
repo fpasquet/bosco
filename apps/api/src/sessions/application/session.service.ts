@@ -41,7 +41,7 @@ export interface SessionView {
   lastMessage: null | string;
   model: null | string;
   projectPath: null | string;
-  /** Projet qui contient le dossier de travail, et ce dossier à l'intérieur (« packages/bosco ») ; null : hors projet */
+  /** Projet qui contient le dossier de travail, et ce dossier à l'intérieur (« packages/budget ») ; null : hors projet */
   project: { folder: string; id: number; name: string; root: string } | null;
   sourceId: string;
   startedAt: Date;

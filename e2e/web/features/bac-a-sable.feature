@@ -5,10 +5,10 @@ Fonctionnalité: Sessions en bac à sable
   que l'agent travaille sur une copie du projet et sa propre branche, que je récupère quand je veux.
 
   Contexte:
-    Étant donné le profil Claude Code « .claude-perso » contient le transcript « session-labo-ia-bosco.jsonl » de la session « c41e9a07 »
+    Étant donné le profil Claude Code « .claude-perso » contient le transcript « session-maison-budget.jsonl » de la session « c41e9a07 »
     Et le profil Claude Code « .claude-perso » a accès à l’abonnement Claude de « camille@exemple.dev »
     Et Bosco surveille les profils « .claude » et « .claude-perso »
-    Et le dossier « labo-ia » est un projet
+    Et le dossier « maison » est un projet
 
   @NF-18
   @CA-SESS-106
@@ -44,7 +44,7 @@ Fonctionnalité: Sessions en bac à sable
     Et je clique sur le bouton « Démarrer »
     Et je clique sur le bouton « Ajouter à la liste : raw.githubusercontent.com »
     Alors je vois l’élément de menu « À la liste générale »
-    Quand je clique sur l’élément de menu « Aux domaines de labo-ia »
+    Quand je clique sur l’élément de menu « Aux domaines de maison »
     Alors je suis sur la page « /projects/1/settings »
     Et le champ « Ajouter un domaine » vaut « raw.githubusercontent.com »
     Quand je clique sur le bouton « Ajouter le domaine »

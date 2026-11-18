@@ -32,8 +32,8 @@ function session(id: string, overrides: Partial<SessionDto> = {}): SessionDto {
     openInTerminal: false,
     pilot: null,
     recentActions: [],
-    projectPath: '/home/dev/www/labo-ia/packages/rag',
-    project: { folder: 'packages/rag', id: 1, name: 'labo-ia', root: '/home/dev/www/labo-ia' },
+    projectPath: '/home/dev/www/maison/packages/recettes',
+    project: { folder: 'packages/recettes', id: 1, name: 'maison', root: '/home/dev/www/maison' },
     sourceId: 'pro',
     startedAt: new Date('2026-11-06T14:00:00').toISOString(),
     state: 'running',
@@ -84,7 +84,7 @@ describe('groupByProject', () => {
       session('rag'),
     ]);
     expect(groups.map(({ name, sessions }) => [name, sessions.length])).toEqual([
-      ['labo-ia', 1],
+      ['maison', 1],
       ['outils-node', 1],
       [null, 1],
     ]);
@@ -115,8 +115,12 @@ describe('groupByGroup', () => {
       [group(1, 'Club des Trois Lacs', [1, 3]), group(2, 'Node.js', [2])],
     );
     expect(groups.map(({ also, labels, name }) => [name, labels, also])).toEqual([
-      ['Club des Trois Lacs', { rag: 'labo-ia/packages/rag', tarifs: 'labo-ia +2' }, { tarifs: 'aussi dans Node.js' }],
-      ['Node.js', { tarifs: 'labo-ia +2' }, { tarifs: 'aussi dans Club des Trois Lacs' }],
+      [
+        'Club des Trois Lacs',
+        { rag: 'maison/packages/recettes', tarifs: 'maison +2' },
+        { tarifs: 'aussi dans Node.js' },
+      ],
+      ['Node.js', { tarifs: 'maison +2' }, { tarifs: 'aussi dans Club des Trois Lacs' }],
     ]);
   });
 });

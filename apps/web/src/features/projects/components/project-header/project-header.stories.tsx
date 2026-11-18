@@ -8,13 +8,13 @@ const meta = {
   component: ProjectHeader,
   parameters: { layout: 'padded' },
   args: {
-    project: { id: 2, name: 'labo-ia', path: '~/www/labo-ia', branch: 'develop', git: true },
+    project: { id: 2, name: 'maison', path: '~/www/maison', branch: 'develop', git: true },
     proposals: 0,
     tab: 'sessions',
     menu: (
       <ProjectMenu
         variant="header"
-        project={{ id: 2, name: 'labo-ia', pinned: true }}
+        project={{ id: 2, name: 'maison', pinned: true }}
         proposals={0}
         groups={[]}
         onAddToGroup={fn()}
@@ -31,15 +31,15 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {};
 
-/** L'onglet Contexte, une décision à valider : « Projets › labo-ia › Contexte ». */
+/** L'onglet Contexte, une décision à valider : « Projets › maison › Contexte ». */
 export const Context: Story = { args: { tab: 'context', proposals: 1 } };
 
-/** Une décision ouverte depuis le contexte : « Projets › labo-ia › DEC-6 », sans les onglets. */
+/** Une décision ouverte depuis le contexte : « Projets › maison › DEC-6 », sans les onglets. */
 export const Decision: Story = { args: { tab: 'context', crumb: 'DEC-6' } };
 
 /** Un dossier sans git : ni branche ni puce « git ». */
 export const WithoutGit: Story = {
-  args: { project: { id: 4, name: 'notes', path: '~/notes', branch: null, git: false }, tab: 'settings' },
+  args: { project: { id: 4, name: 'notes-clubs', path: '~/notes-clubs', branch: null, git: false }, tab: 'settings' },
 };
 
 export const Mobile: Story = { globals: { viewport: { value: 'mobile1' } } };

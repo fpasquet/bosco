@@ -9,7 +9,7 @@ import type {
 } from '@bosco/domain';
 
 const ago = (seconds: number) => new Date(Date.now() - seconds * 1000).toISOString();
-const laboIa = (folder: string) => ({ folder, id: 1, name: 'labo-ia', root: '/home/dev/www/labo-ia' });
+const maison = (folder: string) => ({ folder, id: 1, name: 'maison', root: '/home/dev/www/maison' });
 
 function session(overrides: Partial<SessionDto> & Pick<SessionDto, 'id' | 'title'>): SessionDto {
   return {
@@ -48,7 +48,7 @@ export const STORY_SESSIONS: SessionDto[] = [
     title: 'Specs du tableau de bord Bosco',
     sourceId: 'perso',
     branch: 'feat/specs',
-    project: laboIa('packages/bosco'),
+    project: maison('packages/budget'),
     model: 'claude-opus-5-5',
     lastAction: 'Bash · npm run db:migrate',
     recentActions: ['Bash · npm run db:migrate', 'Modifie src/migrations/0003.ts', 'Lit src/db/schema.ts'],
@@ -60,7 +60,7 @@ export const STORY_SESSIONS: SessionDto[] = [
   session({
     id: '5e0a91c3',
     title: 'Corriger l’indexation des PDF dans Elasticsearch',
-    project: laboIa('packages/rag'),
+    project: maison('packages/recettes'),
     addedProjects: [{ id: 2, name: 'outils-node', root: '/home/dev/www/outils-node' }],
     lastAction: 'Bash · yarn test --forceExit',
     recentActions: ['Bash · yarn test --forceExit', 'Modifie src/indexer/pdf.ts'],
@@ -93,19 +93,19 @@ export const STORY_SESSIONS: SessionDto[] = [
   }),
 ];
 
-/** Groupes du fil rouge : « Médias » réunit labo-ia et api-voix, « Node.js » outils-node. */
+/** Groupes du fil rouge : « Perso » réunit maison et site-perso, « Node.js » outils-node. */
 export const STORY_GROUPS: GroupDto[] = [
   {
     id: 2,
-    name: 'Médias',
+    name: 'Perso',
     description: null,
     instructions: '',
     defaults: { effort: null, model: null, permissionMode: null, profile: null },
     sidebar: true,
     system: false,
     projects: [
-      { id: 1, name: 'labo-ia' },
-      { id: 3, name: 'api-voix' },
+      { id: 1, name: 'maison' },
+      { id: 3, name: 'site-perso' },
     ],
   },
   {
@@ -126,7 +126,7 @@ export const STORY_WAITING: SessionDto[] = [
     id: '7a3e5f21',
     title: 'Digest quotidien de la veille média',
     branch: 'feat/digest',
-    project: laboIa('packages/veille-presse'),
+    project: maison('packages/agenda'),
     state: 'waiting',
     lastEventAt: ago(6 * 60),
     waiting: { kind: 'turn', message: 'Le digest est généré. Veux-tu que je lance les tests ?', since: ago(6 * 60) },
@@ -137,7 +137,7 @@ export const STORY_WAITING: SessionDto[] = [
     title: 'Specs du tableau de bord Bosco',
     sourceId: 'perso',
     branch: 'feat/specs',
-    project: laboIa('packages/bosco'),
+    project: maison('packages/budget'),
     state: 'waiting',
     lastEventAt: ago(40),
     waiting: { kind: 'permission', requestId: 'req-1', tool: 'Bash', detail: 'npm run db:migrate', since: ago(40) },
@@ -220,7 +220,7 @@ export const STORY_STEPS = {
   read: toolStep(
     't1',
     'Read',
-    { file_path: '/home/dev/www/labo-ia/packages/rag/src/indexer/pdf.ts' },
+    { file_path: '/home/dev/www/maison/packages/recettes/src/indexer/pdf.ts' },
     36,
     35.99,
     PDF_TS,
@@ -230,7 +230,7 @@ export const STORY_STEPS = {
     't3',
     'Edit',
     {
-      file_path: '/home/dev/www/labo-ia/packages/rag/src/indexer/pdf.ts',
+      file_path: '/home/dev/www/maison/packages/recettes/src/indexer/pdf.ts',
       old_string: '  for (const page of pages) chunks.push(...splitBlocks(page.blocks));',
       new_string:
         '  for (const page of pages) {\n    // Les lignes d’un même tableau restent dans un seul bloc\n    chunks.push(...splitBlocks(groupTables(page.blocks)));\n  }',
@@ -346,7 +346,7 @@ export const STORY_STEPS = {
   mcp: toolStep(
     't9',
     'mcp__github__get_issue',
-    { owner: 'labo-ia', repo: 'rag', issue_number: 42 },
+    { owner: 'maison', repo: 'rag', issue_number: 42 },
     33,
     32.99,
     '{ "title": "Tableaux coupés dans les PDF" }',

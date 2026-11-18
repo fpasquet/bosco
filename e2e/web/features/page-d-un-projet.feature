@@ -7,7 +7,7 @@ Fonctionnalité: Page d'un projet
 
   Contexte:
     Étant donné Bosco surveille les profils « .claude » et « .claude-perso »
-    Et les dossiers « labo-ia » et « api-voix » sont des projets
+    Et les dossiers « maison » et « site-perso » sont des projets
 
   @CA-CONT-125
   @CA-CONT-127
@@ -15,23 +15,23 @@ Fonctionnalité: Page d'un projet
   @NF-18
   Scénario: Les réglages d'un projet sans git disent sa place, et le bac à sable y est grisé avec sa raison
     Quand j'ouvre la page « /projects/1/settings »
-    Alors le fil d’Ariane est « Projets › labo-ia »
+    Alors le fil d’Ariane est « Projets › maison »
     Et l’onglet « Réglages » est ouvert
     Et je vois l’étiquette « sans git »
-    Et je vois le texte « Bac à sable indisponible : labo-ia n’est pas un dépôt git. »
+    Et je vois le texte « Bac à sable indisponible : maison n’est pas un dépôt git. »
     Et le bouton radio « Sur le poste » est coché
     Et la page est accessible
 
   @CA-CONT-126
   Scénario: Un projet rejoint un groupe qui a des instructions depuis ses réglages, après une confirmation
-    Étant donné le groupe « Médias » réunit le projet « api-voix »
-    Et le groupe « Médias » a l’instruction « Les textes lus sont en français. »
+    Étant donné le groupe « Perso » réunit le projet « site-perso »
+    Et le groupe « Perso » a l’instruction « Les textes lus sont en français. »
     Quand j'ouvre la page « /projects/1/settings »
-    Et je clique sur le bouton « Ajouter à un groupe : labo-ia »
-    Et je clique sur l’élément de menu « Médias »
+    Et je clique sur le bouton « Ajouter à un groupe : maison »
+    Et je clique sur l’élément de menu « Perso »
     Alors je vois le texte « Les instructions du groupe arriveront aux prochains agents de »
     Quand je clique sur le bouton « Ajouter » de la confirmation
-    Alors je vois le lien « Médias » dans la page
+    Alors je vois le lien « Perso » dans la page
 
   @CA-CONT-130
   Scénario: Le retrait d'un projet depuis ses réglages demande une confirmation qui garde tout sur le poste

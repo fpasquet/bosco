@@ -12,7 +12,7 @@ export function dayTitle(date: string, now: Date): string {
   return label.charAt(0).toUpperCase() + label.slice(1);
 }
 
-/** « labo-ia · packages/rag », « labo-ia · racine du projet » */
+/** « maison · packages/recettes », « maison · racine du projet » */
 export function whereOf(session: SessionDto): string {
   if (!session.project) return session.projectPath ?? 'Hors projet';
   return `${session.project.name} · ${session.project.folder || 'racine du projet'}`;

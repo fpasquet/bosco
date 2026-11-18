@@ -4,7 +4,7 @@ import { AppShell } from '@/shared/layouts/app-shell';
 
 const TITLE = 'Vue d’ensemble';
 
-/** Vue d'ensemble. L'ancienne vue filtrée sur un projet (`?project=labo-ia`) mène à la page du projet. */
+/** Vue d'ensemble. L'ancienne vue filtrée sur un projet (`?project=maison`) mène à la page du projet. */
 export default async function OverviewPage({ searchParams }: { searchParams: Promise<{ project?: string }> }) {
   const { project } = await searchParams;
   return (

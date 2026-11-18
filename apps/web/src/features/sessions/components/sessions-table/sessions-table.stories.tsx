@@ -27,7 +27,7 @@ export const ByGroup: Story = {
 /** Page d'un projet : la colonne « Dossier » remplace les intertitres. */
 export const ProjectPage: Story = {
   args: {
-    groups: groupByProject(STORY_SESSIONS.filter((session) => session.project?.name === 'labo-ia')),
+    groups: groupByProject(STORY_SESSIONS.filter((session) => session.project?.name === 'maison')),
     column: 'folder',
   },
 };

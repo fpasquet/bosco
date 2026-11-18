@@ -5,7 +5,7 @@ Fonctionnalité: Canal de Bosco
   depuis mon téléphone sans retourner à son terminal.
 
   Contexte:
-    Étant donné le profil Claude Code « .claude-perso » contient le transcript « session-labo-ia-bosco.jsonl » de la session « c41e9a07 »
+    Étant donné le profil Claude Code « .claude-perso » contient le transcript « session-maison-budget.jsonl » de la session « c41e9a07 »
     Et Bosco surveille les profils « .claude » et « .claude-perso »
     Et la session « c41e9a07 » est ouverte dans Claude Code
 

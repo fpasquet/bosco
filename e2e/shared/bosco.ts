@@ -103,14 +103,14 @@ export async function startBosco(recordings: string): Promise<Bosco> {
         rmSync(join(profilesRoot, entry), { recursive: true, force: true });
     },
     writeProfileTranscript(profile, source, sessionId) {
-      // Les dossiers de travail (/home/dev/labo-ia/packages/rag) sont recréés dans le dossier du scénario, chaque projet
+      // Les dossiers de travail (/home/dev/maison/packages/recettes) sont recréés dans le dossier du scénario, chaque projet
       // avec son .git, pour que Bosco trouve les projets comme sur le poste.
       const content = readFileSync(source, 'utf8').replaceAll(SAMPLE_HOME, profilesRoot);
       const cwd = /"cwd":\s*"([^"]+)"/.exec(content)?.[1] ?? profilesRoot;
       const project = cwd.slice(profilesRoot.length + 1).split('/')[0];
       if (project) mkdirSync(join(profilesRoot, project, '.git'), { recursive: true });
       mkdirSync(cwd, { recursive: true });
-      // Worktree de Claude Code (labo-ia/.claude/worktrees/fix-ui) : son .git est un fichier vers le projet d'origine
+      // Worktree de Claude Code (maison/.claude/worktrees/fix-ui) : son .git est un fichier vers le projet d'origine
       const worktree = /^(.+)\/\.claude\/worktrees\/([^/]+)/.exec(cwd);
       if (worktree?.[1] && worktree[2]) {
         const gitdir = join(worktree[1], '.git', 'worktrees', worktree[2]);

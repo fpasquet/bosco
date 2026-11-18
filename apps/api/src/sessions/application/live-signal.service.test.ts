@@ -38,7 +38,7 @@ function setup() {
   const service = new LiveSignalService(repository, new SessionService(repository, clock, events), events, clock, {
     next: () => `req-${++next}`,
   });
-  const origin = { cwd: '/home/dev/labo-ia/packages/bosco', sessionId: 'c41e9a07', sourceId: 'perso' };
+  const origin = { cwd: '/home/dev/maison/packages/budget', sessionId: 'c41e9a07', sourceId: 'perso' };
   return { origin, repository, service, settled };
 }
 

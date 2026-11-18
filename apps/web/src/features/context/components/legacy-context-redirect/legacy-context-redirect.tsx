@@ -12,7 +12,7 @@ export interface LegacyContextRedirectProps {
   edit?: boolean;
   /** Nouvelle décision (« /context/decisions/new ») */
   newDecision?: boolean;
-  /** Nom du projet de l'ancienne adresse (« ?project=api-voix ») */
+  /** Nom du projet de l'ancienne adresse (« ?project=site-perso ») */
   project: null | string;
   replaces?: null | number;
 }

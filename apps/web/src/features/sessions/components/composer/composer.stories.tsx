@@ -14,7 +14,7 @@ const FILES = [
 const COMMANDS: SuggestionDto[] = [
   { value: 'review', description: 'Relire les changements de la branche', origin: 'commande' },
   { value: 'tdd', description: 'Développer en commençant par les tests', origin: 'skill · profil perso' },
-  { value: 'commit', description: 'Commiter en Conventional Commits', origin: 'projet api-voix' },
+  { value: 'commit', description: 'Commiter en Conventional Commits', origin: 'projet site-perso' },
   { value: 'compact', description: 'Résumer la conversation pour libérer le contexte', origin: 'commande' },
 ];
 

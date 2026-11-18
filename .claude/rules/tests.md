@@ -18,7 +18,7 @@ paths:
 ## Nommage et traçabilité
 
 - Titres en anglais. Un test qui vérifie un critère le cite en tête de son nom : `it('CA-SESS-04 · …')` ; un scénario le porte en tag (`@CA-SESS-04`, `@RF-SESS-02`, `@NF-13` sur la fonctionnalité). `trace.mjs` mesure la couverture (NF-19).
-- Les données reprennent le fil rouge des maquettes (`labo-ia`, `api-voix`, T-12, session `c41e9a07`…).
+- Les données reprennent le fil rouge des maquettes (`api-tarifs`, `creneaux`, `maison`, groupe « Club des Trois Lacs », session `c41e9a07`…).
 
 ## Scénarios Gherkin (playwright-bdd)
 

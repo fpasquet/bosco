@@ -17,12 +17,12 @@
     "recentActions": [
       "Bash · npm run db:migrate"
     ],
-    "projectPath": "<profiles>/labo-ia/packages/bosco",
+    "projectPath": "<profiles>/maison/packages/budget",
     "project": {
-      "folder": "packages/bosco",
+      "folder": "packages/budget",
       "id": 1,
-      "name": "labo-ia",
-      "root": "<profiles>/labo-ia"
+      "name": "maison",
+      "root": "<profiles>/maison"
     },
     "sourceId": "<masked>",
     "startedAt": "2026-11-06T14:02:00.000Z",

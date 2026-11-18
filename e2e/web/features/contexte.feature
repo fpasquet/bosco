@@ -6,9 +6,9 @@ Fonctionnalité: Contexte des agents
   été décidé, et qu'un agent ne fasse que proposer.
 
   Contexte:
-    Étant donné le profil Claude Code « .claude » contient le transcript « session-labo-ia-rag.jsonl » de la session « 5e0a91c3 »
+    Étant donné le profil Claude Code « .claude » contient le transcript « session-maison-rag.jsonl » de la session « 5e0a91c3 »
     Et Bosco surveille les profils « .claude » et « .claude-perso »
-    Et les dossiers « labo-ia » et « api-voix » sont des projets
+    Et les dossiers « maison » et « site-perso » sont des projets
 
   @CA-CONT-03
   @CA-CONT-06
@@ -16,14 +16,14 @@ Fonctionnalité: Contexte des agents
   @CA-CONT-165
   @NF-18
   Scénario: Une décision proposée par une session attend dans l'onglet Contexte du projet, puis le rejoint une fois acceptée
-    Étant donné une session a proposé la décision « Normaliser les sigles » dans le projet « labo-ia »
+    Étant donné une session a proposé la décision « Normaliser les sigles » dans le projet « maison »
     Quand j'ouvre la page « /projects/1/context »
-    Alors le fil d’Ariane est « Projets › labo-ia › Contexte »
-    Et l’entrée « labo-ia » de la barre latérale est active
+    Alors le fil d’Ariane est « Projets › maison › Contexte »
+    Et l’entrée « maison » de la barre latérale est active
     Et je vois le texte « 1 décision proposée par un agent attend ta validation »
     Et la page est accessible
     Quand je clique sur le lien « Examiner DEC-1 »
-    Alors le fil d’Ariane est « Projets › labo-ia › DEC-1 »
+    Alors le fil d’Ariane est « Projets › maison › DEC-1 »
     Et je vois le texte « Proposée par une session »
     Et la page est accessible
     Quand je clique sur le bouton « Accepter »
@@ -48,7 +48,7 @@ Fonctionnalité: Contexte des agents
   @CA-CONT-21
   @CA-CONT-22
   Scénario: Une décision acceptée change avec une note et garde sa version précédente
-    Étant donné le projet « labo-ia » a la décision acceptée « Garder Jest pour les tests »
+    Étant donné le projet « maison » a la décision acceptée « Garder Jest pour les tests »
     Quand j'ouvre la page « /projects/1/context/decisions/1/edit »
     Et je saisis « Garder Jest pour les tests existants » dans le champ « Titre »
     Et je clique sur le bouton « Enregistrer la version 2 »
@@ -65,20 +65,20 @@ Fonctionnalité: Contexte des agents
   @NF-18
   Scénario: Les instructions des groupes du projet se lisent dans son contexte et s'écrivent dans le groupe
     Étant donné le groupe « Tous les projets » a l’instruction « Node 22 au minimum. »
-    Et le groupe « Labo » réunit le projet « labo-ia »
-    Et le groupe « Labo » a l’instruction « Citer les sources de chaque réponse. »
-    Et le projet « labo-ia » a la décision acceptée « Garder Jest pour les tests »
+    Et le groupe « Perso » réunit le projet « maison »
+    Et le groupe « Perso » a l’instruction « Aucun service payant ni de télémétrie. »
+    Et le projet « maison » a la décision acceptée « Garder Jest pour les tests »
     Quand j'ouvre la page « /projects/1/context »
     Alors la liste « Tous les projets » contient « Node 22 au minimum. »
-    Et la liste « Labo » contient « Citer les sources de chaque réponse. »
+    Et la liste « Perso » contient « Aucun service payant ni de télémétrie. »
     Et je vois le texte « elles l’emportent sur les instructions des groupes »
     Et la page est accessible
-    Quand je clique sur le lien « Modifier les instructions de Labo »
+    Quand je clique sur le lien « Modifier les instructions de Perso »
     Alors je suis sur la page « /groups/2/instructions »
 
   @CA-CONT-164
   Scénario: L'ancienne adresse du contexte d'un projet mène à l'onglet Contexte de sa page
-    Quand j'ouvre la page « /context?project=labo-ia »
+    Quand j'ouvre la page « /context?project=maison »
     Alors je suis sur la page « /projects/1/context »
 
   @CA-CONT-11
@@ -87,13 +87,13 @@ Fonctionnalité: Contexte des agents
   @NF-18
   Scénario: Sans décision, la première s'écrit depuis le contexte du projet, pour un projet choisi parmi tous
     Quand j'ouvre la page « /projects/2/context »
-    Alors je vois le texte « Aucune décision pour api-voix : elles arrivent proposées par un agent, ou écrites ici. »
+    Alors je vois le texte « Aucune décision pour site-perso : elles arrivent proposées par un agent, ou écrites ici. »
     Et la page est accessible
     Quand je clique sur le lien « Nouvelle décision »
-    Alors la liste « Porte sur » vaut « api-voix »
-    Quand je choisis « labo-ia » dans la liste « Porte sur »
+    Alors la liste « Porte sur » vaut « site-perso »
+    Quand je choisis « maison » dans la liste « Porte sur »
     Alors je suis sur la page « /projects/1/context/decisions/new »
-    Et la liste « Porte sur » vaut « labo-ia »
+    Et la liste « Porte sur » vaut « maison »
     Quand je saisis « Garder les fichiers audio 30 jours en cache » dans le champ « Titre »
     Et je saisis « Générer un même article plusieurs fois coûte cher. » dans le champ « Contexte »
     Et je saisis « Garder chaque fichier audio 30 jours. » dans le champ « Décision »
@@ -105,7 +105,7 @@ Fonctionnalité: Contexte des agents
   @CA-CONT-19
   @NF-18
   Scénario: Sur le téléphone, une décision proposée s'accepte, une décision acceptée se lit seulement
-    Étant donné une session a proposé la décision « Normaliser les sigles » dans le projet « labo-ia »
+    Étant donné une session a proposé la décision « Normaliser les sigles » dans le projet « maison »
     Quand j'ouvre la page « /projects/1/context/decisions/1 »
     Et je clique sur le bouton « Accepter »
     Alors je suis sur la page « /projects/1/context »

@@ -8,7 +8,7 @@ const meta = {
   title: 'Features/Sessions/EndedToday',
   component: EndedToday,
   parameters: { layout: 'padded' },
-  args: { sessions: ended, scope: { history: '/history?project=labo-ia', label: 'dans ce projet' } },
+  args: { sessions: ended, scope: { history: '/history?project=maison', label: 'dans ce projet' } },
 } satisfies Meta<typeof EndedToday>;
 
 export default meta;

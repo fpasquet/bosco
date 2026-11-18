@@ -19,7 +19,7 @@ export interface StateBoardProps {
 
 const COLUMN_TITLES: Record<SessionStateDto, string> = { ...STATE_LABELS, ended: 'Terminées', inactive: 'Inactives' };
 
-/** « labo-ia/rag » : le projet, et le dernier dossier quand la session tourne dans un sous-dossier. */
+/** « maison/rag » : le projet, et le dernier dossier quand la session tourne dans un sous-dossier. */
 function placeOf(session: SessionDto): string {
   if (!session.project) return 'Hors projet';
   const { folder, name } = session.project;

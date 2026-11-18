@@ -15,7 +15,7 @@ const line = (text: string, second = 0) =>
 
 function profileWith(content: string): { file: string; profile: string } {
   const profile = mkdtempSync(join(tmpdir(), 'bosco-conversation-'));
-  const folder = join(profile, 'projects', '-home-dev-labo-ia');
+  const folder = join(profile, 'projects', '-home-dev-maison');
   mkdirSync(folder, { recursive: true });
   const file = join(folder, 'c41e9a07.jsonl');
   writeFileSync(file, content);

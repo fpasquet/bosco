@@ -5,7 +5,7 @@ Feature: Sessions over several projects
   or in a sandbox, so that one agent can change an API and the sites that call it, with the context of each project.
 
   Background:
-    Given the Claude Code profile ".claude-perso" has the transcript "session-labo-ia-bosco.jsonl" for the session "c41e9a07"
+    Given the Claude Code profile ".claude-perso" has the transcript "session-maison-budget.jsonl" for the session "c41e9a07"
     And the Claude Code profile ".claude-perso" has an access to the Claude subscription of "camille@exemple.dev"
     And Bosco watches the profiles ".claude-perso"
     And the home folder has the folders:
@@ -76,11 +76,11 @@ Feature: Sessions over several projects
   @CA-SESS-142
   @CA-CONT-105
   Scenario: A session over several projects reads the context of each, the principal first
-    Given the folders "labo-ia,api-voix" are projects
+    Given the folders "maison,site-perso" are projects
     When I send POST request to "/api/decisions" with the JSON "fixtures/context/project-decision.json"
-    And I send POST request to "/api/decisions" with the JSON "fixtures/context/api-voix-decision.json"
+    And I send POST request to "/api/decisions" with the JSON "fixtures/context/site-perso-decision.json"
     And the session calls the Bosco tool "bosco_context" with:
-      | path  | labo-ia/packages/bosco |
-      | paths | api-voix, labo-ia      |
-    Then the Bosco tool answers "Session sur 2 projets : labo-ia (projet principal, dossier de travail), puis api-voix."
+      | path  | maison/packages/budget |
+      | paths | site-perso, maison     |
+    Then the Bosco tool answers "Session sur 2 projets : maison (projet principal, dossier de travail), puis site-perso."
     And the Bosco tool answers "DEC-2 Valider chaque requête par un schéma"

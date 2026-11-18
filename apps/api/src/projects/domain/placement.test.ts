@@ -130,7 +130,7 @@ describe('Suggestions', () => {
   it('never proposes the home folder itself, nor what is under the temporary or Bosco data folders', () => {
     const unproposed = { below: ['/tmp', '/run/user/1000/tmp', '/home/dev/.local/share/bosco'], home: '/home/dev' };
     expect(isProposable('/home/dev', unproposed)).toBe(false);
-    expect(isProposable('/home/dev/notes', unproposed)).toBe(true);
+    expect(isProposable('/home/dev/notes-clubs', unproposed)).toBe(true);
     expect(isProposable('/tmp', unproposed)).toBe(false);
     expect(isProposable('/run/user/1000/tmp/claude/scratchpad', unproposed)).toBe(false);
     expect(isProposable('/home/dev/.local/share/bosco/sandboxes/c41e9a07', unproposed)).toBe(false);

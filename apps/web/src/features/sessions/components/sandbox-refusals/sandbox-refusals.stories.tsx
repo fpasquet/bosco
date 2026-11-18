@@ -6,7 +6,7 @@ const meta = {
   component: SandboxRefusals,
   parameters: { layout: 'padded', nextjs: { appDirectory: true } },
   args: {
-    project: { id: 1, name: 'labo-ia' },
+    project: { id: 1, name: 'maison' },
     refusals: [
       { at: '2026-11-06T15:07:00.000Z', host: 'raw.githubusercontent.com' },
       { at: '2026-11-06T15:08:00.000Z', host: 'raw.githubusercontent.com' },
