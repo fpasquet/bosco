@@ -84,13 +84,13 @@ function ArchitectureForm({
         <span className="text-xs font-medium">Appelle</span>
         <input
           className="input w-full input-sm"
-          placeholder="Service de synthèse, Stockage audio"
+          placeholder="Service de paiement, Stockage des grilles"
           {...register('calls')}
         />
       </label>
       <label className="flex flex-col gap-1">
         <span className="text-xs font-medium">Appelée par</span>
-        <input className="input w-full input-sm" placeholder="veille-presse, site-articles" {...register('calledBy')} />
+        <input className="input w-full input-sm" placeholder="creneaux, site-clubs" {...register('calledBy')} />
       </label>
       <p className="text-xs text-muted">Des noms séparés par des virgules.</p>
       <div className="flex gap-2">
