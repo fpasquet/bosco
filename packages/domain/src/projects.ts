@@ -10,6 +10,8 @@ export interface ProjectDto {
   id: number;
   /** Dernière activité de ses sessions ; null sans session */
   lastSessionAt: null | string;
+  /** Monodépôt (pnpm-workspace.yaml, workspaces, turbo.json, nx.json) : un seul projet, ses paquets en sous-dossiers */
+  monorepo: boolean;
   name: string;
   path: string;
   /** Montré dans la barre latérale même sans session ouverte */

@@ -26,13 +26,14 @@ const changeSchema = z.object({
 });
 
 function presentProject(project: ProjectSnapshot | ProjectView): ProjectDto {
-  const view = 'sessions' in project ? project : { ...project, lastSessionAt: null, sessions: 0 };
+  const view = 'sessions' in project ? project : { ...project, lastSessionAt: null, monorepo: false, sessions: 0 };
   return {
     defaults: view.defaults,
     domains: view.domains,
     git: view.git,
     id: view.id,
     lastSessionAt: view.lastSessionAt?.toISOString() ?? null,
+    monorepo: view.monorepo,
     name: view.name,
     path: view.path,
     pinned: view.pinned,

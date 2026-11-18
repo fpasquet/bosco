@@ -26,6 +26,8 @@ import { activityOf, type Suggestion } from '../domain/suggestions.ts';
 
 export interface ProjectView extends ProjectSnapshot {
   lastSessionAt: Date | null;
+  /** Monodépôt : ses paquets sont des sous-dossiers, ses sessions se rangent sous lui */
+  monorepo: boolean;
   sessions: number;
 }
 
@@ -122,10 +124,16 @@ export class ProjectService {
       below: this.unproposed,
       home: this.home,
     });
+    const monorepos = await Promise.all(this.projects.map((project) => this.folders.isMonorepo(project.path)));
     const projects = this.projects
-      .map((project) => {
+      .map((project, index) => {
         const found = activity.projects.get(project.id);
-        return { ...project, lastSessionAt: found?.lastSessionAt ?? null, sessions: found?.sessions ?? 0 };
+        return {
+          ...project,
+          lastSessionAt: found?.lastSessionAt ?? null,
+          monorepo: monorepos[index] ?? false,
+          sessions: found?.sessions ?? 0,
+        };
       })
       .toSorted(
         (a, b) =>
