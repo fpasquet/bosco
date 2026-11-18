@@ -26,7 +26,14 @@ const schema = z.object({
   BOSCO_CLAUDE_BIN: z.string().min(1).optional(),
   // Sessions pilotées : Claude Code lancé sur le poste ; un faux Claude Code dans les scénarios
   BOSCO_PILOT_CLAUDE: z.string().min(1).optional(),
+  // Façon dont Bosco est installé, donnée par l'application du poste : paquet .deb, AppImage, ou depuis le dépôt
+  BOSCO_INSTALL: z.enum(['appimage', 'deb', 'source']).default('source'),
+  // Releases de Bosco, lues une fois par jour au plus pour proposer une version plus récente (sans identifiant)
+  BOSCO_RELEASES_URL: z.url().default('https://api.github.com/repos/fpasquet/bosco/releases?per_page=30'),
 });
+
+/** Racine du dépôt, ou du service installé par le paquet : package.json, build.json et CHANGELOG.md y sont */
+const APP_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 
 export type Config = Readonly<{
   port: number;
@@ -41,6 +48,8 @@ export type Config = Readonly<{
   worker: { claudeBinary: string; credentials: string };
   /** Claude Code lancé pour les tours des sessions pilotées par Bosco */
   pilotClaude: string;
+  /** Version et mises à jour : où lire la version, comment Bosco est installé, où chercher les releases */
+  about: { appRoot: string; install: 'appimage' | 'deb' | 'source'; releasesUrl: string };
 }>;
 
 /** Claude Code installé sur le poste : le lien de ~/.local/bin/claude mène à l'exécutable de la version courante. */
@@ -75,5 +84,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
       claudeBinary: values.BOSCO_CLAUDE_BIN ?? installedClaude(),
     },
     pilotClaude: values.BOSCO_PILOT_CLAUDE ?? installedClaude(),
+    about: { appRoot: APP_ROOT, install: values.BOSCO_INSTALL, releasesUrl: values.BOSCO_RELEASES_URL },
   };
 }

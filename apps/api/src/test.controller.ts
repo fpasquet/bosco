@@ -1,5 +1,7 @@
 import type { MikroORM } from '@mikro-orm/sqlite';
 import { Body, Controller, Get, HttpCode, Inject, Post } from '@nestjs/common';
+import type { AboutService } from './about/application/about.service.ts';
+import type { ScriptedReleaseFeed } from './about/infrastructure/scripted/scripted-releases.ts';
 import type { AccessService } from './access/application/access.service.ts';
 import type { ContainersService } from './isolation/application/containers.service.ts';
 import type { IsolationService } from './isolation/application/isolation.service.ts';
@@ -16,6 +18,8 @@ import type { SourceService } from './sessions/application/source.service.ts';
 import type { FileTranscriptWatcher } from './sessions/infrastructure/claude-code/transcript-watcher.ts';
 import type { RecordingNotifier } from './sessions/infrastructure/notifications/desktop-notifier.ts';
 import type { PresenceTracker } from './sessions/infrastructure/notifications/presence.ts';
+import { ScriptedBuildInfo } from './about/infrastructure/scripted/scripted-releases.ts';
+import { ABOUT_SERVICE, BUILD_INFO, RELEASE_FEED } from './about/tokens.ts';
 import { ACCESS_SERVICE } from './access/tokens.ts';
 import { CONTAINERS_SERVICE, ISOLATION_SERVICE, QUOTA_SERVICE, SANDBOX_PROBE } from './isolation/tokens.ts';
 import { GROUP_SERVICE, PROJECT_SERVICE } from './projects/tokens.ts';
@@ -56,7 +60,59 @@ export class TestController {
     @Inject(SANDBOX_PROBE) private readonly docker: ScriptedSandboxProbe,
     @Inject(CONTAINERS_SERVICE) private readonly containers: ContainersService,
     @Inject(SOURCE_SERVICE) private readonly sources: SourceService,
+    @Inject(ABOUT_SERVICE) private readonly about: AboutService,
+    @Inject(RELEASE_FEED) private readonly releases: ScriptedReleaseFeed,
+    @Inject(BUILD_INFO) private readonly build: ScriptedBuildInfo,
   ) {}
+
+  /**
+   * Releases publiées sur GitHub, comme les donnerait l'API : version, pre-release, notes et fichiers joints ;
+   * `failing` simule GitHub injoignable.
+   */
+  @Post('releases')
+  @HttpCode(204)
+  setReleases(
+    @Body()
+    body: {
+      failing?: boolean;
+      releases: { assets?: string[]; notes?: string; prerelease?: boolean; publishedAt?: string; version: string }[];
+    },
+  ): void {
+    this.releases.failing = body.failing ?? false;
+    this.releases.releases = body.releases.map((release) => ({
+      version: release.version,
+      prerelease: release.prerelease ?? release.version.includes('-beta.'),
+      publishedAt: new Date(release.publishedAt ?? '2026-11-20T10:00:00Z'),
+      notes: release.notes ?? '',
+      url: `https://github.com/fpasquet/bosco/releases/tag/v${release.version}`,
+      assets: (release.assets ?? []).map((name) => ({
+        name,
+        url: `https://github.com/fpasquet/bosco/releases/download/v${release.version}/${name}`,
+      })),
+    }));
+  }
+
+  /**
+   * Version qui tourne ; `previous` simule un lancement précédent sur une autre version, puis relance la lecture,
+   * comme au démarrage qui suit une mise à jour.
+   */
+  @Post('version')
+  @HttpCode(204)
+  async setVersion(
+    @Body() body: { commit?: string; install?: 'appimage' | 'deb' | 'source'; previous?: string; version: string },
+  ): Promise<void> {
+    if (body.previous) {
+      this.build.info = { ...this.build.info, version: body.previous };
+      await this.about.load();
+    }
+    this.build.info = {
+      version: body.version,
+      commit: body.commit ?? null,
+      release: !body.commit,
+      install: body.install ?? 'deb',
+    };
+    await this.about.load();
+  }
 
   /** Simule un Docker qui ne répond plus, ou qui répond de nouveau, à la mesure suivante des conteneurs. */
   @Post('docker')
@@ -91,6 +147,9 @@ export class TestController {
     // Un import de tout l'historique du scénario précédent s'arrête avant de vider la base
     await this.sources.stopImport();
     this.docker.reachable = true;
+    this.releases.releases = [];
+    this.releases.failing = false;
+    this.build.info = ScriptedBuildInfo.DEFAULT;
     await this.watcher.close();
     await this.access.disable();
     this.liveSignals.forget();
@@ -101,6 +160,7 @@ export class TestController {
     // L'index de recherche n'est pas une entité : il se vide à part
     await this.orm.em.getConnection().execute('delete from session_search');
     await this.settings.load();
+    await this.about.load();
     await this.isolation.load();
     await this.quota.load();
     await this.projects.load();
