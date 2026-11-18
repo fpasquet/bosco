@@ -54,6 +54,12 @@ export function SessionSide({ now, onCopy, projects, resume, sandbox, session }:
             </>
           )}
           <Row label="Coût estimé" value={formatCost(session.cost)} />
+          {session.subagents && (
+            <Row
+              label="dont sous-agents"
+              value={`${formatCost({ unpriced: false, usd: session.subagents.usd })} · ${formatTokens(session.subagents.tokens)}`}
+            />
+          )}
           <Row label="Durée" value={elapsed(new Date(session.startedAt), durationEnd(session, now))} />
           <Row label="Tours" value={String(session.turns)} />
         </dl>
