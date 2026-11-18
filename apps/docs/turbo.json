@@ -13,7 +13,7 @@
     },
     "build": {
       "dependsOn": ["^build", "generate"],
-      "env": ["BOSCO_DOCS_BASE_PATH"],
+      "env": ["BOSCO_DOCS_BASE_PATH", "NEXT_PUBLIC_SITE_URL"],
       "outputs": ["out/**", ".next/**", "!.next/cache/**"],
       "passThroughEnv": ["GITHUB_TOKEN"]
     }

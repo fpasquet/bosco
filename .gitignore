@@ -23,3 +23,5 @@ apps/desktop/out/
 # Site de documentation : collections générées par fumadocs-mdx, export statique
 .source/
 apps/docs/out/
+# État local de wrangler (make docs-preview)
+.wrangler/

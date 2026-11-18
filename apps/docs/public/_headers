@@ -1,0 +1,4 @@
+# En-têtes de Cloudflare Pages. L'export statique écrit l'index de la recherche sans extension : son type se donne ici.
+
+/api/search
+  Content-Type: application/json

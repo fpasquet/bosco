@@ -9,13 +9,15 @@ import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 import { RootProvider } from 'fumadocs-ui/provider/next';
 import SearchDialog from '@/components/search';
-import { BASE_PATH, SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE } from '@/lib/constants';
+import { BASE_PATH, SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE, SITE_URL } from '@/lib/constants';
 import { frenchTranslations } from '@/lib/translations';
 
 export const metadata: Metadata = {
   applicationName: SITE_NAME,
   description: SITE_DESCRIPTION,
   icons: { icon: [{ type: 'image/svg+xml', url: `${BASE_PATH}/favicon.svg` }] },
+  metadataBase: new URL(SITE_URL),
+  openGraph: { locale: 'fr_FR', siteName: SITE_NAME, type: 'website' },
   title: { default: `${SITE_NAME} · ${SITE_TAGLINE}`, template: `%s · ${SITE_NAME}` },
 };
 

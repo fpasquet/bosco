@@ -1,0 +1,110 @@
+name: Docs
+
+# Construit le site de documentation (export statique, apps/docs/out) et le publie sur Cloudflare Pages :
+#   - à chaque push sur main qui touche le site ;
+#   - après chaque exécution réussie du workflow Release, pour que la page Télécharger donne la nouvelle version
+#     (une release créée avec GITHUB_TOKEN ne déclenche pas de workflow, la fin d'une exécution si) ;
+#   - à la main, depuis l'onglet Actions.
+# Il ne faut que deux secrets, CLOUDFLARE_API_TOKEN et CLOUDFLARE_ACCOUNT_ID : le projet Pages se crée au premier
+# déploiement. Sans eux, le workflow s'arrête sur un avertissement, sans échec. Voir README.md, « Documentation ».
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/docs/**'
+      - 'packages/domain/**'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - '.github/workflows/docs.yml'
+  workflow_run:
+    workflows: [Release]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  # wrangler-action rattache le déploiement à l'environnement GitHub « docs »
+  deployments: write
+
+concurrency:
+  # Seul le dernier état compte : un déploiement plus récent remplace celui en cours
+  group: docs
+  cancel-in-progress: true
+
+env:
+  # Nom du projet Cloudflare Pages, servi sur https://<nom>.pages.dev (Cloudflare ajoute un suffixe si le nom est pris)
+  CLOUDFLARE_PAGES_PROJECT: bosco
+
+jobs:
+  deploy:
+    name: Deploy the documentation site to Cloudflare Pages
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    environment:
+      name: docs
+      url: ${{ steps.deploy.outputs.pages-deployment-alias-url || steps.deploy.outputs.deployment-url }}
+    steps:
+      - name: Cloudflare secrets
+        id: secrets
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo '::warning::CLOUDFLARE_API_TOKEN or CLOUDFLARE_ACCOUNT_ID is missing: the documentation site is not deployed (see README.md, Documentation).'
+            echo 'ready=false' >> "$GITHUB_OUTPUT"
+          else
+            echo 'ready=true' >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.secrets.outputs.ready == 'true'
+        uses: actions/checkout@v5
+      - if: steps.secrets.outputs.ready == 'true'
+        uses: pnpm/action-setup@v6
+      - if: steps.secrets.outputs.ready == 'true'
+        uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - if: steps.secrets.outputs.ready == 'true'
+        run: pnpm install --frozen-lockfile
+      - name: Build the static export
+        if: steps.secrets.outputs.ready == 'true'
+        run: pnpm docs:build
+        env:
+          # La page Télécharger lit les releases au build ; le jeton évite la limite des appels anonymes à l'API
+          GITHUB_TOKEN: ${{ github.token }}
+          # Facultative : https://bosco.pages.dev par défaut ; à régler pour un domaine rattaché ou un nom suffixé
+          NEXT_PUBLIC_SITE_URL: ${{ vars.NEXT_PUBLIC_SITE_URL }}
+      # Le projet Pages se crée au premier passage ; ensuite, Cloudflare répond qu'il existe déjà
+      - name: Create the Cloudflare Pages project
+        if: steps.secrets.outputs.ready == 'true'
+        working-directory: apps/docs
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if output=$(pnpm exec wrangler pages project create "$CLOUDFLARE_PAGES_PROJECT" --production-branch=main 2>&1); then
+            echo "$output"
+          elif grep -qiE 'already exists|8000002' <<< "$output"; then
+            echo "The Pages project $CLOUDFLARE_PAGES_PROJECT already exists."
+          else
+            echo "$output"
+            exit 1
+          fi
+      - name: Deploy to Cloudflare Pages
+        id: deploy
+        if: steps.secrets.outputs.ready == 'true'
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+          # Le wrangler de apps/docs, à la version du lockfile
+          packageManager: pnpm
+          workingDirectory: apps/docs
+          command: >-
+            pages deploy out
+            --project-name=${{ env.CLOUDFLARE_PAGES_PROJECT }}
+            --branch=main
+            --commit-hash=${{ github.sha }}

@@ -3,9 +3,11 @@ SPECS ?= ../specs
 SKILLS := .claude/skills
 PROFILE ?= $(HOME)/.claude
 BETA_DIR ?= $(HOME)/.cache/bosco/beta
+# Projet Cloudflare Pages du site de documentation (le même que le workflow Docs)
+DOCS_PROJECT ?= bosco
 
 .DEFAULT_GOAL := help
-.PHONY: help install dev start changelog desktop desktop-install desktop-package desktop-release desktop-package-install desktop-update beta android build check lint typecheck test format format-check e2e e2e-api e2e-web e2e-record e2e-clean storybook docs-dev docs-build docs-screenshots claude-compat db-migration service-install mcp-install mcp-install-dev mcp-remove skills tokens tokens-check requirements requirements-check
+.PHONY: help install dev start changelog desktop desktop-install desktop-package desktop-release desktop-package-install desktop-update beta android build check lint typecheck test format format-check e2e e2e-api e2e-web e2e-record e2e-clean storybook docs-dev docs-build docs-deploy docs-preview docs-screenshots claude-compat db-migration service-install mcp-install mcp-install-dev mcp-remove skills tokens tokens-check requirements requirements-check
 
 help: ## List the commands
 	@grep -E '^[a-z0-9-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN { FS = ":.*## " } { printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2 }'
@@ -112,6 +114,12 @@ docs-dev: ## Start the documentation site on http://127.0.0.1:4890
 
 docs-build: ## Build the documentation site as static pages (apps/docs/out)
 	pnpm docs:build
+
+docs-preview: docs-build ## Serve the static export as Cloudflare Pages would, on http://127.0.0.1:4891
+	pnpm --filter @bosco/docs exec wrangler pages dev out --ip 127.0.0.1 --port 4891
+
+docs-deploy: docs-build ## Deploy the documentation site to Cloudflare Pages (wrangler login, or CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID)
+	pnpm --filter @bosco/docs exec wrangler pages deploy out --project-name=$(DOCS_PROJECT) --branch=main
 
 docs-screenshots: build ## Take the screenshots of the documentation site from Bosco, on the storyline data
 	pnpm --filter @bosco/e2e docs:screenshots
