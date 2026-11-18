@@ -19,7 +19,7 @@ Feature: Sessions in a sandbox
     When I write to "the started session" with the JSON "fixtures/pilot/schema.json"
     Then "the started session" should end its turn with "Reçu : Vérifie aussi le schéma de config · mode acceptEdits · modèle défaut · effort défaut · images 0"
 
-  @RF-SESS-12
+  @CA-SESS-185
   Scenario: The branch of a session is under the prefix of the sandboxes
     When I start a session in the project "maison" with the JSON "fixtures/pilot/start-sandbox-bad-branch.json"
     Then the response code should be 400

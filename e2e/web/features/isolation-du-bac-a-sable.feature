@@ -9,9 +9,8 @@ Fonctionnalité: Isolation du bac à sable
     Étant donné Bosco surveille les profils « .claude » et « .claude-perso »
 
   @CA-CONT-41
-  @CA-CONT-43
-  @CA-CONT-44
   @CA-REGL-08
+  @CA-REGL-10
   @NF-18
   Scénario: Les limites d'un bac à sable, et un domaine qui s'ajoute par son nom puis se retire d'un clic
     Quand j'ouvre la page « /settings »
