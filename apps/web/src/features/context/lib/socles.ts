@@ -15,16 +15,16 @@ function family(id: number, socles: readonly SocleDto[]): SocleDto[] {
 }
 
 /**
- * Dépôts dont les prochains agents sont touchés par un changement du socle (CA-CONT-58) : ceux où il s'applique, et
+ * Projets dont les prochains agents sont touchés par un changement du socle (CA-CONT-58) : ceux où il s'applique, et
  * ceux des socles qui en héritent ; pour un socle modifié, avant comme après le changement.
  */
-export function concernedRepositories(
+export function concernedProjects(
   id: number,
   socles: readonly SocleDto[],
-  after: null | { repositories: string[]; scope: 'global' | 'shared' } = null,
+  after: null | { projects: string[]; scope: 'global' | 'shared' } = null,
   everywhere: readonly string[] = [],
 ): string[] {
   const names = new Set(family(id, socles).flatMap(({ applied }) => applied));
-  if (after) for (const name of after.scope === 'global' ? everywhere : after.repositories) names.add(name);
+  if (after) for (const name of after.scope === 'global' ? everywhere : after.projects) names.add(name);
   return [...names].toSorted((a, b) => a.localeCompare(b, 'fr'));
 }

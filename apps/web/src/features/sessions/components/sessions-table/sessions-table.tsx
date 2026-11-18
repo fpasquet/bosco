@@ -4,19 +4,19 @@ import type { SessionDto } from '@bosco/domain';
 import { cn } from '@/lib/cn';
 import { clockOf } from '../../lib/detail';
 import { actionLabel, elapsed, formatCost, formatTokens, sessions as sessionsLabel } from '../../lib/format';
-import { type RepositoryGroup, totalTokens } from '../../lib/overview';
+import { type ProjectGroup, totalTokens } from '../../lib/overview';
 import { SessionStateBadge } from '../session-state-badge';
 
 export interface SessionsTableProps {
   /** Bosco injoignable : les données sont figées, « Vu à » remplace les durées (E1f, CA-SESS-23) */
   frozen?: boolean;
-  groups: RepositoryGroup[];
+  groups: ProjectGroup[];
   /** Marque du profil (« perso ») d'une session lancée avec un autre dossier de configuration que celui par défaut */
   markOf: (session: SessionDto) => null | string;
   now: Date;
   /** Lignes animées à la suite des sessions arrivées, pendant le chargement (E1e) */
   pendingRows?: number;
-  /** Vue filtrée sur un dépôt (E1c) : la colonne « Dossier » remplace les intertitres */
+  /** Vue filtrée sur un projet (E1c) : la colonne « Dossier » remplace les intertitres */
   showFolder?: boolean;
 }
 
@@ -29,7 +29,7 @@ export function titleOf(session: SessionDto): string {
   return session.title ?? `Session ${session.id.slice(0, 8)}`;
 }
 
-function groupLabel(group: RepositoryGroup, pending: boolean): string {
+function groupLabel(group: ProjectGroup, pending: boolean): string {
   const count = sessionsLabel(group.sessions.length);
   return pending ? `${count} pour l’instant` : count;
 }
@@ -70,7 +70,7 @@ function Row({
       </td>
       {showFolder && (
         <td className="truncate font-mono text-xs text-muted">
-          {session.repository ? session.repository.folder || 'racine' : '—'}
+          {session.project ? session.project.folder || 'racine' : '—'}
         </td>
       )}
       <td className="truncate font-mono text-xs text-muted">{session.branch ?? '—'}</td>
@@ -99,9 +99,9 @@ function MobileList({ groups, now, pendingRows, showFolder }: Omit<SessionsTable
   return (
     <div className="flex flex-col gap-4 md:hidden">
       {groups.map((group) => (
-        <section key={group.name ?? ''} aria-label={group.name ?? 'Hors dépôt git'}>
+        <section key={group.name ?? ''} aria-label={group.name ?? 'Hors projet'}>
           {!showFolder && (
-            <h2 className="px-1 pb-1.5 text-xs font-semibold text-muted">{group.name ?? 'Hors dépôt git'}</h2>
+            <h2 className="px-1 pb-1.5 text-xs font-semibold text-muted">{group.name ?? 'Hors projet'}</h2>
           )}
           <ul className="divide-y divide-line rounded-card border border-line bg-surface">
             {group.sessions.map((session) => (
@@ -131,7 +131,7 @@ function MobileList({ groups, now, pendingRows, showFolder }: Omit<SessionsTable
   );
 }
 
-/** Tableau des sessions ouvertes, groupées par dépôt (E1b) ou d'un seul dépôt avec ses dossiers (E1c). */
+/** Tableau des sessions ouvertes, groupées par projet (E1b) ou d'un seul projet avec ses dossiers (E1c). */
 export function SessionsTable({
   frozen = false,
   groups,
@@ -164,7 +164,7 @@ export function SessionsTable({
                   <th colSpan={columns} scope="colgroup" className="pl-4 font-normal">
                     <span className="flex items-center gap-2">
                       <FolderGit2 aria-hidden className="size-3.5" />
-                      <b className="font-semibold text-ink">{group.name ?? 'Hors dépôt git'}</b>
+                      <b className="font-semibold text-ink">{group.name ?? 'Hors projet'}</b>
                       {groupLabel(group, pendingRows > 0)}
                     </span>
                   </th>

@@ -4,7 +4,7 @@ import { Button } from '@/shared/ui/button';
 
 export interface SocleImpactDialogProps {
   busy: boolean;
-  /** Dépôts dont les prochains agents recevront le changement */
+  /** Projets dont les prochains agents recevront le changement */
   count: number;
   onCancel: () => void;
   onConfirm: () => void;
@@ -13,7 +13,7 @@ export interface SocleImpactDialogProps {
 }
 
 /**
- * Confirmation d'un changement de socle (E14a, CA-CONT-58) : il touche les prochains agents de tous ses dépôts, les
+ * Confirmation d'un changement de socle (E14a, CA-CONT-58) : il touche les prochains agents de tous ses projets, les
  * agents déjà lancés gardent le contexte reçu au départ.
  */
 export function SocleImpactDialog({ busy, count, onCancel, onConfirm, open, socle }: SocleImpactDialogProps) {
@@ -23,7 +23,7 @@ export function SocleImpactDialog({ busy, count, onCancel, onConfirm, open, socl
     if (open && element && !element.open) element.showModal();
     if (!open && element?.open) element.close();
   }, [open]);
-  const repositories = count > 1 ? `${count} dépôts` : `${count} dépôt`;
+  const projects = count > 1 ? `${count} projets` : `${count} projet`;
   return (
     <dialog
       ref={dialog}
@@ -38,7 +38,7 @@ export function SocleImpactDialog({ busy, count, onCancel, onConfirm, open, socl
           Changer « {socle} » ?
         </h2>
         <p id="socle-impact-text">
-          Ce changement touche les prochains agents de <b className="font-semibold">{repositories}</b>.
+          Ce changement touche les prochains agents de <b className="font-semibold">{projects}</b>.
         </p>
         <p className="text-sm text-muted">
           Les agents déjà lancés ne sont pas touchés : ils gardent le contexte reçu au départ.

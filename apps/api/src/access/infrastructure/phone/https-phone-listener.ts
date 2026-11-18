@@ -30,7 +30,7 @@ const SETTINGS = [
   /^\/api\/settings/,
   /^\/api\/isolation/,
   /^\/api\/rights/,
-  /^\/api\/repositories\/[^/]+\/test-environment/,
+  /^\/api\/projects\/[^/]+\/test-environment/,
   /^\/api\/context/,
   /^\/api\/socles/,
   // Sur le téléphone, une décision proposée s'accepte ou se refuse ; le reste s'écrit sur le poste (E9b mobile)

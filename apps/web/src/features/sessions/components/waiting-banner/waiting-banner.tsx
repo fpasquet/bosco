@@ -63,9 +63,9 @@ export function WaitingActions({
 
 /** « labo-ia/packages/bosco · feat/specs » */
 export function placeOf(session: SessionDto): string {
-  const place = session.repository
-    ? [session.repository.name, session.repository.folder].filter(Boolean).join('/')
-    : (session.repoPath ?? 'Hors dépôt git');
+  const place = session.project
+    ? [session.project.name, session.project.folder].filter(Boolean).join('/')
+    : (session.projectPath ?? 'Hors projet');
   return session.branch ? `${place} · ${session.branch}` : place;
 }
 

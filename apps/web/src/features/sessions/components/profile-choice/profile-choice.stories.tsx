@@ -10,8 +10,8 @@ const meta = {
   args: {
     home: '/home/dev',
     candidates: [
-      { path: '/home/dev/.claude', repositoryCount: 29, lastSessionAt: minutesAgo(3) },
-      { path: '/home/dev/.claude-perso', repositoryCount: 20, lastSessionAt: minutesAgo(0.7) },
+      { path: '/home/dev/.claude', projectCount: 29, lastSessionAt: minutesAgo(3) },
+      { path: '/home/dev/.claude-perso', projectCount: 20, lastSessionAt: minutesAgo(0.7) },
     ],
   },
 } satisfies Meta<typeof ProfileChoice>;
@@ -22,5 +22,5 @@ type Story = StoryObj<typeof meta>;
 export const TwoProfiles: Story = {};
 
 export const OneProfile: Story = {
-  args: { candidates: [{ path: '/home/dev/.claude', repositoryCount: 1, lastSessionAt: null }] },
+  args: { candidates: [{ path: '/home/dev/.claude', projectCount: 1, lastSessionAt: null }] },
 };

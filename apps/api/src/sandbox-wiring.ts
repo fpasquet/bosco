@@ -37,7 +37,7 @@ export class SandboxWiring implements OnApplicationBootstrap, OnApplicationShutd
 
   onApplicationBootstrap(): void {
     const root = join(this.config.dataDir, 'sandboxes');
-    // Dans les scénarios, des bacs à sable scriptés : ni Docker ni copie du dépôt
+    // Dans les scénarios, des bacs à sable scriptés : ni Docker ni copie du projet
     const sandboxes = this.config.testing
       ? new ScriptedSandboxes(root)
       : new GitSandboxes(root, new DockerSandboxContainers(this.docker), (profile) =>

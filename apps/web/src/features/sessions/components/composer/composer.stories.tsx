@@ -14,11 +14,11 @@ const FILES = [
 const COMMANDS: SuggestionDto[] = [
   { value: 'review', description: 'Relire les changements de la branche', origin: 'commande' },
   { value: 'tdd', description: 'Développer en commençant par les tests', origin: 'skill · profil perso' },
-  { value: 'commit', description: 'Commiter en Conventional Commits', origin: 'dépôt api-voix' },
+  { value: 'commit', description: 'Commiter en Conventional Commits', origin: 'projet api-voix' },
   { value: 'compact', description: 'Résumer la conversation pour libérer le contexte', origin: 'commande' },
 ];
 
-/** Suggestions simulées : fichiers du dépôt du fil rouge, commandes et skills du profil et du dépôt. */
+/** Suggestions simulées : fichiers du projet du fil rouge, commandes et skills du profil et du projet. */
 function suggest(kind: 'command' | 'file', query: string): Promise<SuggestionDto[]> {
   const needle = query.toLowerCase();
   const found =
@@ -78,7 +78,7 @@ export const WithTextAndImage: Story = {
   },
 };
 
-/** « @lexi » ouvre les fichiers du dépôt, le premier choisi, la partie tapée en gras. */
+/** « @lexi » ouvre les fichiers du projet, le premier choisi, la partie tapée en gras. */
 export const FileSuggestions: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
@@ -86,7 +86,7 @@ export const FileSuggestions: Story = {
     const field = await canvas.findByRole('combobox', { name: 'Message à l’agent' });
     await userEvent.click(field);
     await userEvent.keyboard('Corrige aussi @lexi');
-    const list = await page.findByRole('listbox', { name: 'Fichiers du dépôt' });
+    const list = await page.findByRole('listbox', { name: 'Fichiers du projet' });
     const first = within(list).getByRole('option', { name: 'src/lexique/lexique.ts' });
     await expect(first).toHaveAttribute('aria-selected', 'true');
     await expect(field).toHaveAttribute('aria-expanded', 'true');
@@ -114,7 +114,7 @@ export const SendWithMention: Story = {
     const field = await canvas.findByRole('combobox', { name: 'Message à l’agent' });
     await userEvent.click(field);
     await userEvent.keyboard('Corrige aussi @lexi');
-    await within(canvasElement.ownerDocument.body).findByRole('listbox', { name: 'Fichiers du dépôt' });
+    await within(canvasElement.ownerDocument.body).findByRole('listbox', { name: 'Fichiers du projet' });
     await userEvent.keyboard('{ArrowDown}{Enter}');
     await waitFor(() => expect(field).toHaveAttribute('aria-expanded', 'false'));
     await userEvent.keyboard('{Shift>}{Enter}{/Shift}avant de corriger.{Enter}');

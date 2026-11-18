@@ -16,11 +16,11 @@ export const STATE_LABELS: Record<SessionStateDto, string> = {
 export interface OverviewFilters {
   hideInactive: boolean;
   query: string;
-  /** Nom du dépôt choisi dans la barre latérale (E1c) ; null : tous les dépôts */
-  repository: null | string;
+  /** Nom du projet choisi dans la barre latérale (E1c) ; null : tous les projets */
+  project: null | string;
 }
 
-export interface RepositoryGroup {
+export interface ProjectGroup {
   name: null | string;
   sessions: SessionDto[];
 }
@@ -66,16 +66,16 @@ function byStateThenActivity(left: SessionDto, right: SessionDto): number {
   return state === 0 ? right.lastEventAt.localeCompare(left.lastEventAt) : state;
 }
 
-/** Tri d'un dépôt : par état, puis par activité la plus récente (CA-SESS-09). */
+/** Tri d'un projet : par état, puis par activité la plus récente (CA-SESS-09). */
 export function sortSessions(sessions: readonly SessionDto[]): SessionDto[] {
   return sessions.toSorted(byStateThenActivity);
 }
 
-/** Dépôts dans l'ordre de leur session la plus urgente ; les sessions hors dépôt git ferment la liste. */
-export function groupByRepository(sessions: readonly SessionDto[]): RepositoryGroup[] {
+/** Projets dans l'ordre de leur session la plus urgente ; les sessions hors projet ferment la liste. */
+export function groupByProject(sessions: readonly SessionDto[]): ProjectGroup[] {
   const groups = new Map<null | string, SessionDto[]>();
   for (const session of sortSessions(sessions)) {
-    const name = session.repository?.name ?? null;
+    const name = session.project?.name ?? null;
     groups.set(name, [...(groups.get(name) ?? []), session]);
   }
   return [...groups.entries()]
@@ -104,7 +104,7 @@ export function groupByState(
 function matches(session: SessionDto, query: string): boolean {
   const needle = query.trim().toLocaleLowerCase('fr');
   if (!needle) return true;
-  return [session.title, session.branch, session.repository?.name, session.repository?.folder, session.lastAction]
+  return [session.title, session.branch, session.project?.name, session.project?.folder, session.lastAction]
     .filter((value): value is string => Boolean(value))
     .some((value) => value.toLocaleLowerCase('fr').includes(needle));
 }
@@ -112,7 +112,7 @@ function matches(session: SessionDto, query: string): boolean {
 export function filterSessions(sessions: readonly SessionDto[], filters: OverviewFilters): SessionDto[] {
   return sessions.filter(
     (session) =>
-      (filters.repository === null || session.repository?.name === filters.repository) &&
+      (filters.project === null || session.project?.name === filters.project) &&
       !(filters.hideInactive && session.state === 'inactive') &&
       matches(session, filters.query),
   );
@@ -144,12 +144,12 @@ export function indicatorsOf(open: readonly SessionDto[], all: readonly SessionD
 }
 
 /**
- * Dépôts de la barre latérale, dans l'ordre des intertitres, avec leur nombre de sessions ouvertes ; un dépôt masqué
+ * Projets de la barre latérale, dans l'ordre des intertitres, avec leur nombre de sessions ouvertes ; un projet masqué
  * dans les réglages n'y figure pas (CA-SESS-80).
  */
-export function repositoriesOf(open: readonly SessionDto[]): { count: number; name: string }[] {
-  return groupByRepository(open).flatMap(({ name, sessions }) =>
-    name === null || sessions[0]?.repository?.hidden ? [] : [{ name, count: sessions.length }],
+export function projectsOf(open: readonly SessionDto[]): { count: number; name: string }[] {
+  return groupByProject(open).flatMap(({ name, sessions }) =>
+    name === null || sessions[0]?.project?.hidden ? [] : [{ name, count: sessions.length }],
   );
 }
 

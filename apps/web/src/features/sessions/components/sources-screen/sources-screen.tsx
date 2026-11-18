@@ -157,7 +157,7 @@ export function SourcesScreen({ title }: { title: string }) {
         className="flex flex-col divide-y divide-line rounded-card border border-line bg-surface shadow-card md:hidden"
       >
         {[
-          { href: '/settings/repositories', label: 'Dépôts' },
+          { href: '/settings/projects', label: 'Projets' },
           { href: '/settings/notifications', label: 'Notifications' },
           { href: '/settings/subscription', label: 'Abonnement Claude' },
           { href: '/settings/isolation', label: 'Isolation du bac à sable' },

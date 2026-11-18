@@ -9,7 +9,7 @@ import { ShellBell, ShellContainers, ShellDock } from './shell-slots';
 
 interface AppShellProps {
   children: ReactNode;
-  /** Suite de la barre latérale propre à l'écran : dépôts, profils et état des sources de la vue d'ensemble */
+  /** Suite de la barre latérale propre à l'écran : projets, profils et état des sources de la vue d'ensemble */
   sidebar?: ReactNode;
   title: string;
 }

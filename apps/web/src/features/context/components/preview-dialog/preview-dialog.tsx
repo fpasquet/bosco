@@ -10,7 +10,7 @@ export interface PreviewDialogProps {
   onCopy: (text: string) => void;
   open: boolean;
   preview: ContextPreviewDto | undefined;
-  repository: string;
+  project: string;
 }
 
 const TIME = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' });
@@ -19,7 +19,7 @@ const TIME = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digi
  * Aperçu du texte transmis (E9f) : exactement ce que lira un agent au prochain lancement, calculé à l'ouverture, avec ce
  * qui n'y figure pas et une estimation des tokens.
  */
-export function PreviewDialog({ onClose, onCopy, open, preview, repository }: PreviewDialogProps) {
+export function PreviewDialog({ onClose, onCopy, open, preview, project }: PreviewDialogProps) {
   const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     const element = dialog.current;
@@ -41,7 +41,7 @@ export function PreviewDialog({ onClose, onCopy, open, preview, repository }: Pr
     >
       <div className="modal-box flex max-w-3xl flex-col gap-3">
         <h2 id="preview-title" className="font-display text-lg font-semibold">
-          Texte transmis à un agent de {repository}
+          Texte transmis à un agent de {project}
         </h2>
         {preview ? (
           <>

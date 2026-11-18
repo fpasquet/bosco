@@ -35,7 +35,7 @@ async function call(path: string, init: RequestInit = {}): Promise<Response> {
   throw new PilotError(code, MESSAGES[code] ?? body.message ?? `Bosco a répondu ${response.status}.`);
 }
 
-/** Formulaire d'une nouvelle session (E16a) : dépôts et abonnements Claude. */
+/** Formulaire d'une nouvelle session (E16a) : projets et abonnements Claude. */
 export const pilotOptionsQuery = {
   queryKey: ['pilot', 'options'],
   queryFn: async (): Promise<PilotOptionsDto> => {
@@ -77,8 +77,8 @@ export async function answerQuestion(sessionId: string, requestId: string, answe
   });
 }
 
-/** Où chercher les suggestions : une session, ou le dépôt et le profil d'une nouvelle session. */
-export type SuggestionTarget = { profile: null | string; repository: string } | { sessionId: string };
+/** Où chercher les suggestions : une session, ou le projet et le profil d'une nouvelle session. */
+export type SuggestionTarget = { profile: null | string; project: string } | { sessionId: string };
 
 /** Suggestions de « @ » et « / » (CA-SESS-99) ; [] si Bosco ne répond pas. */
 export async function suggestions(
@@ -89,7 +89,7 @@ export async function suggestions(
   const params = new URLSearchParams({ kind, q: query });
   if ('sessionId' in target) params.set('session', target.sessionId);
   else {
-    params.set('repository', target.repository);
+    params.set('project', target.project);
     if (target.profile) params.set('profile', target.profile);
   }
   try {

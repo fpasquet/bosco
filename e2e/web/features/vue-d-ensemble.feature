@@ -2,7 +2,7 @@
 @RF-SESS-02
 @RF-SESS-06
 Fonctionnalité: Vue d'ensemble
-  En tant que développeur, je veux voir d'un coup d'œil les sessions ouvertes, groupées par dépôt ou par état, afin de
+  En tant que développeur, je veux voir d'un coup d'œil les sessions ouvertes, groupées par projet ou par état, afin de
   savoir où en sont mes agents et ce que coûte la journée.
 
   Contexte:
@@ -21,12 +21,12 @@ Fonctionnalité: Vue d'ensemble
     Et la page est accessible
 
   @CA-SESS-09
-  Scénario: Dans chaque dépôt, les sessions sont triées par état puis par activité
+  Scénario: Dans chaque projet, les sessions sont triées par état puis par activité
     Étant donné il est « 2026-11-06T15:10:00+01:00 » dans le navigateur
     Et Bosco surveille les profils « .claude » et « .claude-perso »
     Quand j'ouvre la page « / »
     Alors la vue d’ensemble montre, dans l’ordre :
-      | dépôt   | session                                          | état     |
+      | projet  | session                                          | état     |
       | labo-ia | Specs du tableau de bord Bosco                   | Inactive |
       | labo-ia | Corriger l’indexation des PDF dans Elasticsearch | Inactive |
 
@@ -41,15 +41,15 @@ Fonctionnalité: Vue d'ensemble
 
   @CA-SESS-11
   @CA-SESS-12
-  Scénario: Un dépôt de la barre latérale filtre la vue d'ensemble
+  Scénario: Un projet de la barre latérale filtre la vue d'ensemble
     Étant donné il est « 2026-11-06T15:10:00+01:00 » dans le navigateur
     Et Bosco surveille les profils « .claude » et « .claude-perso »
     Quand j'ouvre la page « / »
     Et je clique sur le lien « labo-ia »
-    Alors je vois le texte « Dépôt : labo-ia »
+    Alors je vois le texte « Projet : labo-ia »
     Et le tableau a la colonne « Dossier »
-    Quand je clique sur le lien « Retirer le filtre Dépôt : labo-ia »
-    Alors je ne vois plus le texte « Dépôt : labo-ia »
+    Quand je clique sur le lien « Retirer le filtre Projet : labo-ia »
+    Alors je ne vois plus le texte « Projet : labo-ia »
 
   @CA-SESS-14
   @CA-SESS-15

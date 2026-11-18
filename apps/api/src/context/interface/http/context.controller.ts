@@ -34,7 +34,7 @@ const textSchema = z.object({
   alternatives: z.string().max(10_000).nullable().default(null),
 });
 const targetSchema = z.union([
-  z.object({ kind: z.literal('repository'), name: z.string().min(1) }),
+  z.object({ kind: z.literal('project'), name: z.string().min(1) }),
   z.object({ kind: z.literal('socle'), id: z.number().int() }),
 ]);
 const writeSchema = z.object({
@@ -55,7 +55,7 @@ const socleSchema = z.object({
   name: z.string().max(200),
   scope: z.enum(['global', 'shared']),
   inherits: z.number().int().nullable().default(null),
-  repositories: z.array(z.string()).max(500).default([]),
+  projects: z.array(z.string()).max(500).default([]),
 });
 
 function present(decision: DecisionSnapshot): DecisionDto {
@@ -79,10 +79,10 @@ export class ContextController {
   constructor(@Inject(CONTEXT_SERVICE) private readonly context: ContextService) {}
 
   @Get('context')
-  async overview(@Query('repository') repository: string): Promise<ContextDto> {
-    const overview = await this.context.overview(repository);
+  async overview(@Query('project') project: string): Promise<ContextDto> {
+    const overview = await this.context.overview(project);
     return {
-      repository: overview.repository,
+      project: overview.project,
       architecture: overview.architecture,
       decisions: overview.decisions.map(present),
       proposed: overview.proposed.map(present),
@@ -95,8 +95,8 @@ export class ContextController {
   }
 
   @Get('context/preview')
-  async preview(@Query('repository') repository: string): Promise<ContextPreviewDto> {
-    const preview = await this.context.preview(repository);
+  async preview(@Query('project') project: string): Promise<ContextPreviewDto> {
+    const preview = await this.context.preview(project);
     return {
       text: preview.text,
       tokens: preview.tokens,
@@ -105,29 +105,29 @@ export class ContextController {
     };
   }
 
-  /** Dépôts connus de Bosco : ceux auxquels une décision ou un socle s'applique. */
-  @Get('repositories')
-  async listRepositories(): Promise<{ repositories: { name: string; root: string }[] }> {
-    const repositories = await this.context.listRepositories();
-    return { repositories };
+  /** Projets connus de Bosco : ceux auxquels une décision ou un socle s'applique. */
+  @Get('projects')
+  async listProjects(): Promise<{ projects: { name: string; root: string }[] }> {
+    const projects = await this.context.listProjects();
+    return { projects };
   }
 
-  @Get('context/repositories')
-  async listDecidedRepositories(): Promise<{ repositories: string[] }> {
-    const repositories = await this.context.listDecidedRepositories();
-    return { repositories };
+  @Get('context/projects')
+  async listDecidedProjects(): Promise<{ projects: string[] }> {
+    const projects = await this.context.listDecidedProjects();
+    return { projects };
   }
 
-  /** Décisions proposées, tous dépôts : le compteur de l'entrée « Contexte » (CA-CONT-03). */
+  /** Décisions proposées, tous projets : le compteur de l'entrée « Contexte » (CA-CONT-03). */
   @Get('context/proposals')
   async proposals(): Promise<{ proposals: DecisionDto[] }> {
     const proposals = await this.context.proposals();
     return { proposals: proposals.map(present) };
   }
 
-  @Put('context/architecture/:repository')
-  architecture(@Param('repository') repository: string, @Body() body: unknown): Promise<ArchitectureDto> {
-    return this.context.setArchitecture(repository, parseBody(architectureSchema, body));
+  @Put('context/architecture/:project')
+  architecture(@Param('project') project: string, @Body() body: unknown): Promise<ArchitectureDto> {
+    return this.context.setArchitecture(project, parseBody(architectureSchema, body));
   }
 
   @Get('decisions/:id')
@@ -183,7 +183,7 @@ export class ContextController {
         ...socle,
         decisions: socle.decisions.map(present),
         exceptions: socle.exceptions.map((exception) => ({
-          repository: exception.repository,
+          project: exception.project,
           decision: present(exception.decision),
           replaces: present(exception.replaces),
         })),

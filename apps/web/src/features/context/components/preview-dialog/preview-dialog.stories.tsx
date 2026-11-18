@@ -7,7 +7,7 @@ const meta = {
   title: 'Features/Context/PreviewDialog',
   component: PreviewDialog,
   parameters: { layout: 'fullscreen' },
-  args: { open: true, preview: STORY_PREVIEW, repository: 'api-voix', onClose: fn(), onCopy: fn() },
+  args: { open: true, preview: STORY_PREVIEW, project: 'api-voix', onClose: fn(), onCopy: fn() },
 } satisfies Meta<typeof PreviewDialog>;
 
 export default meta;

@@ -63,7 +63,7 @@ export function SandboxCard({ busy, onRemove, onRetrieve, onStop, sandbox }: San
           {confirming ? (
             <div role="alert" className="flex flex-col gap-2 rounded-control bg-danger-soft p-3 text-xs text-danger">
               <p>
-                Le conteneur et la copie du dépôt seront effacés
+                Le conteneur et la copie du projet seront effacés
                 {sandbox.retrievedAt ? '' : ' : la branche n’a jamais été récupérée'}. La session restera lisible.
               </p>
               <div className="flex gap-2">

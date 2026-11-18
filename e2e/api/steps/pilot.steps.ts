@@ -16,7 +16,7 @@ interface SessionView {
     sandbox?: null | { branch: string; from: string; state: string };
     settings: { effort: null | string; model: null | string; permissionMode: string };
   };
-  repository: null | { name: string };
+  project: null | { name: string };
   waiting:
     | null
     | { kind: 'permission'; detail: null | string; requestId: string }
@@ -68,9 +68,9 @@ async function eventually(
 }
 
 When(
-  'I start a session in the repository {string} with the JSON {string}',
-  async ({ bosco, last, request }, repository: string, file: string) => {
-    const body = { ...message(file, bosco.profilesRoot), repository: join(bosco.profilesRoot, repository) };
+  'I start a session in the project {string} with the JSON {string}',
+  async ({ bosco, last, request }, project: string, file: string) => {
+    const body = { ...message(file, bosco.profilesRoot), project: join(bosco.profilesRoot, project) };
     const response = await request.post('/api/pilot/sessions', { data: body });
     const json = (await response.json()) as { sessionId?: string };
     last.response = { status: response.status(), body: json };
@@ -128,7 +128,7 @@ Then('{string} should be piloted with:', async ({ request }, session: string, ta
     permissionMode: view.pilot?.settings.permissionMode,
     model: view.pilot?.settings.model ?? '',
     effort: view.pilot?.settings.effort ?? '',
-    repository: view.repository?.name,
+    project: view.project?.name,
   }).toEqual(expected);
 });
 

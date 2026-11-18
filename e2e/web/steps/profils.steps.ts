@@ -21,15 +21,12 @@ Given('Bosco surveille les profils {texte} et {texte}', async ({ bosco }, first:
   expect(response.ok).toBe(true);
 });
 
-Given(
-  'le dépôt {texte} a le fichier des services de test {texte}',
-  ({ bosco }, repository: string, fixture: string) => {
-    copyFileSync(
-      join(import.meta.dirname, '../../shared/compose', fixture),
-      join(bosco.profilesRoot, repository, 'compose.yaml'),
-    );
-  },
-);
+Given('le projet {texte} a le fichier des services de test {texte}', ({ bosco }, project: string, fixture: string) => {
+  copyFileSync(
+    join(import.meta.dirname, '../../shared/compose', fixture),
+    join(bosco.profilesRoot, project, 'compose.yaml'),
+  );
+});
 
 Given(
   'le profil Claude Code {texte} a accès à l’abonnement Claude de {texte}',

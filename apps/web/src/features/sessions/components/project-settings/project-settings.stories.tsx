@@ -1,13 +1,13 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite';
 import { fn } from 'storybook/test';
-import { RepositorySettings } from './repository-settings';
+import { ProjectSettings } from './project-settings';
 
 const NOW = new Date('2026-11-06T15:13:00Z');
 const minutesAgo = (minutes: number) => new Date(NOW.getTime() - minutes * 60_000).toISOString();
 
 const meta = {
-  title: 'Features/Sessions/RepositorySettings',
-  component: RepositorySettings,
+  title: 'Features/Sessions/ProjectSettings',
+  component: ProjectSettings,
   parameters: { layout: 'padded' },
   args: {
     busy: false,
@@ -24,7 +24,7 @@ const meta = {
         hidden: ['/home/dev/www/rules-sandbox'],
         roots: ['~/www'],
       },
-      repositories: [
+      projects: [
         { git: true, hidden: false, lastActivityAt: minutesAgo(3), name: 'labo-ia', root: '/home/dev/www/labo-ia' },
         {
           git: true,
@@ -50,12 +50,12 @@ const meta = {
       ],
     },
   },
-} satisfies Meta<typeof RepositorySettings>;
+} satisfies Meta<typeof ProjectSettings>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Dossiers de dépôts, dossiers exclus et un dépôt masqué (E4d). */
+/** Dossiers de projets, dossiers exclus et un projet masqué (E4d). */
 export const Settled: Story = {};
 
 /** Premier lancement : réglages par défaut, rien encore trouvé. */
@@ -64,7 +64,7 @@ export const Defaults: Story = {
     data: {
       home: '/home/dev',
       outside: 0,
-      repositories: [],
+      projects: [],
       settings: { attachWorktrees: true, excluded: ['/tmp'], gitOnly: true, hidden: [], roots: [] },
     },
   },

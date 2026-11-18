@@ -6,7 +6,7 @@ import { sessionsQuery } from '../../api/sessions';
 import { sourcesQuery } from '../../api/sources';
 import { useOffline } from '../../lib/connection';
 import { displayPath } from '../../lib/format';
-import { openSessions, repositoriesOf } from '../../lib/overview';
+import { openSessions, projectsOf } from '../../lib/overview';
 import { SessionsSidebar } from './sessions-sidebar';
 
 /** Barre latérale de la vue d'ensemble, lue dans les caches que le flux en direct tient à jour. */
@@ -31,7 +31,7 @@ export function OverviewSidebar({ selected }: { selected: null | string }) {
       selected={selected}
       showStatus={!offline}
       liveTracking={sources.sources.some((source) => source.liveTracking)}
-      repositories={repositoriesOf(open)}
+      projects={projectsOf(open)}
       profiles={sources.sources
         .filter((source) => source.watched)
         .map((source) => ({

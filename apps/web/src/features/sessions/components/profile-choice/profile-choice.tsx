@@ -6,7 +6,7 @@ import type { ProfileCandidateDto } from '@bosco/domain';
 import { Button } from '@/shared/ui/button';
 import { APP_NAME } from '@bosco/domain';
 import { sourcesQuery, watchProfiles } from '../../api/sources';
-import { displayPath, repositories, sinceNow } from '../../lib/format';
+import { displayPath, projects, sinceNow } from '../../lib/format';
 
 interface ProfileChoiceProps {
   candidates: ProfileCandidateDto[];
@@ -68,7 +68,7 @@ export function ProfileChoice({ candidates, home }: ProfileChoiceProps) {
                 <span className="min-w-0 flex-1">
                   <span className="block font-mono font-medium break-all">{path}</span>
                   <span className="block text-xs text-muted">
-                    {repositories(candidate.repositoryCount)}
+                    {projects(candidate.projectCount)}
                     {last}
                   </span>
                 </span>

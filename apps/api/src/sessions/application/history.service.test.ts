@@ -1,14 +1,14 @@
-// Ce que les scénarios ne voient pas : les jours ouvrés de la moyenne et le cumul par dépôt et par modèle.
+// Ce que les scénarios ne voient pas : les jours ouvrés de la moyenne et le cumul par projet et par modèle.
 import { describe, expect, it } from 'vitest';
 import type { SessionView } from './session.service.ts';
 import { HistoryService } from './history.service.ts';
 
-const view = (id: string, startedAt: string, usd: number, repository: null | string, model = 'claude-sonnet-5-5') =>
+const view = (id: string, startedAt: string, usd: number, project: null | string, model = 'claude-sonnet-5-5') =>
   ({
     id,
     startedAt: new Date(startedAt),
     cost: { usd, unpriced: false },
-    repository: repository ? { name: repository, folder: '', root: `/home/dev/${repository}` } : null,
+    project: project ? { name: project, folder: '', root: `/home/dev/${project}` } : null,
     model,
     sourceId: 'pro',
     state: 'ended',
@@ -29,7 +29,7 @@ function service(found: string[] = []) {
   );
 }
 
-const all = { from: null, query: '', repository: null, sourceId: null, state: null } as const;
+const all = { from: null, query: '', project: null, sourceId: null, state: null } as const;
 
 describe('HistoryService', () => {
   it('groups the sessions by day, newest first, with the cost of each day (CA-SESS-49)', async () => {
@@ -44,18 +44,18 @@ describe('HistoryService', () => {
     const days = await service(['a', 'c']).history({
       ...all,
       query: 'pdf',
-      repository: 'labo-ia',
+      project: 'labo-ia',
       from: new Date('2026-11-05'),
     });
     expect(days.flatMap((day) => day.sessions.map(({ id }) => id))).toEqual(['a']);
   });
 
-  it('averages the cost on the working days only, and splits it by repository and by model (CA-SESS-52)', async () => {
+  it('averages the cost on the working days only, and splits it by project and by model (CA-SESS-52)', async () => {
     const report = await service().costs({ ...all, from: new Date('2026-11-02T00:00:00') });
     expect([report.totalUsd, report.workingDays, report.averagePerWorkingDayUsd, report.cacheShare]).toEqual([
       4, 5, 0.8, 80,
     ]);
-    expect(report.byRepository.map(({ name, share }) => [name, share])).toEqual([
+    expect(report.byProject.map(({ name, share }) => [name, share])).toEqual([
       ['labo-ia', 75],
       ['api-voix', 25],
     ]);
@@ -63,6 +63,6 @@ describe('HistoryService', () => {
       ['claude-sonnet-5-5', 3],
       ['claude-opus-5-5', 1],
     ]);
-    expect(report.days.find((day) => day.date === '2026-11-06')?.repositories).toHaveLength(2);
+    expect(report.days.find((day) => day.date === '2026-11-06')?.projects).toHaveLength(2);
   });
 });

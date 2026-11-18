@@ -2,7 +2,7 @@ import { DomainError } from '../../shared/domain/domain-error.ts';
 
 /**
  * Bac à sable d'une session pilotée (règle 12, DT-37) : un conteneur isolé du poste, qui travaille sur une copie du
- * dépôt et sa propre branche. La copie et la conversation sont gardées hors du conteneur, qui reste démarré pendant
+ * projet et sa propre branche. La copie et la conversation sont gardées hors du conteneur, qui reste démarré pendant
  * la session et s'arrête après un temps sans message.
  */
 export interface SandboxInfo {

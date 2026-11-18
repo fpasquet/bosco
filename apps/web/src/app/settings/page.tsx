@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 
-/** Réglages : les dépôts, premier onglet. */
+/** Réglages : les projets, premier onglet. */
 export default function SettingsPage() {
-  redirect('/settings/repositories');
+  redirect('/settings/projects');
 }

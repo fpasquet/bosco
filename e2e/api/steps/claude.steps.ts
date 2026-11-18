@@ -3,7 +3,7 @@ import { copyFileSync, mkdirSync, utimesSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { TRANSCRIPTS } from '../../shared/transcripts.ts';
 
-/** Fichiers des services de test des dépôts des scénarios (E12a). */
+/** Fichiers des services de test des projets des scénarios (E12a). */
 const COMPOSE = join(import.meta.dirname, '../../shared/compose');
 import { Given } from './fixtures.ts';
 
@@ -26,12 +26,9 @@ Given(
   },
 );
 
-Given(
-  'the repository {string} has the test services file {string}',
-  ({ bosco }, repository: string, fixture: string) => {
-    copyFileSync(join(COMPOSE, fixture), join(bosco.profilesRoot, repository, 'compose.yaml'));
-  },
-);
+Given('the project {string} has the test services file {string}', ({ bosco }, project: string, fixture: string) => {
+  copyFileSync(join(COMPOSE, fixture), join(bosco.profilesRoot, project, 'compose.yaml'));
+});
 
 Given(
   'the Claude Code profile {string} has an access to the Claude subscription of {string}',

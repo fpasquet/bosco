@@ -2,7 +2,7 @@
 @RF-SESS-12
 Fonctionnalité: Sessions en bac à sable
   En tant que développeur, je veux faire tourner une session pilotée dans un bac à sable, isolé de mon poste, afin
-  que l'agent travaille sur une copie du dépôt et sa propre branche, que je récupère quand je veux.
+  que l'agent travaille sur une copie du projet et sa propre branche, que je récupère quand je veux.
 
   Contexte:
     Étant donné le profil Claude Code « .claude-perso » contient le transcript « session-labo-ia-bosco.jsonl » de la session « c41e9a07 »
@@ -15,7 +15,7 @@ Fonctionnalité: Sessions en bac à sable
   Scénario: Une session démarre dans un bac à sable et se pilote comme les autres
     Quand j'ouvre la page « /sessions/new »
     Et je clique sur le bouton radio « Bac à sable »
-    Alors je vois le texte « Rien d’autre du poste : ni fichiers, ni accès, ni autres dépôts »
+    Alors je vois le texte « Rien d’autre du poste : ni fichiers, ni accès, ni autres projets »
     Et la page est accessible
     Quand je saisis « Monte TypeScript en version 6 » dans le champ « Premier message »
     Et je clique sur le bouton « Démarrer »

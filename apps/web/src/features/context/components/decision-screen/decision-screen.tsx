@@ -11,12 +11,12 @@ import {
   ContextRefused,
   decisionQuery,
   editDecision,
+  projectsQuery,
   refuseDecision,
-  repositoriesQuery,
   soclesQuery,
   writeDecision,
 } from '../../api/context';
-import { concernedRepositories } from '../../lib/socles';
+import { concernedProjects } from '../../lib/socles';
 import { DecisionForm, type DecisionFormValues } from '../decision-form';
 import { DecisionView } from '../decision-view';
 import { SocleImpactDialog } from '../socle-impact-dialog';
@@ -24,10 +24,10 @@ import { SocleImpactDialog } from '../socle-impact-dialog';
 function useTargetLabel(target: DecisionTargetDto | null) {
   const { data: socles } = useQuery({ ...soclesQuery, enabled: target?.kind === 'socle' });
   if (!target) return { label: '', parent: { href: '/context', label: 'Contexte' } };
-  if (target.kind === 'repository')
+  if (target.kind === 'project')
     return {
       label: target.name,
-      parent: { href: `/context?repository=${encodeURIComponent(target.name)}`, label: `Contexte › ${target.name}` },
+      parent: { href: `/context?project=${encodeURIComponent(target.name)}`, label: `Contexte › ${target.name}` },
     };
   const name = socles?.find(({ id }) => id === target.id)?.name ?? 'Socle';
   return { label: name, parent: { href: '/context/socles', label: 'Socles' } };
@@ -35,7 +35,7 @@ function useTargetLabel(target: DecisionTargetDto | null) {
 
 /**
  * Confirmation d'un changement qui touche un socle (CA-CONT-58) : une décision du socle écrite, acceptée ou changée
- * part vers les prochains agents de tous ses dépôts. Sans socle, le changement s'enregistre tout de suite.
+ * part vers les prochains agents de tous ses projets. Sans socle, le changement s'enregistre tout de suite.
  */
 function useSocleConfirmation(target: DecisionTargetDto | null) {
   const { data: socles } = useQuery({ ...soclesQuery, enabled: target?.kind === 'socle' });
@@ -52,7 +52,7 @@ function useSocleConfirmation(target: DecisionTargetDto | null) {
         <SocleImpactDialog
           open={pending !== null}
           socle={socle.name}
-          count={concernedRepositories(socle.id, socles).length}
+          count={concernedProjects(socle.id, socles).length}
           busy={busy}
           onCancel={() => setPending(null)}
           onConfirm={() => pending && run(pending)}
@@ -69,7 +69,7 @@ export function DecisionScreen({ id }: { id: number }) {
   const { label, parent } = useTargetLabel(data?.decision.target ?? null);
   const done = async (decision: DecisionDto) => {
     await client.invalidateQueries();
-    // Acceptée ou refusée : retour au contexte du dépôt, où le bandeau disparaît (CA-CONT-06)
+    // Acceptée ou refusée : retour au contexte du projet, où le bandeau disparaît (CA-CONT-06)
     if (decision.state === 'accepted' || decision.state === 'refused') router.push(parent.href);
   };
   const accept = useMutation({
@@ -95,18 +95,18 @@ export function DecisionScreen({ id }: { id: number }) {
   );
 }
 
-/** Nouvelle décision (E9c) pour un dépôt ou un socle ; elle peut en remplacer une autre. */
+/** Nouvelle décision (E9c) pour un projet ou un socle ; elle peut en remplacer une autre. */
 export function NewDecisionScreen({ replaces, target }: { replaces: null | number; target: DecisionTargetDto }) {
   const router = useRouter();
   const client = useQueryClient();
   const { label, parent } = useTargetLabel(target);
-  const repository = target.kind === 'repository' ? target.name : null;
-  const { data: context } = useQuery({ ...contextQuery(repository ?? ''), enabled: repository !== null });
+  const project = target.kind === 'project' ? target.name : null;
+  const { data: context } = useQuery({ ...contextQuery(project ?? ''), enabled: project !== null });
   const { data: replaced } = useQuery({ ...decisionQuery(replaces ?? 0), enabled: replaces !== null });
-  // Une décision de dépôt se porte sur n'importe quel dépôt connu, même sans décision encore
-  const { data: known } = useQuery({ ...repositoriesQuery, enabled: repository !== null });
+  // Une décision de projet se porte sur n'importe quel projet connu, même sans décision encore
+  const { data: known } = useQuery({ ...projectsQuery, enabled: project !== null });
   const retarget = (name: string) => {
-    const query = new URLSearchParams({ repository: name });
+    const query = new URLSearchParams({ project: name });
     if (replaces !== null) query.set('replaces', String(replaces));
     router.replace(`/context/decisions/new?${query.toString()}`);
   };
@@ -141,7 +141,7 @@ export function NewDecisionScreen({ replaces, target }: { replaces: null | numbe
             mode="new"
             initial={replaced?.decision.versions.at(-1) ?? null}
             targetLabel={label}
-            targetChoices={repository === null ? undefined : known?.map(({ name }) => name)}
+            targetChoices={project === null ? undefined : known?.map(({ name }) => name)}
             onTargetChange={retarget}
             exceptionChoices={choices}
             busy={write.isPending}

@@ -2,10 +2,10 @@
 import { Folder, FolderX } from 'lucide-react';
 import { useId, useState } from 'react';
 import { Button } from '@/shared/ui/button';
-import { repositories } from '../../lib/format';
+import { projects } from '../../lib/format';
 
 export interface FolderListProps {
-  /** Nombre de dépôts trouvés sous chaque dossier ; rien pour les dossiers exclus */
+  /** Nombre de projets trouvés sous chaque dossier ; rien pour les dossiers exclus */
   counts?: Record<string, number>;
   /** Dossiers proposés par défaut (/tmp) */
   defaults?: readonly string[];
@@ -45,9 +45,7 @@ export function FolderList({
             <li key={folder} className="flex items-center gap-3 px-3 py-2">
               <Icon aria-hidden className="size-4 shrink-0 text-muted" />
               <span className="min-w-0 flex-1 truncate font-mono text-xs">{folder}</span>
-              {counts && (
-                <span className="text-xs whitespace-nowrap text-muted">{repositories(counts[folder] ?? 0)}</span>
-              )}
+              {counts && <span className="text-xs whitespace-nowrap text-muted">{projects(counts[folder] ?? 0)}</span>}
               {defaults.includes(folder) && <span className="badge badge-ghost badge-sm">par défaut</span>}
               <Button
                 variant="ghost"

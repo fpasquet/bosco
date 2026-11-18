@@ -23,18 +23,18 @@ export class FileProfileFinder implements ProfileFinder {
 
   private async preview(path: string): Promise<null | ProfileCandidate> {
     const projects = join(path, 'projects');
-    const repositories = await readdir(projects, { withFileTypes: true }).catch(() => null);
-    if (!repositories) return null;
+    const folders = await readdir(projects, { withFileTypes: true }).catch(() => null);
+    if (!folders) return null;
     let lastSessionAt: Date | null = null;
-    let repositoryCount = 0;
-    for (const repository of repositories.filter((entry) => entry.isDirectory())) {
-      repositoryCount += 1;
-      const files = await readdir(join(projects, repository.name)).catch(() => []);
+    let projectCount = 0;
+    for (const folder of folders.filter((entry) => entry.isDirectory())) {
+      projectCount += 1;
+      const files = await readdir(join(projects, folder.name)).catch(() => []);
       for (const file of files.filter((name) => name.endsWith('.jsonl'))) {
-        const info = await stat(join(projects, repository.name, file));
+        const info = await stat(join(projects, folder.name, file));
         if (!lastSessionAt || info.mtime > lastSessionAt) lastSessionAt = info.mtime;
       }
     }
-    return { path, repositoryCount, lastSessionAt };
+    return { path, projectCount, lastSessionAt };
   }
 }

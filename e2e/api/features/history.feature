@@ -26,7 +26,7 @@ Feature: History and costs
     Then the response property "days.0.sessions.0.id" should equal "5e0a91c3"
     When I send GET request to "/api/history?q=migrate"
     Then the response property "days.0.sessions.0.id" should equal "c41e9a07"
-    When I send GET request to "/api/history?q=migrate&repo=api-voix"
+    When I send GET request to "/api/history?q=migrate&project=api-voix"
     Then the response property "days.length" should equal "0"
 
   @CA-SESS-52
@@ -34,4 +34,4 @@ Feature: History and costs
     When I send GET request to "/api/history/costs?from=2026-11-02"
     Then the response code should be 200
     And the response property "sessions" should equal "2"
-    And the response property "byRepository.0.name" should equal "labo-ia"
+    And the response property "byProject.0.name" should equal "labo-ia"

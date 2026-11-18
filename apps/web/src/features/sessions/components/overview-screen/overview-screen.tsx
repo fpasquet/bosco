@@ -13,7 +13,7 @@ import { formatCost } from '../../lib/format';
 import {
   endedToday,
   filterSessions,
-  groupByRepository,
+  groupByProject,
   groupByState,
   indicatorsOf,
   openSessions,
@@ -36,24 +36,24 @@ import { WaitingActions, WaitingBanner } from '../waiting-banner';
 import { Welcome } from '../welcome';
 
 interface OverviewProps {
-  repository: null | string;
+  project: null | string;
   title: string;
 }
 
 /** Lignes animées pendant un chargement : le premier affichage garde la forme de l'écran (CA-SESS-20, CA-SESS-22). */
 const PENDING_ROWS = 4;
 
-function LiveOverview({ repository, sources, title }: OverviewProps & { sources: SourcesDto }) {
+function LiveOverview({ project, sources, title }: OverviewProps & { sources: SourcesDto }) {
   const now = useNow();
   const [query, setQuery] = useState('');
   const { grouping, hideInactive, setGrouping, toggleHideInactive } = useOverviewPreferences();
   const { data: sessions } = useQuery(sessionsQuery);
   const { data: progress } = useQuery(importProgressQuery);
-  const inRepository = (list: readonly SessionDto[]) =>
-    repository === null ? list : list.filter((session) => session.repository?.name === repository);
-  const all = inRepository(sessions ?? []);
+  const inProject = (list: readonly SessionDto[]) =>
+    project === null ? list : list.filter((session) => session.project?.name === project);
+  const all = inProject(sessions ?? []);
   const open = openSessions(all, now);
-  const visible = filterSessions(open, { hideInactive: grouping === 'repository' && hideInactive, query, repository });
+  const visible = filterSessions(open, { hideInactive: grouping === 'project' && hideInactive, query, project });
   const indicators = indicatorsOf(open, all, now);
   const loading = sessions === undefined || progress !== null;
   const liveTracking = sources.sources.some((source) => source.liveTracking);
@@ -73,14 +73,14 @@ function LiveOverview({ repository, sources, title }: OverviewProps & { sources:
         onHideInactiveChange={toggleHideInactive}
         query={query}
         onQueryChange={setQuery}
-        repository={repository}
+        project={project}
         costToday={formatCost(indicators.costToday)}
         summary={grouping === 'state' ? summary : undefined}
       />
       <ConnectionStatus />
       {progress && <ImportProgressBanner progress={progress} />}
       {!liveTracking && <LiveTrackingLine />}
-      {grouping === 'repository' ? (
+      {grouping === 'project' ? (
         <>
           {liveTracking && <WaitingBanner now={now} sessions={waitingSessions(open)} {...actions} />}
           {progress === null && sessions !== undefined && (
@@ -89,11 +89,11 @@ function LiveOverview({ repository, sources, title }: OverviewProps & { sources:
             </div>
           )}
           <SessionsTable
-            groups={groupByRepository(visible)}
+            groups={groupByProject(visible)}
             markOf={(session) => profileMark(session, sources.sources)}
             now={now}
             pendingRows={loading ? PENDING_ROWS : 0}
-            showFolder={repository !== null}
+            showFolder={project !== null}
             frozen={offline}
           />
         </>
@@ -105,16 +105,14 @@ function LiveOverview({ repository, sources, title }: OverviewProps & { sources:
         />
       )}
       {!loading && open.length === 0 && <p className="text-center text-muted">Aucune session ouverte aujourd’hui.</p>}
-      {(repository !== null || grouping === 'state') && (
-        <EndedToday repository={repository} sessions={endedToday(all, now)} />
-      )}
+      {(project !== null || grouping === 'state') && <EndedToday project={project} sessions={endedToday(all, now)} />}
       <AllowDialog session={answers.confirming} onCancel={answers.cancel} onConfirm={answers.confirm} />
     </div>
   );
 }
 
 /** Vue d'ensemble : premier lancement tant qu'aucun profil n'est choisi (E1a), puis les sessions en direct (E1b à E1e). */
-export function OverviewScreen({ repository, title }: OverviewProps) {
+export function OverviewScreen({ project, title }: OverviewProps) {
   const { data } = useQuery(sourcesQuery);
   const watching = (data?.sources.length ?? 0) > 0;
   useLiveEvents(watching);
@@ -128,5 +126,5 @@ export function OverviewScreen({ repository, title }: OverviewProps) {
       </div>
     );
   }
-  return <LiveOverview repository={repository} sources={data} title={title} />;
+  return <LiveOverview project={project} sources={data} title={title} />;
 }

@@ -18,7 +18,7 @@ const clock = { now: () => new Date() };
 
 /**
  * Contexte des agents (RF-CONT-01 à 03, 10, 11) : décisions, socles et architecture, lus par les sessions par le
- * serveur MCP de Bosco ; les dépôts viennent des sessions.
+ * serveur MCP de Bosco ; les projets viennent des sessions.
  */
 @Module({
   imports: [SessionsModule],
@@ -32,7 +32,7 @@ const clock = { now: () => new Date() };
           new MikroOrmDecisionRepository(orm),
           new MikroOrmSocleRepository(orm),
           new MikroOrmArchitectureStore(orm),
-          { list: () => sessions.knownRepositories() },
+          { list: () => sessions.knownProjects() },
           clock,
         ),
     },

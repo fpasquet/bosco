@@ -1,4 +1,4 @@
-// Outils du serveur MCP de Bosco : une session lit le contexte du dépôt où elle travaille, et y propose une décision,
+// Outils du serveur MCP de Bosco : une session lit le contexte du projet où elle travaille, et y propose une décision,
 // qui attend ta validation.
 import { z } from 'zod';
 import type { ContextService } from '../../application/context.service.ts';
@@ -21,13 +21,13 @@ export const TOOLS: McpTool[] = [
   {
     name: 'bosco_context',
     description:
-      'Rend le contexte du dépôt où tu travailles : ses décisions acceptées, celles des socles qui s’y appliquent et sa place dans l’architecture. À lire avant de travailler.',
+      'Rend le contexte du projet où tu travailles : ses décisions acceptées, celles des socles qui s’y appliquent et sa place dans l’architecture. À lire avant de travailler.',
     inputSchema: { type: 'object', properties: { path }, required: ['path'] },
   },
   {
     name: 'bosco_propose_decision',
     description:
-      'Propose une décision durable pour le dépôt où tu travailles (convention, choix technique). Elle attend la validation de la personne dans Bosco avant d’être transmise à qui que ce soit.',
+      'Propose une décision durable pour le projet où tu travailles (convention, choix technique). Elle attend la validation de la personne dans Bosco avant d’être transmise à qui que ce soit.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -56,7 +56,7 @@ interface ToolDeps {
   context: ContextService;
 }
 
-const OUTSIDE: ToolResult = { error: true, text: 'Ce dossier n’est dans aucun dépôt connu de Bosco.' };
+const OUTSIDE: ToolResult = { error: true, text: 'Ce dossier n’est dans aucun projet connu de Bosco.' };
 
 const trim = (path: string) => path.replace(/\/$/, '');
 
@@ -64,15 +64,15 @@ const trim = (path: string) => path.replace(/\/$/, '');
 const HANDLERS: Record<string, (deps: ToolDeps, args: unknown) => Promise<ToolResult>> = {
   async bosco_context({ context }, args) {
     const input = contextSchema.parse(args);
-    const repository = await context.repositoryOf(trim(input.path));
-    if (!repository) return OUTSIDE;
-    const preview = await context.preview(repository.name);
+    const project = await context.projectOf(trim(input.path));
+    if (!project) return OUTSIDE;
+    const preview = await context.preview(project.name);
     return { text: preview.text };
   },
   async bosco_propose_decision({ context }, args) {
     const input = proposeSchema.parse(args);
-    const repository = await context.repositoryOf(trim(input.path));
-    if (!repository) return OUTSIDE;
+    const project = await context.projectOf(trim(input.path));
+    if (!project) return OUTSIDE;
     const text = {
       title: input.title,
       context: input.context,
@@ -80,7 +80,7 @@ const HANDLERS: Record<string, (deps: ToolDeps, args: unknown) => Promise<ToolRe
       consequences: input.consequences ?? null,
       alternatives: input.alternatives ?? null,
     };
-    const decision = await context.propose(repository.name, text, null);
+    const decision = await context.propose(project.name, text, null);
     return { text: `DEC-${decision.id} proposée : elle attend la validation de la personne dans Bosco.` };
   },
 };

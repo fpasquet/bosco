@@ -25,7 +25,7 @@ async function json<T>(url: string, init?: RequestInit): Promise<T> {
   return (await response.json()) as T;
 }
 
-/** Lance une session `claude -p` dans un dépôt jetable, avec les hooks de Bosco passés par --settings. */
+/** Lance une session `claude -p` dans un projet jetable, avec les hooks de Bosco passés par --settings. */
 function claude(prompt: string, settings: string, cwd: string): Promise<string> {
   return new Promise((resolve, reject) => {
     const child = spawn(

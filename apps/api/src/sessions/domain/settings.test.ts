@@ -17,9 +17,9 @@ describe('Settings', () => {
   });
 });
 
-describe('Settings of the discovered repositories (E4d)', () => {
+describe('Settings of the discovered projects (E4d)', () => {
   it('starts with git only, worktrees attached and /tmp excluded', () => {
-    expect(Settings.restore(null).repositories).toEqual({
+    expect(Settings.restore(null).projects).toEqual({
       attachWorktrees: true,
       excluded: ['/tmp'],
       gitOnly: true,
@@ -30,8 +30,8 @@ describe('Settings of the discovered repositories (E4d)', () => {
 
   it('changes one setting at a time, folders written as in the terminal and without duplicates', () => {
     const settings = Settings.restore(null);
-    settings.update({ repositories: { roots: ['~/www/', '~/www'] } });
-    expect(settings.repositories).toMatchObject({ excluded: ['/tmp'], gitOnly: true, roots: ['~/www'] });
-    expect(() => settings.update({ repositories: { excluded: ['archives'] } })).toThrow(InvalidSetting);
+    settings.update({ projects: { roots: ['~/www/', '~/www'] } });
+    expect(settings.projects).toMatchObject({ excluded: ['/tmp'], gitOnly: true, roots: ['~/www'] });
+    expect(() => settings.update({ projects: { excluded: ['archives'] } })).toThrow(InvalidSetting);
   });
 });

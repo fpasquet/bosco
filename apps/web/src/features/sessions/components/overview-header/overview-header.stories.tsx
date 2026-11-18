@@ -9,10 +9,10 @@ const meta = {
   args: {
     title: 'Vue d’ensemble',
     now: new Date(),
-    grouping: 'repository',
+    grouping: 'project',
     hideInactive: false,
     query: '',
-    repository: null,
+    project: null,
     costToday: '6,14 $',
     onGroupingChange: fn(),
     onHideInactiveChange: fn(),
@@ -23,9 +23,9 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const ByRepository: Story = {};
+export const ByProject: Story = {};
 
-export const FilteredByRepository: Story = { args: { repository: 'labo-ia' } };
+export const FilteredByProject: Story = { args: { project: 'labo-ia' } };
 
 export const ByState: Story = {
   args: { grouping: 'state', summary: '4 sessions ouvertes · 14 aujourd’hui · 6,14 $ estimés' },

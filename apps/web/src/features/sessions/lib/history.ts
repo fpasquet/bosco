@@ -12,25 +12,25 @@ export function dayTitle(date: string, now: Date): string {
   return label.charAt(0).toUpperCase() + label.slice(1);
 }
 
-/** « labo-ia · packages/rag », « labo-ia · racine du dépôt » */
+/** « labo-ia · packages/rag », « labo-ia · racine du projet » */
 export function whereOf(session: SessionDto): string {
-  if (!session.repository) return session.repoPath ?? 'Hors dépôt git';
-  return `${session.repository.name} · ${session.repository.folder || 'racine du dépôt'}`;
+  if (!session.project) return session.projectPath ?? 'Hors projet';
+  return `${session.project.name} · ${session.project.folder || 'racine du projet'}`;
 }
 
-/** Séries du graphique : les trois dépôts qui coûtent le plus, puis « autres dépôts » (E3b, annotation 2). */
+/** Séries du graphique : les trois projets qui coûtent le plus, puis « autres projets » (E3b, annotation 2). */
 export function chartSeries(report: CostReportDto): { name: null | string; label: string }[] {
-  const top = report.byRepository.slice(0, 3).map(({ name }) => ({ name, label: name ?? 'Hors dépôt git' }));
-  return report.byRepository.length > 3 ? [...top, { name: '*', label: 'autres dépôts' }] : top;
+  const top = report.byProject.slice(0, 3).map(({ name }) => ({ name, label: name ?? 'Hors projet' }));
+  return report.byProject.length > 3 ? [...top, { name: '*', label: 'autres projets' }] : top;
 }
 
-/** Coût d'un jour pour une série ; « * » cumule les dépôts hors des trois premiers. */
+/** Coût d'un jour pour une série ; « * » cumule les projets hors des trois premiers. */
 export function seriesCost(
   day: CostReportDto['days'][number],
   series: { name: null | string },
   top: readonly (null | string)[],
 ): number {
-  return day.repositories
+  return day.projects
     .filter((entry) => (series.name === '*' ? !top.includes(entry.name) : entry.name === series.name))
     .reduce((total, entry) => total + entry.usd, 0);
 }

@@ -34,7 +34,7 @@ import {
   stopsAt,
 } from '../domain/sandbox.ts';
 
-/** Un tour à lancer : `claude -p` dans le dossier du dépôt, avec le profil, une session nouvelle ou reprise (DT-31). */
+/** Un tour à lancer : `claude -p` dans le dossier du projet, avec le profil, une session nouvelle ou reprise (DT-31). */
 export interface TurnRequest {
   /** Dossier de configuration du profil Claude Code */
   configDir: string;
@@ -58,26 +58,26 @@ export interface TurnLaunch {
 export type SandboxState = 'missing' | 'running' | 'stopped';
 
 /**
- * Bacs à sable des sessions (règle 12, DT-37) : copie du dépôt sur la branche de la session et dossier personnel de
+ * Bacs à sable des sessions (règle 12, DT-37) : copie du projet sur la branche de la session et dossier personnel de
  * l'agent, gardés hors du conteneur ; conteneur isolé comme un agent du worker.
  */
 export interface Sandboxes {
-  /** Profil où les conversations des bacs à sable sont gardées, rangées avec leur dépôt : une source surveillée */
+  /** Profil où les conversations des bacs à sable sont gardées, rangées avec leur projet : une source surveillée */
   readonly profile: string;
-  currentBranch(repositoryRoot: string): Promise<null | string>;
+  currentBranch(projectRoot: string): Promise<null | string>;
   /** Démarre le conteneur, le crée s'il manque ; la commande d'un tour, null : sur le poste (scénarios) */
-  ensure(sessionId: string, repositoryRoot: string): Promise<null | TurnLaunch>;
+  ensure(sessionId: string, projectRoot: string): Promise<null | TurnLaunch>;
   prepare(input: {
     branch: string;
     profile: string;
-    repositoryRoot: string;
+    projectRoot: string;
     sessionId: string;
     startBranch: null | string;
   }): Promise<{ base: string; from: string }>;
   refusals(sessionId: string): Promise<{ at: Date; host: string }[]>;
   remove(sessionId: string): Promise<void>;
-  /** Enregistre le travail en cours dans la branche, puis la rapatrie dans le dépôt ; la branche reçue */
-  retrieve(input: { branch: string; repositoryRoot: string; sessionId: string }): Promise<string>;
+  /** Enregistre le travail en cours dans la branche, puis la rapatrie dans le projet ; la branche reçue */
+  retrieve(input: { branch: string; projectRoot: string; sessionId: string }): Promise<string>;
   state(sessionId: string): Promise<SandboxState>;
   stop(sessionId: string): Promise<void>;
   /** null quand un bac à sable peut démarrer ; sinon la raison (« Docker ne répond pas ») */
@@ -215,7 +215,7 @@ export class PilotService {
     private readonly repository: PilotRepository,
     private readonly runner: TurnRunner,
     private readonly signals: Signals,
-    private readonly sessions: Pick<SessionService, 'knownRepositories' | 'viewOf'>,
+    private readonly sessions: Pick<SessionService, 'knownProjects' | 'viewOf'>,
     private readonly sessionRepository: Pick<SessionRepository, 'find'>,
     private readonly sources: Pick<SourceRepository, 'list'>,
     private readonly registry: Pick<SessionRegistry, 'isOpen'>,
@@ -288,42 +288,42 @@ export class PilotService {
     return !this.turns.has(sessionId) && this.registry.isOpen(sourceId, sessionId) === true;
   }
 
-  /** Formulaire d'une nouvelle session (E16a) : dépôts connus, abonnements et celui par défaut. */
+  /** Formulaire d'une nouvelle session (E16a) : projets connus, abonnements et celui par défaut. */
   async options(): Promise<{
     profiles: { account: null | string; label: string; path: string }[];
-    repositories: { branch: null | string; defaultProfile: null | string; name: string; root: string }[];
+    projects: { branch: null | string; defaultProfile: null | string; name: string; root: string }[];
     sandboxUnavailable: null | string;
   }> {
     const sources = await this.sources.list();
     const watched = new Set(sources.filter((source) => source.watched).map(({ path }) => path));
-    const known = await this.sessions.knownRepositories();
+    const known = await this.sessions.knownProjects();
     const { choices, effective } = await this.profiles.subscriptions();
     const profiles = choices.filter(({ path }) => watched.has(path));
     const defaultProfile = effective && watched.has(effective) ? effective : null;
-    const repositories = [];
+    const projects = [];
     for (const { name, root } of known) {
       const branch = this.sandbox ? await this.sandbox.sandboxes.currentBranch(root).catch(() => null) : null;
-      repositories.push({ branch, defaultProfile, name, root });
+      projects.push({ branch, defaultProfile, name, root });
     }
     const sandboxUnavailable = this.sandbox
       ? await this.sandbox.sandboxes.unavailable()
       : 'Bac à sable indisponible sur ce poste';
-    return { profiles, repositories, sandboxUnavailable };
+    return { profiles, projects, sandboxUnavailable };
   }
 
-  /** « Démarrer la session » (CA-SESS-91) : une nouvelle session dans le dossier du dépôt, avec le profil choisi. */
+  /** « Démarrer la session » (CA-SESS-91) : une nouvelle session dans le dossier du projet, avec le profil choisi. */
   async start(input: {
     message: PilotMessage;
     profile: null | string;
-    repository: string;
+    project: string;
     /** Dans un bac à sable (E16b) : branche de départ et branche de la session, null : proposées */
     sandbox?: null | { branch: null | string; startBranch: null | string };
     settings: PilotSettings;
   }): Promise<string> {
     const message = checkPilotMessage(input.message);
-    const known = await this.sessions.knownRepositories();
-    const repository = known.find(({ root }) => root === input.repository);
-    if (!repository) throw new PilotTargetNotFound(`Bosco ne connaît pas le dépôt ${input.repository}.`);
+    const known = await this.sessions.knownProjects();
+    const project = known.find(({ root }) => root === input.project);
+    if (!project) throw new PilotTargetNotFound(`Bosco ne connaît pas le projet ${input.project}.`);
     const accounts = await this.profiles.subscriptions();
     const profile = input.profile ?? accounts.effective;
     const sources = await this.sources.list();
@@ -333,9 +333,9 @@ export class PilotService {
     this.checkQuota(source.path, Boolean(input.sandbox));
     const sessionId = this.ids.next();
     const record: PilotRecord = input.sandbox
-      ? await this.sandboxed(sessionId, repository.root, source.path, message, input.sandbox)
+      ? await this.sandboxed(sessionId, project.root, source.path, message, input.sandbox)
       : {
-          cwd: repository.root,
+          cwd: project.root,
           sandbox: null,
           sessionId,
           settings: input.settings,
@@ -349,7 +349,7 @@ export class PilotService {
   }
 
   /**
-   * Prépare le bac à sable d'une nouvelle session (CA-SESS-106) : la copie du dépôt sur sa branche, l'accès à
+   * Prépare le bac à sable d'une nouvelle session (CA-SESS-106) : la copie du projet sur sa branche, l'accès à
    * l'abonnement du profil choisi ; ses conversations rejoignent le profil des bacs à sable, une source surveillée.
    */
   private async sandboxed(
@@ -368,7 +368,7 @@ export class PilotService {
     const { base, from } = await deps.sandboxes.prepare({
       branch,
       profile,
-      repositoryRoot: root,
+      projectRoot: root,
       sessionId,
       startBranch,
     });
@@ -405,7 +405,7 @@ export class PilotService {
   /** « Récupérer la branche » (CA-SESS-112) : le travail rejoint le dépôt du poste, sans toucher à sa branche courante. */
   async retrieve(sessionId: string): Promise<string> {
     const { deps, record, sandbox } = this.idleSandbox(sessionId);
-    const branch = await deps.sandboxes.retrieve({ branch: sandbox.branch, repositoryRoot: record.cwd, sessionId });
+    const branch = await deps.sandboxes.retrieve({ branch: sandbox.branch, projectRoot: record.cwd, sessionId });
     await this.keep({ ...record, sandbox: { ...sandbox, retrievedAt: this.clock.now() } });
     await this.publish(sessionId);
     return branch;
@@ -559,7 +559,7 @@ export class PilotService {
     if (known) return known;
     const session = await this.sessionRepository.find(sessionId);
     const snapshot = session?.toSnapshot();
-    const cwd = snapshot?.repoPath ?? snapshot?.repoRoot;
+    const cwd = snapshot?.projectPath ?? snapshot?.projectRoot;
     if (!snapshot || !cwd) throw new PilotTargetNotFound(`Bosco ne connaît pas la session ${sessionId}.`);
     return {
       cwd,

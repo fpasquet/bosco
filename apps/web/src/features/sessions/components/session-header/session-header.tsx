@@ -26,9 +26,9 @@ function since(session: SessionDto, now: Date): string {
   return `dernier événement il y a ${elapsed(new Date(session.lastEventAt), now)}`;
 }
 
-/** En-tête du détail d'une session (E2a) : état, titre, dépôt, profil, durée, et ce qu'on peut copier. */
+/** En-tête du détail d'une session (E2a) : état, titre, projet, profil, durée, et ce qu'on peut copier. */
 export function SessionHeader({ mark, now, onCopy, profile, resume, session }: SessionHeaderProps) {
-  const folder = session.repository ? session.repoPath : null;
+  const folder = session.project ? session.projectPath : null;
   return (
     <header className="flex flex-wrap items-start gap-4">
       <div className="min-w-0 flex-1">
@@ -36,11 +36,11 @@ export function SessionHeader({ mark, now, onCopy, profile, resume, session }: S
           <Link href="/" className="link link-hover">
             Vue d’ensemble
           </Link>
-          {session.repository && (
+          {session.project && (
             <>
               <ChevronRight aria-hidden className="size-3" />
-              <Link href={`/?repo=${encodeURIComponent(session.repository.name)}`} className="link link-hover">
-                {session.repository.name}
+              <Link href={`/?project=${encodeURIComponent(session.project.name)}`} className="link link-hover">
+                {session.project.name}
               </Link>
             </>
           )}

@@ -7,7 +7,7 @@ export interface HistoryFilters {
   /** Sessions commencées depuis cette date ; aucune : tout l'historique */
   from: Date | null;
   query: string;
-  repository: null | string;
+  project: null | string;
   sourceId: null | string;
   state: null | SessionState;
 }
@@ -23,11 +23,11 @@ export interface CostReport {
   /** Moyenne sur les seuls jours ouvrés de la période (CA-SESS-52) */
   averagePerWorkingDayUsd: number;
   byModel: { model: null | string; share: number; usd: number }[];
-  byRepository: { name: null | string; sessions: number; share: number; usd: number }[];
+  byProject: { name: null | string; sessions: number; share: number; usd: number }[];
   /** Part des tokens lus depuis le cache plutôt que recalculés */
   cacheShare: number;
-  /** Un coût par jour ouvré, empilé par dépôt (CA-SESS-53) */
-  days: { date: string; repositories: { name: null | string; sessions: number; usd: number }[] }[];
+  /** Un coût par jour ouvré, empilé par projet (CA-SESS-53) */
+  days: { date: string; projects: { name: null | string; sessions: number; usd: number }[] }[];
   sessions: number;
   totalUsd: number;
   workingDays: number;
@@ -89,8 +89,8 @@ export class HistoryService {
     const totalUsd = sum(sessions, (session) => session.cost.usd);
     const oldest = sessions.reduce<Date | null>((min, s) => (!min || s.startedAt < min ? s.startedAt : min), null);
     const days = workingDays(filters.from ?? oldest ?? this.now(), this.now());
-    const repositoryOf = (session: SessionView) => session.repository?.name ?? null;
-    const repositories = [...new Set(sessions.map(repositoryOf))];
+    const projectOf = (session: SessionView) => session.project?.name ?? null;
+    const projects = [...new Set(sessions.map(projectOf))];
     const models = [...new Set(sessions.map((session) => session.model))];
     const read = sum(sessions, ({ usage }) => usage.input + usage.cacheRead + usage.cacheCreation);
     return {
@@ -106,17 +106,17 @@ export class HistoryService {
         const ofDay = sessions.filter((session) => dayOf(session.startedAt) === date);
         return {
           date,
-          repositories: repositories
+          projects: projects
             .map((name) => {
-              const own = ofDay.filter((session) => repositoryOf(session) === name);
+              const own = ofDay.filter((session) => projectOf(session) === name);
               return { name, sessions: own.length, usd: sum(own, (session) => session.cost.usd) };
             })
             .filter((entry) => entry.sessions > 0),
         };
       }),
-      byRepository: repositories
+      byProject: projects
         .map((name) => {
-          const own = sessions.filter((session) => repositoryOf(session) === name);
+          const own = sessions.filter((session) => projectOf(session) === name);
           const usd = sum(own, (session) => session.cost.usd);
           return { name, sessions: own.length, usd, share: shareOf(usd, totalUsd) };
         })
@@ -139,7 +139,7 @@ export class HistoryService {
     return sessions.filter(
       (session) =>
         (!filters.from || session.startedAt >= filters.from) &&
-        (!filters.repository || session.repository?.name === filters.repository) &&
+        (!filters.project || session.project?.name === filters.project) &&
         (!filters.sourceId || session.sourceId === filters.sourceId) &&
         (!filters.state || session.state === filters.state) &&
         (!found || found.has(session.id)),

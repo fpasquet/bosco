@@ -12,7 +12,7 @@ function decision(
   return {
     id,
     state: 'accepted',
-    target: { kind: 'repository', name: 'api-voix' },
+    target: { kind: 'project', name: 'api-voix' },
     exceptionTo: null,
     fromTask: null,
     reason: null,
@@ -64,10 +64,10 @@ export const STORY_DEC3: DecisionDto = {
 };
 
 export const STORY_CONTEXT: ContextDto = {
-  repository: 'api-voix',
+  project: 'api-voix',
   decisions: [
     decision(1, 'Synthèse vocale par un service externe'),
-    decision(2, 'Lexique de prononciation versionné dans le dépôt'),
+    decision(2, 'Lexique de prononciation versionné dans le projet'),
     STORY_DEC3,
     decision(5, 'Garder Jest pour les tests', { exceptionTo: 10 }),
   ],
@@ -92,7 +92,7 @@ export const STORY_CONTEXT: ContextDto = {
 };
 
 export const STORY_PREVIEW: ContextPreviewDto = {
-  text: '# Contexte du dépôt api-voix\n\n## Décisions du dépôt\n- DEC-1 Synthèse vocale par un service externe\n  Synthèse vocale par un service externe.\n\n## Socles\nSocle commun\n- Node 22 au minimum\n  Node 22 au minimum.',
+  text: '# Contexte du projet api-voix\n\n## Décisions du projet\n- DEC-1 Synthèse vocale par un service externe\n  Synthèse vocale par un service externe.\n\n## Socles\nSocle commun\n- Node 22 au minimum\n  Node 22 au minimum.',
   tokens: 1240,
   at: new Date('2026-11-06T15:14:00').toISOString(),
   absent: { proposed: [STORY_PROPOSED], excluded: [STORY_VITEST] },
@@ -104,7 +104,7 @@ export const STORY_SOCLES: SocleDto[] = [
     name: 'Socle commun',
     scope: 'global',
     inherits: null,
-    repositories: [],
+    projects: [],
     applied: ['api-voix', 'api-signets', 'api-liens', 'labo-ia', 'site-articles'],
     decisions: STORY_CONTEXT.socles[0]!.decisions,
     exceptions: [],
@@ -114,9 +114,9 @@ export const STORY_SOCLES: SocleDto[] = [
     name: 'Socle Node.js',
     scope: 'shared',
     inherits: null,
-    repositories: ['api-voix', 'api-signets', 'api-liens', 'labo-ia'],
+    projects: ['api-voix', 'api-signets', 'api-liens', 'labo-ia'],
     applied: ['api-voix', 'api-signets', 'api-liens', 'labo-ia'],
     decisions: [STORY_VITEST, ...STORY_CONTEXT.socles[1]!.decisions],
-    exceptions: [{ repository: 'api-voix', decision: STORY_CONTEXT.decisions[3]!, replaces: STORY_VITEST }],
+    exceptions: [{ project: 'api-voix', decision: STORY_CONTEXT.decisions[3]!, replaces: STORY_VITEST }],
   },
 ];

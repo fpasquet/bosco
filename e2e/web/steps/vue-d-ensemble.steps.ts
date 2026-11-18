@@ -77,15 +77,15 @@ When('la session {texte} lance la commande {texte}', ({ transcripts }, sessionId
   appendFileSync(file, `${JSON.stringify(line)}\n`);
 });
 
-/** Lignes du tableau des sessions : intertitre de dépôt, titre et état, dans l'ordre de l'écran. */
+/** Lignes du tableau des sessions : intertitre de projet, titre et état, dans l'ordre de l'écran. */
 async function overviewRows(page: Page): Promise<Record<string, string>[]> {
   const rows: Record<string, string>[] = [];
   for (const group of await page.getByRole('table', { name: 'Sessions ouvertes' }).locator('tbody').all()) {
-    const [repository = ''] = await group.locator('th[scope=colgroup] b').allTextContents();
+    const [project = ''] = await group.locator('th[scope=colgroup] b').allTextContents();
     for (const row of await group.locator('tr:has(td)').all()) {
       const cells = row.locator('td');
       const [title = ''] = await cells.nth(1).locator('.truncate').allTextContents();
-      rows.push({ dépôt: repository, session: title, état: (await cells.nth(0).textContent()) ?? '' });
+      rows.push({ projet: project, session: title, état: (await cells.nth(0).textContent()) ?? '' });
     }
   }
   return rows;

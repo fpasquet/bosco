@@ -16,22 +16,21 @@ export interface OverviewHeaderProps {
   query: string;
   /** Coût du jour, rappelé à côté du regroupement sur téléphone, sans la bande d'indicateurs */
   costToday?: string;
-  /** Dépôt filtré (E1c), affiché en puce que la croix retire */
-  repository: null | string;
+  /** Projet filtré (E1c), affiché en puce que la croix retire */
+  project: null | string;
   /** Sous-titre des colonnes par état, qui n'ont pas de bande d'indicateurs (E1d) */
   summary?: string;
   title: string;
 }
 
 const GROUPINGS: { label: string; value: Grouping }[] = [
-  { label: 'Dépôt', value: 'repository' },
+  { label: 'Projet', value: 'project' },
   { label: 'État', value: 'state' },
 ];
 
 /** En-tête de la vue d'ensemble : regroupement gardé d'une visite à l'autre, recherche (raccourci « / »), filtres. */
 export function OverviewHeader(props: OverviewHeaderProps) {
-  const { grouping, hideInactive, now, onGroupingChange, onHideInactiveChange, onQueryChange, query, repository } =
-    props;
+  const { grouping, hideInactive, now, onGroupingChange, onHideInactiveChange, onQueryChange, query, project } = props;
   const search = useRef<HTMLInputElement>(null);
   useEffect(() => {
     const focusSearch = (event: KeyboardEvent) => {
@@ -45,18 +44,14 @@ export function OverviewHeader(props: OverviewHeaderProps) {
   }, []);
   return (
     <div className="flex flex-wrap items-end gap-3">
-      <div className={cn('min-w-0', !repository && 'hidden md:block')}>
+      <div className={cn('min-w-0', !project && 'hidden md:block')}>
         <p className="hidden text-xs text-muted md:block">{props.summary ?? `Poste local · ${dayLabel(now)}`}</p>
         <div className="mt-1 flex items-center gap-3">
           <h1 className="hidden font-display text-2xl font-semibold tracking-tight md:block">{props.title}</h1>
-          {repository && (
+          {project && (
             <span className="badge gap-1.5 badge-outline">
-              Dépôt : {repository}
-              <Link
-                href="/"
-                aria-label={`Retirer le filtre Dépôt : ${repository}`}
-                className="text-muted hover:text-ink"
-              >
+              Projet : {project}
+              <Link href="/" aria-label={`Retirer le filtre Projet : ${project}`} className="text-muted hover:text-ink">
                 <X aria-hidden className="size-3.5" />
               </Link>
             </span>
@@ -92,7 +87,7 @@ export function OverviewHeader(props: OverviewHeaderProps) {
         />
         <kbd className="kbd kbd-sm">/</kbd>
       </label>
-      {grouping === 'repository' && (
+      {grouping === 'project' && (
         <button
           type="button"
           aria-pressed={hideInactive}

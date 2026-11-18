@@ -31,7 +31,7 @@ export function PermissionCard({ agentSays, busy, now, onAllow, onDeny, session,
       </p>
     );
   }
-  const folder = session.repository?.folder || session.repository?.name || session.repoPath;
+  const folder = session.project?.folder || session.project?.name || session.projectPath;
   return (
     <section aria-label="Autorisation demandée" className="mt-4 rounded-card border border-warning bg-surface">
       <h3 className="flex items-center gap-2 rounded-t-card bg-warning-soft px-4 py-2.5 font-semibold text-warning">

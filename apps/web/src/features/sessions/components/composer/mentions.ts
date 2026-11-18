@@ -2,7 +2,7 @@ import type { Editor } from '@tiptap/core';
 
 export type SuggestionKind = 'command' | 'file';
 
-/** Déclencheur de chaque menu : « @ » pour un fichier du dépôt, « / » en tête de message pour une commande. */
+/** Déclencheur de chaque menu : « @ » pour un fichier du projet, « / » en tête de message pour une commande. */
 export const TRIGGER: Record<SuggestionKind, string> = { command: '/', file: '@' };
 
 /** Texte d'une puce dans le message envoyé : `@chemin` ou `/nom`, sans doubler un déclencheur déjà présent. */

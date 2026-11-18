@@ -16,8 +16,8 @@
     "recentActions": [
       "Bash · npm run db:migrate"
     ],
-    "repoPath": "<profiles>/labo-ia/packages/bosco",
-    "repository": {
+    "projectPath": "<profiles>/labo-ia/packages/bosco",
+    "project": {
       "folder": "packages/bosco",
       "hidden": false,
       "name": "labo-ia",

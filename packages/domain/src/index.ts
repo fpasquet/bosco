@@ -21,7 +21,7 @@ export type {
   PilotSandboxDto,
   PilotSettingsDto,
   ProfileCandidateDto,
-  RepositorySettingsDto,
+  ProjectSettingsDto,
   SandboxRefusalsDto,
   SessionConversationDto,
   SessionDetailDto,

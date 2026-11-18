@@ -44,8 +44,8 @@ export interface SessionSnapshot {
   lastMessage: null | string;
   model: null | string;
   nextSeq: number;
-  repoPath: null | string;
-  repoRoot: null | string;
+  projectPath: null | string;
+  projectRoot: null | string;
   sourceId: string;
   startedAt: Date;
   title: null | string;
@@ -75,8 +75,8 @@ export class Session {
     return new Session({
       id,
       sourceId,
-      repoPath: null,
-      repoRoot: null,
+      projectPath: null,
+      projectRoot: null,
       branch: null,
       lastAction: null,
       recentActions: [],
@@ -150,7 +150,7 @@ export class Session {
 
   /** Dossier de travail donné par un signal du suivi en direct, avant que le transcript ne soit lu. */
   placeIn(cwd: null | string): void {
-    if (cwd && !this.snapshot.repoPath) this.snapshot = { ...this.snapshot, repoPath: cwd };
+    if (cwd && !this.snapshot.projectPath) this.snapshot = { ...this.snapshot, projectPath: cwd };
   }
 
   /** La session reprend (démarrage, message envoyé, action de l'agent) : elle n'attend plus rien et reste ouverte. */
@@ -188,8 +188,8 @@ export class Session {
     const current = this.snapshot;
     this.snapshot = {
       ...current,
-      repoPath: event.cwd ?? current.repoPath,
-      repoRoot: event.repoRoot ?? current.repoRoot,
+      projectPath: event.cwd ?? current.projectPath,
+      projectRoot: event.projectRoot ?? current.projectRoot,
       branch: event.branch ?? current.branch,
       model: event.model ?? current.model,
       usage: event.usage ? current.usage.add(event.usage) : current.usage,
