@@ -1,0 +1,98 @@
+---
+title: Sessions pilotées
+description: Lancer une session depuis Bosco, lui écrire, choisir son mode d'autorisation, son modèle et son effort, et comprendre d'où viennent leurs valeurs par défaut.
+---
+
+Une session pilotée est lancée par Bosco lui-même, avec ton Claude Code et ton abonnement. Tu lui écris depuis Bosco, sur le poste ou le téléphone, et elle se reprend aussi dans un terminal entre deux tours. Elle tourne sur le poste, dans le dossier du projet, ou dans un [bac à sable](/docs/guides/sandbox).
+
+## Lancer une session
+
+![« Nouvelle session » depuis api-tarifs : le projet, l'abonnement, où elle tourne et le premier message](/screenshots/new-session.png)
+
+« Nouvelle session » s'ouvre depuis la vue d'ensemble, depuis la page d'un projet ou d'un groupe, ou depuis le menu ⋯ d'un projet (« Nouvelle session dans api-tarifs »). Sur le téléphone, c'est le bouton « + ».
+
+Le formulaire demande :
+
+- **« Projets »** : un ou plusieurs projets. Le champ propose d'abord tes groupes, puis tes projets. Choisir le groupe « Club des Trois Lacs » le remplit avec `api-tarifs`, `creneaux` et `site-clubs`, le principal en tête. L'étoile désigne le **projet principal**, le dossier de travail de la session ; la croix retire un projet, « + Projet » en ajoute un. Une session compte 20 projets au plus.
+- **« Abonnement Claude »** : le profil Claude Code dont la session utilise l'accès, par exemple « pro · profil par défaut ».
+- **« Où elle tourne »** : « Sur le poste » ou « Bac à sable ». Le formulaire reprend le dernier choix fait pour le projet principal.
+- **« Premier message »** : ce que l'agent doit faire, par exemple « Ajoute le bloc des tarifs sous chaque club, en t'appuyant sur l'API d'api-tarifs. ». `@` cite un fichier ; tu peux joindre 5 images au plus (PNG, JPEG, GIF ou WebP, 5 Mo chacune).
+
+La barre d'outils du message porte trois menus : **« Autorisations »**, **modèle** et **effort**. À côté de chaque puce, Bosco écrit d'où vient sa valeur (voir [Valeurs par défaut](#valeurs-par-défaut)). « Démarrer » lance la session.
+
+Si une session est déjà ouverte dans le même dossier, dans un terminal, Bosco prévient : « Une session est déjà ouverte dans ce dossier, dans un terminal : les deux agents modifieraient les mêmes fichiers. » L'avertissement ne bloque pas.
+
+Modèles proposés : « Défaut du profil », Opus 5.5, Sonnet 5.5, Haiku 5.5 et Haiku 4.5. Efforts : « Effort : défaut », Faible, Moyen, Élevé, Très élevé, Maximal.
+
+## Écrire à la session
+
+- **« Envoyer »** part tout de suite entre deux tours. Pendant un tour, le message attend, « partira à la fin du tour », et tu peux l'annuler. Un second message rejoint le premier.
+- **« Arrêter »**, pendant un tour, champ vide, interrompt le tour. Le message en attente est gardé.
+- **Changer de mode** s'enregistre aussitôt et vaut pour le tour en cours : une demande en attente passe si le nouveau mode la couvre, par exemple en passant à « Accès complet ». **Changer de modèle ou d'effort** vaut dès le message suivant. Les trois restent avec la session.
+- **Une question de l'agent** désactive la zone de message : « Réponds d'abord à la question ».
+
+Les autorisations d'une session pilotée arrivent dans Bosco comme celles d'un terminal (voir [Autoriser ou refuser](/docs/guides/sessions#autoriser-ou-refuser)).
+
+### Répondre à une question
+
+Une question à choix arrive comme une carte au bout du fil. Quand l'agent recommande une option, elle est cochée d'office et marquée « Recommandé » ; tu peux en choisir une autre, ou « Autre » pour écrire ta réponse.
+
+### Reprendre une session close
+
+Une session close se reprend en lui écrivant : « Session close · ton message la reprend dans Bosco, sur ce poste, dans … ». Pour la reprendre dans un terminal, « Copier la reprise » copie la commande `claude --resume` qui convient. Pour une session sur plusieurs projets, la commande ajoute les `--add-dir` de chaque projet.
+
+Une session dont Claude Code a effacé le transcript (après 30 jours) se lit encore dans Bosco, mais ne se reprend plus : la zone de message laisse la place à « Effacée par Claude Code : elle ne se reprend plus. », et aucune commande de reprise n'est proposée.
+
+## Le contexte transmis au lancement
+
+Au lancement, Bosco transmet à une session pilotée le contexte de ses projets, le principal d'abord : instructions de « Tous les projets » et des groupes, décisions acceptées, place dans l'architecture (voir [Instructions et contexte](/docs/guides/projects-and-groups#instructions-et-contexte)). Le texte est fixé au premier tour et renvoyé tel quel à chaque tour : une décision acceptée ou modifiée ensuite vaut pour les sessions lancées après, pas pour celle-ci. Il en va de même en bac à sable, où aucun serveur MCP n'entre. Une session ouverte dans un terminal, elle, lit le contexte par le [serveur MCP de Bosco](/docs/guides/mcp#serveur-mcp-de-bosco).
+
+## Les cinq modes d'autorisation
+
+| Mode                           | Ce que fait l'agent                                                         | Mode de Claude Code |
+| ------------------------------ | --------------------------------------------------------------------------- | ------------------- |
+| « Demander »                   | Chaque autorisation arrive dans Bosco.                                      | `default`           |
+| « Accepter les modifications » | Les modifications de fichiers passent sans demander ; le reste est demandé. | `acceptEdits`       |
+| « Plan »                       | L'agent propose un plan avant de toucher aux fichiers.                      | `plan`              |
+| « Approuver pour moi »         | Un vérificateur examine chaque demande à ta place.                          | `auto`              |
+| « Accès complet »              | Aucune demande, ni pour les modifications ni pour les commandes.            | `bypassPermissions` |
+
+### Approuver pour moi
+
+Le vérificateur de Claude Code décide à ta place. Il n'existe pas avec tous les modèles : avec Haiku 4.5, l'option est grisée, « Pas disponible avec ce modèle ».
+
+Claude Code suspend ce mode après 3 refus de suite ou 20 au total. Le fil le dit, en orange : « Approuver pour moi suspendu après 3 refus : les demandes reviennent dans Bosco ». Les demandes suivantes t'arrivent comme en mode « Demander ».
+
+### Accès complet
+
+Sur le poste, l'accès complet demande une confirmation, « Donner l'accès complet sur le poste ? » : l'agent modifiera les fichiers et lancera des commandes sans rien te demander, dans le projet et partout où ses outils peuvent aller. La fenêtre propose « Utiliser un bac à sable », qui garde l'accès complet mais isole la session du poste, « Annuler » ou « Donner l'accès complet ».
+
+En bac à sable, l'accès complet ne demande pas de confirmation : l'agent ne voit que sa copie du projet.
+
+## Valeurs par défaut
+
+Le mode d'autorisation, le modèle et l'effort ont une valeur par défaut, cherchée dans cet ordre ; la première trouvée l'emporte :
+
+1. **la session** : ce que tu choisis dans le formulaire ou en cours de session ;
+2. **le groupe**, si la session est lancée avec un groupe ;
+3. **le projet principal** ;
+4. **le profil réglé dans Bosco** ;
+5. **le profil Claude Code** lui-même : `permissions.defaultMode`, `model` et `effortLevel` de son `settings.json`, lus sans être modifiés.
+
+Sans rien nulle part, le mode est « Demander ». En bac à sable, si aucun niveau de Bosco ne règle le mode, il vaut « Accepter les modifications », avant le profil Claude Code.
+
+Le profil (l'abonnement) suit le même ordre, de la session au groupe puis au projet, et sinon le profil par défaut de Réglages › Abonnement Claude.
+
+L'interface dit toujours d'où vient une valeur : « choisi pour cette session », « défaut du groupe », « défaut du projet api-tarifs », « défaut du profil pro », « celui du profil Claude Code », « défaut en bac à sable ».
+
+### Où régler les valeurs par défaut
+
+| Niveau | Où                                                                                          | Ce qu'on y règle                                                                                         |
+| ------ | ------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| Projet | page du projet › Réglages › carte « Sessions »                                              | Profil, Autorisations, Modèle, Effort ; « Où elle tourne par défaut » ; branche de départ du bac à sable |
+| Groupe | page du groupe › Réglages › carte « Sessions »                                              | Profil, Autorisations, Modèle, Effort                                                                    |
+| Profil | Réglages › Sources › « Gérer » sur la ligne du profil › « Valeurs par défaut des sessions » | Autorisations, Modèle, Effort                                                                            |
+
+Sur les pages d'un projet et d'un groupe, chaque liste commence par « Hériter », et l'aide sous le champ dit « Réglé ici » ou « Hérité · défaut du profil pro (Sonnet 5.5) ». Une valeur par défaut ne s'applique qu'aux sessions suivantes : les sessions ouvertes ne changent pas.
+
+Exemple avec le fil rouge : le profil `pro` règle « Demander », Sonnet 5.5, effort moyen. Le groupe « Club des Trois Lacs » règle « Approuver pour moi ». Une session lancée avec ce groupe démarre en « Approuver pour moi » (défaut du groupe), sur Sonnet 5.5 et en effort moyen (défaut du profil pro).

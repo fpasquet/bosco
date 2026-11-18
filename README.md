@@ -69,10 +69,30 @@ make desktop-release  # .deb, AppImage et fichiers de mise à jour, à la versio
 | `apps/web`         | Interface Next.js, design system (tokens des specs, daisyUI, shadcn/ui sur Radix, Storybook)                                                                                            |
 | `apps/desktop`     | Application du poste (Electron, Linux) : fenêtre de l'interface, barre système, notifications natives ; paquet .deb                                                                     |
 | `apps/mobile`      | Application Android (Expo) : interface téléphone dans une vue web, appairage par QR code, notifications locales                                                                         |
+| `apps/docs`        | Site de documentation (Fumadocs), en français : installation, applications, guides, développement ; export statique dans `out/`                                                         |
 | `packages/domain`  | Contrats partagés avec le web : nom de l'application, types des vues                                                                                                                    |
 | `packages/configs` | Configurations partagées : TypeScript, ESLint, Vitest, Prettier                                                                                                                         |
 | `tools/release`    | Outils du workflow Release : version calculée depuis les commits, écrite dans les applications, CHANGELOG.md et notes                                                                   |
 | `e2e`              | Scénarios Gherkin de l'API (anglais) et du web (français), module d'enregistrement des appels sortants                                                                                  |
+
+## Documentation
+
+Le site de documentation (`apps/docs`, Fumadocs) est un export statique publié sur Cloudflare Pages par le workflow « Docs » (`.github/workflows/docs.yml`) : à chaque push sur `main` qui touche le site, après chaque exécution réussie du workflow « Release » (la page Télécharger lit les releases GitHub au build et donne ainsi la nouvelle version), et à la main depuis l'onglet Actions. Sans domaine, il est servi sur `https://bosco.pages.dev`.
+
+Mise en place, une seule fois :
+
+1. Sur Cloudflare, **My Profile › API Tokens › Create Token** › « Create Custom Token », avec la permission **Account › Cloudflare Pages › Edit**, limitée à ton compte.
+2. L'Account ID est dans le tableau de bord (**Workers & Pages**, colonne de droite), ou dans `pnpm --filter @bosco/docs exec wrangler whoami` après `wrangler login`.
+3. Les deux secrets du dépôt :
+
+   ```bash
+   gh secret set CLOUDFLARE_API_TOKEN --repo fpasquet/bosco
+   gh secret set CLOUDFLARE_ACCOUNT_ID --repo fpasquet/bosco
+   ```
+
+4. Lance **Actions › Docs › Run workflow**. Le premier passage crée le projet Pages `bosco` (branche de production `main`), les suivants le réutilisent. Sans les secrets, le workflow s'arrête sur un avertissement, sans échec.
+
+Si le nom `bosco` est déjà pris sur Cloudflare, le projet reçoit un suffixe (`bosco-xyz.pages.dev`, l'adresse est dans le résumé du déploiement) : règle alors la variable du dépôt `NEXT_PUBLIC_SITE_URL` sur cette adresse (`gh variable set NEXT_PUBLIC_SITE_URL --repo fpasquet/bosco --body https://…`). Pour un domaine plus tard : **Workers & Pages › bosco › Custom domains**, puis la même variable. Le nom du projet est `CLOUDFLARE_PAGES_PROJECT` dans `docs.yml` (et `DOCS_PROJECT` du Makefile). `make docs-deploy` publie depuis le poste, après `wrangler login`.
 
 ## Commandes
 
@@ -82,6 +102,10 @@ make desktop-release  # .deb, AppImage et fichiers de mise à jour, à la versio
 make check            # lint, types, tests et build de chaque paquet (Turborepo)
 make e2e              # scénarios de l'API, puis parcours du web (ordinateur et téléphone)
 make storybook        # http://localhost:6006
+make docs-dev         # site de documentation sur http://127.0.0.1:4890
+make docs-build       # export statique du site dans apps/docs/out
+make docs-preview     # l'export servi comme sur Cloudflare Pages, http://127.0.0.1:4891
+make docs-screenshots # captures du site, prises sur Bosco avec les données du fil rouge
 make format
 make tokens           # recopie les tokens des specs (../specs/bosco/ui)
 make requirements     # régénère docs/requirements depuis le cahier des charges

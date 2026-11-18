@@ -48,8 +48,11 @@ const HOMES = join(homedir(), '.cache', 'bosco-e2e');
 /** Dossier personnel écrit dans les transcripts d'exemple, remplacé par le dossier du scénario. */
 const SAMPLE_HOME = '/home/dev';
 
-/** `recordings` : dossier des enregistrements des appels sortants de cette suite. */
-export async function startBosco(recordings: string): Promise<Bosco> {
+/**
+ * `recordings` : dossier des enregistrements des appels sortants de cette suite. `home` fait du dossier personnel du
+ * scénario celui du service, pour que l'interface affiche ses chemins depuis « ~ » (captures du site de documentation).
+ */
+export async function startBosco(recordings: string, options: { home?: boolean } = {}): Promise<Bosco> {
   const port = await freePort();
   const phonePort = await freePort();
   const configDir = mkdtempSync(join(tmpdir(), 'bosco-claude-'));
@@ -78,6 +81,7 @@ export async function startBosco(recordings: string): Promise<Bosco> {
         BOSCO_PILOT_CLAUDE: join(ROOT, 'e2e/shared/fake-claude.mjs'),
         BOSCO_REPLAY: process.env.BOSCO_REPLAY ?? 'replay',
         BOSCO_RECORDINGS: recordings,
+        ...(options.home ? { HOME: profilesRoot } : {}),
       },
       stdio: ['ignore', 'inherit', 'inherit'],
     },

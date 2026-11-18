@@ -1,0 +1,114 @@
+---
+title: Projets et groupes
+description: Les dépôts de tes sessions deviennent des projets d'eux-mêmes ; en ajouter d'autres, les réunir en groupes, lancer une session sur plusieurs projets, et donner du contexte aux agents.
+---
+
+Bosco range chaque session sous le projet qui contient son dossier de travail. Un projet est un dépôt git où une session a tourné, que Bosco adopte de lui-même, ou un dossier que tu as ajouté, par exemple `~/www/api-tarifs`. Un groupe réunit des projets qui vont ensemble : ceux d'un client, ceux d'une stack, ou tes projets perso.
+
+Dans les exemples, trois groupes :
+
+| Groupe               | Projets (le principal d'abord)         | Instructions                                                                                                   |
+| -------------------- | -------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Club des Trois Lacs  | `api-tarifs`, `creneaux`, `site-clubs` | « Les textes lus par les joueurs sont en français. » « Les tickets du club se citent par leur clé (LAC-123). » |
+| Gîtes du Haut-Vallon | `sejours`, `api-disponibilites`        | « Les dates s'affichent au format français (17 nov. 2026). »                                                   |
+| Perso                | `maison`, `site-perso`                 | « Aucun service payant ni de télémétrie. »                                                                     |
+
+## La page Projets
+
+![La page « Tous les projets », avec les projets, leurs groupes et la liste des groupes](/screenshots/projects.png)
+
+« Tous les projets » (`/projects`) liste :
+
+- **« Projets »** : chaque projet avec son chemin, ses groupes, sa dernière session, la puce « sans git » ou « monodépôt » s'il y a lieu, et « Ajouter à un groupe ». Un projet est un monodépôt quand sa racine a un `pnpm-workspace.yaml`, un `turbo.json`, un `nx.json` ou des `workspaces` dans son `package.json` : ses paquets sont des sous-dossiers d'un seul projet (`creneaux/packages/paiement`) ;
+- **« Hors projet »** : les sessions dont le dossier n'est dans aucun projet, par exemple un dossier sans git ;
+- **« Suggestions »** : les dossiers sans git où une session a tourné, hors de tes projets, avec « Ajouter » ou « Ignorer ». « Ignorés » garde aussi les dossiers des projets retirés ;
+- **« Groupes »** : chaque groupe, son nombre de projets et sa description.
+
+## Les projets adoptés
+
+Chaque dépôt git où une session a tourné devient un projet de lui-même : au démarrage, après une réinitialisation et dès qu'une nouvelle session est lue. Un worktree rejoint son dépôt d'origine. Le projet adopté n'est ni épinglé ni dans un groupe ; ses sessions passées s'y rangent aussitôt, et l'[usage](/docs/guides/history-and-usage#usage) le compte.
+
+Ne sont jamais adoptés : ton dossier personnel, les dossiers temporaires (`/tmp`), les données de Bosco, les dossiers ignorés et les dépôts qui n'existent plus sur le poste. Un dossier sans git n'est pas adopté : il contiendrait les dépôts qui s'y ajouteraient ensuite. Il reste dans les suggestions, et « Ajouter » en fait un projet.
+
+La barre latérale ne montre que les projets épinglés ou qui ont une session ouverte : « Tous les projets » et les listes de choix les montrent tous.
+
+## Ajouter des projets
+
+« Ajouter des projets », sur la page Projets ou par le ＋ de la barre latérale, ouvre le navigateur de dossiers. Il part de ton dossier personnel (`~`) et n'en sort jamais. Il ne montre que les dossiers, sans fichiers ni dossiers cachés, avec leurs puces : « git » ou « sans git », « déjà ajouté », « suggestion ».
+
+- Coche les dossiers à ajouter ; la sélection reste quand tu entres dans un sous-dossier avec le chevron.
+- « Cocher les N dépôts git non ajoutés de ce dossier » coche d'un coup, par exemple, les dépôts de `~/www`.
+- « Dans le groupe : » range les projets ajoutés dans un groupe, « Aucun groupe » par défaut. Ouvert depuis les réglages d'un groupe (« Parcourir les dossiers… »), le navigateur choisit ce groupe d'avance.
+- « Ajouter N projets » valide.
+
+Un dossier sans Git peut devenir un projet (`~/Documents/notes-clubs`), mais ses sessions tournent seulement sur le poste : « Sans git, pas de bac à sable ». Le nom d'un projet est celui de son dossier.
+
+Le navigateur n'existe que sur le poste.
+
+## La page d'un projet
+
+La page d'un projet a trois onglets :
+
+- **« Sessions »** : le bandeau « T'attend », les indicateurs et les sessions du projet, avec leur sous-dossier. « Aussi dans ce projet » liste les sessions sur plusieurs projets dont il n'est pas le principal.
+- **« Contexte »** : ce que les agents de ce projet reçoivent (voir [plus bas](#instructions-et-contexte)).
+- **« Réglages »** : l'identité du projet, ses groupes, les [valeurs par défaut de ses sessions](/docs/guides/piloted-sessions#valeurs-par-défaut), ses [domaines de bac à sable](/docs/guides/sandbox#le-réseau-sortant), et « Retirer le projet ».
+
+Le menu ⋯ d'un projet, dans la barre latérale ou sur sa page, propose « Nouvelle session dans api-tarifs », les trois onglets, « Usage », « Ajouter à un groupe », « Épingler dans la barre latérale » et « Retirer le projet… ».
+
+### Retirer un projet
+
+« Retirer le projet » ne touche à rien sur le poste : ni le dossier, ni les sessions. Les sessions passent sous « Hors projet », le projet sort de ses groupes, et ses décisions sont gardées pour le jour où tu l'ajoutes de nouveau. Son dossier passe dans les dossiers ignorés : sinon, la session suivante le ferait adopter de nouveau. « Ne plus ignorer », dans les suggestions, le fait revenir s'il a des sessions. Tant qu'une session pilotée tourne dans le projet, le retrait est bloqué.
+
+## Les groupes
+
+« Nouveau groupe » demande un nom, une description facultative et des projets : le premier coché est le projet principal. Le groupe s'affiche dans la barre latérale ; tu peux l'en masquer dans ses réglages.
+
+La page d'un groupe a trois onglets :
+
+- **« Sessions »** : les sessions de tous ses projets, une seule fois chacune, avec leur projet ;
+- **« Instructions »** : le texte transmis aux agents de ses projets ;
+- **« Réglages »** : nom et description, projets (« Définir comme principal », « Retirer », « Ajouter des projets »), valeurs par défaut des sessions, affichage dans la barre latérale, « Supprimer le groupe ».
+
+Supprimer un groupe ne retire aucun projet : ils restent dans Bosco, avec leurs sessions et leurs décisions.
+
+« Tous les projets » est un groupe à part, qui contient tous tes projets et n'a qu'un onglet, « Instructions » : ses lignes valent pour tous les agents, par exemple « Messages de commit en anglais, au format Conventional Commits. ».
+
+## Les sessions sur plusieurs projets
+
+Une session pilotée peut voir plusieurs projets : « Afficher les tarifs sur chaque page de club » touche `api-tarifs`, `site-clubs` et `creneaux`. Dans « Nouvelle session », choisis plusieurs projets, ou un groupe : le **projet principal** (l'étoile) est le dossier de travail de la session, les autres lui sont passés par `--add-dir`.
+
+- La session se range sous son projet principal, « api-tarifs +2 », et dans « Aussi dans ce projet » des autres.
+- Elle compte dans chaque groupe dont elle voit un projet.
+- En bac à sable, chaque projet a sa copie, sur la même branche, et sa branche se récupère projet par projet.
+
+## Instructions et contexte
+
+Une session pilotée par Bosco, sur le poste comme en bac à sable, reçoit le contexte de ses projets [à son lancement](/docs/guides/piloted-sessions#le-contexte-transmis-au-lancement). Une session ouverte dans un terminal le lit par le [serveur MCP de Bosco](/docs/guides/mcp#serveur-mcp-de-bosco), avec son outil `bosco_context` : il s'installe avec le suivi en direct du profil, ou à part avec `make mcp-install`.
+
+Le texte transmis à un agent de `api-tarifs` réunit, dans l'ordre :
+
+1. les instructions de « Tous les projets » ;
+2. les instructions de chaque groupe du projet (« Club des Trois Lacs », « Node.js »…) ;
+3. les **décisions** acceptées du projet, qui l'emportent sur les instructions : « DEC-1 Tarifs calculés par l'API, jamais par les sites » ;
+4. sa **place dans l'architecture** : ce qu'il appelle et qui l'appelle.
+
+Pour une session sur plusieurs projets, le texte réunit le contexte de chaque projet, le principal d'abord, dans 10 000 caractères au plus.
+
+### L'onglet Contexte d'un projet
+
+![L'onglet Contexte d'api-tarifs : décisions, instructions des groupes et place dans l'architecture](/screenshots/project-context.png)
+
+- **« Décisions de api-tarifs »** : les décisions acceptées. « Nouvelle décision » en écrit une. Un agent peut aussi en proposer une avec l'outil `bosco_propose_decision` : elle attend ta validation (« 1 décision proposée par un agent attend ta validation », bouton « Examiner »), et une notification « Décision proposée » l'annonce. La décision nomme la session de l'agent qui l'a proposée, avec un lien vers elle. « Accepter », « Refuser », ou « Modifier avant d'accepter », qui rouvre ses champs : la version acceptée est celle que tu as relue.
+- **« Instructions des groupes »** : les groupes du projet, avec un lien pour modifier leurs instructions.
+- **« Place dans l'architecture »** : « Appelle » et « Appelée par », des noms séparés par des virgules.
+- **« Aperçu du texte transmis »** montre le texte exact qu'un agent recevrait, avec sa taille en tokens, et « Copier ».
+
+### Les instructions d'un groupe
+
+![Les instructions du groupe Club des Trois Lacs, et l'ordre du texte transmis à un agent d'api-tarifs](/screenshots/group-instructions.png)
+
+L'onglet « Instructions » d'un groupe est un texte libre, une consigne par ligne. Avant d'enregistrer, Bosco dit à combien de projets elles arriveront : « Elles seront transmises aux prochains agents de 3 projets ». Les agents déjà lancés ne sont pas touchés. L'encart « Où ces instructions arrivent » montre l'ordre du texte pour le projet principal du groupe.
+
+## Sur le téléphone
+
+L'onglet « Projets » du téléphone est en lecture seule. Toucher un projet ouvre ses sessions, son contexte et ses réglages, et permet d'y lancer une nouvelle session. Ajouter, retirer ou modifier se fait depuis le poste.

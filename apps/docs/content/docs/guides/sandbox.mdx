@@ -1,0 +1,105 @@
+---
+title: Bac à sable
+description: Faire tourner une session pilotée dans un conteneur Docker, isolée du poste, sur sa propre branche, avec un réseau fermé aux domaines permis.
+---
+
+Le bac à sable isole une session pilotée du poste. L'agent travaille dans un conteneur Docker, sur une copie du projet et une branche à lui. Il ne voit ni tes autres projets, ni tes réglages, ni tes accès, et ne sort sur Internet que vers les domaines que tu permets. Quand il a fini, tu récupères sa branche dans ton dépôt.
+
+C'est le bon endroit pour un travail long et sans demande, par exemple « Monter TypeScript en version 6 » dans `api-tarifs`, en mode « Accepter les modifications » ou « Accès complet ».
+
+## Prérequis
+
+- **Docker**, installé et joignable par ton utilisateur (`/usr/bin/docker`). Podman n'est pas pris en charge.
+- **Claude Code** sur le poste : il est monté en lecture seule dans le conteneur, à la même version que tes sessions.
+- **Un accès Claude** dans un profil surveillé, par `/login` ou par un [jeton longue durée](/docs/guides/settings#jeton-longue-durée) : seul cet accès entre dans le conteneur.
+- **Des projets sous Git** : un dossier sans Git tourne seulement sur le poste.
+
+Si l'un manque, « Bac à sable » est grisé dans « Nouvelle session », avec la raison : « Docker n'est pas installé », « Docker ne répond pas », « Accès à l'abonnement Claude introuvable », « Claude Code introuvable sur le poste » ou « creneaux n'est pas un dépôt git ».
+
+## Lancer une session en bac à sable
+
+Dans « Nouvelle session », choisis « Où elle tourne » › « Bac à sable ». Deux champs s'ajoutent :
+
+- **« Partir de »** : la branche de départ, celle réglée dans les réglages du projet, sinon la branche courante du dossier ;
+- **« Branche de la session »** : un nom qui commence par `bosco/s-`, proposé d'après le premier message, par exemple `bosco/s-typescript-6`. Un nom déjà pris est refusé.
+
+Bosco fait alors un clone Git autonome du projet, sans objet partagé avec ton dépôt, crée la branche de session à partir de la branche de départ, et démarre le conteneur. Les fichiers non commités du poste ne sont pas copiés.
+
+Avec plusieurs projets, chaque projet a sa copie, sur la même branche, créée dans chacun.
+
+## Ce que voit l'agent
+
+|          | A accès                                                      | N'a pas accès                           |
+| -------- | ------------------------------------------------------------ | --------------------------------------- |
+| Fichiers | sa copie du projet, son dossier personnel, ses conversations | tes autres projets, tes réglages, Bosco |
+| Secrets  | l'accès à l'abonnement Claude de la session                  | accès GitHub, `.npmrc`, connecteurs     |
+| Réseau   | les domaines autorisés                                       | le reste d'Internet                     |
+
+Seul l'accès du profil entre dans le conteneur, sa copie de `.credentials.json` ou le jeton déclaré, passé par une variable d'environnement : ni serveur MCP, ni connecteur, ni réglage du profil. Le contexte de ses projets (instructions des groupes, décisions) lui est transmis à son lancement, comme à toute [session pilotée](/docs/guides/piloted-sessions#le-contexte-transmis-au-lancement). Chaque conteneur a 4 Go de mémoire, 2 processeurs et 512 processus au plus, et tourne sans droits d'administration. L'image `bosco-agent` contient Node, Git, Python, ripgrep, `make`, `curl` et Corepack, qui fournit la version de pnpm ou de Yarn que demande le projet ; Bosco la construit au premier besoin. Docker n'y est pas : les services du projet démarrent à côté (voir [plus bas](#les-bases-de-données-du-projet)). Node passe par le proxy du bac à sable, y compris pour `fetch`, et la télémétrie de Next.js et de Turborepo est coupée.
+
+## Les bases de données du projet
+
+Quand le projet a un fichier Compose (`compose.yaml`, `docker-compose.yml`…), Bosco démarre avec le bac à sable les services qui tournent sur une image toute faite : une base Postgres, un Redis, un serveur de mails de test. Les services qui se construisent depuis le dépôt (`build:`), qui montent un dossier du poste ou demandent des droits du poste ne démarrent pas : l'agent lance le code du projet lui-même.
+
+Par exemple, pour un projet dont le `docker-compose.yml` déclare `db` (`postgres:16`), `install`, `api` et `web` (construits depuis le dépôt), seul `db` démarre. L'agent le joint par son nom, `db:5432`, comme dans le fichier Compose.
+
+- Les services sont sur le réseau privé du bac à sable, sans passer par le proxy, et **aucun port n'est publié sur le poste** : ils ne gênent pas ceux que tu lances toi-même.
+- Chaque session a **ses propres volumes**, jamais ceux de ton environnement de développement, effacés avec le bac à sable.
+- Chaque service est plafonné à 1 cœur et 1 Go de mémoire.
+- Bosco attend leur contrôle de santé, 5 minutes au plus. Un service qui ne démarre pas s'affiche avec sa raison, sans bloquer le tour.
+- Le contexte de lancement dit à l'agent qu'il n'a pas Docker, et quels services l'attendent sous quel nom.
+
+Avec plusieurs projets, seul le fichier Compose du projet principal est lu. La carte « Bac à sable » de la session et le panneau des conteneurs listent ces services sous leur bac à sable ; ils s'arrêtent et se suppriment avec lui.
+
+## Le réseau sortant
+
+Le conteneur est sur un réseau Docker interne, sans Internet. Sa seule sortie est un proxy qui laisse passer HTTP et HTTPS vers les domaines autorisés, et refuse le reste. La liste est relue à chaque connexion : un domaine ajouté vaut tout de suite.
+
+- **Par défaut**, verrouillés, ceux dont Claude Code et les installations ont besoin : `api.anthropic.com`, `claude.ai`, `platform.claude.com`, `registry.npmjs.org`, `registry.yarnpkg.com`.
+- **Ajoutés par toi**, dans Réglages › Bac à sable › « Domaines autorisés » : par exemple `github.com` ou `*.github.com`. `*.domaine` couvre les sous-domaines.
+- **Domaines du projet**, dans la page du projet › Réglages › « Domaines du projet » : ils s'ajoutent à la liste générale pour les seules sessions de ce projet, par exemple le registre privé `npm.registre.exemple.dev`. Une session sur plusieurs projets réunit les domaines de tous ses projets.
+
+Le filtrage se fait par nom de domaine : un domaine autorisé reste une sortie possible.
+
+### Une sortie refusée
+
+L'agent reçoit une erreur 403, « Domaine refusé par Bosco : raw.githubusercontent.com ». Le fil de la session montre « Sortie réseau refusée · raw.githubusercontent.com · 15:08 » à son heure, entre les étapes de l'agent, là où il a tenté la sortie. Plusieurs refus du même domaine pendant un tour n'y font qu'une ligne, à l'heure du premier, avec le nombre de tentatives. Sur le poste, « Ajouter à la liste » propose « Aux domaines de api-tarifs » ou « À la liste générale », le domaine déjà rempli ; il vaut au tour suivant.
+
+## Récupérer la branche
+
+![Le détail d'une session en bac à sable : la sortie refusée dans le fil, la carte du bac à sable et sa consommation](/screenshots/session-sandbox.png)
+
+La carte « Bac à sable » du détail de la session montre l'état du conteneur (« Démarré », « En veille », « Supprimé »), ce qu'il consomme quand il est démarré (« Processeur 0,0 / 2 cœurs », « Mémoire 1,3 / 4 Go », mesurés comme dans [les conteneurs en cours](#les-conteneurs-en-cours)), l'heure à laquelle il s'arrêtera sans nouveau message, sa branche, et « jamais récupérée » ou « récupérée à 16:20 ».
+
+Sur le téléphone, le détail d'une session en bac à sable a un onglet de plus : « Fil », « Bac à sable », « Usage ». L'onglet « Bac à sable » porte la carte, sa consommation et ses actions ; ajouter un domaine à la liste ne se fait que sur le poste.
+
+![Sur le téléphone, l'onglet « Bac à sable » du détail d'une session](/screenshots/phone-session-sandbox.png)
+
+« Récupérer la branche » commite le travail en cours dans la copie (« Travail en cours de la session »), puis le rapatrie dans ton dépôt par `git fetch`, sans toucher à ta branche courante. Si la branche a avancé sur le poste entre-temps, Bosco la récupère sous un autre nom (`…-2`) et le dit. Avec plusieurs projets : « Récupérer les branches », ou projet par projet.
+
+Ces actions se font entre deux tours : « Un tour est en cours : attends qu'il finisse. »
+
+## Cycle de vie
+
+- Entre deux tours, le conteneur attend. Il **s'arrête après 30 minutes** sans message, sans rien perdre, et redémarre au message suivant.
+- Le bac à sable est **supprimé 7 jours après le dernier message**. La veille, une notification prévient si la branche a du travail non récupéré : « Supprimé demain : la branche bosco/s-typescript-6 a du travail non récupéré. »
+- « Arrêter le bac à sable » et « Supprimer le bac à sable » sont dans la carte. La suppression efface le conteneur et la copie ; la session reste lisible, mais ne se reprend plus.
+
+Une session en bac à sable ne se reprend pas dans un terminal : elle n'existe que dans le conteneur.
+
+Ses conversations se lisent dans une source à part, « Bacs à sable » (`~/.local/share/bosco/sandboxes/profile`), « Tenue par Bosco » : toujours lue, sans interrupteur, ni suivi en direct, ni canal à installer. Voir [Réglages › Sources](/docs/guides/settings#sources).
+
+## Le quota de l'abonnement
+
+Les sessions en bac à sable tournent sur ton abonnement Claude. Pour ne pas l'épuiser, Bosco lit son quota et applique deux seuils, réglables dans Réglages › Abonnement Claude :
+
+| Fenêtre | Ne plus lancer de tour au-delà de | Arrêter le tour au-delà de |
+| ------- | --------------------------------- | -------------------------- |
+| 5 h     | 50 %                              | 80 %                       |
+| Semaine | 70 %                              | 90 %                       |
+
+Au-delà du premier seuil, les messages attendent : « Quota de l'abonnement : 5 h à 52 %, reprise vers 16:00 ». Au-delà du second, le tour en cours s'arrête. « Les seuils retiennent » s'applique aux « Sessions en bac à sable » (par défaut), ou aussi aux sessions pilotées sur le poste. Une session lancée dans un terminal n'est jamais retenue.
+
+## Les conteneurs en cours
+
+Quand un conteneur tourne, « Conteneurs » apparaît en bas de la barre latérale. Le panneau liste les « Bacs à sable », avec leurs services de données en dessous, et les « Tours sur le poste », avec leur projet, depuis quand ils tournent, leur processeur et leur mémoire en jauges, « Proche du plafond » au-delà de 80 %, « Voir la session » et « Arrêter le tour ». Si Docker ne répond plus : « Docker ne répond pas depuis … », avec « Réessayer ». Les dernières mesures restent, grisées et datées (« Dernières mesures · 15:09 »), et leur « Voir la session » est désactivé jusqu'au retour de Docker ; Bosco réessaie seul toutes les 30 secondes. Sur le téléphone, « Conteneurs en cours », dans les Réglages, montre une carte par bac à sable et par tour.

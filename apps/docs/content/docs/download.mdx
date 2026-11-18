@@ -1,0 +1,67 @@
+---
+title: Télécharger
+description: Les applications de Bosco pour Linux et Android, tirées de la dernière release publiée sur GitHub, et comment vérifier un téléchargement.
+---
+
+Chaque version de Bosco est publiée sur [GitHub](https://github.com/fpasquet/bosco/releases) avec ses applications. Une version stable porte un numéro simple (`0.2.0`) ; une bêta, publiée en pre-release, essaie la suivante (`0.3.0-beta.1`). Les liens ci-dessous sont ceux de la dernière version de chaque canal, au moment où ce site a été construit : il est reconstruit à chaque release.
+
+<Downloads />
+
+## Quelle application choisir
+
+| Fichier       | Pour qui                                       | Mises à jour                                                            |
+| ------------- | ---------------------------------------------- | ----------------------------------------------------------------------- |
+| Paquet `.deb` | Ubuntu, Debian et dérivés : le choix conseillé | Bosco signale une version plus récente ; tu installes le nouveau paquet |
+| AppImage      | toute distribution Linux, sans installation    | elle se télécharge seule, puis « Relancer pour mettre à jour »          |
+| APK Android   | le téléphone, en complément du poste           | Bosco signale une version plus récente ; tu installes l'APK par-dessus  |
+
+Le paquet `.deb` configure à l'installation le bac à sable de Chromium et le profil AppArmor qu'Ubuntu exige. L'AppImage ne le peut pas : elle se lance sans ce bac à sable (`--no-sandbox`). Le [bac à sable de Bosco](/docs/guides/sandbox), où tournent les sessions, n'en dépend pas : il marche avec l'un comme avec l'autre.
+
+Les deux applications du poste embarquent le service de Bosco et Node 26 : rien d'autre à installer, sauf Docker pour le bac à sable. Elles gardent leurs données dans `~/.local/share/bosco`, les mêmes que le service lancé [depuis le dépôt](/docs/installation#depuis-le-dépôt).
+
+## Installer
+
+<Tabs items={['Paquet .deb', 'AppImage', 'Android']}>
+<Tab value="Paquet .deb">
+
+```bash
+sudo apt install ./bosco-desktop_*_amd64.deb
+```
+
+Si apt signale que `_apt` ne peut pas lire le fichier, copie-le d'abord dans `/tmp`. Bosco apparaît dans le menu des applications ; le détail est dans [Application du poste](/docs/desktop).
+
+</Tab>
+<Tab value="AppImage">
+
+```bash
+chmod +x bosco-desktop_*_x86_64.AppImage
+./bosco-desktop_*_x86_64.AppImage
+```
+
+Garde le fichier à un endroit fixe (par exemple `~/Applications`) : la mise à jour automatique le remplace sur place.
+
+</Tab>
+<Tab value="Android">
+
+Télécharge l'APK depuis le téléphone, ouvre-le, puis autorise l'installation pour le navigateur seulement. L'APK est signé avec la clé de release de Bosco : un ancien APK construit sur le poste (signé avec la clé de debug d'Expo) se désinstalle d'abord. L'appairage avec le poste est décrit dans [Application Android](/docs/android).
+
+</Tab>
+</Tabs>
+
+## Vérifier un téléchargement
+
+Chaque release joint `SHA256SUMS`, les empreintes de ses fichiers. Télécharge-le à côté des fichiers, puis :
+
+```bash
+sha256sum --check --ignore-missing SHA256SUMS
+```
+
+Chaque fichier présent doit répondre « OK ». En ligne de commande, `gh release download` récupère une version entière :
+
+```bash
+gh release download v0.1.0-beta.1 -R fpasquet/bosco --pattern '*.deb' --pattern SHA256SUMS
+```
+
+## Suivre les nouvelles versions
+
+Réglages › À propos dit la version qui tourne et cherche une version plus récente une fois par jour au plus, sur le canal « Stable » ou « Bêta ». Le détail est dans [Réglages](/docs/guides/settings#à-propos).

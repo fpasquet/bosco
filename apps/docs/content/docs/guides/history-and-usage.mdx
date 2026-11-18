@@ -1,0 +1,72 @@
+---
+title: Historique et usage
+description: Retrouver une session passée par ses titres, messages et commandes, puis voir ce que consomment les sessions et où en est le quota de l'abonnement.
+---
+
+## L'historique
+
+L'historique (`/history`) liste les sessions de tous les profils surveillés, jour par jour, du plus récent au plus ancien. Chaque jour donne son nombre de sessions et son coût estimé ; les jours suivants se chargent au défilement.
+
+Bosco garde sa propre copie des sessions : elles restent dans l'historique même quand Claude Code efface ses transcripts après 30 jours. Il importe les 30 derniers jours, ou tout l'historique encore présent dans les profils si tu le choisis dans [Réglages › Données](/docs/guides/settings#données).
+
+### Chercher
+
+Le champ « Rechercher dans les titres, messages et commandes » (raccourci `/`) cherche pendant la frappe. Chaque mot est cherché en début de mot dans les messages, les réponses et les commandes, et n'importe où dans les titres : `tarif` trouve « Afficher les tarifs sur chaque page de club ».
+
+### Filtrer
+
+Les filtres se cumulent :
+
+- **« Période »** : « 7 derniers jours » (par défaut), « 30 derniers jours » ou « tout » ;
+- **« Projet »** et **« Groupe »** : un groupe garde les sessions de tous ses projets, y compris celles qui en voient un comme projet ajouté ;
+- **« Profil »** : `pro`, `perso`… ;
+- **« État »** : T'attend, En cours, Inactive, Terminée.
+
+Un filtre se retire en revenant à « tous ». « Voir l'historique », en bas de la page d'un projet, ouvre l'historique déjà filtré sur lui.
+
+Sur le téléphone, l'onglet « Historique » bascule entre « Sessions » et « Usage ».
+
+## La page Usage
+
+![La page Usage sur 30 jours : activité de Bosco, tokens et utilisation quotidienne](/screenshots/usage.png)
+
+La page Usage (`/usage`) montre ce que consomment tes sessions Claude Code, d'après leurs transcripts. On l'ouvre par « Usage » dans la barre latérale, ou par « Usage » du menu ⋯ d'un projet ou d'un groupe, qui l'ouvre déjà filtrée.
+
+### Filtres
+
+- **« Période »** : « 7 j », « 30 j » (par défaut), « 90 j » ou « Depuis le début » ;
+- **« Projet ou groupe »** : par exemple « Groupe Club des Trois Lacs » ou « Projet api-tarifs » ;
+- **« Tous les profils »** et **« Tous les modèles »** ;
+- « Réinitialiser » revient aux valeurs par défaut, « Voir en tableau » montre les chiffres sous forme de tableau.
+
+Les filtres sont dans l'adresse de la page et repris à la visite suivante.
+
+### Activité de Bosco
+
+Cinq chiffres sur ce que Bosco a fait faire : « Sessions pilotées lancées », « Temps de travail des agents » (de ta demande à la dernière action de l'agent, tour par tour), « Bacs à sable créés », « Branches récupérées » et « PR créées ».
+
+Une PR compte quand un agent l'a créée avec `gh pr create` et que GitHub a renvoyé son adresse. Une PR créée hors d'une session, ou hors GitHub, ne compte pas.
+
+### Tokens
+
+- « Entrée », « Sortie », « Lecture du cache », « Écriture en cache » ;
+- « Réutilisation du cache » : la lecture du cache rapportée à l'entrée plus la lecture du cache ;
+- « Tours sans lecture du cache », en pourcentage ;
+- « Sessions / tours » ;
+- « Coût estimé », au tarif public de l'API. Un modèle sans tarif connu est « non chiffré ». Sous le total, « dont X $ de sous-agents » dit la part des agents lancés par les sessions.
+
+Le coût est une estimation : avec un abonnement Claude, tu ne paies pas ce montant, il sert à comparer les sessions entre elles.
+
+### Utilisation quotidienne
+
+Un graphique en barres empilées, jour par jour, en tokens ou en coût estimé : lecture du cache, écriture en cache, sortie, entrée. Le survol d'un jour donne le détail. Sur le téléphone, il montre les 7 derniers jours.
+
+### Quota des abonnements
+
+Pour chaque abonnement, deux jauges, « 5 h » et « Semaine », avec leur pourcentage et l'heure de remise à zéro, et les deux seuils du [bac à sable](/docs/guides/sandbox#le-quota-de-labonnement). Au-delà du seuil d'attente, la jauge passe en orange : « Les messages aux sessions retenues attendent ». Le quota ne se filtre pas : il vaut pour tout l'abonnement. Bosco le lit au premier tour d'une session pilotée.
+
+### Répartition
+
+Les tokens et le coût comptent les sous-agents d'une session (ceux qu'elle lance avec l'outil Agent) : c'est souvent là que part l'essentiel d'une longue session. Le nombre de tours, lui, ne compte que ceux de la session.
+
+« Par projet » liste tous les projets, du plus coûteux au moins coûteux : les dix premiers s'affichent, « Afficher les N autres » déplie la suite. Une session hors projet compte pour son dossier, « ~/scripts hors projet » ; tout ce qui est sous un dossier temporaire ou de Bosco compte pour une seule ligne. « Par modèle » et « Par profil » nomment les cinq plus gros et regroupent les autres. « Sessions et sous-agents » sépare ce que coûtent les sessions elles-mêmes et leurs sous-agents. Un clic sur un projet filtre toute la page sur lui. Une session sur plusieurs projets compte pour chacun : la somme des projets peut dépasser le total.

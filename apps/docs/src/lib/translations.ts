@@ -1,0 +1,40 @@
+import type { Translations } from 'fumadocs-ui/i18n';
+
+// Textes de Fumadocs lus sur le site (recherche, sommaire, navigation), en français comme le contenu
+export const frenchTranslations: Partial<Translations> = {
+  displayName: 'Français',
+  'Back to Home(404 page)': "Retour à l'accueil",
+  'Close Search(search dialog)(aria-label)': 'Fermer la recherche',
+  'Close Sidebar(aria-label)': 'Fermer le menu',
+  'Close Sidebar(sidebar)(aria-label)': 'Fermer le menu',
+  'Collapse Sidebar(sidebar)(aria-label)': 'Replier le menu',
+  'Copied Anchor Link(heading anchor)(aria-label)': 'Lien copié',
+  'Copied Text(code block)(aria-label)': 'Texte copié',
+  'Copy Anchor Link(heading anchor)(aria-label)': 'Copier le lien',
+  'Copy Text(code block)(aria-label)': 'Copier le texte',
+  'Dark(theme switcher)(aria-label)': 'Sombre',
+  'Hide Sidebar(sidebar)': 'Masquer le menu',
+  'Last updated on(page footer)': 'Mis à jour le',
+  'Light(theme switcher)(aria-label)': 'Clair',
+  'Next Page(pagination)': 'Page suivante',
+  'No Headings(table of contents)': 'Aucun titre',
+  'No results found(search dialog)': 'Aucun résultat',
+  'On this page(table of contents)': 'Sur cette page',
+  'Open Search(search trigger)(aria-label)': 'Ouvrir la recherche',
+  'Open Sidebar(sidebar)(aria-label)': 'Ouvrir le menu',
+  'Page Not Found(404 page)': 'Page introuvable',
+  'Previous Page(pagination)': 'Page précédente',
+  'Search failed(search dialog)': 'La recherche a échoué',
+  'Search failed, showing results for {query}(search dialog)':
+    'La recherche a échoué, voici les résultats pour {query}',
+  'Search(search dialog)': 'Rechercher',
+  'Search(search trigger)': 'Rechercher',
+  'Show Sidebar(sidebar)': 'Afficher le menu',
+  'Skip to Content(skip link)': 'Aller au contenu',
+  'System(theme switcher)(aria-label)': 'Système',
+  'Table of Contents(inline table of contents)': 'Sommaire',
+  'The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.(404 page)':
+    "La page demandée n'existe pas, ou plus : elle a peut-être changé de nom.",
+  'Toggle Menu(mobile menu)(aria-label)': 'Ouvrir ou fermer le menu',
+  'Toggle Theme(theme switcher)(aria-label)': 'Changer de thème',
+};

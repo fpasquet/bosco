@@ -1,0 +1,57 @@
+---
+title: Notifications
+description: Quand Bosco te prévient, où la notification arrive (bureau, fenêtre de Bosco, téléphone), et comment choisir ce qui notifie.
+---
+
+Bosco te prévient quand une session a besoin de toi, même si aucun onglet n'est ouvert, tant que le service tourne.
+
+## Ce qui notifie
+
+| Cas                                        | Par défaut                     | Déclencheur                                                                            |
+| ------------------------------------------ | ------------------------------ | -------------------------------------------------------------------------------------- |
+| « Autorisation demandée »                  | activé                         | Claude Code demande l'accord pour un outil                                             |
+| « Question de l'agent »                    | activé                         | L'agent pose une question à choix                                                      |
+| « Fin de tour qui finit par une question » | activé                         | Le dernier message de l'agent finit par « ? »                                          |
+| « Fin de tour d'une session »              | « Après un long tour » (2 min) | L'agent a fini son tour ; « Jamais », « Après un long tour » ou « Toujours »           |
+| « Session terminée »                       | désactivé                      | Claude Code ferme la session                                                           |
+| Bac à sable                                | toujours                       | La veille de la suppression d'un bac à sable dont la branche a du travail non récupéré |
+| « Décision proposée »                      | toujours                       | Un agent propose une décision pour un projet ; la notification ouvre la décision       |
+
+Ces notifications demandent le [suivi en direct](/docs/guides/settings#sources) du profil, sauf pour les sessions pilotées par Bosco. Seuls les événements nouveaux notifient : rouvrir Bosco ne rejoue pas les anciens.
+
+## Où elles arrivent
+
+### Sur le bureau
+
+Le service envoie une notification du système (`notify-send`) : le titre donne le type et le projet, « Autorisation · maison », le texte donne le titre de la session et un extrait, par exemple « Bash · npm run db:migrate ». Une session n'a qu'une notification à la fois : la suivante remplace la précédente. Une autorisation ou une question reste affichée jusqu'à ce que tu la fermes. « Ouvrir » ouvre la session dans le navigateur.
+
+Quand l'[application du poste](/docs/desktop#les-notifications) tourne, c'est elle qui affiche la notification, et un clic ouvre la session dans sa fenêtre.
+
+### Dans Bosco, quand tu le regardes
+
+Si l'onglet de Bosco est devant toi, un message bref remplace la notification du bureau : « Autorisation · Ajouter les catégories au budget du foyer », avec « Ouvrir ». Une autorisation ou une question reste affichée jusqu'à ce que tu la fermes ; le reste se ferme seul après 8 secondes.
+
+### Le centre de notifications
+
+La cloche, à côté du logo (dans l'en-tête sur le téléphone), porte le nombre de notifications non lues. Elle ouvre le tiroir « Notifications » :
+
+- « À traiter » ou « Toutes », regroupées par « Aujourd'hui », « Hier », puis par date ;
+- une autorisation non traitée propose « Autoriser », « Refuser » et « Ouvrir » ;
+- une notification traitée dit son issue : « autorisé dans Bosco », « refusé dans Bosco », « répondu dans le terminal », « session terminée »… ;
+- « Tout marquer comme lu ». Les notifications sont gardées 7 jours.
+
+### Sur le téléphone
+
+L'[application Android](/docs/android#notifications) affiche les notifications de Bosco sur le canal « Bosco ». Application fermée, il faut activer « Rester connecté en arrière-plan ». Un simple navigateur de téléphone n'a pas de notification système.
+
+## Choisir ce qui notifie
+
+Réglages › Notifications (`/settings/notifications`) :
+
+- **« Notifications du bureau »** : « Envoyer des notifications du bureau » et « Message bref quand Bosco est devant toi », activés par défaut ;
+- **« Une question t'attend »** : « Autorisation demandée », « Question de l'agent », « Fin de tour qui finit par une question » ;
+- **« Un travail est fini »** : « Fin de tour d'une session » (« Jamais », « Après un long tour », « Toujours ») avec la « Durée d'un long tour » (1, 2, 5, 10, 15 ou 30 min), et « Session terminée ».
+
+Un aperçu montre la notification du bureau telle qu'elle s'affichera. Pour une pause, l'application du poste propose « Suspendre les notifications 1 h » dans la barre système.
+
+Sur le téléphone, ces réglages sont en lecture seule : « Modifiable depuis le poste ».

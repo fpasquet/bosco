@@ -1,0 +1,53 @@
+@import 'tailwindcss';
+@import 'fumadocs-ui/css/neutral.css';
+@import 'fumadocs-ui/css/preset.css';
+
+/* Marque de l'interface (apps/web/src/styles/tokens.css) : neutres teintés vers le vert d'eau, vert d'eau pour
+   les actions et la sélection, Instrument Sans pour le texte, JetBrains Mono pour les commandes et les chemins */
+@theme {
+  --color-fd-background: #f3f6f5;
+  --color-fd-foreground: #142321;
+  --color-fd-muted: #ebf0ef;
+  --color-fd-muted-foreground: #52615d;
+  --color-fd-popover: #ffffff;
+  --color-fd-popover-foreground: #142321;
+  --color-fd-card: #ffffff;
+  --color-fd-card-foreground: #142321;
+  --color-fd-border: #d9e1df;
+  --color-fd-primary: #0d6e66;
+  --color-fd-primary-foreground: #ffffff;
+  --color-fd-secondary: #ebf0ef;
+  --color-fd-secondary-foreground: #142321;
+  --color-fd-accent: #dfeeeb;
+  --color-fd-accent-foreground: #0a5751;
+  --color-fd-ring: #0d6e66;
+
+  --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+/* Les specs n'ont pas de thème sombre : celui-ci garde la teinte de la marque, éclaircie pour rester lisible */
+.dark {
+  --color-fd-background: #0e1716;
+  --color-fd-foreground: #e3ecea;
+  --color-fd-muted: #16211f;
+  --color-fd-muted-foreground: #9db0ab;
+  --color-fd-popover: #121c1b;
+  --color-fd-popover-foreground: #e3ecea;
+  --color-fd-card: #121c1b;
+  --color-fd-card-foreground: #e3ecea;
+  --color-fd-border: #26332f;
+  --color-fd-primary: #5cc2b7;
+  --color-fd-primary-foreground: #0e1716;
+  --color-fd-secondary: #1a2624;
+  --color-fd-secondary-foreground: #e3ecea;
+  --color-fd-accent: #1c2e2b;
+  --color-fd-accent-foreground: #8fd8cf;
+  --color-fd-ring: #5cc2b7;
+}
+
+/* Les liens du texte prennent la couleur de la marque */
+.prose a:not([data-card]) {
+  color: var(--color-fd-primary);
+  text-decoration-color: color-mix(in oklab, var(--color-fd-primary) 40%, transparent);
+}

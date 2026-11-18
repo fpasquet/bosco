@@ -1,0 +1,86 @@
+---
+title: Canal et serveur MCP
+description: Écrire depuis Bosco à une session ouverte dans un terminal avec le canal de Bosco, et donner aux agents le contexte de leur projet avec le serveur MCP de Bosco (« Ma session »).
+---
+
+Bosco s'ajoute à Claude Code de deux façons, chacune un serveur MCP installé dans un profil :
+
+|                      | Canal de Bosco                                             | Serveur MCP de Bosco (« Ma session »)                                                 |
+| -------------------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Nom dans Claude Code | `bosco-channel`                                            | `bosco`                                                                               |
+| Sert à               | écrire depuis Bosco à une session ouverte dans un terminal | donner à l'agent le contexte de son projet, et lui permettre de proposer une décision |
+| S'installe           | Réglages › Sources › « Canal de Bosco »                    | avec le suivi en direct du profil, ou `make mcp-install`                              |
+| Transport            | stdio, lancé par Claude Code                               | HTTP, `http://127.0.0.1:4870/mcp`                                                     |
+
+## Canal de Bosco
+
+Une session ouverte dans un terminal se lit dans Bosco, mais on n'y répond que dans le terminal. Le canal de Bosco lève cette limite : lancée avec le canal, la session reçoit les messages que tu écris dans Bosco, sur le poste ou le téléphone, comme si tu les tapais dans le terminal.
+
+Le canal ne transmet que du texte : ni images, ni changement de mode ou de modèle, ni « Arrêter ». Les autorisations continuent de passer par le suivi en direct.
+
+### Installer le canal
+
+Dans Réglages › Sources, sur la ligne du profil, « Canal de Bosco · non installé » › « Installer ». Le panneau « Canal de Bosco · profil pro » explique ce que cela permet, puis « Installer » ajoute le canal aux serveurs MCP du profil, sans rien remplacer (`claude mcp add-json --scope user bosco-channel …`). « Retirer » l'enlève.
+
+### Lancer une session avec le canal
+
+Le canal est un aperçu de recherche de Claude Code : il faut le charger explicitement au lancement.
+
+```bash
+claude --dangerously-load-development-channels server:bosco-channel
+```
+
+Pour un autre profil que `~/.claude`, préfixe la commande :
+
+```bash
+CLAUDE_CONFIG_DIR=~/.claude-perso claude --dangerously-load-development-channels server:bosco-channel
+```
+
+Le panneau propose un alias à ajouter à ton shell :
+
+```bash
+alias claude-bosco='claude --dangerously-load-development-channels server:bosco-channel'
+```
+
+À chaque lancement, Claude Code demande de confirmer le chargement d'un canal en développement local. Une organisation Team ou Enterprise peut désactiver les canaux.
+
+### Écrire à la session
+
+Une session lancée avec le canal porte la marque « Canal de Bosco » dans son en-tête. La zone de message dit « Ouverte dans un terminal · ton message y arrive par le canal de Bosco ». Après l'envoi : « Message envoyé dans le terminal par le canal de Bosco. », et le message apparaît dans le fil avec la mention « depuis Bosco ».
+
+Sans canal, une session de terminal montre « Ouverte dans un terminal · réponds-y là-bas. »
+
+## Serveur MCP de Bosco
+
+Le README et le Makefile l'appellent « Ma session ». Le serveur `bosco` donne aux agents le contexte de leur projet, celui que tu écris dans Bosco : instructions des groupes, décisions, place dans l'architecture (voir [Instructions et contexte](/docs/guides/projects-and-groups#instructions-et-contexte)).
+
+### Les outils
+
+| Outil                    | Paramètres                                                             | Ce qu'il fait                                                                                                                                                                     |
+| ------------------------ | ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `bosco_context`          | `path`, `paths`                                                        | Rend le contexte du projet qui contient `path`, et de ceux des dossiers ajoutés (`paths`) : instructions communes et des groupes, décisions acceptées, place dans l'architecture. |
+| `bosco_propose_decision` | `path`, `title`, `context`, `decision`, `consequences`, `alternatives` | Propose une décision pour le projet, par exemple « DEC-6 Normaliser les fuseaux horaires avant le calcul du tarif ». Elle attend ta validation dans l'onglet Contexte du projet.  |
+
+Le serveur dit à l'agent de lire le contexte avec `bosco_context` avant de travailler dans un projet, et de proposer une convention durable avec `bosco_propose_decision`. Hors d'un projet connu, l'outil répond « Ce dossier n'est dans aucun projet connu de Bosco. »
+
+### Installer et retirer
+
+```bash
+make mcp-install                              # profil ~/.claude
+make mcp-install PROFILE=~/.claude-perso      # un autre profil
+make mcp-install-dev                          # pointé sur make dev (port 4880, données dans .data/)
+make mcp-remove                               # retirer du profil ~/.claude
+make mcp-remove PROFILE=~/.claude-perso
+```
+
+Installer le suivi en direct d'un profil (Réglages › Sources) installe aussi le serveur MCP ; le désinstaller le retire.
+
+`make mcp-install` construit Bosco, puis appelle `claude mcp add --scope user --transport http bosco http://127.0.0.1:4870/mcp` dans le profil, avec un en-tête `Authorization` qui porte le secret de ton installation de Bosco. Il dit ensuite ce que le serveur apporte :
+
+```text
+added to ~/.claude: its sessions read the context of their project (instructions of its groups, accepted decisions) and propose decisions, to accept in Bosco
+```
+
+Le serveur vaut pour tous les projets du profil. `claude mcp list` le montre ensuite.
+
+Le serveur n'écoute que sur `127.0.0.1` et refuse un appel sans ce secret. Une session pilotée n'en a pas besoin : Bosco lui transmet le contexte [à son lancement](/docs/guides/piloted-sessions#le-contexte-transmis-au-lancement). Une session en bac à sable n'emporte aucun serveur MCP du profil.

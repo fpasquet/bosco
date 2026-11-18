@@ -1,0 +1,11 @@
+{
+  "extends": "@bosco/configs/tsconfig/next.json",
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["./src/*"],
+      "collections/*": ["./.source/*"]
+    }
+  },
+  "include": ["src", "scripts", "*.ts", "next-env.d.ts", ".next/types/**/*.ts", ".source/**/*.ts"],
+  "exclude": ["node_modules", "out"]
+}

@@ -22,5 +22,7 @@ allowBuilds:
   # Installateur Windows d'electron-builder : sans objet, le paquet du poste est un .deb
   electron-winstaller: false
   esbuild: true
+  # Site de documentation : wrangler (déploiement sur Cloudflare Pages) télécharge le moteur workerd
+  workerd: true
 patchedDependencies:
   react-native-webview@14.0.1: patches/react-native-webview@14.0.1.patch
