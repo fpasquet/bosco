@@ -5,6 +5,7 @@ import { cn } from '@/lib/cn';
 import { clockOf } from '../../lib/detail';
 import { actionLabel, elapsed, formatCost, formatTokens, sessions as sessionsLabel } from '../../lib/format';
 import { type ProjectGroup, projectLabel, totalTokens } from '../../lib/overview';
+import { SandboxMark } from '../sandbox-mark';
 import { SessionStateBadge } from '../session-state-badge';
 
 export interface SessionsTableProps {
@@ -104,6 +105,7 @@ function Row({
           >
             {titleOf(session)}
           </Link>
+          {session.pilot?.sandbox && <SandboxMark />}
           {mark && (
             <span className="shrink-0 rounded-sm border border-line px-1 font-mono text-xs text-muted">{mark}</span>
           )}
@@ -165,6 +167,7 @@ function MobileList({ column, groups, headings, now, pendingRows }: Omit<Session
                   >
                     {titleOf(session)}
                   </Link>
+                  {session.pilot?.sandbox && <SandboxMark />}
                   <span className="block truncate font-mono text-xs text-muted">
                     {column === 'project' && `${projectLabel(session) ?? 'Hors projet'} · `}
                     {column !== 'project' && group.labels?.[session.id] && `${group.labels[session.id]} · `}

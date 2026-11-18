@@ -1,8 +1,9 @@
-import { Box, Copy, FolderOpen, MessageSquare, RadioTower } from 'lucide-react';
+import { Copy, FolderOpen, MessageSquare, RadioTower } from 'lucide-react';
 import type { SessionDto } from '@bosco/domain';
 import { Breadcrumbs } from '@/shared/ui/breadcrumbs';
 import { Button } from '@/shared/ui/button';
 import { elapsed } from '../../lib/format';
+import { SandboxMark } from '../sandbox-mark';
 import { SessionStateBadge } from '../session-state-badge';
 import { titleOf } from '../sessions-table';
 import { placeOf } from '../waiting-banner';
@@ -47,10 +48,7 @@ export function SessionHeader({ mark, now, onCopy, profile, resume, session }: S
           <SessionStateBadge state={session.state} />
           <span className="line-clamp-2 min-w-0">{titleOf(session)}</span>
           {session.pilot?.sandbox ? (
-            <span className="badge gap-1 badge-soft font-sans badge-sm font-medium badge-primary">
-              <Box aria-hidden className="size-3" />
-              Bac à sable
-            </span>
+            <SandboxMark />
           ) : (
             session.pilot && (
               <span className="badge gap-1 badge-outline font-sans badge-sm font-normal text-muted">
