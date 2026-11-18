@@ -1,1 +1,1 @@
-export { SourceCard } from './source-card';
+export { ManagedSourceCard, SourceCard } from './source-card';

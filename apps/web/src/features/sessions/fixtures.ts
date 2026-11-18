@@ -38,8 +38,8 @@ function session(overrides: Partial<SessionDto> & Pick<SessionDto, 'id' | 'title
 }
 
 export const STORY_SOURCES: SourceDto[] = [
-  { id: 'pro', label: 'pro', liveTracking: false, path: '/home/dev/.claude', watched: true },
-  { id: 'perso', label: 'perso', liveTracking: false, path: '/home/dev/.claude-perso', watched: true },
+  { id: 'pro', label: 'pro', liveTracking: false, managed: false, path: '/home/dev/.claude', watched: true },
+  { id: 'perso', label: 'perso', liveTracking: false, managed: false, path: '/home/dev/.claude-perso', watched: true },
 ];
 
 export const STORY_SESSIONS: SessionDto[] = [

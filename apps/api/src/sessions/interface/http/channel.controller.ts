@@ -56,7 +56,8 @@ export class ChannelController {
     const { sources } = await this.sources.listSources();
     const profiles = await Promise.all(
       sources
-        .filter((source) => source.watched)
+        // Le profil des bacs à sable n'a pas de canal : c'est Bosco qui lance ses sessions
+        .filter((source) => source.watched && !source.managed)
         .map(async (source) => {
           const installed = await this.installer.isInstalled(source.path);
           return {
@@ -88,7 +89,8 @@ export class ChannelController {
 
   private async watched(path: string): Promise<void> {
     const { sources } = await this.sources.listSources();
-    if (!sources.some((source) => source.path === path)) throw new NotFoundException({ code: 'unknownSource' });
+    if (!sources.some((source) => source.path === path && !source.managed))
+      throw new NotFoundException({ code: 'unknownSource' });
   }
 
   private authenticate(authorization: string | undefined): void {

@@ -10,14 +10,16 @@ import { SettingsHeader } from '@/shared/layouts/settings-tabs';
 import { APP_NAME, type SourceDto } from '@bosco/domain';
 import { channelProfilesQuery, installChannel, uninstallChannel } from '../../api/channel';
 import { installLiveTracking, liveTrackingQuery, uninstallLiveTracking } from '../../api/live-tracking';
+import { sessionsQuery } from '../../api/sessions';
 import { type SettingsDto, settingsQuery, updateSettings } from '../../api/settings';
 import { setSourceWatched, sourcesQuery } from '../../api/sources';
 import { useCopy } from '../../hooks/use-copy';
 import { displayPath } from '../../lib/format';
+import { sandboxActivity } from '../../lib/sources';
 import { ChannelPanel } from '../channel-panel';
 import { LiveTrackingPanel, type LiveTrackingStep } from '../live-tracking-panel';
 import { SettingsPanel } from '../settings-panel';
-import { SourceCard } from '../source-card';
+import { ManagedSourceCard, SourceCard } from '../source-card';
 
 /** L'adresse ne change pas pendant la visite : rien à écouter */
 const noSubscription = () => () => undefined;
@@ -36,11 +38,14 @@ export function SourcesScreen() {
   const push = useNotices((state) => state.push);
   const { data } = useQuery(sourcesQuery);
   const sources = data?.sources ?? [];
+  const { data: sessions } = useQuery(sessionsQuery);
   const { data: settings } = useQuery(settingsQuery);
   const [selected, setSelected] = useState<null | SourceDto>(null);
   const [step, setStep] = useState<LiveTrackingStep>('intro');
+  // La source des bacs à sable n'a pas de suivi en direct à installer : son état ne se lit pas
   const statuses = useQueries({
     queries: sources.map((source) => ({
+      enabled: !source.managed,
       ...liveTrackingQuery(source.id),
       refetchInterval: selected?.id === source.id && step === 'check' ? CHECK_REFRESH_MS : STATUS_REFRESH_MS,
     })),
@@ -120,6 +125,14 @@ export function SourcesScreen() {
         </h2>
         <ul className="divide-y divide-line">
           {sources.map((source) => {
+            if (source.managed)
+              return (
+                <ManagedSourceCard
+                  key={source.id}
+                  path={displayPath(source.path, data.home)}
+                  activity={sandboxActivity((sessions ?? []).filter((session) => session.sourceId === source.id))}
+                />
+              );
             const signal = statusOf(source.id)?.lastSignalAt;
             return (
               <SourceCard

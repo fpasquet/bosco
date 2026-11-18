@@ -1,8 +1,19 @@
-import { Body, Controller, Delete, Get, Inject, NotFoundException, Param, Put } from '@nestjs/common';
+import {
+  Body,
+  ConflictException,
+  Controller,
+  Delete,
+  Get,
+  Inject,
+  NotFoundException,
+  Param,
+  Put,
+} from '@nestjs/common';
 import { z } from 'zod';
 import type { LiveTrackingService, LiveTrackingStatus } from '../../application/live-tracking.service.ts';
 import { parseBody } from '../../../shared/interface/http/parse-body.ts';
 import { UnknownSource } from '../../application/live-tracking.service.ts';
+import { ManagedSource } from '../../domain/source.ts';
 import { LIVE_TRACKING_SERVICE } from '../../tokens.ts';
 
 const installSchema = z.object({ backup: z.boolean().default(true) });
@@ -48,6 +59,7 @@ async function guard<T>(work: Promise<T>): Promise<T> {
     return await work;
   } catch (error) {
     if (error instanceof UnknownSource) throw new NotFoundException({ code: error.code });
+    if (error instanceof ManagedSource) throw new ConflictException({ code: error.code, message: error.message });
     throw error;
   }
 }

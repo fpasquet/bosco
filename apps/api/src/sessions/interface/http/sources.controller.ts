@@ -1,14 +1,25 @@
-import { Body, Controller, Get, Inject, NotFoundException, Param, Patch, Post, Put } from '@nestjs/common';
+import {
+  Body,
+  ConflictException,
+  Controller,
+  Get,
+  Inject,
+  NotFoundException,
+  Param,
+  Patch,
+  Post,
+  Put,
+} from '@nestjs/common';
 import { homedir } from 'node:os';
 import { z } from 'zod';
 import type { ProfileSettingsDto } from '@bosco/domain';
 import type { SessionDefaultsChanges } from '../../../shared/domain/session-settings.ts';
 import type { ProfileSettingsView, SessionDefaultsService } from '../../application/session-defaults.service.ts';
 import type { SourceService, SourcesView } from '../../application/source.service.ts';
-import type { SourceSnapshot } from '../../domain/source.ts';
 import { sessionDefaultsSchema } from '../../../shared/interface/http/defaults-schema.ts';
 import { parseBody } from '../../../shared/interface/http/parse-body.ts';
 import { UnknownProfile } from '../../application/session-defaults.service.ts';
+import { ManagedSource, type SourceSnapshot } from '../../domain/source.ts';
 import { SESSION_DEFAULTS_SERVICE, SOURCE_SERVICE } from '../../tokens.ts';
 
 const watchProfilesSchema = z.object({ paths: z.array(z.string().min(1)) });
@@ -69,7 +80,10 @@ export class SourcesController {
   @Patch(':id')
   async updateSource(@Param('id') id: string, @Body() body: unknown): Promise<SourceSnapshot> {
     const { watched } = parseBody(sourceSchema, body);
-    const source = await this.sourceService.setWatched(id, watched);
+    const source = await this.sourceService.setWatched(id, watched).catch((error: unknown) => {
+      if (error instanceof ManagedSource) throw new ConflictException({ code: error.code, message: error.message });
+      throw error;
+    });
     if (!source) throw new NotFoundException({ code: 'unknownSource' });
     return source;
   }

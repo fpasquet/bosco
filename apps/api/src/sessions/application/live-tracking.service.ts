@@ -1,6 +1,6 @@
-import type { Source } from '../domain/source.ts';
 import type { HookEndpoint, ProfileSettings, SourceRepository } from './ports.ts';
 import { DomainError } from '../../shared/domain/domain-error.ts';
+import { ManagedSource, type Source } from '../domain/source.ts';
 
 /** Les six événements que suit Bosco : démarrage et fin, message, action, autorisation, fin de tour (E4b). */
 export const LIVE_TRACKING_EVENTS = [
@@ -43,6 +43,8 @@ export class LiveTrackingService {
 
   async install(sourceId: string, backup: boolean): Promise<LiveTrackingStatus & { backupPath: null | string }> {
     const source = await this.sourceOf(sourceId);
+    // Bosco lance lui-même les sessions des bacs à sable : rien à écrire dans leur profil
+    if (source.managed) throw new ManagedSource(source.path);
     const { backupPath } = await this.settings.install(source.path, this.endpointOf(source.id), backup);
     await this.setLiveTracking(source, true);
     const status = await this.status(sourceId);

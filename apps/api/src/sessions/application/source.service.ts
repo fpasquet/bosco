@@ -62,15 +62,30 @@ export class SourceService {
     return source.toSnapshot();
   }
 
-  /** Profil tenu par Bosco (celui du worker) : surveillé dès qu'il existe, sans passer par le premier lancement. */
+  /**
+   * Profil des bacs à sable, tenu par Bosco : ajouté au premier bac à sable, toujours lu. Un profil déjà connu comme
+   * source ordinaire (avant que Bosco le tienne à part) est repris sans changer d'identifiant.
+   */
   async ensureSource(path: string): Promise<SourceSnapshot> {
-    const sources = await this.sourceRepository.list();
-    const known = sources.find((source) => source.toSnapshot().path === path);
-    if (known) return known.toSnapshot();
-    const source = Source.choose(this.idGenerator.next(), path, true);
+    const known = await this.keepManaged(path);
+    if (known) return known;
+    const source = Source.manage(this.idGenerator.next(), path);
     await this.sourceRepository.save([source]);
     await this.resumeWatching([source]);
     return source.toSnapshot();
+  }
+
+  /** Au démarrage : reprend à part le profil des bacs à sable s'il est déjà connu, sans le créer. */
+  async keepManaged(path: string): Promise<null | SourceSnapshot> {
+    const sources = await this.sourceRepository.list();
+    const known = sources.find((source) => source.path === path);
+    if (!known) return null;
+    if (known.managed) return known.toSnapshot();
+    const wasWatched = known.watched;
+    known.takeOver();
+    await this.sourceRepository.save([known]);
+    if (!wasWatched) await this.resumeWatching([known]);
+    return known.toSnapshot();
   }
 
   /** Au démarrage du service : reprend la lecture des profils surveillés là où elle s'était arrêtée. */

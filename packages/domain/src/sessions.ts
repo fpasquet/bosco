@@ -10,6 +10,8 @@ export interface SourceDto {
   id: string;
   label: string;
   liveTracking: boolean;
+  /** Tenue par Bosco (« Bacs à sable ») : toujours lue, sans interrupteur, suivi en direct ni canal */
+  managed: boolean;
   path: string;
   watched: boolean;
 }

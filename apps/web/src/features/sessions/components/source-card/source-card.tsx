@@ -1,6 +1,7 @@
-import { Radio, RadioTower, SquareTerminal } from 'lucide-react';
+import { Box, Radio, RadioTower, SquareTerminal } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/shared/ui/button';
+import { APP_NAME } from '@bosco/domain';
 import { sinceNow } from '../../lib/format';
 
 export interface SourceCardProps {
@@ -19,6 +20,43 @@ export interface SourceCardProps {
   path: string;
   /** Interrupteur de la source : sa lecture s'arrête, rien n'est effacé (CA-SESS-56) */
   watched: boolean;
+}
+
+export interface ManagedSourceCardProps {
+  /** « 1 bac à sable · dernier tour à 15:12 » ; null avant le premier tour */
+  activity: null | string;
+  /** Chemin écrit comme dans le terminal */
+  path: string;
+}
+
+/**
+ * La source « Bacs à sable », tenue par Bosco : il lance lui-même ses sessions. La couper ferait disparaître les
+ * sessions en bac à sable : ni interrupteur, ni « Gérer », ni suivi en direct ou canal à installer.
+ */
+export function ManagedSourceCard({ activity, path }: ManagedSourceCardProps) {
+  return (
+    <li className="flex items-start gap-3 px-4 py-3 md:items-center md:gap-4">
+      <span className="grid size-9 shrink-0 place-items-center rounded-control bg-surface-alt text-muted">
+        <Box aria-hidden className="size-4" />
+      </span>
+      <div className="flex min-w-0 flex-1 flex-col gap-2 md:flex-row md:items-center md:gap-4">
+        <div className="min-w-0 md:flex-1">
+          <p className="flex min-w-0 items-center gap-2 font-medium">
+            <span className="truncate">Bacs à sable</span>
+            <span className="badge shrink-0 badge-ghost badge-sm">Tenue par {APP_NAME}</span>
+          </p>
+          <p className="truncate font-mono text-xs text-muted">{path}</p>
+        </div>
+        <div className="min-w-0 text-xs md:w-56">
+          <p className="flex items-center gap-1.5 font-medium text-muted">
+            <Radio aria-hidden className="size-3.5 shrink-0" />
+            Piloté par {APP_NAME}
+          </p>
+          {activity && <p className="text-muted">{activity}</p>}
+        </div>
+      </div>
+    </li>
+  );
 }
 
 /** Une source surveillée (E4a) : son suivi en direct et son dernier signal, pour voir d'un coup d'œil que tout est branché. */

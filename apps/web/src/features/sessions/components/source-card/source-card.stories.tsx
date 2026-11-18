@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite';
 import { fn } from 'storybook/test';
-import { SourceCard } from './source-card';
+import { ManagedSourceCard, SourceCard } from './source-card';
 
 const meta = {
   title: 'Features/Sessions/SourceCard',
@@ -36,3 +36,10 @@ export const NotInstalled: Story = {
 };
 
 export const Paused: Story = { args: { watched: false, liveTracking: false, lastSignalAt: null } };
+
+/** La source « Bacs à sable », tenue par Bosco : ni interrupteur, ni « Gérer », ni suivi en direct ou canal. */
+export const Sandboxes: Story = {
+  render: () => (
+    <ManagedSourceCard path="~/.local/share/bosco/sandboxes/profile" activity="1 bac à sable · dernier tour à 15:12" />
+  ),
+};

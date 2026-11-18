@@ -54,3 +54,15 @@ Feature: Sessions in a sandbox
     When I write to "the started session" with the JSON "fixtures/pilot/schema.json"
     Then the response code should be 409
     And the response property "code" should equal "sandboxRemoved"
+
+  @CA-REGL-15
+  Scenario: The sandboxes source is kept by Bosco, always read, without live tracking
+    When I start a session in the project "maison" with the JSON "fixtures/pilot/start-sandbox.json"
+    And "the started session" should end its turn with "Reçu : Monte TypeScript en version 6 · mode acceptEdits · modèle défaut · effort défaut · images 0"
+    And I switch off the source of the profile "sandboxes/profile"
+    Then the response code should be 409
+    And the response property "code" should equal "managedSource"
+    When I install live tracking for the profile "sandboxes/profile"
+    Then the response code should be 409
+    When I send GET request to "/api/channel/profiles"
+    Then the response should not contain "sandboxes/profile"

@@ -53,6 +53,8 @@ export class SandboxWiring implements OnApplicationBootstrap, OnApplicationShutd
       : new GitSandboxes(root, new DockerSandboxContainers(this.docker), (profile) =>
           this.isolation.credentialsOf(profile),
         );
+    // Le profil des bacs à sable déjà lu comme un profil ordinaire est repris à part, toujours lu
+    await this.sources.keepManaged(sandboxes.profile);
     this.pilot.useSandboxes({
       sandboxes,
       ensureSource: (path) => this.sources.ensureSource(path),
