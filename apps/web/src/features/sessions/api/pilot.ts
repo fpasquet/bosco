@@ -6,6 +6,7 @@ import type {
   RetrievedBranchesDto,
   SandboxBranchesDto,
   SandboxRefusalsDto,
+  SessionDefaultsResolvedDto,
   StartSessionDto,
   SuggestionDto,
 } from '@bosco/domain';
@@ -47,6 +48,30 @@ export const pilotOptionsQuery = {
     return (await response.json()) as PilotOptionsDto;
   },
 };
+
+/** Ce qui décide des valeurs d'une nouvelle session : projet principal, groupe, profil choisi, bac à sable. */
+export interface DefaultsTarget {
+  group: null | number;
+  profile: null | string;
+  project: null | string;
+  sandbox: boolean;
+}
+
+/** Valeurs d'une nouvelle session avant tout choix, chacune avec son origine (règle 16). */
+export function pilotDefaultsQuery(target: DefaultsTarget) {
+  return {
+    queryKey: ['pilot', 'defaults', target],
+    queryFn: async (): Promise<SessionDefaultsResolvedDto> => {
+      const params = new URLSearchParams();
+      if (target.project) params.set('project', target.project);
+      if (target.group !== null) params.set('group', String(target.group));
+      if (target.profile) params.set('profile', target.profile);
+      if (target.sandbox) params.set('sandbox', 'true');
+      const response = await call(`/api/pilot/defaults?${params.toString()}`);
+      return (await response.json()) as SessionDefaultsResolvedDto;
+    },
+  };
+}
 
 /** « Démarrer la session » (CA-SESS-91) : l'identifiant de la session créée. */
 export async function startSession(input: StartSessionDto): Promise<string> {

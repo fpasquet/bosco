@@ -27,6 +27,7 @@ import { profileOf, resumeCommand } from '../../lib/detail';
 import { profileMark, waitingSessions } from '../../lib/overview';
 import { useSettlements } from '../../lib/settlements';
 import { AllowDialog } from '../allow-dialog';
+import { AutoModeSuspended } from '../auto-mode-suspended';
 import { ConnectionStatus } from '../connection-status';
 import { PendingMessage } from '../pending-message';
 import { PermissionCard } from '../permission-card';
@@ -149,6 +150,7 @@ export function SessionDetailScreen({ id }: { id: string }) {
             now={now}
             tail={
               <>
+                {session.pilot?.suspended && <AutoModeSuspended suspended={session.pilot.suspended} />}
                 <PermissionCard
                   session={session}
                   now={now}
