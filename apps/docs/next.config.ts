@@ -16,6 +16,8 @@ const config: NextConfig = {
   images: { unoptimized: true },
   poweredByHeader: false,
   reactStrictMode: true,
+  // Les consignes des agents sont dans AGENTS.md à la racine : pas de copie générée dans apps/docs
+  agentRules: false,
 };
 
 export default withMDX(config);

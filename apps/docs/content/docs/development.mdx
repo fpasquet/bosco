@@ -29,7 +29,7 @@ make check            # lint, types, tests et build de chaque paquet (Turborepo)
 make format-check     # mise en forme (Prettier)
 make e2e              # scénarios de l'API, puis parcours du web (ordinateur et téléphone)
 make storybook        # http://localhost:6006
-make docs             # ce site sur http://127.0.0.1:4890
+make docs-dev         # ce site sur http://127.0.0.1:4890
 make docs-build       # export statique de ce site dans apps/docs/out
 make docs-screenshots # captures de ce site, prises sur Bosco avec les données du fil rouge
 make db-migration     # écrit la migration qui amène la base aux entités
@@ -81,7 +81,7 @@ Le comportement des hooks n'est pas documenté par Claude Code. À chaque nouvel
 
 ## Ce site
 
-Le site vit dans `apps/docs` : les pages sont des fichiers MDX dans `content/docs`, rangés par `meta.json`. `make docs` le sert avec rechargement à chaud ; `make docs-build` produit l'export statique dans `apps/docs/out`, avec l'index de la recherche.
+Le site vit dans `apps/docs` : les pages sont des fichiers MDX dans `content/docs`, rangés par `meta.json`. `make docs-dev` le sert avec rechargement à chaud ; `make docs-build` produit l'export statique dans `apps/docs/out`, avec l'index de la recherche.
 
 Les captures de `apps/docs/public/screenshots` se reprennent avec `make docs-screenshots` : le script `e2e/docs/screenshots.ts` lance Bosco comme les tests du web, sur des données temporaires (projets, groupes et sessions du fil rouge, faux Claude Code), puis Playwright photographie chaque écran. Tes données de `~/.local/share/bosco` ne sont pas touchées.
 

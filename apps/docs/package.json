@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "generate": "fumadocs-mdx",
-    "docs": "fumadocs-mdx && next dev --port 4890 --hostname 127.0.0.1",
+    "docs:dev": "fumadocs-mdx && next dev --port 4890 --hostname 127.0.0.1",
     "build": "next build",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit"

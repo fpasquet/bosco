@@ -83,7 +83,7 @@ make desktop-release  # .deb, AppImage et fichiers de mise à jour, à la versio
 make check            # lint, types, tests et build de chaque paquet (Turborepo)
 make e2e              # scénarios de l'API, puis parcours du web (ordinateur et téléphone)
 make storybook        # http://localhost:6006
-make docs             # site de documentation sur http://127.0.0.1:4890
+make docs-dev         # site de documentation sur http://127.0.0.1:4890
 make docs-build       # export statique du site dans apps/docs/out
 make docs-screenshots # captures du site, prises sur Bosco avec les données du fil rouge
 make format
