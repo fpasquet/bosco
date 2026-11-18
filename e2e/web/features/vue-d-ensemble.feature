@@ -6,10 +6,10 @@ Fonctionnalité: Vue d'ensemble
   savoir où en sont mes agents et ce que coûte la journée.
 
   Contexte:
-    Étant donné le profil Claude Code « .claude » contient le transcript « session-labo-ia-rag.jsonl » de la session « 5e0a91c3 »
-    Et le profil Claude Code « .claude-perso » contient le transcript « session-labo-ia-bosco.jsonl » de la session « c41e9a07 »
-    Et le profil Claude Code « .claude » contient le transcript « session-api-voix-fastify.jsonl » de la session « a41f07c2 »
-    Et les dossiers « labo-ia » et « api-voix » sont des projets
+    Étant donné le profil Claude Code « .claude » contient le transcript « session-maison-rag.jsonl » de la session « 5e0a91c3 »
+    Et le profil Claude Code « .claude-perso » contient le transcript « session-maison-budget.jsonl » de la session « c41e9a07 »
+    Et le profil Claude Code « .claude » contient le transcript « session-site-perso-fastify.jsonl » de la session « a41f07c2 »
+    Et les dossiers « maison » et « site-perso » sont des projets
 
   @CA-SESS-08
   @NF-18
@@ -27,9 +27,9 @@ Fonctionnalité: Vue d'ensemble
     Et Bosco surveille les profils « .claude » et « .claude-perso »
     Quand j'ouvre la page « / »
     Alors la vue d’ensemble montre, dans l’ordre :
-      | projet  | session                                          | état     |
-      | labo-ia | Specs du tableau de bord Bosco                   | Inactive |
-      | labo-ia | Corriger l’indexation des PDF dans Elasticsearch | Inactive |
+      | projet | session                                          | état     |
+      | maison | Specs du tableau de bord Bosco                   | Inactive |
+      | maison | Corriger l’indexation des PDF dans Elasticsearch | Inactive |
 
   @CA-SESS-10
   Scénario: Le coût du jour additionne les sessions commencées aujourd'hui
@@ -51,10 +51,10 @@ Fonctionnalité: Vue d'ensemble
     Quand j'ouvre la page « / »
     Alors la page n’a pas de fil d’Ariane
     Et l’entrée « Vue d’ensemble » de la barre latérale est active
-    Quand je clique sur le lien « labo-ia » de la barre latérale
+    Quand je clique sur le lien « maison » de la barre latérale
     Alors je suis sur la page « /projects/1/sessions »
-    Et le fil d’Ariane est « Projets › labo-ia »
-    Et l’entrée « labo-ia » de la barre latérale est active
+    Et le fil d’Ariane est « Projets › maison »
+    Et l’entrée « maison » de la barre latérale est active
     Et les onglets « Onglets du projet » sont « Sessions, Contexte, Réglages »
     Et l’onglet « Sessions » est ouvert
     Et le tableau a la colonne « Dossier »

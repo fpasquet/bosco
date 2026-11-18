@@ -9,7 +9,7 @@ const view = (id: string, startedAt: string, usd: number, project: null | string
     startedAt: new Date(startedAt),
     cost: { usd, unpriced: false },
     project: project
-      ? { id: project === 'labo-ia' ? 1 : 2, name: project, folder: '', root: `/home/dev/${project}` }
+      ? { id: project === 'maison' ? 1 : 2, name: project, folder: '', root: `/home/dev/${project}` }
       : null,
     addedProjects: [],
     model,
@@ -19,11 +19,11 @@ const view = (id: string, startedAt: string, usd: number, project: null | string
   }) as unknown as SessionView;
 
 const sessions = [
-  view('a', '2026-11-06T10:00:00', 2, 'labo-ia'),
-  view('b', '2026-11-06T15:00:00', 1, 'api-voix', 'claude-opus-5-5'),
-  view('c', '2026-11-03T09:00:00', 1, 'labo-ia'),
+  view('a', '2026-11-06T10:00:00', 2, 'maison'),
+  view('b', '2026-11-06T15:00:00', 1, 'site-perso', 'claude-opus-5-5'),
+  view('c', '2026-11-03T09:00:00', 1, 'maison'),
   {
-    ...view('d', '2026-11-02T09:00:00', 1, 'labo-ia'),
+    ...view('d', '2026-11-02T09:00:00', 1, 'maison'),
     addedProjects: [{ id: 3, name: 'outils', root: '/home/dev/outils' }],
   },
 ];
@@ -32,7 +32,7 @@ function service(found: string[] = []) {
   return new HistoryService(
     {
       listSessions: () => Promise.resolve(sessions),
-      knownGroups: () => Promise.resolve([{ id: 2, name: 'Médias', projects: [2, 3], defaults: {} as never }]),
+      knownGroups: () => Promise.resolve([{ id: 2, name: 'Perso', projects: [2, 3], defaults: {} as never }]),
     },
     { search: () => Promise.resolve(new Set(found)) },
   );
@@ -54,7 +54,7 @@ describe('HistoryService', () => {
     const days = await service(['a', 'c']).history({
       ...all,
       query: 'pdf',
-      project: 'labo-ia',
+      project: 'maison',
       from: new Date('2026-11-05'),
     });
     expect(days.flatMap((day) => day.sessions.map(({ id }) => id))).toEqual(['a']);

@@ -7,7 +7,7 @@ Feature: Session defaults and permission modes
   profile, a project or a group, so that each new session starts as I want and says where each value comes from.
 
   Background:
-    Given the Claude Code profile ".claude-perso" has the transcript "session-labo-ia-bosco.jsonl" for the session "c41e9a07"
+    Given the Claude Code profile ".claude-perso" has the transcript "session-maison-budget.jsonl" for the session "c41e9a07"
     And the Claude Code profile ".claude-perso" has an access to the Claude subscription of "camille@exemple.dev"
     And Bosco watches the profiles ".claude-perso"
     And the home folder has the folders:

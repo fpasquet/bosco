@@ -5,11 +5,11 @@ Feature: History
   that I find again the session I am looking for.
 
   Background:
-    Given the Claude Code profile ".claude" has the transcript "session-labo-ia-rag.jsonl" for the session "5e0a91c3"
-    And the Claude Code profile ".claude-perso" has the transcript "session-labo-ia-bosco.jsonl" for the session "c41e9a07"
-    And the Claude Code profile ".claude-perso" has the transcript "session-api-voix-fastify.jsonl" for the session "a41f07c2"
+    Given the Claude Code profile ".claude" has the transcript "session-maison-rag.jsonl" for the session "5e0a91c3"
+    And the Claude Code profile ".claude-perso" has the transcript "session-maison-budget.jsonl" for the session "c41e9a07"
+    And the Claude Code profile ".claude-perso" has the transcript "session-site-perso-fastify.jsonl" for the session "a41f07c2"
     And Bosco watches the profiles ".claude" and ".claude-perso"
-    And the folders "labo-ia,api-voix" are projects
+    And the folders "maison,site-perso" are projects
 
   @CA-SESS-49
   Scenario: The history lists the days from the newest, each with its total
@@ -27,12 +27,12 @@ Feature: History
     Then the response property "days.0.sessions.0.id" should equal "5e0a91c3"
     When I send GET request to "/api/history?q=migrate"
     Then the response property "days.0.sessions.0.id" should equal "c41e9a07"
-    When I send GET request to "/api/history?q=migrate&project=api-voix"
+    When I send GET request to "/api/history?q=migrate&project=site-perso"
     Then the response property "days.length" should equal "0"
 
   @CA-SESS-127
   Scenario: Filtered on a group, the history keeps the sessions of its projects and adds up with the other filters
-    Given I send POST request to "/api/groups" with the JSON "fixtures/groups/medias.json"
+    Given I send POST request to "/api/groups" with the JSON "fixtures/groups/perso.json"
     When I send GET request to "/api/history?group=2"
     Then the response property "days.length" should equal "1"
     And the response property "days.0.sessions.0.id" should equal "a41f07c2"

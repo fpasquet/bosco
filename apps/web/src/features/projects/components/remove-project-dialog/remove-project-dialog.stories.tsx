@@ -9,12 +9,12 @@ const meta = {
   args: {
     open: true,
     busy: false,
-    name: 'api-voix',
+    name: 'site-perso',
     sessions: 12,
     decisions: 4,
     running: 0,
     groups: [
-      { name: 'Médias', next: 'labo-ia' },
+      { name: 'Perso', next: 'maison' },
       { name: 'Node.js', next: null },
     ],
     onCancel: fn(),

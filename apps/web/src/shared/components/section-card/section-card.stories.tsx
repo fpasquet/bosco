@@ -8,7 +8,7 @@ const meta = {
     title: 'Identité',
     children: (
       <p>
-        <span className="text-muted">Chemin</span> <span className="font-mono">~/labo-ia</span>
+        <span className="text-muted">Chemin</span> <span className="font-mono">~/maison</span>
       </p>
     ),
   },

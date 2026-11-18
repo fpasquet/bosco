@@ -6,8 +6,8 @@ Fonctionnalité: Détail d'une session
   elle m'attend, afin de garder un œil sur plusieurs agents à la fois.
 
   Contexte:
-    Étant donné le profil Claude Code « .claude-perso » contient le transcript « session-labo-ia-bosco.jsonl » de la session « c41e9a07 »
-    Et le profil Claude Code « .claude » contient le transcript « session-labo-ia-rag.jsonl » de la session « 5e0a91c3 »
+    Étant donné le profil Claude Code « .claude-perso » contient le transcript « session-maison-budget.jsonl » de la session « c41e9a07 »
+    Et le profil Claude Code « .claude » contient le transcript « session-maison-rag.jsonl » de la session « 5e0a91c3 »
     Et la session « 5e0a91c3 » a agi il y a quelques secondes
     Et Bosco surveille les profils « .claude » et « .claude-perso »
     Et le suivi en direct est installé dans le profil « .claude-perso »
@@ -67,7 +67,7 @@ Fonctionnalité: Détail d'une session
 
   @CA-SESS-73
   Scénario: Le fil montre les réflexions, les commandes, les sous-agents, le plan et les sources de l'agent
-    Étant donné le profil Claude Code « .claude » contient le transcript « session-labo-ia-pdf.jsonl » de la session « 7b2e5d10 »
+    Étant donné le profil Claude Code « .claude » contient le transcript « session-maison-pdf.jsonl » de la session « 7b2e5d10 »
     Quand j'ouvre la page « /sessions/7b2e5d10 »
     Alors je vois le titre « Découpage des PDF »
     Et je vois le texte « A réfléchi »

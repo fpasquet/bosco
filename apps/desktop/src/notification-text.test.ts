@@ -8,7 +8,7 @@ const base: NotificationDto = {
   excerpt: 'Bash · npm run db:migrate',
   id: 6,
   kind: 'permission',
-  place: 'labo-ia',
+  place: 'maison',
   readAt: null,
   sessionId: 'c41e9a07',
   settled: null,
@@ -20,7 +20,7 @@ const base: NotificationDto = {
 describe('nativeText', () => {
   it('titles with the kind and the project, the session on the first line', () => {
     expect(nativeText(base)).toEqual({
-      title: 'Autorisation · labo-ia',
+      title: 'Autorisation · maison',
       body: 'Specs du tableau de bord Bosco\nBash · npm run db:migrate',
     });
   });

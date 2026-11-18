@@ -7,9 +7,9 @@ Fonctionnalité: Groupes de projets
   chacun de leurs projets, afin d'écrire une seule fois ce qui vaut pour plusieurs projets.
 
   Contexte:
-    Étant donné le profil Claude Code « .claude » contient le transcript « session-labo-ia-rag.jsonl » de la session « 5e0a91c3 »
+    Étant donné le profil Claude Code « .claude » contient le transcript « session-maison-rag.jsonl » de la session « 5e0a91c3 »
     Et Bosco surveille les profils « .claude » et « .claude-perso »
-    Et les dossiers « labo-ia » et « api-voix » sont des projets
+    Et les dossiers « maison » et « site-perso » sont des projets
 
   @CA-CONT-146
   @CA-CONT-147
@@ -17,76 +17,76 @@ Fonctionnalité: Groupes de projets
   Scénario: Un nouveau groupe réunit les projets cochés, le premier coché en principal, et s'affiche dans la barre latérale
     Quand j'ouvre la page « /projects »
     Et je clique sur le bouton « Nouveau groupe »
-    Et je saisis « Médias » dans le champ « Nom »
-    Et je coche « api-voix »
-    Et je coche « labo-ia »
+    Et je saisis « Node.js » dans le champ « Nom »
+    Et je coche « site-perso »
+    Et je coche « maison »
     Alors je vois le texte « 2 projets cochés »
     Et la page est accessible
     Quand je clique sur le bouton « Créer le groupe »
     Alors je suis sur la page « /groups/2/settings »
-    Et la liste « Projets du groupe » contient « api-voix »
+    Et la liste « Projets du groupe » contient « site-perso »
     Et je vois l’étiquette « principal »
-    Et je vois le lien « Médias »
+    Et je vois le lien « Node.js »
     Et la page est accessible
 
   @CA-CONT-145
   Scénario: Un nom déjà pris par un groupe est refusé sous le champ
-    Étant donné le groupe « Médias » réunit le projet « api-voix »
+    Étant donné le groupe « Node.js » réunit le projet « site-perso »
     Quand j'ouvre la page « /projects »
     Et je clique sur le bouton « Nouveau groupe »
-    Et je saisis « médias » dans le champ « Nom »
+    Et je saisis « node.js » dans le champ « Nom »
     Et je clique sur le bouton « Créer le groupe »
     Alors je vois le texte « Un groupe porte déjà ce nom. »
 
   @CA-CONT-113
   @CA-CONT-126
   Scénario: Un projet rejoint un groupe qui a des instructions depuis la liste, après une confirmation
-    Étant donné le groupe « Médias » réunit le projet « api-voix »
-    Et le groupe « Médias » a l’instruction « Les textes lus sont en français. »
+    Étant donné le groupe « Node.js » réunit le projet « site-perso »
+    Et le groupe « Node.js » a l’instruction « Les textes lus sont en français. »
     Quand j'ouvre la page « /projects »
-    Et je clique sur le bouton « Ajouter à un groupe : labo-ia »
-    Et je clique sur l’élément de menu « Médias »
+    Et je clique sur le bouton « Ajouter à un groupe : maison »
+    Et je clique sur l’élément de menu « Node.js »
     Alors je vois le texte « Les instructions du groupe arriveront aux prochains agents de »
     Quand je clique sur le bouton « Ajouter » de la confirmation
-    Alors la liste « Projets » contient « ~/labo-ia · Médias »
+    Alors la liste « Projets » contient « ~/maison · Node.js »
 
   @CA-CONT-140
   @CA-CONT-141
   @CA-CONT-142
   @NF-18
   Scénario: Les instructions d'un groupe s'enregistrent après une confirmation qui compte les projets touchés
-    Étant donné le groupe « Médias » réunit le projet « api-voix »
+    Étant donné le groupe « Node.js » réunit le projet « site-perso »
     Quand j'ouvre la page « /groups/2/instructions »
-    Et je saisis « Les textes lus sont en français. » dans le champ « Instructions de Médias »
+    Et je saisis « Les textes lus sont en français. » dans le champ « Instructions de Node.js »
     Et je clique sur le bouton « Enregistrer »
     Alors je vois le texte « Elles seront transmises aux prochains agents de »
     Et la page est accessible
     Quand je clique sur le bouton « Enregistrer » de la confirmation
     Et je clique sur le bouton « Aperçu du texte transmis »
-    Alors je vois le texte « ## Instructions du groupe Médias »
+    Alors je vois le texte « ## Instructions du groupe Node.js »
 
   @CA-CONT-137
   @NF-18
   Scénario: Un groupe masqué quitte la barre latérale et reste ouvert depuis les projets
-    Étant donné le groupe « Médias » réunit le projet « api-voix »
+    Étant donné le groupe « Node.js » réunit le projet « site-perso »
     Quand j'ouvre la page « /groups/2/settings »
-    Alors je vois le lien « Médias »
+    Alors je vois le lien « Node.js »
     Et la page est accessible
     Quand je bascule l’interrupteur « Afficher dans la barre latérale »
-    Alors la barre latérale ne montre pas le groupe « Médias »
+    Alors la barre latérale ne montre pas le groupe « Node.js »
     Quand j'ouvre la page « /projects »
-    Et je clique sur le lien « Médias »
+    Et je clique sur le lien « Node.js »
     Alors je suis sur la page « /groups/2/sessions »
 
   @CA-CONT-138
   Scénario: Supprimer un groupe ne retire aucun de ses projets
-    Étant donné le groupe « Médias » réunit le projet « api-voix »
+    Étant donné le groupe « Node.js » réunit le projet « site-perso »
     Quand j'ouvre la page « /groups/2/settings »
     Et je clique sur le bouton « Supprimer le groupe »
     Alors je vois le texte « Aucun projet n’est retiré : ils restent dans Bosco, avec leurs sessions et leurs décisions. »
     Quand je clique sur le bouton « Supprimer le groupe » de la confirmation
     Alors je suis sur la page « /projects »
-    Et la liste « Projets » contient « api-voix »
+    Et la liste « Projets » contient « site-perso »
 
   @CA-CONT-143
   Scénario: « Tous les projets » n'a que ses instructions et n'apparaît pas dans la barre latérale
@@ -100,8 +100,8 @@ Fonctionnalité: Groupes de projets
   @CA-CONT-144
   @RF-CONT-24
   Scénario: Sur le téléphone, les instructions d'un groupe se lisent seulement
-    Étant donné le groupe « Médias » réunit le projet « api-voix »
-    Et le groupe « Médias » a l’instruction « Les textes lus sont en français. »
+    Étant donné le groupe « Node.js » réunit le projet « site-perso »
+    Et le groupe « Node.js » a l’instruction « Les textes lus sont en français. »
     Quand j'ouvre la page « /groups/2/instructions »
     Alors je vois le texte « Modifiable depuis le poste. Les instructions se rédigent depuis le poste seulement. »
     Et je vois le texte « Les textes lus sont en français. »
@@ -110,6 +110,6 @@ Fonctionnalité: Groupes de projets
   Scénario: L'aperçu des instructions de « Tous les projets » se lit pour le projet choisi, le premier par ordre alphabétique d'abord
     Quand j'ouvre la page « /groups/1/instructions »
     Et je clique sur le bouton « Aperçu du texte transmis »
-    Alors la liste « pour le projet » vaut « api-voix »
-    Quand je choisis « labo-ia » dans la liste « pour le projet »
-    Alors je vois le titre « Texte transmis à un agent de labo-ia »
+    Alors la liste « pour le projet » vaut « maison »
+    Quand je choisis « site-perso » dans la liste « pour le projet »
+    Alors je vois le titre « Texte transmis à un agent de site-perso »

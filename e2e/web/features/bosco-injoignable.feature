@@ -5,7 +5,7 @@ Fonctionnalité: Bosco injoignable
   seul à son retour, afin de ne jamais répondre à une autorisation qui n'arriverait pas.
 
   Contexte:
-    Étant donné le profil Claude Code « .claude-perso » contient le transcript « session-labo-ia-bosco.jsonl » de la session « c41e9a07 »
+    Étant donné le profil Claude Code « .claude-perso » contient le transcript « session-maison-budget.jsonl » de la session « c41e9a07 »
     Et Bosco surveille les profils « .claude » et « .claude-perso »
     Et le suivi en direct est installé dans le profil « .claude-perso »
     Et la session « c41e9a07 » du profil « .claude-perso » demande l’autorisation de lancer « npm run db:migrate »

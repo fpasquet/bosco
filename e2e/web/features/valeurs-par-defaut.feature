@@ -9,14 +9,14 @@ Fonctionnalité: Valeurs par défaut des sessions et modes d'autorisation
   chaque valeur, avec cinq modes d'autorisation et l'accès complet confirmé sur le poste.
 
   Contexte:
-    Étant donné le profil Claude Code « .claude-perso » contient le transcript « session-labo-ia-bosco.jsonl » de la session « c41e9a07 »
+    Étant donné le profil Claude Code « .claude-perso » contient le transcript « session-maison-budget.jsonl » de la session « c41e9a07 »
     Et le profil Claude Code « .claude-perso » a accès à l’abonnement Claude de « camille@exemple.dev »
     Et Bosco surveille les profils « .claude » et « .claude-perso »
     Et le dossier personnel contient les dossiers :
-      | dossier  | git |
-      | api-voix | oui |
-    Et les dossiers « labo-ia » et « api-voix » sont des projets
-    Et le groupe « Médias » réunit les projets « labo-ia » et « api-voix »
+      | dossier    | git |
+      | site-perso | oui |
+    Et les dossiers « maison » et « site-perso » sont des projets
+    Et le groupe « Perso » réunit les projets « maison » et « site-perso »
 
   @NF-18
   @CA-SESS-157
@@ -24,13 +24,13 @@ Fonctionnalité: Valeurs par défaut des sessions et modes d'autorisation
   @CA-CONT-168
   @CA-CONT-171
   Scénario: Une session démarrée avec un groupe prend le mode du groupe, le modèle et l'effort du projet principal
-    Étant donné le groupe « Médias » part par défaut en « Approuver pour moi »
-    Et le projet « labo-ia » règle par défaut le modèle « Sonnet 5.5 » et l’effort « élevé »
+    Étant donné le groupe « Perso » part par défaut en « Approuver pour moi »
+    Et le projet « maison » règle par défaut le modèle « Sonnet 5.5 » et l’effort « élevé »
     Quand j'ouvre la page « /groups/2/sessions »
     Et je clique sur le lien « Nouvelle session dans ce groupe »
     Alors le réglage « Autorisations » vaut « Approuver pour moi, défaut du groupe »
-    Et le réglage « Modèle » vaut « Sonnet 5.5, défaut du projet labo-ia »
-    Et le réglage « Effort » vaut « élevé, défaut du projet labo-ia »
+    Et le réglage « Modèle » vaut « Sonnet 5.5, défaut du projet maison »
+    Et le réglage « Effort » vaut « élevé, défaut du projet maison »
     Et la page est accessible
     Quand je saisis « Affiche les tarifs » dans le champ « Premier message »
     Et je clique sur le bouton « Démarrer »
@@ -39,7 +39,7 @@ Fonctionnalité: Valeurs par défaut des sessions et modes d'autorisation
   @CA-SESS-156
   @CA-SESS-163
   Scénario: Le profil proposé est celui du groupe, et le dit
-    Étant donné le groupe « Médias » prend par défaut le profil « .claude-perso »
+    Étant donné le groupe « Perso » prend par défaut le profil « .claude-perso »
     Quand j'ouvre la page « /groups/2/sessions »
     Et je clique sur le lien « Nouvelle session dans ce groupe »
     Alors la liste « Abonnement Claude » vaut « perso · défaut du groupe · camille@exemple.dev »
@@ -79,7 +79,7 @@ Fonctionnalité: Valeurs par défaut des sessions et modes d'autorisation
   @CA-SESS-170
   @CA-SESS-173
   Scénario: Un accès complet venu du groupe se confirme au démarrage, puis la session part sans demande
-    Étant donné le groupe « Médias » part par défaut en « Accès complet »
+    Étant donné le groupe « Perso » part par défaut en « Accès complet »
     Quand j'ouvre la page « /groups/2/sessions »
     Et je clique sur le lien « Nouvelle session dans ce groupe »
     Et je saisis « Lance les tests » dans le champ « Premier message »
@@ -186,8 +186,8 @@ Fonctionnalité: Valeurs par défaut des sessions et modes d'autorisation
   @CA-CONT-169
   @CA-CONT-170
   Scénario: Les réglages d'un groupe héritent du projet principal, et un mode réglé ici vaut pour ses sessions
-    Étant donné le projet « labo-ia » règle par défaut le modèle « Sonnet 5.5 » et l’effort « élevé »
+    Étant donné le projet « maison » règle par défaut le modèle « Sonnet 5.5 » et l’effort « élevé »
     Quand j'ouvre la page « /groups/2/settings »
-    Alors je vois le texte « Hérité · défaut du projet principal, labo-ia (Sonnet 5.5) »
+    Alors je vois le texte « Hérité · défaut du projet principal, maison (Sonnet 5.5) »
     Quand je choisis « Approuver pour moi » dans la liste « Autorisations »
     Alors la liste « Autorisations » vaut « Approuver pour moi »

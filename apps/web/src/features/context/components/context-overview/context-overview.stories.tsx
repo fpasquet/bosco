@@ -19,7 +19,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const ApiVoix: Story = {};
+export const SitePerso: Story = {};
 
 export const Empty: Story = {
   args: {

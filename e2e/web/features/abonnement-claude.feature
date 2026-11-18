@@ -5,7 +5,7 @@ Fonctionnalité: Abonnement Claude
   son quota, afin qu'un bac à sable n'épuise pas ma fenêtre de 5 h ou ma semaine sans que je le sache.
 
   Contexte:
-    Étant donné le profil Claude Code « .claude-perso » contient le transcript « session-labo-ia-bosco.jsonl » de la session « c41e9a07 »
+    Étant donné le profil Claude Code « .claude-perso » contient le transcript « session-maison-budget.jsonl » de la session « c41e9a07 »
     Et le profil Claude Code « .claude-perso » a accès à l’abonnement Claude de « camille@exemple.dev »
     Et Bosco surveille les profils « .claude » et « .claude-perso »
 

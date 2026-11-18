@@ -5,9 +5,9 @@ import { ProjectMenu } from '../project-menu';
 import { SidebarPlaces } from './sidebar-places';
 
 const PROJECTS = [
-  { id: 2, name: 'labo-ia', git: true, count: 2, waiting: 1 },
-  { id: 3, name: 'api-voix', git: true, count: 1, waiting: 0 },
-  { id: 4, name: 'notes', git: false, count: 0, waiting: 0 },
+  { id: 2, name: 'maison', git: true, count: 2, waiting: 1 },
+  { id: 3, name: 'site-perso', git: true, count: 1, waiting: 0 },
+  { id: 4, name: 'notes-clubs', git: false, count: 0, waiting: 0 },
 ];
 
 const meta = {
@@ -23,12 +23,12 @@ const meta = {
   args: {
     active: { group: null, project: null, projects: false },
     allProjects: 5,
-    groups: [{ id: 2, name: 'Médias', count: 3, waiting: 1 }],
+    groups: [{ id: 2, name: 'Perso', count: 3, waiting: 1 }],
     projects: PROJECTS,
     outside: { count: 1, waiting: 0 },
     onBrowse: fn(),
     onNewGroup: fn(),
-    groupMenu: (id) => <GroupMenu group={{ id, name: 'Médias', sidebar: true }} onDelete={fn()} onSidebar={fn()} />,
+    groupMenu: (id) => <GroupMenu group={{ id, name: 'Perso', sidebar: true }} onDelete={fn()} onSidebar={fn()} />,
     projectMenu: (id) => {
       const project = PROJECTS.find((candidate) => candidate.id === id) ?? PROJECTS[0];
       return (
@@ -51,7 +51,7 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {};
 
-/** La page de labo-ia est ouverte : sa ligne est active, son bouton ⋯ visible. */
+/** La page de maison est ouverte : sa ligne est active, son bouton ⋯ visible. */
 export const ProjectActive: Story = { args: { active: { group: null, project: 2, projects: false } } };
 
 /** La page « Tous les projets » est ouverte. */

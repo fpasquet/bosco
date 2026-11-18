@@ -65,7 +65,7 @@ describe('context', () => {
   });
 
   it('keeps every version, and asks for a note to change an accepted decision', () => {
-    const decision = Decision.write(5, { kind: 'project', name: 'api-voix' }, text('Cache audio'), {
+    const decision = Decision.write(5, { kind: 'project', name: 'site-perso' }, text('Cache audio'), {
       accept: true,
       at,
     });

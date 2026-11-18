@@ -16,8 +16,8 @@ const meta = {
     project: {
       defaults: { effort: 'high', model: 'claude-sonnet-5-5', permissionMode: null, profile: null },
       id: 2,
-      name: 'labo-ia',
-      path: '~/www/labo-ia',
+      name: 'maison',
+      path: '~/www/maison',
       git: true,
       branch: 'develop',
       pinned: true,
@@ -31,15 +31,15 @@ const meta = {
     groups: [
       {
         id: 2,
-        name: 'Médias',
+        name: 'Perso',
         description: null,
         instructions: '',
         defaults: { effort: null, model: null, permissionMode: null, profile: null },
         sidebar: true,
         system: false,
         projects: [
-          { id: 3, name: 'api-voix' },
-          { id: 2, name: 'labo-ia' },
+          { id: 3, name: 'site-perso' },
+          { id: 2, name: 'maison' },
         ],
       },
     ],
@@ -53,8 +53,8 @@ const meta = {
       { label: 'perso', path: '/home/camille/.claude-perso' },
     ],
     inherited: {
-      effort: { value: 'high', origin: { level: 'project', name: 'labo-ia' } },
-      model: { value: 'claude-sonnet-5-5', origin: { level: 'project', name: 'labo-ia' } },
+      effort: { value: 'high', origin: { level: 'project', name: 'maison' } },
+      model: { value: 'claude-sonnet-5-5', origin: { level: 'project', name: 'maison' } },
       permissionMode: { value: 'ask', origin: { level: 'profile', name: 'pro' } },
       profile: { value: '/home/camille/.claude', origin: { level: 'defaultProfile' } },
     },
@@ -75,8 +75,8 @@ export const WithoutGit: Story = {
     project: {
       defaults: { effort: null, model: null, permissionMode: null, profile: null },
       id: 4,
-      name: 'notes',
-      path: '~/notes',
+      name: 'notes-clubs',
+      path: '~/notes-clubs',
       git: false,
       branch: null,
       pinned: false,

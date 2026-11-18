@@ -208,7 +208,7 @@ export interface PilotOptionsDto {
 /** Suggestion de l'éditeur (E2h) : un fichier du projet après « @ », une commande ou un skill après « / ». */
 export interface SuggestionDto {
   description: null | string;
-  /** Origine d'une commande : « commande », « skill · profil perso », « projet api-voix » */
+  /** Origine d'une commande : « commande », « skill · profil perso », « projet site-perso » */
   origin: null | string;
   value: string;
 }
@@ -229,7 +229,7 @@ export interface SessionDto {
   /** Trois dernières actions de l'agent, la plus récente en premier */
   recentActions: string[];
   projectPath: null | string;
-  /** Projet qui contient le dossier de travail, et ce dossier à l'intérieur (« packages/bosco ») ; null : hors projet */
+  /** Projet qui contient le dossier de travail, et ce dossier à l'intérieur (« packages/budget ») ; null : hors projet */
   project: { folder: string; id: number; name: string; root: string } | null;
   sourceId: string;
   startedAt: string;
@@ -333,7 +333,7 @@ export interface NotificationDto {
   excerpt: null | string;
   id: number;
   kind: 'ended' | 'failed' | 'long-turn' | 'permission' | 'question' | 'review' | 'sandbox' | 'turn-question';
-  /** Projet de la session ou de la tâche (« api-voix ») */
+  /** Projet de la session ou de la tâche (« site-perso ») */
   place: null | string;
   readAt: null | string;
   sessionId: null | string;

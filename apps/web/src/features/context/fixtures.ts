@@ -12,7 +12,7 @@ function decision(
   return {
     id,
     state: 'accepted',
-    target: { kind: 'project', name: 'api-voix' },
+    target: { kind: 'project', name: 'api-tarifs' },
     fromTask: null,
     reason: null,
     replacedBy: null,
@@ -26,21 +26,22 @@ function decision(
 
 export const STORY_PROPOSED = decision(
   6,
-  'Normaliser les sigles avec points avant la recherche dans le lexique',
+  'Normaliser les fuseaux horaires avant le calcul du tarif',
   { state: 'proposed', fromTask: 12, specifies: [3] },
   {
-    context: 'La variante « S.N.C.F. » n’est pas trouvée dans le lexique ; les sigles arrivent avec ou sans points.',
-    decision: 'Retirer les points des sigles avant la recherche, garder l’écriture d’origine dans le texte prononcé.',
+    context:
+      'Un créneau réservé à 23:30 depuis un autre fuseau tombait le lendemain et prenait le tarif du jour suivant.',
+    decision: 'Ramener chaque créneau au fuseau du club avant de chercher son tarif dans la grille.',
   },
 );
 
 export const STORY_DEC3: DecisionDto = {
-  ...decision(3, 'Prononcer les sigles lettre par lettre, sauf exceptions du lexique'),
+  ...decision(3, 'Arrondir les prix au centime supérieur, sauf exceptions des grilles'),
   versions: [
     {
-      title: 'Prononcer les sigles lettre par lettre',
-      context: 'Prononcés comme des mots, les sigles donnaient des lectures erronées.',
-      decision: 'Prononcer les sigles lettre par lettre.',
+      title: 'Arrondir les prix au centime supérieur',
+      context: 'Les remises en pourcentage donnaient des prix à plus de deux décimales.',
+      decision: 'Arrondir chaque prix au centime supérieur.',
       consequences: null,
       alternatives: null,
       at: at('10-12'),
@@ -48,23 +49,23 @@ export const STORY_DEC3: DecisionDto = {
       note: 'Création',
     },
     {
-      title: 'Prononcer les sigles lettre par lettre, sauf exceptions du lexique',
-      context: 'Prononcés comme des mots, les sigles donnaient des lectures erronées : « SNCF » était lu « sncf ».',
-      decision: 'Prononcer les sigles lettre par lettre. Les exceptions sont listées dans le lexique de prononciation.',
-      consequences: 'Un sigle qui se prononce comme un mot demande une entrée dans le lexique.',
+      title: 'Arrondir les prix au centime supérieur, sauf exceptions des grilles',
+      context: 'Les remises en pourcentage donnaient des prix à plus de deux décimales : 12,345 € au lieu de 12,35 €.',
+      decision: 'Arrondir chaque prix au centime supérieur. Les exceptions sont listées dans les grilles de tarifs.',
+      consequences: 'Un tarif arrondi autrement demande une exception dans sa grille.',
       alternatives: null,
       at: at('11-03'),
       author: 'toi',
-      note: 'Ajout des exceptions du lexique',
+      note: 'Ajout des exceptions des grilles',
     },
   ],
 };
 
 export const STORY_CONTEXT: ContextDto = {
-  project: 'api-voix',
+  project: 'api-tarifs',
   decisions: [
-    decision(1, 'Synthèse vocale par un service externe'),
-    decision(2, 'Lexique de prononciation versionné dans le projet'),
+    decision(1, 'Tarifs calculés par l’API, jamais par les sites'),
+    decision(2, 'Grilles de tarifs versionnées dans le dépôt'),
     STORY_DEC3,
     decision(5, 'Garder Jest pour les tests'),
   ],
@@ -76,8 +77,13 @@ export const STORY_CONTEXT: ContextDto = {
       system: true,
       instructions: 'Messages de commit en anglais, au format Conventional Commits.\nNode 22 au minimum.',
     },
-    { id: 2, name: 'Médias', system: false, instructions: 'Les textes lus sont en français.' },
+    {
+      id: 2,
+      name: 'Club des Trois Lacs',
+      system: false,
+      instructions: 'Les textes lus par les joueurs sont en français.',
+    },
     { id: 3, name: 'Node.js', system: false, instructions: 'Tests avec Vitest.\nJournaux au format JSON.' },
   ],
-  architecture: { calls: ['Service de synthèse', 'Stockage audio'], calledBy: ['veille-presse', 'site-articles'] },
+  architecture: { calls: ['Service de paiement', 'Stockage des grilles'], calledBy: ['creneaux', 'site-clubs'] },
 };

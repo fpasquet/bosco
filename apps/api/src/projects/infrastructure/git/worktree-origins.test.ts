@@ -10,7 +10,7 @@ describe('GitWorktreeOrigins', () => {
   afterEach(() => rmSync(dir, { recursive: true, force: true }));
 
   it('finds the origin of a worktree, not of a submodule or a repository', () => {
-    const origin = join(dir, 'labo-ia');
+    const origin = join(dir, 'maison');
     mkdirSync(join(origin, '.git', 'worktrees', 'fix-ui'), { recursive: true });
     const worktree = join(origin, '.claude', 'worktrees', 'fix-ui');
     mkdirSync(worktree, { recursive: true });
@@ -28,7 +28,7 @@ describe('GitWorktreeOrigins', () => {
   });
 
   it('finds the git root of a folder', () => {
-    const repository = join(dir, 'api-voix');
+    const repository = join(dir, 'site-perso');
     mkdirSync(join(repository, '.git'), { recursive: true });
     mkdirSync(join(repository, 'src'), { recursive: true });
     const origins = new GitWorktreeOrigins();

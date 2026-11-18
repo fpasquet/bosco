@@ -1,7 +1,7 @@
 {
   "session_id": "c41e9a07",
   "transcript_path": "{{profiles}}/.claude-perso/projects/c41e9a07.jsonl",
-  "cwd": "{{profiles}}/labo-ia/packages/bosco",
+  "cwd": "{{profiles}}/maison/packages/budget",
   "permission_mode": "default",
   "hook_event_name": "Stop",
   "stop_hook_active": false,

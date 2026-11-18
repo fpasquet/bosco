@@ -5,7 +5,7 @@ import { TranscriptParser } from './transcript-parser.ts';
 
 const base = {
   sessionId: 'c41e9a07',
-  cwd: '/home/dev/labo-ia/packages/bosco',
+  cwd: '/home/dev/maison/packages/budget',
   gitBranch: 'feat/specs',
   timestamp: '2026-11-06T14:02:00Z',
 };

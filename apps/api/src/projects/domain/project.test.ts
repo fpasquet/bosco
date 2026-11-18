@@ -63,7 +63,7 @@ describe('Project', () => {
   });
 
   it('never proposes the sandbox for a folder without git', () => {
-    const project = Project.restore({ ...add('/home/dev/notes', []), git: false });
+    const project = Project.restore({ ...add('/home/dev/notes-clubs', []), git: false });
     project.rememberPlace('sandbox');
     expect(project.toSnapshot().place).toBe('workstation');
   });

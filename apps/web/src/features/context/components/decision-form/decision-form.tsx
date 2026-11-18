@@ -28,7 +28,7 @@ export interface DecisionFormProps {
   serverError: null | string;
   /** Projets entre lesquels choisir la cible d'une nouvelle décision ; sans eux, la cible est fixe */
   targetChoices?: string[];
-  /** Projet visé (« api-voix ») */
+  /** Projet visé (« site-perso ») */
   targetLabel: string;
   onTargetChange?: (project: string) => void;
 }

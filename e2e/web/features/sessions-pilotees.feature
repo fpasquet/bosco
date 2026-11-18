@@ -5,10 +5,10 @@ Fonctionnalité: Sessions pilotées par Bosco
   de travailler avec un agent sans ouvrir de terminal.
 
   Contexte:
-    Étant donné le profil Claude Code « .claude-perso » contient le transcript « session-labo-ia-bosco.jsonl » de la session « c41e9a07 »
+    Étant donné le profil Claude Code « .claude-perso » contient le transcript « session-maison-budget.jsonl » de la session « c41e9a07 »
     Et le profil Claude Code « .claude-perso » a accès à l’abonnement Claude de « camille@exemple.dev »
     Et Bosco surveille les profils « .claude » et « .claude-perso »
-    Et le dossier « labo-ia » est un projet
+    Et le dossier « maison » est un projet
 
   @CA-SESS-92
   @CA-SESS-155

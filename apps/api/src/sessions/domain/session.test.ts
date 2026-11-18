@@ -10,10 +10,10 @@ const reply = (time: string, usage: TokenUsage | null = null): TranscriptEvent =
   at: at(time),
   kind: 'reply',
   text: 'Je relis les specs.',
-  cwd: '/home/dev/labo-ia/packages/bosco',
+  cwd: '/home/dev/maison/packages/budget',
   branch: 'feat/specs',
   model: 'claude-opus-5-5',
-  projectRoot: '/home/dev/labo-ia',
+  projectRoot: '/home/dev/maison',
   usage,
 });
 

@@ -11,7 +11,7 @@ function base(bosco: { profilesRoot: string }, sessionId: string, event: string)
   return {
     session_id: sessionId,
     transcript_path: join(bosco.profilesRoot, 'transcript.jsonl'),
-    cwd: join(bosco.profilesRoot, 'labo-ia', 'packages', 'bosco'),
+    cwd: join(bosco.profilesRoot, 'maison', 'packages', 'bosco'),
     permission_mode: 'default',
     hook_event_name: event,
   };

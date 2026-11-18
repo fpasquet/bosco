@@ -3,7 +3,7 @@
 import { describe, expect, it } from 'vitest';
 import { groupsFromSocles, instructionOf, type RetiredSocle } from './socle-import.ts';
 
-const PROJECTS = ['api-tarifs', 'creneaux', 'site-clubs', 'api-voix', 'labo-ia'];
+const PROJECTS = ['api-tarifs', 'creneaux', 'site-clubs', 'site-perso', 'maison'];
 
 const socle = (id: number, name: string, overrides: Partial<RetiredSocle> = {}): RetiredSocle => ({
   id,
@@ -42,8 +42,8 @@ describe('groupsFromSocles', () => {
     const found = groupsFromSocles({
       allProjects: PROJECTS,
       socles: [
-        socle(2, 'Node.js', { projects: ['api-voix', 'labo-ia'] }),
-        socle(3, 'NestJS', { inherits: 2, projects: ['api-tarifs', 'api-voix'] }),
+        socle(2, 'Node.js', { projects: ['site-perso', 'maison'] }),
+        socle(3, 'NestJS', { inherits: 2, projects: ['api-tarifs', 'site-perso'] }),
         socle(4, 'Fastify', { inherits: 3, projects: ['creneaux', 'disparu'] }),
       ],
       decisions: [decision(10, 2, 'Tests avec Vitest'), decision(11, 3, 'Modules par contexte')],
@@ -53,9 +53,9 @@ describe('groupsFromSocles', () => {
       {
         name: 'Node.js',
         instructions: 'Tests avec Vitest.',
-        projects: ['api-voix', 'labo-ia', 'api-tarifs', 'creneaux'],
+        projects: ['site-perso', 'maison', 'api-tarifs', 'creneaux'],
       },
-      { name: 'NestJS', instructions: 'Modules par contexte.', projects: ['api-tarifs', 'api-voix', 'creneaux'] },
+      { name: 'NestJS', instructions: 'Modules par contexte.', projects: ['api-tarifs', 'site-perso', 'creneaux'] },
       { name: 'Fastify', instructions: '', projects: ['creneaux'] },
     ]);
   });
@@ -63,7 +63,7 @@ describe('groupsFromSocles', () => {
   it('gives every project to a shared socle that a global socle inherited from', () => {
     const found = groupsFromSocles({
       allProjects: PROJECTS,
-      socles: [socle(2, 'Node.js', { projects: ['labo-ia'] }), socle(1, 'Commun', { scope: 'global', inherits: 2 })],
+      socles: [socle(2, 'Node.js', { projects: ['maison'] }), socle(1, 'Commun', { scope: 'global', inherits: 2 })],
       decisions: [],
       taken: [],
     });

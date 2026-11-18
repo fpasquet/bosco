@@ -9,8 +9,8 @@
     {
       "added": false,
       "git": true,
-      "name": "api-voix",
-      "path": "<profiles>/api-voix",
+      "name": "site-perso",
+      "path": "<profiles>/site-perso",
       "suggestion": true
     },
     {

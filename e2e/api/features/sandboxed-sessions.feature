@@ -4,15 +4,15 @@ Feature: Sessions in a sandbox
   works on a copy of the project and its own branch, which I retrieve when I want.
 
   Background:
-    Given the Claude Code profile ".claude-perso" has the transcript "session-labo-ia-bosco.jsonl" for the session "c41e9a07"
+    Given the Claude Code profile ".claude-perso" has the transcript "session-maison-budget.jsonl" for the session "c41e9a07"
     And the Claude Code profile ".claude-perso" has an access to the Claude subscription of "camille@exemple.dev"
     And Bosco watches the profiles ".claude-perso"
-    And the folder "labo-ia" is a project
+    And the folder "maison" is a project
 
   @CA-SESS-106
   @CA-SESS-109
   Scenario: A session starts in a sandbox on its own branch, and its turns run in its container
-    When I start a session in the project "labo-ia" with the JSON "fixtures/pilot/start-sandbox.json"
+    When I start a session in the project "maison" with the JSON "fixtures/pilot/start-sandbox.json"
     Then the response code should be 201
     And "the started session" should end its turn with "Reçu : Monte TypeScript en version 6 · mode acceptEdits · modèle défaut · effort défaut · images 0"
     And "the started session" should run in a sandbox on the branch "bosco/s-typescript-6" from "develop", "running"
@@ -21,14 +21,14 @@ Feature: Sessions in a sandbox
 
   @CA-SESS-106
   Scenario: The branch of a session is under the prefix of the sandboxes
-    When I start a session in the project "labo-ia" with the JSON "fixtures/pilot/start-sandbox-bad-branch.json"
+    When I start a session in the project "maison" with the JSON "fixtures/pilot/start-sandbox-bad-branch.json"
     Then the response code should be 400
     And the response property "code" should equal "invalidSandboxBranch"
 
   @CA-SESS-110
   @CA-SESS-111
   Scenario: A stopped sandbox starts again with the next message, without losing the session
-    When I start a session in the project "labo-ia" with the JSON "fixtures/pilot/start-sandbox.json"
+    When I start a session in the project "maison" with the JSON "fixtures/pilot/start-sandbox.json"
     And "the started session" should end its turn with "Reçu : Monte TypeScript en version 6 · mode acceptEdits · modèle défaut · effort défaut · images 0"
     And I stop the sandbox of "the started session"
     Then "the started session" should run in a sandbox on the branch "bosco/s-typescript-6" from "develop", "stopped"
@@ -38,7 +38,7 @@ Feature: Sessions in a sandbox
   @CA-SESS-108
   @CA-SESS-112
   Scenario: The branch is retrieved between two turns, and the refused exits are read
-    When I start a session in the project "labo-ia" with the JSON "fixtures/pilot/start-sandbox.json"
+    When I start a session in the project "maison" with the JSON "fixtures/pilot/start-sandbox.json"
     And "the started session" should end its turn with "Reçu : Monte TypeScript en version 6 · mode acceptEdits · modèle défaut · effort défaut · images 0"
     And I retrieve the branch of "the started session"
     Then the response property "branch" should equal "bosco/s-typescript-6"
@@ -47,7 +47,7 @@ Feature: Sessions in a sandbox
 
   @CA-SESS-114
   Scenario: A deleted sandbox no longer takes a message
-    When I start a session in the project "labo-ia" with the JSON "fixtures/pilot/start-sandbox.json"
+    When I start a session in the project "maison" with the JSON "fixtures/pilot/start-sandbox.json"
     And "the started session" should end its turn with "Reçu : Monte TypeScript en version 6 · mode acceptEdits · modèle défaut · effort défaut · images 0"
     And I delete the sandbox of "the started session"
     Then the response code should be 204

@@ -1,5 +1,5 @@
 {
-  "target": { "kind": "project", "name": "api-voix" },
+  "target": { "kind": "project", "name": "site-perso" },
   "text": {
     "title": "Valider chaque requête par un schéma",
     "context": "Les routes acceptaient des corps incomplets.",

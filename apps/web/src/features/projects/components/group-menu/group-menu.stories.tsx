@@ -7,7 +7,7 @@ const meta = {
   component: GroupMenu,
   parameters: { docs: { story: { inline: false, height: '360px' } } },
   args: {
-    group: { id: 2, name: 'Médias', sidebar: true },
+    group: { id: 2, name: 'Perso', sidebar: true },
     variant: 'header',
     onDelete: fn(),
     onSidebar: fn(),

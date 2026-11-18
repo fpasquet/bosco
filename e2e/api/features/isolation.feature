@@ -4,12 +4,12 @@ Feature: Sandbox isolation
   subscription they use, so that a session cannot send my code anywhere else.
 
   Background:
-    Given the Claude Code profile ".claude" has the transcript "session-api-voix-fastify.jsonl" for the session "a41f07c2"
-    And the Claude Code profile ".claude-perso" has the transcript "session-labo-ia-bosco.jsonl" for the session "c41e9a07"
+    Given the Claude Code profile ".claude" has the transcript "session-site-perso-fastify.jsonl" for the session "a41f07c2"
+    And the Claude Code profile ".claude-perso" has the transcript "session-maison-budget.jsonl" for the session "c41e9a07"
     And the Claude Code profile ".claude" has an access to the Claude subscription of "camille@exemple.dev"
     And the Claude Code profile ".claude-perso" has an access to the Claude subscription of "camille.perso@exemple.dev"
     And Bosco watches the profiles ".claude" and ".claude-perso"
-    And the folders "labo-ia,api-voix" are projects
+    And the folders "maison,site-perso" are projects
 
   @CA-CONT-43
   Scenario: The default domains are locked, and the limits of each sandbox are shown

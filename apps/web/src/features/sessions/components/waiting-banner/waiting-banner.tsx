@@ -61,7 +61,7 @@ export function WaitingActions({
   );
 }
 
-/** « labo-ia/packages/bosco · feat/specs » */
+/** « maison/packages/budget · feat/specs » */
 export function placeOf(session: SessionDto): string {
   const place = session.project
     ? [session.project.name, session.project.folder].filter(Boolean).join('/')
