@@ -7,7 +7,7 @@ description: Retrouver une session passée par ses titres, messages et commandes
 
 L'historique (`/history`) liste les sessions de tous les profils surveillés, jour par jour, du plus récent au plus ancien. Chaque jour donne son nombre de sessions et son coût estimé ; les jours suivants se chargent au défilement.
 
-Bosco garde sa propre copie des sessions : elles restent dans l'historique même quand Claude Code efface ses transcripts après 30 jours.
+Bosco garde sa propre copie des sessions : elles restent dans l'historique même quand Claude Code efface ses transcripts après 30 jours. Il importe les 30 derniers jours, ou tout l'historique encore présent dans les profils si tu le choisis dans [Réglages › Données](/docs/guides/settings#données).
 
 ### Chercher
 
@@ -53,7 +53,7 @@ Une PR compte quand un agent l'a créée avec `gh pr create` et que GitHub a ren
 - « Réutilisation du cache » : la lecture du cache rapportée à l'entrée plus la lecture du cache ;
 - « Tours sans lecture du cache », en pourcentage ;
 - « Sessions / tours » ;
-- « Coût estimé », au tarif public de l'API. Un modèle sans tarif connu est « non chiffré ».
+- « Coût estimé », au tarif public de l'API. Un modèle sans tarif connu est « non chiffré ». Sous le total, « dont X $ de sous-agents » dit la part des agents lancés par les sessions.
 
 Le coût est une estimation : avec un abonnement Claude, tu ne paies pas ce montant, il sert à comparer les sessions entre elles.
 
@@ -67,4 +67,6 @@ Pour chaque abonnement, deux jauges, « 5 h » et « Semaine », avec leur p
 
 ### Répartition
 
-Trois colonnes, « Par projet », « Par modèle » et « Par profil » : les cinq plus gros sont nommés, les autres regroupés. Un clic sur un projet filtre toute la page sur lui. Une session sur plusieurs projets compte pour chacun : la somme des projets peut dépasser le total.
+Les tokens et le coût comptent les sous-agents d'une session (ceux qu'elle lance avec l'outil Agent) : c'est souvent là que part l'essentiel d'une longue session. Le nombre de tours, lui, ne compte que ceux de la session.
+
+« Par projet » liste tous les projets, du plus coûteux au moins coûteux : les dix premiers s'affichent, « Afficher les N autres » déplie la suite. Une session hors projet compte pour son dossier, « ~/scripts hors projet » ; tout ce qui est sous un dossier temporaire ou de Bosco compte pour une seule ligne. « Par modèle » et « Par profil » nomment les cinq plus gros et regroupent les autres. « Sessions et sous-agents » sépare ce que coûtent les sessions elles-mêmes et leurs sous-agents. Un clic sur un projet filtre toute la page sur lui. Une session sur plusieurs projets compte pour chacun : la somme des projets peut dépasser le total.

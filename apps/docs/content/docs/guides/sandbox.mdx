@@ -11,7 +11,7 @@ C'est le bon endroit pour un travail long et sans demande, par exemple « Monte
 
 - **Docker**, installé et joignable par ton utilisateur (`/usr/bin/docker`). Podman n'est pas pris en charge.
 - **Claude Code** sur le poste : il est monté en lecture seule dans le conteneur, à la même version que tes sessions.
-- **Un accès Claude** dans un profil surveillé : seule sa copie entre dans le conteneur.
+- **Un accès Claude** dans un profil surveillé, par `/login` ou par un [jeton longue durée](/docs/guides/settings#jeton-longue-durée) : seul cet accès entre dans le conteneur.
 - **Des projets sous Git** : un dossier sans Git tourne seulement sur le poste.
 
 Si l'un manque, « Bac à sable » est grisé dans « Nouvelle session », avec la raison : « Docker n'est pas installé », « Docker ne répond pas », « Accès à l'abonnement Claude introuvable », « Claude Code introuvable sur le poste » ou « creneaux n'est pas un dépôt git ».
@@ -35,7 +35,21 @@ Avec plusieurs projets, chaque projet a sa copie, sur la même branche, créée 
 | Secrets  | l'accès à l'abonnement Claude de la session                  | accès GitHub, `.npmrc`, connecteurs     |
 | Réseau   | les domaines autorisés                                       | le reste d'Internet                     |
 
-Seul le fichier d'accès du profil (`.credentials.json`) entre dans le conteneur : ni serveur MCP, ni connecteur, ni réglage du profil. Le contexte de ses projets (instructions des groupes, décisions) lui est transmis à son lancement, comme à toute [session pilotée](/docs/guides/piloted-sessions#le-contexte-transmis-au-lancement). Chaque conteneur a 4 Go de mémoire, 2 processeurs et 512 processus au plus, et tourne sans droits d'administration. L'image `bosco-agent` contient Node, Git, Python et ripgrep ; Bosco la construit au premier besoin.
+Seul l'accès du profil entre dans le conteneur, sa copie de `.credentials.json` ou le jeton déclaré, passé par une variable d'environnement : ni serveur MCP, ni connecteur, ni réglage du profil. Le contexte de ses projets (instructions des groupes, décisions) lui est transmis à son lancement, comme à toute [session pilotée](/docs/guides/piloted-sessions#le-contexte-transmis-au-lancement). Chaque conteneur a 4 Go de mémoire, 2 processeurs et 512 processus au plus, et tourne sans droits d'administration. L'image `bosco-agent` contient Node, Git, Python, ripgrep, `make`, `curl` et Corepack, qui fournit la version de pnpm ou de Yarn que demande le projet ; Bosco la construit au premier besoin. Docker n'y est pas : les services du projet démarrent à côté (voir [plus bas](#les-bases-de-données-du-projet)). Node passe par le proxy du bac à sable, y compris pour `fetch`, et la télémétrie de Next.js et de Turborepo est coupée.
+
+## Les bases de données du projet
+
+Quand le projet a un fichier Compose (`compose.yaml`, `docker-compose.yml`…), Bosco démarre avec le bac à sable les services qui tournent sur une image toute faite : une base Postgres, un Redis, un serveur de mails de test. Les services qui se construisent depuis le dépôt (`build:`), qui montent un dossier du poste ou demandent des droits du poste ne démarrent pas : l'agent lance le code du projet lui-même.
+
+Par exemple, pour un projet dont le `docker-compose.yml` déclare `db` (`postgres:16`), `install`, `api` et `web` (construits depuis le dépôt), seul `db` démarre. L'agent le joint par son nom, `db:5432`, comme dans le fichier Compose.
+
+- Les services sont sur le réseau privé du bac à sable, sans passer par le proxy, et **aucun port n'est publié sur le poste** : ils ne gênent pas ceux que tu lances toi-même.
+- Chaque session a **ses propres volumes**, jamais ceux de ton environnement de développement, effacés avec le bac à sable.
+- Chaque service est plafonné à 1 cœur et 1 Go de mémoire.
+- Bosco attend leur contrôle de santé, 5 minutes au plus. Un service qui ne démarre pas s'affiche avec sa raison, sans bloquer le tour.
+- Le contexte de lancement dit à l'agent qu'il n'a pas Docker, et quels services l'attendent sous quel nom.
+
+Avec plusieurs projets, seul le fichier Compose du projet principal est lu. La carte « Bac à sable » de la session et le panneau des conteneurs listent ces services sous leur bac à sable ; ils s'arrêtent et se suppriment avec lui.
 
 ## Le réseau sortant
 
@@ -88,4 +102,4 @@ Au-delà du premier seuil, les messages attendent : « Quota de l'abonnement : 
 
 ## Les conteneurs en cours
 
-Quand un conteneur tourne, « Conteneurs » apparaît en bas de la barre latérale. Le panneau liste les « Bacs à sable » et les « Tours sur le poste », avec leur consommation, « Proche du plafond » au-delà de 80 %, « Voir la session » et « Arrêter le tour ». Si Docker ne répond plus : « Docker ne répond pas depuis … », avec « Réessayer ». Les dernières mesures restent, grisées et datées (« Dernières mesures · 15:09 »), et leur « Voir la session » est désactivé jusqu'au retour de Docker ; Bosco réessaie seul toutes les 30 secondes. Sur le téléphone, « Conteneurs en cours », dans les Réglages, montre une carte par bac à sable et par tour.
+Quand un conteneur tourne, « Conteneurs » apparaît en bas de la barre latérale. Le panneau liste les « Bacs à sable », avec leurs services de données en dessous, et les « Tours sur le poste », avec leur projet, depuis quand ils tournent, leur processeur et leur mémoire en jauges, « Proche du plafond » au-delà de 80 %, « Voir la session » et « Arrêter le tour ». Si Docker ne répond plus : « Docker ne répond pas depuis … », avec « Réessayer ». Les dernières mesures restent, grisées et datées (« Dernières mesures · 15:09 »), et leur « Voir la session » est désactivé jusqu'au retour de Docker ; Bosco réessaie seul toutes les 30 secondes. Sur le téléphone, « Conteneurs en cours », dans les Réglages, montre une carte par bac à sable et par tour.

@@ -1,19 +1,34 @@
 ---
 title: Installation
-description: Installer Bosco depuis le dépôt, le lancer, en faire un service de l'utilisateur et brancher son serveur MCP.
+description: Installer Bosco depuis une release ou depuis son dépôt, le premier lancement, le service de l'utilisateur et le serveur MCP.
 ---
 
-Bosco s'installe depuis son dépôt Git. Il tourne comme un service local, sur la boucle locale du poste, et sert son interface dans le navigateur. L'[application du poste](/docs/desktop) et l'[application Android](/docs/android) sont facultatives.
+Bosco s'installe de deux façons :
+
+- **depuis une release**, le plus simple : l'[application du poste](/docs/desktop) (paquet `.deb` ou AppImage) embarque le service, l'interface et Node 26. Rien à construire ;
+- **depuis le dépôt Git** : le service tourne avec le Node du poste et sert son interface dans le navigateur. C'est la voie pour macOS, pour développer Bosco ou pour le faire tourner comme service systemd.
+
+Dans les deux cas, Bosco tourne sur la boucle locale du poste et garde ses données dans `~/.local/share/bosco` : passer de l'un à l'autre ne perd rien. L'[application Android](/docs/android) est facultative.
 
 ## Prérequis
 
-- **Linux** pour tout Bosco. Sous macOS, le service et l'interface marchent dans le navigateur, sans application du poste.
-- **Node 26**, la version de `.nvmrc`. pnpm refuse d'installer avec une autre version : `nvm use` à la racine du dépôt.
-- **pnpm 12**, activé par `corepack enable`.
+- **Linux** pour tout Bosco. Sous macOS, le service et l'interface marchent dans le navigateur, depuis le dépôt, sans application du poste.
 - **Claude Code** installé, avec au moins un profil (`~/.claude` par défaut).
 - **Docker**, seulement pour le [bac à sable](/docs/guides/sandbox). Sans Docker, tout le reste marche.
+- Depuis le dépôt seulement : **Node 26** (la version de `.nvmrc`, `nvm use` à la racine : pnpm refuse d'installer avec une autre version) et **pnpm 12**, activé par `corepack enable`.
 
-## Installer et lancer
+## Depuis une release
+
+Télécharge le paquet `.deb` ou l'AppImage de la dernière version depuis la page [Télécharger](/docs/download), puis :
+
+```bash
+sudo apt install ./bosco-desktop_*_amd64.deb      # paquet .deb : Bosco rejoint le menu des applications
+chmod +x bosco-desktop_*_x86_64.AppImage && ./bosco-desktop_*_x86_64.AppImage   # ou l'AppImage
+```
+
+L'application démarre son service sur `http://127.0.0.1:4870` et ouvre sa fenêtre. Passe ensuite au [premier lancement](#premier-lancement).
+
+## Depuis le dépôt
 
 <Steps>
 <Step>
@@ -42,13 +57,25 @@ make start
 `make start` construit chaque paquet, puis lance le service sur `http://127.0.0.1:4870` et ouvre la vue d'ensemble dans le navigateur. Le port se change avec `BOSCO_PORT`, mais le service n'écoute jamais ailleurs que sur `127.0.0.1`.
 
 </Step>
+</Steps>
+
+## Premier lancement
+
+<Steps>
 <Step>
 
 ### Choisir les profils à surveiller
 
 Au premier lancement, Bosco affiche « Bienvenue dans Bosco » et liste les profils Claude Code trouvés dans ton dossier personnel (`~/.claude`, `~/.claude-perso`…), avec la date de leur dernière session. Tous sont cochés : décoche ceux que Bosco ne doit pas lire, puis « Surveiller ces profils ». Rien n'est lu avant ce clic.
 
-Bosco importe alors les sessions des 30 derniers jours dans l'historique. Il les lit sans les modifier.
+Bosco importe alors les sessions des 30 derniers jours dans l'historique, ou tout l'historique encore présent dans les profils si tu le choisis. Il les lit sans les modifier. La période se change ensuite dans [Réglages › Données](/docs/guides/settings#données).
+
+</Step>
+<Step>
+
+### Retrouver tes projets
+
+Chaque dépôt git où une session a tourné devient un projet, sans rien faire : la barre latérale et l'usage se rangent aussitôt par projet. Les dossiers sans git restent dans les suggestions de la page Projets. Le détail est dans [Projets et groupes](/docs/guides/projects-and-groups).
 
 </Step>
 <Step>

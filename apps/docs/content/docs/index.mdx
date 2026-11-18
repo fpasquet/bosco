@@ -16,8 +16,8 @@ Bosco est un service local qui lit les sessions Claude Code du poste et les mont
 - **Autoriser sans changer de fenêtre.** « Autoriser » ou « Refuser » depuis Bosco, avec un motif transmis à l'agent. Le terminal garde la main : la première réponse l'emporte.
 - **Piloter une session.** Lancer une session depuis Bosco, lui écrire, l'arrêter, choisir son mode d'autorisation, son modèle et son effort, sur un ou plusieurs projets.
 - **Bac à sable.** Faire tourner une session pilotée dans un conteneur Docker, isolée du poste, sur sa propre branche, avec un réseau fermé aux seuls domaines permis. Tu récupères ensuite la branche dans ton dépôt.
-- **Projets et groupes.** Choisir ses projets dans un navigateur de dossiers, les réunir en groupes (« Club des Trois Lacs », « Gîtes du Haut-Vallon », « Perso ») et donner à chaque groupe des instructions que lisent les agents.
-- **Historique et usage.** Retrouver une session passée, puis voir ce que consomment les sessions : tokens, coût estimé, quota de l'abonnement, PR créées.
+- **Projets et groupes.** Chaque dépôt git où une session a tourné devient un projet de lui-même ; tu en ajoutes d'autres depuis un navigateur de dossiers, tu les réunis en groupes (« Club des Trois Lacs », « Gîtes du Haut-Vallon », « Perso ») et donner à chaque groupe des instructions que lisent les agents.
+- **Historique et usage.** Retrouver une session passée, puis voir ce que consomment les sessions et leurs sous-agents : tokens, coût estimé, quota de l'abonnement, PR créées.
 
 ## À qui il sert
 
@@ -50,9 +50,14 @@ Bosco tourne sous Linux. Le service et l'interface marchent aussi sous macOS, da
 
 <Cards>
   <Card
+    title="Télécharger"
+    href="/docs/download"
+    description="Le paquet .deb, l'AppImage et l'APK Android de la dernière version."
+  />
+  <Card
     title="Installation"
     href="/docs/installation"
-    description="Prérequis, make install, make start, le service systemd et le serveur MCP."
+    description="Première ouverture, ou Bosco depuis le dépôt : make install, make start, le service systemd et le serveur MCP."
   />
   <Card
     title="Vue d'ensemble et sessions"
@@ -62,7 +67,7 @@ Bosco tourne sous Linux. Le service et l'interface marchent aussi sous macOS, da
   <Card
     title="Application du poste"
     href="/docs/desktop"
-    description="Le paquet .deb, la barre système et les notifications."
+    description="Le paquet .deb ou l'AppImage, la barre système, les notifications et les mises à jour."
   />
   <Card
     title="Application Android"

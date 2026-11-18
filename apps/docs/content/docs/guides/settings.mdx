@@ -1,9 +1,9 @@
 ---
 title: Réglages
-description: Les cinq onglets des réglages de Bosco - Sources, Téléphone, Notifications, Abonnement Claude et Bac à sable.
+description: Les sept onglets des réglages de Bosco - Sources, Téléphone, Notifications, Abonnement Claude, Bac à sable, Données et À propos.
 ---
 
-« Réglages », en bas de la barre latérale, s'ouvre sur l'onglet Sources. Les cinq onglets sont **« Sources »**, **« Téléphone »**, **« Notifications »**, **« Abonnement Claude »** et **« Bac à sable »**. Sur le téléphone, ils sont en lecture seule.
+« Réglages », en bas de la barre latérale, s'ouvre sur l'onglet Sources. Les sept onglets sont **« Sources »**, **« Téléphone »**, **« Notifications »**, **« Abonnement Claude »**, **« Bac à sable »**, **« Données »** et **« À propos »**. Sur le téléphone, ils sont en lecture seule.
 
 ## Sources
 
@@ -19,6 +19,7 @@ Chaque profil affiche :
 - **le suivi en direct** : « Suivi en direct installé » avec la date du dernier signal, ou « Suivi en direct non installé » avec « Installer » ;
 - **le [canal de Bosco](/docs/guides/mcp#canal-de-bosco)** : « installé » ou « non installé » ;
 - l'interrupteur « Lire le profil », qui met sa lecture en pause : les sessions déjà lues restent dans l'historique.
+- le menu ⋯, avec « Retirer la source… » (voir [plus bas](#retirer-une-source)).
 
 ### Ajouter un dossier
 
@@ -47,8 +48,21 @@ L'installation se fait en trois étapes. La case « Garder une copie des régla
 « Gérer » ouvre la page d'un profil :
 
 - **« Abonnement »** : le compte Claude du profil, et s'il est le profil par défaut de Bosco ;
+- **l'accès à l'abonnement** : « Connexion Claude (/login) » quand le profil est connecté, ou « Jeton longue durée (claude setup-token) » (voir [plus bas](#jeton-longue-durée)) ;
 - **« Valeurs par défaut des sessions »** : « Autorisations », « Modèle » et « Effort » des sessions lancées dans Bosco avec ce profil. L'option « Celui du profil Claude Code · … » reprend la valeur de son `settings.json`. Voir [Valeurs par défaut](/docs/guides/piloted-sessions#valeurs-par-défaut) ;
 - **« Utilisé par »** : les groupes qui l'ont pour profil par défaut, et les sessions ouvertes, « Non modifiées par ces réglages ».
+
+### Jeton longue durée
+
+Un profil sans connexion `/login` (« Aucun accès ») ne peut pas servir d'abonnement à une nouvelle session : il y apparaît grisé, « aucun accès · à régler dans le profil ». Deux façons de lui donner accès : se connecter avec `/login` dans ce profil, ou « Utiliser un jeton longue durée ».
+
+Ce bouton ouvre le navigateur de fichiers, fichiers cachés compris : choisis le fichier où tu as rangé le jeton créé par `claude setup-token`, par exemple `~/.config/claude-equipe/jeton`. Bosco ne garde que son chemin, jamais le jeton : il le relit à chaque tour et le passe à Claude Code, sur le poste comme dans un bac à sable. Un jeton déclaré l'emporte sur la connexion du profil ; « Retirer » l'oublie. Un fichier absent, illisible ou vide s'affiche en orange sous l'accès.
+
+### Retirer une source
+
+« Retirer la source… », dans le menu ⋯ d'un profil, fait oublier à Bosco ce profil et ses sessions : historique, usage et notifications. C'est la différence avec l'interrupteur « Lire le profil », qui met la lecture en pause en gardant tout. Bosco retire aussi du profil ce qu'il y avait installé (suivi en direct, canal), réglages d'avant remis. Rien n'est supprimé dans le dossier de Claude Code : « Ajouter un dossier » rajoute le profil, et son historique est relu.
+
+Les groupes dont ce profil était le profil par défaut reprennent l'abonnement par défaut de Bosco. Une session de ce profil dont un tour tourne dans Bosco bloque le retrait : « Une session de ce profil tourne : arrête-la d'abord ».
 
 ## Téléphone
 
@@ -81,6 +95,27 @@ Voir [Le quota de l'abonnement](/docs/guides/sandbox#le-quota-de-labonnement).
 - **« Domaines autorisés »** : les domaines par défaut, verrouillés, et ceux « Ajoutés par toi ». Un domaine s'écrit seul, sans protocole ni chemin : `pypi.org` ou `*.github.com`.
 
 Voir [Bac à sable](/docs/guides/sandbox).
+
+## Données
+
+- **« Période importée »** : « 30 derniers jours » (par défaut) ou « Tout l'historique », pour tous les profils surveillés. Claude Code efface ses transcripts après 30 jours par défaut : « Tout l'historique » lit en arrière-plan les sessions plus anciennes encore présentes dans les profils, les plus récentes d'abord, avec le bandeau d'import. Revenir à « 30 derniers jours » garde ce qui est déjà importé.
+- **« Sessions importées »** et **« La plus ancienne »** : ce que Bosco a déjà lu, et ce que « Tout l'historique » ajouterait.
+- **La base de Bosco** : son dossier (`~/.local/share/bosco`) et sa taille, bacs à sable compris. Bosco y garde sa propre copie des sessions : une session effacée par Claude Code reste dans l'historique et l'usage.
+
+### Réinitialiser Bosco
+
+« Réinitialiser Bosco… » efface tout ce que Bosco a gardé : sources, projets et groupes, sessions lues et leur usage, sessions pilotées, notifications, contexte des projets, téléphones appairés et réglages. Ce que Bosco a installé dans chaque profil en est retiré. Les bacs à sable sont arrêtés et leurs copies supprimées : une branche pas encore récupérée serait perdue, et la confirmation la nomme.
+
+Pour confirmer, écris « RÉINITIALISER » (majuscules et accents facultatifs), puis « Tout effacer ». Bosco s'ouvre ensuite sur le premier lancement. Les dossiers et les sessions de Claude Code ne sont jamais touchés. Pas de réinitialisation depuis le téléphone, qui perd son accès et revient à l'appairage.
+
+## À propos
+
+- **« Version »** : la version qui tourne et l'installation (paquet .deb, AppImage ou depuis le dépôt). Une bêta se lit « 0.3.0-beta.1 · bêta » ; une version construite hors d'une release (`make beta`, `make dev`) porte son commit, « 0.2.0 · 3118cb5 ».
+- **« Mises à jour »** : Bosco cherche une version plus récente une fois par jour au plus dans les [releases publiées sur GitHub](/docs/download), par un appel en lecture, sans identifiant. « Chercher les nouvelles versions » se coupe ; le « Canal des mises à jour » « Stable » ne propose que les versions stables, « Bêta » aussi les bêtas. « Vérifier maintenant » cherche tout de suite.
+- **La version disponible** : ses notes, le paquet `.deb` à télécharger (l'APK sur le téléphone) et la release sur GitHub. L'AppImage n'a rien à télécharger : elle se met à jour seule, puis la barre système propose « Relancer pour mettre à jour ».
+- **« Nouveautés »** : le journal des versions (`CHANGELOG.md`) embarqué avec la version qui tourne, une section par version, chaque ligne liée à sa PR.
+
+Un bandeau en haut de page annonce une fois « Bosco 0.3.0 installé » après une mise à jour, sinon « Version 0.3.0 disponible » ; « Voir les nouveautés » mène à cet onglet, et une fois fermé il ne revient plus pour cette version. La fenêtre « À propos » du logo y mène aussi.
 
 ## Conteneurs en cours
 

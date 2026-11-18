@@ -11,11 +11,12 @@ Bosco est un monorepo pnpm 12 et Turborepo, sous Node 26. Les conventions de cod
 | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `apps/api`         | Service NestJS sur Fastify : un module par contexte (domain, application, infrastructure, interface/http), qui sert aussi l'interface sur le même port ; commande `bosco` (`src/cli`) |
 | `apps/web`         | Interface Next.js, design system (tokens des specs, daisyUI, shadcn/ui sur Radix, Storybook)                                                                                          |
-| `apps/desktop`     | Application du poste (Electron, Linux) : fenêtre, barre système, notifications natives ; paquet .deb                                                                                  |
+| `apps/desktop`     | Application du poste (Electron, Linux) : fenêtre, barre système, notifications natives ; .deb, AppImage                                                                               |
 | `apps/mobile`      | Application Android (Expo) : interface téléphone dans une vue web, appairage par QR code, notifications locales                                                                       |
 | `apps/docs`        | Ce site (Fumadocs), exporté en pages statiques                                                                                                                                        |
 | `packages/domain`  | Contrats partagés avec le web : nom de l'application, types des vues                                                                                                                  |
 | `packages/configs` | Configurations partagées : TypeScript, ESLint, Vitest, Prettier                                                                                                                       |
+| `tools/release`    | Outils du workflow Release : version tirée des commits, écrite dans les applications, CHANGELOG.md et notes                                                                           |
 | `e2e`              | Scénarios Gherkin de l'API (anglais) et du web (français), module d'enregistrement des appels sortants                                                                                |
 
 ## Commandes
@@ -85,8 +86,33 @@ Le site vit dans `apps/docs` : les pages sont des fichiers MDX dans `content/doc
 
 Les captures de `apps/docs/public/screenshots` se reprennent avec `make docs-screenshots` : le script `e2e/docs/screenshots.ts` lance Bosco comme les tests du web, sur des données temporaires (projets, groupes et sessions du fil rouge, faux Claude Code), puis Playwright photographie chaque écran. Tes données de `~/.local/share/bosco` ne sont pas touchées.
 
-Pour le publier sous un sous-chemin, comme un site GitHub Pages de dépôt :
+`make docs-preview` sert l'export comme Cloudflare Pages le ferait (`wrangler pages dev`, sur `http://127.0.0.1:4891`). La page [Télécharger](/docs/download) lit les releases GitHub au moment du build : sans réseau, elle renvoie à la page des releases.
+
+### Publier le site
+
+Le workflow « Docs » (`.github/workflows/docs.yml`) publie le site sur Cloudflare Pages, à l'adresse `https://bosco.pages.dev` tant qu'aucun domaine n'est rattaché :
+
+- à chaque push sur `main` qui touche `apps/docs`, le lockfile ou le workflow ;
+- après chaque exécution réussie du workflow « Release », pour que la page Télécharger donne la nouvelle version ;
+- à la main, Actions › Docs › « Run workflow ».
+
+Il lui faut deux secrets du dépôt, `CLOUDFLARE_API_TOKEN` (un jeton Cloudflare avec la permission « Account › Cloudflare Pages › Edit ») et `CLOUDFLARE_ACCOUNT_ID`. Le projet Pages `bosco` se crée au premier déploiement. Sans les secrets, le workflow s'arrête sur un avertissement, sans échec. La mise en place pas à pas est dans le `README.md` du dépôt, section « Documentation ».
 
 ```bash
-BOSCO_DOCS_BASE_PATH=/bosco make docs-build
+gh secret set CLOUDFLARE_API_TOKEN --repo fpasquet/bosco
+gh secret set CLOUDFLARE_ACCOUNT_ID --repo fpasquet/bosco
 ```
+
+La variable facultative `NEXT_PUBLIC_SITE_URL` donne l'adresse publique du site : à régler si Cloudflare a suffixé le nom du projet (déjà pris) ou quand un domaine est rattaché. `make docs-deploy` publie depuis le poste, après `wrangler login`.
+
+## Publier une version
+
+Une version de Bosco se publie depuis l'onglet Actions, workflow « Release », lancé à la main avec un canal (`beta` ou `stable`), une version facultative et `dry_run` :
+
+1. **Essai à blanc** (`dry_run`, coché par défaut) : la version et les notes s'affichent dans le résumé de l'exécution, les fichiers restent dans ses artefacts. Rien ne part sur le dépôt.
+2. **Bêta** : la bêta suivante (`0.3.0-beta.1`, puis `-beta.2`…), publiée en pre-release.
+3. **Stable** : la version tirée des commits, ou celle donnée.
+
+La version suit les [Conventional Commits](https://www.conventionalcommits.org/) de `main` : `feat` monte la version mineure, `fix` le correctif, avant la 1.0. Le workflow l'écrit dans les applications, régénère `CHANGELOG.md` (git-cliff, `cliff.toml`), construit le `.deb`, l'AppImage, leurs fichiers de mise à jour et l'APK signé, puis pousse le commit `chore(release): vX.Y.Z` et l'étiquette sur `main` et crée la release avec ses notes et `SHA256SUMS`. Le site est ensuite republié par le workflow « Docs ».
+
+L'APK se signe avec la clé de release, rangée dans les secrets `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS` et `ANDROID_KEY_PASSWORD`. Sans eux, une release s'arrête ; un essai à blanc signe avec la clé de debug.

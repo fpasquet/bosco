@@ -7,6 +7,10 @@ L'application Android montre l'interface téléphone de Bosco dans une vue web, 
 
 ## Obtenir l'APK
 
+### Le télécharger
+
+L'APK de chaque version est joint à sa release, signé avec la clé de release de Bosco : `bosco-android-<version>.apk`. La page [Télécharger](/docs/download) donne celui de la dernière version. Sur le téléphone, ouvre-la dans le navigateur et touche « Android · APK ».
+
 ### Le construire : make android
 
 ```bash
@@ -21,35 +25,24 @@ Il faut un **JDK 17** et le **SDK Android**. Le Makefile les cherche dans `~/.lo
 make android JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 ANDROID_HOME=$HOME/Android/Sdk
 ```
 
-Le dossier `apps/mobile/android` n'est pas versionné : il est régénéré à chaque construction.
-
-### Le télécharger depuis la CI
-
-Le workflow « Apps » construit aussi l'APK, à chaque push sur `main` et sur chaque étiquette `v*` (voir [Télécharger le paquet depuis la CI](/docs/desktop#télécharger-le-paquet-depuis-la-ci)) :
-
-- dans l'onglet Actions, l'artefact `bosco-android` contient `bosco-android-<commit>.apk`, gardé 30 jours ;
-- sur une release `vX.Y.Z`, l'APK est joint tel quel.
-
-```bash
-gh run download <run-id> -R fpasquet/bosco -n bosco-android
-```
+Le dossier `apps/mobile/android` n'est pas versionné : il est régénéré à chaque construction. Sans clé de release (`BOSCO_ANDROID_KEYSTORE` et ses mots de passe), l'APK construit sur le poste est signé avec la clé de debug d'Expo.
 
 ## Installer hors Play Store
 
-Bosco n'est pas sur le Play Store. Copie l'APK sur le téléphone, ou télécharge-le depuis GitHub sur le téléphone, puis ouvre-le. Android demande d'autoriser l'installation d'applications inconnues pour l'application qui l'ouvre (navigateur, gestionnaire de fichiers) : accepte pour celle-là seulement.
+Bosco n'est pas sur le Play Store. Télécharge l'APK sur le téléphone, ou copie-le depuis le poste, puis ouvre-le. Android demande d'autoriser l'installation d'applications inconnues pour l'application qui l'ouvre (navigateur, gestionnaire de fichiers) : accepte pour celle-là seulement.
 
 Depuis le poste, avec le téléphone branché en USB et le débogage USB activé :
 
 ```bash
-adb install apps/mobile/android/app/build/outputs/apk/release/app-release.apk
+adb install bosco-android-0.1.0-beta.1.apk
 ```
 
-Pour mettre à jour, installe un APK plus récent par-dessus : l'appairage est gardé.
+Pour mettre à jour, installe un APK plus récent par-dessus : l'appairage est gardé. Bosco signale une version plus récente dans les réglages du téléphone (« À propos »), avec l'APK à télécharger.
 
-<Callout type="warn" title="Signé avec la clé de debug d'Expo">
-  Le dépôt ne contient aucune clé de signature : l'APK est signé avec la clé de debug du projet que génère Expo. Il
-  convient pour ton téléphone, pas pour une distribution publique. Un APK signé avec une autre clé ne s'installe pas
-  par-dessus : désinstalle d'abord l'ancien.
+<Callout type="warn" title="Une seule clé par installation">
+  Android n'installe un APK par-dessus que s'il est signé avec la même clé. Un APK construit sur le poste (clé de debug
+  d'Expo) et celui d'une release (clé de release) ne se remplacent pas : désinstalle d'abord l'ancien, puis appaire de
+  nouveau le téléphone.
 </Callout>
 
 ## Appairer le téléphone avec le poste
@@ -117,6 +110,7 @@ La notification n'a pas encore de bouton « Autoriser » : touche-la pour ouvr
 On les ouvre depuis le menu de l'interface, entrée « Réglages de l'application » :
 
 - **Poste** : l'adresse, la date d'appairage et « Oublier ce poste ».
+- **Version** : celle de l'application Android, qu'elle donne aussi à la page « À propos » des réglages de Bosco.
 - **Notifications** : « Rester connecté en arrière-plan » (désactivé par défaut), « Vibrer pour une autorisation » (activé par défaut), et « Choisir ce qui notifie », qui ouvre [Réglages › Notifications](/docs/guides/notifications) de Bosco.
 
 ## Poste injoignable

@@ -1,9 +1,9 @@
 ---
 title: Projets et groupes
-description: Choisir ses projets dans un navigateur de dossiers, les réunir en groupes, lancer une session sur plusieurs projets, et donner du contexte aux agents.
+description: Les dépôts de tes sessions deviennent des projets d'eux-mêmes ; en ajouter d'autres, les réunir en groupes, lancer une session sur plusieurs projets, et donner du contexte aux agents.
 ---
 
-Bosco range chaque session sous le projet qui contient son dossier de travail. Un projet est un dossier que tu as ajouté, par exemple `~/www/api-tarifs`. Un groupe réunit des projets qui vont ensemble : ceux d'un client, ceux d'une stack, ou tes projets perso.
+Bosco range chaque session sous le projet qui contient son dossier de travail. Un projet est un dépôt git où une session a tourné, que Bosco adopte de lui-même, ou un dossier que tu as ajouté, par exemple `~/www/api-tarifs`. Un groupe réunit des projets qui vont ensemble : ceux d'un client, ceux d'une stack, ou tes projets perso.
 
 Dans les exemples, trois groupes :
 
@@ -20,11 +20,17 @@ Dans les exemples, trois groupes :
 « Tous les projets » (`/projects`) liste :
 
 - **« Projets »** : chaque projet avec son chemin, ses groupes, sa dernière session, la puce « sans git » ou « monodépôt » s'il y a lieu, et « Ajouter à un groupe ». Un projet est un monodépôt quand sa racine a un `pnpm-workspace.yaml`, un `turbo.json`, un `nx.json` ou des `workspaces` dans son `package.json` : ses paquets sont des sous-dossiers d'un seul projet (`creneaux/packages/paiement`) ;
-- **« Hors projet »** : les sessions dont le dossier n'est dans aucun projet ;
-- **« Suggestions »** : les dossiers où une session a tourné, hors de tes projets, avec « Ajouter » ou « Ignorer » ;
+- **« Hors projet »** : les sessions dont le dossier n'est dans aucun projet, par exemple un dossier sans git ;
+- **« Suggestions »** : les dossiers sans git où une session a tourné, hors de tes projets, avec « Ajouter » ou « Ignorer ». « Ignorés » garde aussi les dossiers des projets retirés ;
 - **« Groupes »** : chaque groupe, son nombre de projets et sa description.
 
-Au premier passage, sans projet, la page propose les suggestions avec des cases : un dépôt Git avec une session de moins de 7 jours est déjà coché. Ton dossier personnel, `/tmp` et le dossier de données de Bosco ne sont jamais proposés.
+## Les projets adoptés
+
+Chaque dépôt git où une session a tourné devient un projet de lui-même : au démarrage, après une réinitialisation et dès qu'une nouvelle session est lue. Un worktree rejoint son dépôt d'origine. Le projet adopté n'est ni épinglé ni dans un groupe ; ses sessions passées s'y rangent aussitôt, et l'[usage](/docs/guides/history-and-usage#usage) le compte.
+
+Ne sont jamais adoptés : ton dossier personnel, les dossiers temporaires (`/tmp`), les données de Bosco, les dossiers ignorés et les dépôts qui n'existent plus sur le poste. Un dossier sans git n'est pas adopté : il contiendrait les dépôts qui s'y ajouteraient ensuite. Il reste dans les suggestions, et « Ajouter » en fait un projet.
+
+La barre latérale ne montre que les projets épinglés ou qui ont une session ouverte : « Tous les projets » et les listes de choix les montrent tous.
 
 ## Ajouter des projets
 
@@ -51,7 +57,7 @@ Le menu ⋯ d'un projet, dans la barre latérale ou sur sa page, propose « Nou
 
 ### Retirer un projet
 
-« Retirer le projet » ne touche à rien sur le poste : ni le dossier, ni les sessions. Les sessions passent sous « Hors projet », le projet sort de ses groupes, et ses décisions sont gardées pour le jour où tu l'ajoutes de nouveau. Tant qu'une session pilotée tourne dans le projet, le retrait est bloqué.
+« Retirer le projet » ne touche à rien sur le poste : ni le dossier, ni les sessions. Les sessions passent sous « Hors projet », le projet sort de ses groupes, et ses décisions sont gardées pour le jour où tu l'ajoutes de nouveau. Son dossier passe dans les dossiers ignorés : sinon, la session suivante le ferait adopter de nouveau. « Ne plus ignorer », dans les suggestions, le fait revenir s'il a des sessions. Tant qu'une session pilotée tourne dans le projet, le retrait est bloqué.
 
 ## Les groupes
 
