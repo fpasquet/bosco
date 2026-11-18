@@ -116,10 +116,11 @@ const SCRIPTED_MEASURE_MS = 1000;
           events,
           hostCpus: availableParallelism(),
           limits: { cpus: AGENT_LIMITS.cpus, memory: AGENT_LIMITS.memory },
-          // Un tour piloté sur le poste se mesure sur l'arbre des processus de son agent
+          // Un tour piloté sur le poste se mesure sur l'arbre des processus de son agent ; celui d'un bac à sable se
+          // mesure avec son conteneur
           pilots: {
             list: async () => {
-              const turns = pilot.runningTurns();
+              const turns = pilot.runningTurns().filter(({ sandboxed }) => !sandboxed);
               if (turns.length === 0) return [];
               const pids = turns.flatMap(({ pid }) => (pid === null ? [] : [pid]));
               const [usage, named] = await Promise.all([processes.sample(pids), titles()]);

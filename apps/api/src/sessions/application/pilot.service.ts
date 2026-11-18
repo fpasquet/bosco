@@ -341,9 +341,17 @@ export class PilotService {
       .map(({ sessionId }) => sessionId);
   }
 
-  /** Tours en cours, avec le processus de leur agent : le panneau des conteneurs les mesure. */
-  runningTurns(): { pid: null | number; sessionId: string; since: Date }[] {
-    return [...this.turns].map(([sessionId, turn]) => ({ pid: turn.process.pid, sessionId, since: turn.startedAt }));
+  /**
+   * Tours en cours, avec le processus de leur agent : le panneau des conteneurs mesure ceux du poste. Celui d'un bac à
+   * sable tourne dans son conteneur : son processus sur le poste n'est que `docker exec`.
+   */
+  runningTurns(): { pid: null | number; sandboxed: boolean; sessionId: string; since: Date }[] {
+    return [...this.turns].map(([sessionId, turn]) => ({
+      pid: turn.process.pid,
+      sandboxed: Boolean(this.records.get(sessionId)?.sandbox),
+      sessionId,
+      since: turn.startedAt,
+    }));
   }
 
   pilotOf(sessionId: string): null | PilotView {

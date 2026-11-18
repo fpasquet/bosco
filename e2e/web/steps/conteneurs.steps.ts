@@ -41,6 +41,11 @@ Given('une session pilotée a un long tour en cours sur le poste', async ({ bosc
   await expect.poll(async () => (await containers(bosco)).piloted.length).toBe(1);
 });
 
+Given('une session a un long tour en cours dans un bac à sable', async ({ bosco }) => {
+  await start(bosco, 'Lance un long travail dans le bac à sable', true);
+  await expect.poll(async () => (await containers(bosco)).sandboxes.length).toBe(1);
+});
+
 Given('Docker ne répond plus', async ({ bosco }) => {
   await fetch(`${bosco.url}/__test/docker`, {
     method: 'POST',

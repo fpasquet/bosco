@@ -42,6 +42,14 @@ Fonctionnalité: Conteneurs en cours
     Quand je clique sur le lien « Voir la session »
     Alors le titre de la page porte « Bac à sable »
 
+  @CA-CONT-181
+  Scénario: Le tour d'un bac à sable se compte avec son bac à sable, pas parmi les tours sur le poste
+    Étant donné une session a un long tour en cours dans un bac à sable
+    Quand j'ouvre la page « / »
+    Et je clique sur le résumé « Conteneurs » de la barre latérale
+    Alors je vois le titre « Bacs à sable »
+    Et je ne vois plus le texte « Tours sur le poste »
+
   @CA-CONT-81
   Scénario: Quand Docker ne répond plus, les dernières mesures restent, grisées et datées, sans action
     Étant donné une session tourne dans un bac à sable
