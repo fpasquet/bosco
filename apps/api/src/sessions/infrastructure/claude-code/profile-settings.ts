@@ -4,8 +4,15 @@
 // Désinstaller ne retire que les siens. Un fichier illisible n'est jamais réécrit.
 import { copyFile, readFile, rename, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import type { HookEndpoint, ProfileSettings } from '../../application/ports.ts';
+import type { ClaudeProfileDefaults, HookEndpoint, ProfileSettings } from '../../application/ports.ts';
 import { DomainError } from '../../../shared/domain/domain-error.ts';
+import {
+  effortOf,
+  NO_DEFAULTS,
+  type PermissionMode,
+  permissionModeOf,
+  type SessionDefaults,
+} from '../../../shared/domain/session-settings.ts';
 import { LIVE_TRACKING_EVENTS } from '../../application/live-tracking.service.ts';
 
 type HookGroup = { hooks?: unknown[]; matcher?: string } & Record<string, unknown>;
@@ -47,7 +54,32 @@ function withoutBosco(settings: Settings, isBoscoHook: (hook: unknown) => boolea
   return Object.keys(hooks).length > 0 ? { ...rest, hooks } : rest;
 }
 
-export class FileProfileSettings implements ProfileSettings {
+/** Mode d'autorisations de Claude Code (permissions.defaultMode) tel que Bosco le nomme ; dontAsk n'est pas proposé. */
+function modeOf(value: unknown): null | PermissionMode {
+  return value === 'default' || value === 'manual' ? 'ask' : permissionModeOf(value);
+}
+
+export class FileProfileSettings implements ProfileSettings, ClaudeProfileDefaults {
+  /** Mode, modèle et effort que règle le profil (permissions.defaultMode, model, effortLevel) ; illisible : aucun. */
+  async sessionDefaults(profilePath: string): Promise<SessionDefaults> {
+    let settings: Settings;
+    try {
+      settings = await this.read(join(profilePath, 'settings.json'));
+    } catch {
+      return NO_DEFAULTS;
+    }
+    const { effortLevel, model, permissions } = settings as Settings & {
+      effortLevel?: unknown;
+      model?: unknown;
+      permissions?: { defaultMode?: unknown };
+    };
+    return {
+      effort: effortOf(effortLevel),
+      model: typeof model === 'string' && model.trim() ? model.trim() : null,
+      permissionMode: modeOf(permissions?.defaultMode),
+    };
+  }
+
   async install(profilePath: string, endpoint: HookEndpoint, backup: boolean): Promise<{ backupPath: null | string }> {
     const path = join(profilePath, 'settings.json');
     const current = await this.read(path);

@@ -1,19 +1,12 @@
+import type { Effort, PermissionMode } from '../../shared/domain/session-settings.ts';
 import { DomainError } from '../../shared/domain/domain-error.ts';
+
+export { type Effort, EFFORTS, PERMISSION_MODES, type PermissionMode } from '../../shared/domain/session-settings.ts';
 
 /**
  * Session pilotée par Bosco (E2e à E2h, E16a, règle 4, DT-31) : Bosco la démarre ou la reprend et lui écrit. Un tour
  * par lancement de l'agent ; entre deux tours, la session est close et se reprend aussi dans un terminal.
  */
-
-/** Mode d'autorisations choisi dans la barre d'outils : Demander, Accepter les modifications, Plan (CA-SESS-94). */
-export type PermissionMode = 'acceptEdits' | 'ask' | 'plan';
-
-export const PERMISSION_MODES: readonly PermissionMode[] = ['ask', 'acceptEdits', 'plan'];
-
-/** Effort de l'agent ; null : celui du profil. */
-export type Effort = 'high' | 'low' | 'max' | 'medium' | 'xhigh';
-
-export const EFFORTS: readonly Effort[] = ['low', 'medium', 'high', 'xhigh', 'max'];
 
 /** Réglages d'un tour : ils valent dès le message envoyé et pour les suivants (CA-SESS-94). */
 export interface PilotSettings {

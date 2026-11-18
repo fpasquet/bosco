@@ -14,6 +14,7 @@ import { LiveSignalService } from './application/live-signal.service.ts';
 import { LiveTrackingService } from './application/live-tracking.service.ts';
 import { NotificationService } from './application/notification.service.ts';
 import { PilotService } from './application/pilot.service.ts';
+import { SessionDefaultsService } from './application/session-defaults.service.ts';
 import { SessionService } from './application/session.service.ts';
 import { SettingsService } from './application/settings.service.ts';
 import { SourceService } from './application/source.service.ts';
@@ -32,6 +33,7 @@ import { NotifySendAlerts, RecordingNotifier } from './infrastructure/notificati
 import { PresenceTracker } from './infrastructure/notifications/presence.ts';
 import { MikroOrmNotificationRepository } from './infrastructure/persistence/notification.repository.ts';
 import { MikroOrmPilotRepository } from './infrastructure/persistence/pilot.repository.ts';
+import { MikroOrmProfileDefaultsRepository } from './infrastructure/persistence/profile-defaults.repository.ts';
 import { MikroOrmSessionRepository } from './infrastructure/persistence/session.repository.ts';
 import { MikroOrmSettingsRepository } from './infrastructure/persistence/settings.repository.ts';
 import { MikroOrmSourceRepository } from './infrastructure/persistence/source.repository.ts';
@@ -58,6 +60,7 @@ import {
   NOTIFIER,
   PILOT_SERVICE,
   PRESENCE,
+  SESSION_DEFAULTS_SERVICE,
   SESSION_EVENTS,
   SESSION_SERVICE,
   SETTINGS_SERVICE,
@@ -182,6 +185,17 @@ const conversations = new FileConversationReader();
         ),
     },
     {
+      provide: SESSION_DEFAULTS_SERVICE,
+      inject: [ORM, SESSION_SERVICE],
+      useFactory: (orm: MikroORM, sessionService: SessionService) =>
+        new SessionDefaultsService(
+          new MikroOrmSourceRepository(orm),
+          new MikroOrmProfileDefaultsRepository(orm),
+          new FileProfileSettings(),
+          sessionService,
+        ),
+    },
+    {
       provide: PILOT_SERVICE,
       inject: [ORM, CONFIG, LIVE_SIGNAL_SERVICE, SESSION_SERVICE, SESSION_EVENTS],
       useFactory: (
@@ -260,6 +274,7 @@ const conversations = new FileConversationReader();
     SOURCE_SERVICE,
     HOOK_SECRET,
     PILOT_SERVICE,
+    SESSION_DEFAULTS_SERVICE,
     CHANNEL_SERVICE,
   ],
 })
@@ -274,6 +289,7 @@ export class SessionsModule implements OnApplicationBootstrap, OnApplicationShut
     @Inject(NOTIFICATION_SERVICE) private readonly notifications: NotificationService,
     @Inject(PILOT_SERVICE) private readonly pilot: PilotService,
     @Inject(CHANNEL_SERVICE) private readonly channel: ChannelService,
+    @Inject(SESSION_DEFAULTS_SERVICE) private readonly defaults: SessionDefaultsService,
   ) {}
 
   async onApplicationBootstrap(): Promise<void> {
@@ -281,6 +297,7 @@ export class SessionsModule implements OnApplicationBootstrap, OnApplicationShut
     this.sessions.useNotifications(this.notifications);
     this.sessions.usePilots(this.pilot);
     this.pilot.useChannel(this.channel);
+    this.pilot.useDefaults(this.defaults);
     this.liveSignals.usePilots(this.pilot);
     await this.pilot.load();
     await this.liveSignals.dropStalePermissions();

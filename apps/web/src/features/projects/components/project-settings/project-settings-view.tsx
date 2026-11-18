@@ -3,9 +3,16 @@ import { Box, Globe, Layers, Monitor, X } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useId } from 'react';
 import { useForm } from 'react-hook-form';
-import type { GroupDto, ProjectDetailDto, ProjectPlaceDto } from '@bosco/domain';
+import type {
+  GroupDto,
+  ProjectDetailDto,
+  ProjectPlaceDto,
+  SessionDefaultsDto,
+  SessionDefaultsResolvedDto,
+} from '@bosco/domain';
 import { sinceNow } from '@/lib/format';
 import { SectionCard } from '@/shared/components/section-card';
+import { SessionDefaultsFields } from '@/shared/components/session-defaults-fields';
 import { Button } from '@/shared/ui/button';
 import { groupsOfProject } from '../../lib/groups';
 import { sessionsLabel } from '../../lib/selection';
@@ -19,14 +26,19 @@ export interface ProjectSettingsViewProps {
   draftDomain?: null | string;
   /** Tous les groupes : ceux du projet s'affichent, les autres se proposent */
   groups: GroupDto[];
+  /** Ce dont hérite une nouvelle session du projet, avec l'origine de chaque valeur */
+  inherited?: SessionDefaultsResolvedDto;
   now: Date;
   onAddDomain: (domain: string) => void;
   onAddToGroup: (group: GroupDto) => void;
+  onDefaults: (changes: Partial<SessionDefaultsDto>) => void;
   onNewGroup: () => void;
   onPlace: (place: ProjectPlaceDto) => void;
   onRemove: () => void;
   onRemoveDomain: (domain: string) => void;
   onStartBranch: (branch: null | string) => void;
+  /** Profils Claude Code surveillés, que le projet peut prendre par défaut */
+  profiles?: readonly { label: string; path: string }[];
   /** Chemin déjà écrit comme dans le terminal (« ~/www/api-tarifs ») */
   project: ProjectDetailDto;
   /** Refus de l'API pour la branche de départ, posé sous son champ */
@@ -163,14 +175,17 @@ export function ProjectSettingsView({
   domainError,
   draftDomain = null,
   groups,
+  inherited,
   now,
   onAddDomain,
   onAddToGroup,
+  onDefaults,
   onNewGroup,
   onPlace,
   onRemove,
   onRemoveDomain,
   onStartBranch,
+  profiles = [],
   project,
   startBranchError,
 }: ProjectSettingsViewProps) {
@@ -214,6 +229,13 @@ export function ProjectSettingsView({
         </div>
       </SectionCard>
       <SectionCard title="Sessions">
+        <SessionDefaultsFields
+          busy={busy}
+          defaults={project.defaults}
+          inherited={inherited}
+          profiles={profiles}
+          onChange={onDefaults}
+        />
         <fieldset className="flex flex-col gap-1.5" aria-describedby={placeHelp}>
           <legend className="mb-1.5 font-medium">Où elle tourne par défaut</legend>
           <div className="hidden grid-cols-2 gap-2 sm:w-96 md:grid">

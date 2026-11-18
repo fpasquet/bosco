@@ -1,5 +1,5 @@
 'use client';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Box,
   Download,
@@ -16,13 +16,15 @@ import {
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import type { GroupDto, PilotSettingsDto, SessionDto, StartSessionDto } from '@bosco/domain';
+import type { GroupDto, PilotOptionsDto, SessionDefaultsResolvedDto, SessionDto, StartSessionDto } from '@bosco/domain';
 import { PageSkeleton } from '@/shared/components/page-skeleton';
 import { useNotices } from '@/shared/hooks/use-notices';
+import { originLabel } from '@/shared/lib/session-settings';
 import { Breadcrumbs } from '@/shared/ui/breadcrumbs';
 import { groupQuery, groupsQuery } from '../../api/groups';
-import { isolationQuery, pilotOptionsQuery, startSession, suggestions } from '../../api/pilot';
+import { isolationQuery, pilotDefaultsQuery, pilotOptionsQuery, startSession, suggestions } from '../../api/pilot';
 import { sessionsQuery } from '../../api/sessions';
+import { useFullAccess } from '../../hooks/use-full-access';
 import {
   groupProjects,
   namesList,
@@ -32,8 +34,15 @@ import {
   sandboxDomains,
   withPrincipal,
 } from '../../lib/new-session';
+import {
+  choicesAfter,
+  effectiveSettings,
+  NO_CHOICES,
+  type SessionChoices,
+  settingsOrigins,
+} from '../../lib/session-choices';
 import { Composer, type ComposerValue } from '../composer';
-import { DEFAULT_SETTINGS } from '../pilot-panel';
+import { FullAccessDialog } from '../full-access-dialog';
 import { ProjectsField } from '../projects-field';
 
 /** Récapitulatif d'une session sur le poste (E16a, E16c) : le projet principal, et ceux qu'elle voit en plus. */
@@ -201,12 +210,6 @@ function SandboxCopies({
   );
 }
 
-/** Origine de l'abonnement proposé : le groupe choisi, sinon le projet principal. */
-function profileOrigin(path: string, group: null | { profile: null | string }, project: OptionProject): string {
-  if (path === group?.profile) return ' · défaut du groupe';
-  return path === project.defaultProfile ? ' · défaut du projet' : '';
-}
-
 /** Projets où une session du terminal est encore ouverte : un avertissement chacun, sauf en bac à sable. */
 function busyProjects(
   sessions: readonly SessionDto[],
@@ -260,13 +263,6 @@ function BusyWarnings({ busy, named }: { busy: { project: OptionProject; session
       </span>
     </div>
   ));
-}
-
-/** L'agent ne peut abîmer que sa copie : en bac à sable, les modifications passent sans demander (E16b). */
-function settingsWhere(where: 'sandbox' | 'workstation', settings: PilotSettingsDto): PilotSettingsDto {
-  return where === 'sandbox' && settings.permissionMode === 'ask'
-    ? { ...settings, permissionMode: 'acceptEdits' }
-    : settings;
 }
 
 /**
@@ -384,15 +380,6 @@ function startFrom(typed: Readonly<Record<string, string>>, project: OptionProje
   return typed[project.root] ?? project.startBranch ?? project.branch ?? '';
 }
 
-/** Abonnement proposé : celui du groupe choisi, sinon celui du projet principal, sinon le premier. */
-function proposedProfile(
-  group: null | { profile: null | string },
-  project: null | OptionProject,
-  profiles: readonly { path: string }[],
-): null | string {
-  return group?.profile ?? project?.defaultProfile ?? profiles[0]?.path ?? null;
-}
-
 /** Pourquoi le bac à sable est grisé : Docker, ou un projet de la session sans git ; null s'il est possible. */
 function sandboxReason(unavailable: null | string, chosen: readonly OptionProject[]): null | string {
   // Un projet sans git ne se copie pas dans un bac à sable : la session tourne alors seulement sur le poste
@@ -421,38 +408,142 @@ function originRoots(
   return found ? [found.root] : [];
 }
 
+/** Abonnement Claude d'une nouvelle session : la valeur par défaut dit d'où elle vient (« profil par défaut »). */
+function ProfileSelect({
+  defaults,
+  onChange,
+  profile,
+  profiles,
+}: {
+  defaults: SessionDefaultsResolvedDto | undefined;
+  onChange: (profile: null | string) => void;
+  profile: null | string;
+  profiles: PilotOptionsDto['profiles'];
+}) {
+  const origin = defaults && defaults.profile.value === profile ? originLabel(defaults.profile.origin) : null;
+  return (
+    <label className="flex min-w-0 flex-col gap-1.5">
+      <span className="text-sm font-medium">Abonnement Claude</span>
+      <select
+        className="select w-full"
+        value={profile ?? ''}
+        onChange={(event) => onChange(event.target.value || null)}
+      >
+        {profiles.length === 0 && <option value="">Aucun profil avec un accès Claude</option>}
+        {profiles.map(({ account, label, path }) => (
+          <option key={path} value={path}>
+            {label}
+            {path === profile && origin ? ` · ${origin}` : ''}
+            {account ? ` · ${account}` : ''}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+/** « Où elle tourne » : sur le poste, ou dans un bac à sable, grisé avec sa raison. */
+function WhereField({
+  onChoose,
+  unavailable,
+  where,
+}: {
+  onChoose: (where: 'sandbox' | 'workstation') => void;
+  unavailable: null | string;
+  where: 'sandbox' | 'workstation';
+}) {
+  return (
+    <fieldset className="flex flex-col gap-1.5">
+      <legend className="text-sm font-medium">Où elle tourne</legend>
+      <div className="grid grid-cols-2 gap-2">
+        <label className="flex cursor-pointer items-center gap-2 rounded-control border border-line bg-surface px-3 py-2">
+          <input
+            type="radio"
+            name="where"
+            className="radio radio-sm"
+            checked={where === 'workstation'}
+            onChange={() => onChoose('workstation')}
+          />
+          <Monitor aria-hidden className="size-4 text-muted" />
+          Sur le poste
+        </label>
+        <label className="flex cursor-pointer items-center gap-2 rounded-control border border-line bg-surface px-3 py-2">
+          <input
+            type="radio"
+            name="where"
+            className="radio radio-sm"
+            checked={where === 'sandbox'}
+            disabled={Boolean(unavailable)}
+            onChange={() => onChoose('sandbox')}
+          />
+          <Box aria-hidden className="size-4 text-muted" />
+          Bac à sable
+        </label>
+      </div>
+      {unavailable && <span className="text-xs text-muted">Bac à sable indisponible : {unavailable}.</span>}
+    </fieldset>
+  );
+}
+
 /**
- * Nouvelle session (E16a à E16d, CA-SESS-128, CA-SESS-132) : les projets, un seul ou ceux d'un groupe, le principal
+ * Nouvelle session (E16a à E16e, CA-SESS-128, CA-SESS-132) : les projets, un seul ou ceux d'un groupe, le principal
  * en tête, et l'abonnement Claude ; où elle tourne (sur le poste ou dans un bac à sable, une copie par projet sur sa
- * propre branche), puis le premier message, avec les réglages du tour dans la barre d'outils. Elle s'ouvre dans
- * Bosco. Partie d'un projet ou d'un groupe, elle le reprend, avec son fil d'Ariane.
+ * propre branche), puis le premier message, avec les réglages du tour dans la barre d'outils, chacun avec son origine
+ * (règle 16). L'accès complet sur le poste se confirme à chaque session. Elle s'ouvre dans Bosco. Partie d'un projet
+ * ou d'un groupe, elle le reprend, avec son fil d'Ariane.
  */
 export function NewSessionScreen({ origin }: { origin: NewSessionOrigin }) {
-  const open = useStartSession();
   const { data: options } = useQuery(pilotOptionsQuery);
+  const { data: group } = useQuery({ ...groupQuery(origin.group ?? 0), enabled: origin.group !== null });
+  if (!options || (origin.group !== null && !group)) return <PageSkeleton variant="detail" rows={6} />;
+  return <NewSessionForm origin={origin} options={options} group={group ?? null} />;
+}
+
+function NewSessionForm({
+  group,
+  options,
+  origin,
+}: {
+  group: GroupDto | null;
+  options: PilotOptionsDto;
+  origin: NewSessionOrigin;
+}) {
+  const open = useStartSession();
+  const fullAccess = useFullAccess();
   const { data: sessions } = useQuery(sessionsQuery);
   const { data: groups } = useQuery(groupsQuery);
   const { data: isolation } = useQuery(isolationQuery);
-  const { data: group } = useQuery({ ...groupQuery(origin.group ?? 0), enabled: origin.group !== null });
   const [chosenRoots, setChosenRoots] = useState<null | string[]>(null);
-  const [chosenGroup, setGroup] = useState<null | { id: number; name: string; profile: null | string }>(null);
+  const [chosenGroup, setGroup] = useState<null | { id: number; name: string }>(null);
   const [chosenProfile, setProfile] = useState<null | string>(null);
-  const [settings, setSettings] = useState<PilotSettingsDto>(DEFAULT_SETTINGS);
+  const [choices, setChoices] = useState<SessionChoices>(NO_CHOICES);
+  // L'accès complet confirmé pour cette session : le démarrage ne le redemande pas
+  const [confirmed, setConfirmed] = useState(false);
   const [chosenWhere, setWhere] = useState<'sandbox' | 'workstation' | null>(null);
   const [startBranches, setStartBranches] = useState<Record<string, string>>({});
   const [branch, setBranch] = useState('');
-  if (!options || (origin.group !== null && !group)) return <PageSkeleton variant="detail" rows={6} />;
   // Partie d'un groupe, la session prend ses projets, le principal en tête ; d'un projet, ce projet
-  const roots = chosenRoots ?? originRoots(group, options.projects, origin.project);
+  const roots = chosenRoots ?? originRoots(group ?? undefined, options.projects, origin.project);
   const chosen = roots.flatMap((root) => options.projects.filter((candidate) => candidate.root === root));
   const project = chosen[0] ?? null;
   const others = chosen.slice(1);
   const sessionGroup = chosenRoots === null && group ? group : chosenGroup;
-  const profile = chosenProfile ?? proposedProfile(sessionGroup, project, options.profiles);
   // « Où elle tourne » reprend le dernier choix fait pour le projet principal
   const where = chosenWhere ?? project?.place ?? 'workstation';
   const sandboxUnavailable = sandboxReason(options.sandboxUnavailable, chosen);
   const sandboxed = where === 'sandbox' && !sandboxUnavailable;
+  const { data: defaults } = useQuery({
+    ...pilotDefaultsQuery({
+      group: sessionGroup?.id ?? null,
+      profile: chosenProfile,
+      project: project?.root ?? null,
+      sandbox: sandboxed,
+    }),
+    enabled: project !== null,
+    placeholderData: keepPreviousData,
+  });
+  const profile = chosenProfile ?? defaults?.profile.value ?? options.profiles[0]?.path ?? null;
+  const settings = effectiveSettings(choices, defaults);
   // Le bac à sable travaille sur ses propres copies : une session du terminal dans le même dossier ne le gêne pas
   const busy = busyProjects(sessions ?? [], chosen, sandboxed);
   const fromOf = (candidate: OptionProject) => startFrom(startBranches, candidate);
@@ -460,27 +551,39 @@ export function NewSessionScreen({ origin }: { origin: NewSessionOrigin }) {
     setChosenRoots(next);
     setProfile(null);
   };
-  const choose = (next: 'sandbox' | 'workstation') => {
-    setWhere(next);
-    setSettings(settingsWhere(next, settings));
+  const changeSettings = (next: typeof settings) => {
+    const apply = () => setChoices(choicesAfter(choices, settings, next));
+    // Sur le poste, choisir l'accès complet demande une confirmation, à chaque session (E16e)
+    if (next.permissionMode === 'bypassPermissions' && settings.permissionMode !== next.permissionMode && !sandboxed)
+      fullAccess.ask(() => {
+        apply();
+        setConfirmed(true);
+      });
+    else apply();
   };
-  const submit = async (value: ComposerValue) => {
+  const start = async (value: ComposerValue) => {
     if (!project) return;
     await open({
       ...value,
+      group: sessionGroup?.id ?? null,
       profile,
       project: project.root,
       projects: others.map(({ root }) => root),
-      settings,
+      settings: choices,
       sandbox: sandboxed ? sandboxChoice(branch, chosen, fromOf) : null,
     });
   };
-  const start = originOf(origin, group ?? null, options.projects);
+  // Un accès complet venu d'un réglage par défaut se confirme aussi au démarrage, sauf en bac à sable
+  const submit = (value: ComposerValue) =>
+    settings.permissionMode === 'bypassPermissions' && !sandboxed && !confirmed
+      ? fullAccess.askBeforeStart(() => start(value))
+      : start(value);
+  const crumbs = originOf(origin, group, options.projects);
   const offer = projectsOffer(groups ?? [], options.projects, roots);
   const general = isolation ? [...isolation.domains.locked, ...isolation.domains.added] : [];
   return (
     <div className="flex flex-col gap-5 p-4 md:px-8 md:pt-6">
-      <Header start={start} group={sessionGroup?.name ?? null} principal={project?.name ?? null} />
+      <Header start={crumbs} group={sessionGroup?.name ?? null} principal={project?.name ?? null} />
       <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
         <div className="flex min-w-0 flex-col gap-4 md:col-span-2">
           {project ? (
@@ -494,7 +597,7 @@ export function NewSessionScreen({ origin }: { origin: NewSessionOrigin }) {
                     onAdd={(root) => changeProjects([...roots, root])}
                     onChooseGroup={(next) => {
                       changeProjects(groupProjects(next, options.projects));
-                      setGroup({ id: next.id, name: next.name, profile: next.profile });
+                      setGroup({ id: next.id, name: next.name });
                     }}
                     onDropGroup={() => {
                       setChosenRoots(roots);
@@ -510,55 +613,14 @@ export function NewSessionScreen({ origin }: { origin: NewSessionOrigin }) {
                     {project.changes ? ` · ${project.changes} modifiés` : ''}
                   </span>
                 </div>
-                <label className="flex min-w-0 flex-col gap-1.5">
-                  <span className="text-sm font-medium">Abonnement Claude</span>
-                  <select
-                    className="select w-full"
-                    value={profile ?? ''}
-                    onChange={(event) => setProfile(event.target.value || null)}
-                  >
-                    {options.profiles.length === 0 && <option value="">Aucun profil avec un accès Claude</option>}
-                    {options.profiles.map(({ account, label, path }) => (
-                      <option key={path} value={path}>
-                        {label}
-                        {account ? ` · ${account}` : ''}
-                        {profileOrigin(path, sessionGroup, project)}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                <ProfileSelect
+                  defaults={defaults}
+                  profile={profile}
+                  profiles={options.profiles}
+                  onChange={setProfile}
+                />
               </div>
-              <fieldset className="flex flex-col gap-1.5">
-                <legend className="text-sm font-medium">Où elle tourne</legend>
-                <div className="grid grid-cols-2 gap-2">
-                  <label className="flex cursor-pointer items-center gap-2 rounded-control border border-line bg-surface px-3 py-2">
-                    <input
-                      type="radio"
-                      name="where"
-                      className="radio radio-sm"
-                      checked={where === 'workstation'}
-                      onChange={() => choose('workstation')}
-                    />
-                    <Monitor aria-hidden className="size-4 text-muted" />
-                    Sur le poste
-                  </label>
-                  <label className="flex cursor-pointer items-center gap-2 rounded-control border border-line bg-surface px-3 py-2">
-                    <input
-                      type="radio"
-                      name="where"
-                      className="radio radio-sm"
-                      checked={where === 'sandbox'}
-                      disabled={Boolean(sandboxUnavailable)}
-                      onChange={() => choose('sandbox')}
-                    />
-                    <Box aria-hidden className="size-4 text-muted" />
-                    Bac à sable
-                  </label>
-                </div>
-                {sandboxUnavailable && (
-                  <span className="text-xs text-muted">Bac à sable indisponible : {sandboxUnavailable}.</span>
-                )}
-              </fieldset>
+              <WhereField where={where} unavailable={sandboxUnavailable} onChoose={setWhere} />
               {sandboxed && (
                 <SandboxFields
                   branch={branch}
@@ -573,7 +635,8 @@ export function NewSessionScreen({ origin }: { origin: NewSessionOrigin }) {
                 label="Premier message"
                 placeholder="Que doit faire l’agent ?"
                 settings={settings}
-                onSettingsChange={setSettings}
+                origins={settingsOrigins(choices, defaults)}
+                onSettingsChange={changeSettings}
                 onSubmit={submit}
                 suggest={(kind, query) => suggestions({ profile, project: project.root }, kind, query)}
                 submitLabel="Démarrer"
@@ -588,6 +651,22 @@ export function NewSessionScreen({ origin }: { origin: NewSessionOrigin }) {
         </div>
         <Summary branch={branch} chosen={chosen} general={general} sandboxed={sandboxed} />
       </div>
+      <FullAccessDialog
+        open={fullAccess.open}
+        project={project?.name ?? ''}
+        onCancel={fullAccess.cancel}
+        onConfirm={fullAccess.confirm}
+        onSandbox={
+          sandboxUnavailable
+            ? undefined
+            : () => {
+                // En bac à sable, l'accès complet ne demande rien : le formulaire passe en E16b en le gardant
+                setChoices({ ...choices, permissionMode: 'bypassPermissions' });
+                setWhere('sandbox');
+                fullAccess.cancel();
+              }
+        }
+      />
     </div>
   );
 }

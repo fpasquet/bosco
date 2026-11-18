@@ -9,9 +9,9 @@ Feature: Piloted sessions
     And Bosco watches the profiles ".claude-perso"
     And the folder "labo-ia" is a project
 
-  @CA-SESS-91
   @CA-SESS-92
   @CA-SESS-94
+  @CA-SESS-155
   Scenario: A session starts in the project with the settings of the toolbar, then runs a turn per message
     When I start a session in the project "labo-ia" with the JSON "fixtures/pilot/start-labo-ia.json"
     Then the response code should be 201
@@ -21,6 +21,7 @@ Feature: Piloted sessions
       | model          | claude-opus-5-5 |
       | effort         | high            |
       | project        | labo-ia         |
+      | profile        | perso           |
     When I write to "the started session" with the JSON "fixtures/pilot/tests-with-image.json"
     Then the response property "status" should equal "sent"
     And "the started session" should end its turn with "Reçu : Et les tests · mode default · modèle défaut · effort défaut · images 1"

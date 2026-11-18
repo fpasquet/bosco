@@ -24,3 +24,11 @@ export const Running: Story = {};
 export const Ended: Story = { args: { live: false } };
 
 export const Partial: Story = { args: { conversation: { ...STORY_CONVERSATION, partial: true } } };
+
+/** « Approuver pour moi » suspendu par Claude Code : la ligne du journal se place à son heure, entre deux tours. */
+export const AutoModeSuspended: Story = {
+  args: {
+    live: false,
+    notices: [{ at: STORY_CONVERSATION.turns[1]?.at ?? '', count: 3, kind: 'autoModeSuspended', seq: 7, total: false }],
+  },
+};

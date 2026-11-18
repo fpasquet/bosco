@@ -11,7 +11,7 @@ import { ImageChip } from './image-chip';
 import { IMAGE_TYPES, readImages } from './images';
 import { textOf } from './mentions';
 import { SendButton, type SendMode } from './send-button';
-import { SettingsBar } from './settings-bar';
+import { SettingsBar, type SettingsOrigins } from './settings-bar';
 import { listIdOf, optionIdOf, SuggestionMenu } from './suggestion-menu';
 
 export interface ComposerValue {
@@ -34,6 +34,8 @@ export interface ComposerProps {
   placeholder: string;
   /** Un tour tourne : champ vide → le bouton rond devient « Arrêter » (icône square) et appelle onStop */
   running?: boolean;
+  /** D'où vient chaque réglage d'une nouvelle session (« défaut du groupe ») */
+  origins?: SettingsOrigins;
   /** Réglages du tour : mode d'autorisations, modèle, effort (barre d'outils) */
   settings: PilotSettingsDto;
   /** Bouton d'envoi libellé (« Démarrer ») au lieu du bouton rond à flèche */
@@ -78,6 +80,7 @@ export function Composer({
   onSettingsChange,
   onStop,
   onSubmit,
+  origins,
   placeholder,
   running = false,
   settings,
@@ -222,6 +225,7 @@ export function Composer({
             compact
             className="flex gap-1.5 overflow-x-auto px-2 pt-2 md:hidden"
             settings={settings}
+            origins={origins}
             disabled={disabled}
             onChange={onSettingsChange}
           />
@@ -253,8 +257,9 @@ export function Composer({
                 <Plus aria-hidden className="size-4" />
               </button>
               <SettingsBar
-                className="flex items-center gap-1 max-md:hidden"
+                className="flex flex-wrap items-center gap-1 max-md:hidden"
                 settings={settings}
+                origins={origins}
                 disabled={disabled}
                 onChange={onSettingsChange}
               />

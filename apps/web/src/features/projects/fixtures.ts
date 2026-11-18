@@ -11,6 +11,7 @@ export const projectsOverview: ProjectsDto = {
   outside: 4,
   projects: [
     {
+      defaults: { effort: null, model: null, permissionMode: null, profile: null },
       git: true,
       id: 2,
       lastSessionAt: ago(3),
@@ -23,6 +24,7 @@ export const projectsOverview: ProjectsDto = {
       sessions: 6,
     },
     {
+      defaults: { effort: null, model: null, permissionMode: null, profile: null },
       git: true,
       id: 4,
       lastSessionAt: ago(5),
@@ -35,6 +37,7 @@ export const projectsOverview: ProjectsDto = {
       sessions: 4,
     },
     {
+      defaults: { effort: null, model: null, permissionMode: null, profile: null },
       git: true,
       id: 1,
       lastSessionAt: ago(12),
@@ -47,6 +50,7 @@ export const projectsOverview: ProjectsDto = {
       sessions: 9,
     },
     {
+      defaults: { effort: null, model: null, permissionMode: null, profile: null },
       git: true,
       id: 5,
       lastSessionAt: ago(2 * DAY),
@@ -59,6 +63,7 @@ export const projectsOverview: ProjectsDto = {
       sessions: 2,
     },
     {
+      defaults: { effort: null, model: null, permissionMode: null, profile: null },
       git: false,
       id: 6,
       lastSessionAt: ago(5 * DAY),
@@ -159,7 +164,7 @@ export const clubsGroup: GroupDto = {
   instructions:
     'Les textes lus par les joueurs sont en français.\nLes tickets du club se citent par leur clé (LAC-123).',
   name: 'Club des Trois Lacs',
-  profile: '/home/camille/.claude',
+  defaults: { effort: null, model: null, permissionMode: 'auto', profile: '/home/camille/.claude' },
   projects: [member(4, 'api-tarifs'), member(1, 'creneaux'), member(5, 'site-clubs')],
   sidebar: true,
   system: false,
@@ -170,7 +175,7 @@ export const allProjectsGroup: GroupDto = {
   id: 1,
   instructions: 'Messages de commit en anglais, au format Conventional Commits.\nNode 22 au minimum.',
   name: 'Tous les projets',
-  profile: null,
+  defaults: { effort: null, model: null, permissionMode: null, profile: null },
   projects: projectsOverview.projects.map(({ id, name }) => member(id, name)),
   sidebar: false,
   system: true,
@@ -184,7 +189,7 @@ export const storyGroups: GroupDto[] = [
     id: 3,
     instructions: '',
     name: 'Gîtes du Haut-Vallon',
-    profile: null,
+    defaults: { effort: null, model: null, permissionMode: null, profile: null },
     projects: [member(2, 'sejours')],
     sidebar: true,
     system: false,
@@ -194,7 +199,7 @@ export const storyGroups: GroupDto[] = [
     id: 4,
     instructions: 'Tests avec Vitest.\nJournaux au format JSON.',
     name: 'Node.js',
-    profile: null,
+    defaults: { effort: null, model: null, permissionMode: null, profile: null },
     projects: [member(4, 'api-tarifs'), member(2, 'sejours')],
     sidebar: false,
     system: false,

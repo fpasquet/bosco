@@ -13,8 +13,47 @@ import { quotaWindowsOf } from '../../../shared/domain/subscription-quota.ts';
 
 const QUESTION_TOOL = 'AskUserQuestion';
 
-/** Mode d'autorisations de Bosco, tel que Claude Code le nomme */
-const CLI_MODES: Record<PermissionMode, string> = { acceptEdits: 'acceptEdits', ask: 'default', plan: 'plan' };
+/** Mode d'autorisations de Bosco, tel que Claude Code le nomme (vérifié sur Claude Code 2.1.327) */
+const CLI_MODES: Record<PermissionMode, string> = {
+  acceptEdits: 'acceptEdits',
+  ask: 'default',
+  auto: 'auto',
+  bypassPermissions: 'bypassPermissions',
+  plan: 'plan',
+};
+
+/**
+ * Raison d'une demande qui suit la suspension d'« Approuver pour moi » : Claude Code repasse aux demandes après 3 refus
+ * du vérificateur de suite (« 3 consecutive actions were blocked ») ou 20 au total (« 20 actions were blocked this
+ * session »). Lu dans Claude Code 2.1.327.
+ */
+export function suspensionOf(request: Record<string, unknown>): null | { count: number; total: boolean } {
+  const reason = request.decision_reason;
+  if (request.decision_reason_type !== 'classifier' || typeof reason !== 'string') return null;
+  const consecutive = countBefore(reason, ' consecutive actions were blocked');
+  if (consecutive !== null) return { count: consecutive, total: false };
+  const total = countBefore(reason, ' actions were blocked this session');
+  return total === null ? null : { count: total, total: true };
+}
+
+/** Le nombre écrit juste avant une phrase ; null sans la phrase ou sans nombre. */
+function countBefore(text: string, phrase: string): null | number {
+  const at = text.indexOf(phrase);
+  if (at === -1) return null;
+  const count = Number(text.slice(0, at).trim().split(' ').at(-1));
+  return Number.isInteger(count) ? count : null;
+}
+
+/** Une demande de l'agent par le protocole de contrôle : une question, sinon une autorisation. */
+function controlRequest(requestId: string, inner: Record<string, unknown>, listener: TurnListener): void {
+  if (inner.subtype !== 'can_use_tool') return;
+  const tool = String(inner.tool_name);
+  const input = (inner.input ?? {}) as Record<string, unknown>;
+  const suspended = suspensionOf(inner);
+  if (suspended) listener.suspended(suspended.count, suspended.total);
+  if (tool === QUESTION_TOOL) listener.question(requestId, input);
+  else listener.permission(requestId, tool, input);
+}
 
 /** Arguments d'un tour : la session (nouvelle ou reprise) et les réglages du message envoyé. */
 export function turnArguments(request: TurnRequest): string[] {
@@ -86,15 +125,9 @@ export class ClaudeTurnRunner implements TurnRunner {
       } catch {
         return;
       }
-      if (line.type === 'control_request') {
-        const requestId = String(line.request_id);
-        const inner = (line.request ?? {}) as Line;
-        if (inner.subtype !== 'can_use_tool') return;
-        const tool = String(inner.tool_name);
-        const input = (inner.input ?? {}) as Record<string, unknown>;
-        if (tool === QUESTION_TOOL) listener.question(requestId, input);
-        else listener.permission(requestId, tool, input);
-      } else if (line.type === 'control_cancel_request') listener.cancelled(String(line.request_id));
+      if (line.type === 'control_request')
+        controlRequest(String(line.request_id), (line.request ?? {}) as Line, listener);
+      else if (line.type === 'control_cancel_request') listener.cancelled(String(line.request_id));
       else if (line.type === 'result') listener.result(typeof line.result === 'string' ? line.result : null);
       else {
         const windows = quotaWindowsOf(line);

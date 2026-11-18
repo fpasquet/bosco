@@ -1,4 +1,5 @@
 import { Radio, RadioTower, SquareTerminal } from 'lucide-react';
+import Link from 'next/link';
 import { Button } from '@/shared/ui/button';
 import { sinceNow } from '../../lib/format';
 
@@ -9,6 +10,8 @@ export interface SourceCardProps {
   /** Dernier signal reçu d'une session du profil ; null tant qu'aucune n'a parlé depuis le démarrage de Bosco */
   lastSignalAt: Date | null;
   liveTracking: boolean;
+  /** Réglages du profil (E4g) : ses valeurs par défaut des sessions ; absent : pas de lien */
+  manageHref?: string;
   now: Date;
   onOpenLiveTracking: () => void;
   onWatchedChange: (watched: boolean) => void;
@@ -38,6 +41,11 @@ export function SourceCard(props: SourceCardProps) {
             )}
           </p>
           <p className="truncate font-mono text-xs text-muted">{path}</p>
+          {props.manageHref && (
+            <Link href={props.manageHref} className="link text-xs font-medium link-primary">
+              Gérer<span className="sr-only"> le profil {label}</span>
+            </Link>
+          )}
         </div>
         <div className="min-w-0 text-xs md:w-56">
           <p className="flex items-center gap-1.5 font-medium">

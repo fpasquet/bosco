@@ -131,6 +131,7 @@ export function SourcesScreen() {
                   }
                 }
                 label={source.label}
+                manageHref={`/settings/sources/${encodeURIComponent(source.id)}`}
                 path={displayPath(source.path, data.home)}
                 liveTracking={source.liveTracking}
                 watched={source.watched}

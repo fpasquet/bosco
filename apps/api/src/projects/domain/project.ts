@@ -1,9 +1,12 @@
 import type { FolderPath } from './folder.ts';
 import { DomainError } from '../../shared/domain/domain-error.ts';
 import { isDomainName } from '../../shared/domain/domain-name.ts';
+import { changedLevelDefaults, type LevelDefaults, NO_LEVEL_DEFAULTS } from '../../shared/domain/session-settings.ts';
 
 export interface ProjectSnapshot {
   addedAt: Date;
+  /** Valeurs par défaut de ses nouvelles sessions : profil, autorisations, modèle, effort ; null : hériter */
+  defaults: LevelDefaults;
   /** Domaines propres au projet, ajoutés à la liste générale pour ses bacs à sable */
   domains: string[];
   /** Le dossier est un dépôt git : seuls ceux-là tournent en bac à sable */
@@ -25,6 +28,7 @@ export type ProjectPlaceChoice = 'sandbox' | 'workstation';
 
 /** Ce qui se change d'un projet : sa place dans la barre latérale et les valeurs par défaut de ses sessions. */
 export interface ProjectChanges {
+  defaults?: Partial<LevelDefaults>;
   pinned?: boolean;
   place?: null | ProjectPlaceChoice;
   startBranch?: null | string;
@@ -102,6 +106,7 @@ export class Project {
     if (projects.some(({ path }) => path === folder.value)) throw new ProjectAlreadyAdded(folder.value);
     return new Project({
       addedAt,
+      defaults: NO_LEVEL_DEFAULTS,
       domains: [],
       git,
       id,
@@ -117,7 +122,7 @@ export class Project {
   }
 
   static restore(snapshot: ProjectSnapshot): Project {
-    return new Project({ ...snapshot, domains: [...snapshot.domains] });
+    return new Project({ ...snapshot, defaults: { ...snapshot.defaults }, domains: [...snapshot.domains] });
   }
 
   get id(): number {
@@ -136,6 +141,7 @@ export class Project {
     if (changes.pinned !== undefined) this.snapshot.pinned = changes.pinned;
     if (changes.place !== undefined) this.rememberPlace(changes.place);
     if (changes.startBranch !== undefined) this.snapshot.startBranch = startBranchOf(changes.startBranch);
+    if (changes.defaults) this.snapshot.defaults = changedLevelDefaults(this.snapshot.defaults, changes.defaults);
   }
 
   /** Un domaine propre au projet : un nom, ou « *. » et un nom ; il vaut tout de suite pour ses bacs à sable. */
@@ -157,6 +163,6 @@ export class Project {
   }
 
   toSnapshot(): ProjectSnapshot {
-    return { ...this.snapshot, domains: [...this.snapshot.domains] };
+    return { ...this.snapshot, defaults: { ...this.snapshot.defaults }, domains: [...this.snapshot.domains] };
   }
 }

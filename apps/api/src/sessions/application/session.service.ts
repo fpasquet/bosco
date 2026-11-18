@@ -4,6 +4,7 @@ import type { JournalEntry, TranscriptEvent } from '../domain/transcript-event.t
 import type { NotificationService } from './notification.service.ts';
 import type { PilotView } from './pilot.service.ts';
 import type {
+  CatalogGroup,
   CatalogProject,
   Clock,
   ProjectCatalog,
@@ -18,7 +19,12 @@ import { DEFAULT_INACTIVITY_DELAY_MS, Session } from '../domain/session.ts';
 const RECENT_QUESTION_MS = 2 * 60 * 1000;
 
 /** Avant que les projets soient branchés, toutes les sessions sont hors projet. */
-const NO_PROJECTS: ProjectCatalog = { list: () => [], placeOf: () => null, rememberPlace: () => Promise.resolve() };
+const NO_PROJECTS: ProjectCatalog = {
+  groups: () => Promise.resolve([]),
+  list: () => [],
+  placeOf: () => null,
+  rememberPlace: () => Promise.resolve(),
+};
 
 export interface SessionView {
   /** Autres projets d'une session pilotée à plusieurs projets, qu'elle voit en plus de son projet principal */
@@ -73,6 +79,8 @@ export class SessionService {
   private notifications: null | Pick<NotificationService, 'notify' | 'settle'> = null;
   private pilots: PilotsView = NO_PILOTS;
   private projects: ProjectCatalog = NO_PROJECTS;
+  /** Dernière écriture en cours du journal de chaque session */
+  private readonly writing = new Map<string, Promise<void>>();
 
   constructor(
     private readonly sessionRepository: SessionRepository,
@@ -94,6 +102,11 @@ export class SessionService {
   /** Projets où l'on démarre une session et dont on lit le contexte : ceux que la personne a ajoutés. */
   knownProjects(): Promise<CatalogProject[]> {
     return Promise.resolve(this.projects.list());
+  }
+
+  /** Groupes avec lesquels démarrer une session, et leurs valeurs par défaut. */
+  knownGroups(): Promise<CatalogGroup[]> {
+    return this.projects.groups();
   }
 
   /** « Où elle tourne » d'une session démarrée : la prochaine du même projet le reprend. */
@@ -128,9 +141,42 @@ export class SessionService {
     this.notifications = notifications;
   }
 
+  /**
+   * Une écriture du journal d'une session à la fois : la lecture du transcript et le pilotage y ajoutent chacun des
+   * lignes, numérotées à la suite.
+   */
+  private exclusive<T>(sessionId: string, write: () => Promise<T>): Promise<T> {
+    const previous = this.writing.get(sessionId) ?? Promise.resolve();
+    const next = previous.then(write, write);
+    const settled = next.then(
+      () => undefined,
+      () => undefined,
+    );
+    this.writing.set(sessionId, settled);
+    void settled.then(() => {
+      if (this.writing.get(sessionId) === settled) this.writing.delete(sessionId);
+    });
+    return next;
+  }
+
+  /** Claude Code a suspendu « Approuver pour moi » d'une session pilotée : son fil le dit, à son heure (règle 17). */
+  noteAutoModeSuspended(sessionId: string, count: number, total: boolean): Promise<void> {
+    return this.exclusive(sessionId, async () => {
+      const session = await this.sessionRepository.find(sessionId);
+      if (!session) return;
+      session.noteAutoModeSuspended(count, total, this.clock.now());
+      await this.sessionRepository.save(session, session.pullJournal());
+      this.sessionEvents.sessionChanged(this.view(session));
+    });
+  }
+
   /** Tient compte des lignes nouvellement lues dans le transcript d'une session, qu'elle soit connue ou non. */
-  async recordTranscript(sourceId: string, sessionId: string, events: TranscriptEvent[]): Promise<SessionView | null> {
-    if (events.length === 0) return null;
+  recordTranscript(sourceId: string, sessionId: string, events: TranscriptEvent[]): Promise<SessionView | null> {
+    if (events.length === 0) return Promise.resolve(null);
+    return this.exclusive(sessionId, () => this.readTranscript(sourceId, sessionId, events));
+  }
+
+  private async readTranscript(sourceId: string, sessionId: string, events: TranscriptEvent[]): Promise<SessionView> {
     const found = await this.sessionRepository.find(sessionId);
     const firstAt = events.find((event) => event.at)?.at ?? this.clock.now();
     const session = found ?? Session.discover(sessionId, sourceId, firstAt);

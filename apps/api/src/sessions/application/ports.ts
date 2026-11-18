@@ -1,3 +1,4 @@
+import type { LevelDefaults, SessionDefaults } from '../../shared/domain/session-settings.ts';
 import type { Conversation } from '../domain/conversation.ts';
 import type { ProfileCandidate } from '../domain/profile-candidate.ts';
 import type { Session } from '../domain/session.ts';
@@ -78,8 +79,32 @@ export interface ProfileSettings {
   uninstall(profilePath: string, endpoint: HookEndpoint): Promise<void>;
 }
 
+/**
+ * Valeurs par défaut des sessions lancées dans Bosco avec un profil (E4g), gardées par Bosco ; NO_DEFAULTS sans
+ * réglage.
+ */
+export interface ProfileDefaultsRepository {
+  find(sourceId: string): Promise<SessionDefaults>;
+  save(sourceId: string, defaults: SessionDefaults): Promise<void>;
+}
+
+/** Ce que dit un profil Claude Code de ses sessions (settings.json : mode, modèle, effort), lu sans être modifié. */
+export interface ClaudeProfileDefaults {
+  sessionDefaults(profilePath: string): Promise<SessionDefaults>;
+}
+
+/** Groupe de projets avec lequel démarrer une session : ses projets dans l'ordre, le principal d'abord. */
+export interface CatalogGroup {
+  defaults: LevelDefaults;
+  id: number;
+  name: string;
+  projects: number[];
+}
+
 /** Projet où démarrer une session, avec ce que propose le formulaire par défaut. */
 export interface CatalogProject {
+  /** Valeurs par défaut de ses nouvelles sessions (E21a) */
+  defaults: LevelDefaults;
   /** Domaines propres au projet, ajoutés à la liste générale pour ses bacs à sable */
   domains: string[];
   git: boolean;
@@ -93,6 +118,8 @@ export interface CatalogProject {
 }
 
 export interface ProjectCatalog {
+  /** Groupes de projets, sans « Tous les projets » */
+  groups(): Promise<CatalogGroup[]>;
   list(): CatalogProject[];
   /** Note le dernier « Où elle tourne » d'une session démarrée dans le projet : la suivante le reprend */
   rememberPlace(root: string, place: 'sandbox' | 'workstation'): Promise<void>;

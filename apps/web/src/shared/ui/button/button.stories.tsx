@@ -8,7 +8,10 @@ const meta = {
   component: Button,
   args: { children: 'Autoriser', variant: 'primary', size: 'default' },
   argTypes: {
-    variant: { control: 'select', options: ['primary', 'outline', 'secondary', 'ghost', 'destructive', 'link'] },
+    variant: {
+      control: 'select',
+      options: ['primary', 'outline', 'secondary', 'ghost', 'destructive', 'warning', 'link'],
+    },
     size: { control: 'select', options: ['default', 'xs', 'sm', 'lg', 'icon', 'icon-xs', 'icon-sm', 'icon-lg'] },
   },
   parameters: {
@@ -43,6 +46,9 @@ export const Variants: Story = {
       </Button>
       <Button {...args} variant="destructive">
         Annuler la tâche
+      </Button>
+      <Button {...args} variant="warning">
+        Donner l’accès complet
       </Button>
       <Button {...args} variant="link">
         Voir les droits

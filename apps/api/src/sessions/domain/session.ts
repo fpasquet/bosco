@@ -243,6 +243,12 @@ export class Session {
     return waiting ? 'waiting' : 'running';
   }
 
+  /** Claude Code a suspendu « Approuver pour moi » : le journal le garde, à son heure dans le fil. */
+  noteAutoModeSuspended(count: number, total: boolean, at: Date): void {
+    this.pending.push({ seq: this.snapshot.nextSeq, at, kind: 'autoModeSuspended', count, total });
+    this.snapshot = { ...this.snapshot, nextSeq: this.snapshot.nextSeq + 1 };
+  }
+
   /** Entrées du journal ajoutées depuis le dernier enregistrement, à écrire une seule fois. */
   pullJournal(): JournalEntry[] {
     return this.pending.splice(0);

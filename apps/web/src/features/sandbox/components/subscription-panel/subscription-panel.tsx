@@ -1,14 +1,17 @@
 'use client';
 import { KeyRound } from 'lucide-react';
+import Link from 'next/link';
 import { useState } from 'react';
-import type { SubscriptionDto } from '@bosco/domain';
 import { Button } from '@/shared/ui/button';
+import { APP_NAME, type SubscriptionDto } from '@bosco/domain';
 
 export interface SubscriptionPanelProps {
   busy: boolean;
   /** Refus de l'API : profil sans accès */
   error: null | string;
   onChange: (profile: string) => void;
+  /** Réglages du profil de l'abonnement dans Bosco (autorisations, modèle, effort) ; null s'il n'est pas surveillé */
+  profileHref?: null | string;
   subscription: SubscriptionDto;
 }
 
@@ -21,7 +24,7 @@ function profileName({ account, label }: { account: null | string; label: null |
  * Abonnement Claude par défaut (E11) : celui que propose une nouvelle session, choisi parmi les profils surveillés qui
  * ont un accès. Un bac à sable en reçoit une copie de l'accès. Sur le téléphone, il se lit sans se changer.
  */
-export function SubscriptionPanel({ busy, error, onChange, subscription }: SubscriptionPanelProps) {
+export function SubscriptionPanel({ busy, error, onChange, profileHref = null, subscription }: SubscriptionPanelProps) {
   const [editing, setEditing] = useState(false);
   const [profile, setProfile] = useState(subscription.profile ?? subscription.choices[0]?.path ?? '');
   return (
@@ -43,6 +46,15 @@ export function SubscriptionPanel({ busy, error, onChange, subscription }: Subsc
               ? 'Proposé à chaque nouvelle session ; tu peux en choisir un autre au démarrage. Un bac à sable en reçoit une copie de l’accès.'
               : 'Aucun accès à l’abonnement : connecte-toi dans un profil surveillé, puis choisis-le ici.'}
           </p>
+          {subscription.available && profileHref && (
+            <p className="mt-1 text-muted">
+              C’est le profil par défaut de {APP_NAME} : un projet ou un groupe peut en choisir un autre, et la session
+              a le dernier mot.{' '}
+              <Link href={profileHref} className="link link-hover">
+                Autorisations, modèle et effort par défaut
+              </Link>
+            </p>
+          )}
           {editing && (
             <form
               className="mt-2 flex flex-wrap gap-2"

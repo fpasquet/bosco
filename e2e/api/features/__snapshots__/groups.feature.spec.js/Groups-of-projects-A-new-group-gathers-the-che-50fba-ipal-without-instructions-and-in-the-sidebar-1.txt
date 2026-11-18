@@ -1,11 +1,16 @@
 {
   "groups": [
     {
+      "defaults": {
+        "effort": null,
+        "model": null,
+        "permissionMode": null,
+        "profile": null
+      },
       "description": "Client : le Club des Trois Lacs",
       "id": 2,
       "instructions": "",
       "name": "Club des Trois Lacs",
-      "profile": null,
       "projects": [
         {
           "id": 1,
@@ -24,11 +29,16 @@
       "system": false
     },
     {
+      "defaults": {
+        "effort": null,
+        "model": null,
+        "permissionMode": null,
+        "profile": null
+      },
       "description": null,
       "id": 3,
       "instructions": "",
       "name": "Node.js",
-      "profile": null,
       "projects": [
         {
           "id": 1,
@@ -39,11 +49,16 @@
       "system": false
     },
     {
+      "defaults": {
+        "effort": null,
+        "model": null,
+        "permissionMode": null,
+        "profile": null
+      },
       "description": null,
       "id": 1,
       "instructions": "",
       "name": "Tous les projets",
-      "profile": null,
       "projects": [
         {
           "id": 1,

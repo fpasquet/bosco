@@ -1,4 +1,4 @@
-import type { IsolationDto, QuotaDto, QuotaScopeDto, QuotaThresholdsDto } from '@bosco/domain';
+import type { IsolationDto, QuotaDto, QuotaScopeDto, QuotaThresholdsDto, SourcesDto } from '@bosco/domain';
 
 /** Réglage refusé par l'API (400) : son message s'affiche sous le champ. */
 export class IsolationRefused extends Error {}
@@ -10,6 +10,16 @@ export const isolationQuery = {
     const response = await fetch('/api/isolation');
     if (!response.ok) throw new Error(`GET /api/isolation answered ${response.status}`);
     return (await response.json()) as IsolationDto;
+  },
+};
+
+/** Profils surveillés : celui de l'abonnement par défaut ouvre ses réglages par son identifiant. */
+export const profilesQuery = {
+  queryKey: ['sources'],
+  queryFn: async () => {
+    const response = await fetch('/api/sources');
+    if (!response.ok) throw new Error(`GET /api/sources answered ${response.status}`);
+    return (await response.json()) as SourcesDto;
   },
 };
 

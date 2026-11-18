@@ -1,9 +1,14 @@
 {
+  "defaults": {
+    "effort": null,
+    "model": null,
+    "permissionMode": null,
+    "profile": null
+  },
   "description": "Client : le Club des Trois Lacs",
   "id": 2,
   "instructions": "Les textes lus par les joueurs sont en français.\n\nLes tickets du club se citent par leur clé (LAC-123).",
   "name": "Club des Trois Lacs",
-  "profile": null,
   "projects": [
     {
       "id": 1,

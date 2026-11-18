@@ -14,6 +14,7 @@ const meta = {
     domainError: null,
     startBranchError: null,
     project: {
+      defaults: { effort: 'high', model: 'claude-sonnet-5-5', permissionMode: null, profile: null },
       id: 2,
       name: 'labo-ia',
       path: '~/www/labo-ia',
@@ -33,7 +34,7 @@ const meta = {
         name: 'Médias',
         description: null,
         instructions: '',
-        profile: null,
+        defaults: { effort: null, model: null, permissionMode: null, profile: null },
         sidebar: true,
         system: false,
         projects: [
@@ -45,7 +46,18 @@ const meta = {
     onAddToGroup: fn(),
     onNewGroup: fn(),
     onAddDomain: fn(),
+    onDefaults: fn(),
     onPlace: fn(),
+    profiles: [
+      { label: 'pro', path: '/home/camille/.claude' },
+      { label: 'perso', path: '/home/camille/.claude-perso' },
+    ],
+    inherited: {
+      effort: { value: 'high', origin: { level: 'project', name: 'labo-ia' } },
+      model: { value: 'claude-sonnet-5-5', origin: { level: 'project', name: 'labo-ia' } },
+      permissionMode: { value: 'ask', origin: { level: 'profile', name: 'pro' } },
+      profile: { value: '/home/camille/.claude', origin: { level: 'defaultProfile' } },
+    },
     onRemoveDomain: fn(),
     onRemove: fn(),
     onStartBranch: fn(),
@@ -61,6 +73,7 @@ export const Default: Story = {};
 export const WithoutGit: Story = {
   args: {
     project: {
+      defaults: { effort: null, model: null, permissionMode: null, profile: null },
       id: 4,
       name: 'notes',
       path: '~/notes',

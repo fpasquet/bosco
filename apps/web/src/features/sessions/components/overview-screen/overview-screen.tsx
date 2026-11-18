@@ -95,7 +95,6 @@ function LiveOverview({ sources, title }: OverviewProps & { sources: SourcesDto 
           )}
           <SessionsTable
             groups={grouping === 'group' ? groupByGroup(visible, groups ?? []) : groupByProject(visible)}
-            column={grouping === 'group' ? 'project' : undefined}
             headings
             markOf={(session) => profileMark(session, sources.sources)}
             now={now}

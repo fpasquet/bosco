@@ -1,4 +1,11 @@
-import type { ContextPreviewDto, GroupDto, GroupsDto, SourcesDto } from '@bosco/domain';
+import type {
+  ContextPreviewDto,
+  GroupDto,
+  GroupsDto,
+  SessionDefaultsDto,
+  SessionDefaultsResolvedDto,
+  SourcesDto,
+} from '@bosco/domain';
 
 /** Refus de Bosco (nom déjà pris, groupe inconnu), avec le texte à montrer. */
 export class GroupRefused extends Error {
@@ -47,6 +54,18 @@ export const profilesQuery = {
   queryFn: () => read<SourcesDto>('/api/sources'),
 };
 
+/**
+ * Ce dont hérite une nouvelle session d'un projet ou d'un groupe, avec l'origine de chaque valeur : ce que disent les
+ * lignes « Hériter » de leurs réglages (E21a, E22a).
+ */
+export const inheritedDefaultsQuery = (level: { group: number } | { project: string }) => ({
+  queryKey: ['pilot', 'defaults', 'level', level],
+  queryFn: () => {
+    const params = 'group' in level ? `group=${level.group}` : `project=${encodeURIComponent(level.project)}`;
+    return read<SessionDefaultsResolvedDto>(`/api/pilot/defaults?${params}`);
+  },
+});
+
 /** Texte transmis à un agent du projet, calculé à l'ouverture de l'aperçu. */
 export const previewQuery = (project: string) => ({
   queryKey: ['context-preview', project],
@@ -59,7 +78,12 @@ export const createGroup = (group: { description: null | string; name: string; p
 
 export const changeGroup = (
   id: number,
-  settings: { description?: null | string; name?: string; profile?: null | string; sidebar?: boolean },
+  settings: {
+    defaults?: Partial<SessionDefaultsDto>;
+    description?: null | string;
+    name?: string;
+    sidebar?: boolean;
+  },
 ) => send<GroupDto>('PATCH', `/api/groups/${id}`, settings);
 
 export const writeInstructions = (id: number, instructions: string) =>

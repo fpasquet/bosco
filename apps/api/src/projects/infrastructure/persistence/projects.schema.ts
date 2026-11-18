@@ -1,6 +1,14 @@
 import { EntitySchema } from '@mikro-orm/core';
 
-export interface ProjectRow {
+/** Valeurs par défaut des sessions d'un projet ou d'un groupe, une colonne chacune ; null : hériter. */
+interface DefaultsColumns {
+  effort: null | string;
+  model: null | string;
+  permissionMode: null | string;
+  profile: null | string;
+}
+
+export interface ProjectRow extends DefaultsColumns {
   addedAt: Date;
   domains: string[];
   git: boolean;
@@ -11,6 +19,13 @@ export interface ProjectRow {
   place: null | string;
   startBranch: null | string;
 }
+
+const DEFAULTS_COLUMNS = {
+  profile: { type: 'string', nullable: true },
+  permissionMode: { type: 'string', nullable: true, fieldName: 'permission_mode' },
+  model: { type: 'string', nullable: true },
+  effort: { type: 'string', nullable: true },
+} as const;
 
 /** Dossiers ajoutés comme projets. */
 export const ProjectSchema = new EntitySchema<ProjectRow>({
@@ -25,6 +40,7 @@ export const ProjectSchema = new EntitySchema<ProjectRow>({
     place: { type: 'string', nullable: true },
     startBranch: { type: 'string', nullable: true, fieldName: 'start_branch' },
     domains: { type: 'json', default: '[]' },
+    ...DEFAULTS_COLUMNS,
     addedAt: { type: 'datetime', fieldName: 'added_at' },
   },
 });
@@ -44,12 +60,11 @@ export const IgnoredFolderSchema = new EntitySchema<IgnoredFolderRow>({
   },
 });
 
-export interface ProjectGroupRow {
+export interface ProjectGroupRow extends DefaultsColumns {
   description: null | string;
   id: number;
   instructions: string;
   name: string;
-  profile: null | string;
   sidebar: boolean;
   system: boolean;
 }
@@ -63,7 +78,7 @@ export const ProjectGroupSchema = new EntitySchema<ProjectGroupRow>({
     name: { type: 'string', unique: true },
     description: { type: 'text', nullable: true },
     instructions: { type: 'text', default: '' },
-    profile: { type: 'string', nullable: true },
+    ...DEFAULTS_COLUMNS,
     sidebar: { type: 'boolean', default: true },
     system: { type: 'boolean', default: false },
   },

@@ -51,8 +51,9 @@ function mask(body: unknown, fields: string): unknown {
 const snapshot = (body: unknown, profilesRoot: string) =>
   `${JSON.stringify(body, null, 2).replaceAll(profilesRoot, '<profiles>')}\n`;
 
-When('I send {word} request to {string}', async ({ request, last }, method: string, path: string) => {
-  last.response = await send(request, method, path);
+When('I send {word} request to {string}', async ({ bosco, request, last }, method: string, path: string) => {
+  // {{profiles}} dans l'adresse désigne aussi le dossier des profils du scénario (un projet en paramètre)
+  last.response = await send(request, method, path.replaceAll('{{profiles}}', encodeURIComponent(bosco.profilesRoot)));
 });
 
 When(

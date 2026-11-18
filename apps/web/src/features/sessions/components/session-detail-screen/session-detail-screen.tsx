@@ -48,7 +48,9 @@ const CONVERSATION_REFRESH_MS = 5000;
 function agentSays(journal: JournalEntryDto[], session: SessionDto): null | string {
   const since = session.waiting?.since;
   if (!since) return null;
-  return journal.filter((entry) => entry.kind === 'reply' && entry.at <= since).at(-1)?.text ?? null;
+  const replies = journal.filter((entry) => entry.kind === 'reply' && entry.at <= since);
+  const last = replies.at(-1);
+  return last && 'text' in last ? last.text : null;
 }
 
 /**

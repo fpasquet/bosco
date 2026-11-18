@@ -18,6 +18,7 @@ interface SessionView {
     settings: { effort: null | string; model: null | string; permissionMode: string };
   };
   project: null | { name: string };
+  sourceId: string;
   waiting:
     | null
     | { kind: 'permission'; detail: null | string; requestId: string }
@@ -25,6 +26,7 @@ interface SessionView {
     | { kind: 'turn'; message: null | string };
 }
 interface SessionDetailDto {
+  journal: ({ kind: string } & Record<string, unknown>)[];
   session: SessionView;
 }
 
@@ -125,12 +127,19 @@ Then('{string} should have no pending message', async ({ request }, session: str
 Then('{string} should be piloted with:', async ({ request }, session: string, table: DataTable) => {
   const view = await detail(request, idOf(session));
   const expected = table.rowsHash();
-  expect({
+  const actual: Record<string, string | undefined> = {
     permissionMode: view.pilot?.settings.permissionMode,
     model: view.pilot?.settings.model ?? '',
     effort: view.pilot?.settings.effort ?? '',
     project: view.project?.name,
-  }).toEqual(expected);
+  };
+  // Le profil se lit par son nom (« perso ») : son identifiant change d'une instance à l'autre
+  if ('profile' in expected) {
+    const response = await request.get('/api/sources');
+    const { sources } = (await response.json()) as { sources: { id: string; label: string }[] };
+    actual.profile = sources.find(({ id }) => id === view.sourceId)?.label;
+  }
+  expect(actual).toEqual(expected);
 });
 
 Then('{string} should wait for the permission {string}', async ({ request }, session: string, detailText: string) => {
@@ -140,6 +149,51 @@ Then('{string} should wait for the permission {string}', async ({ request }, ses
     (view) => view.waiting?.kind === 'permission' && view.waiting.detail === detailText,
   );
 });
+
+Then(
+  '{string} should have auto mode suspended after {int} refusals in a row',
+  async ({ request }, session: string, count: number) => {
+    // La suspension est une ligne du journal de la session, gardée d'un démarrage de Bosco à l'autre
+    for (let attempt = 0; attempt < 60; attempt++) {
+      const response = await request.get(`/api/sessions/${idOf(session)}`);
+      const { journal } = (await response.json()) as SessionDetailDto;
+      const line = journal.find(({ kind }) => kind === 'autoModeSuspended');
+      if (line) {
+        expect(line).toMatchObject({ count, total: false });
+        return;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 150));
+    }
+    throw new Error(`The session ${session} has no suspension in its journal`);
+  },
+);
+
+/** Identifiant d'une source, d'après le dossier de son profil. */
+async function sourceOf(request: APIRequestContext, profile: string): Promise<string> {
+  const response = await request.get('/api/sources');
+  const { sources } = (await response.json()) as { sources: { id: string; path: string }[] };
+  const found = sources.find(({ path }) => path.endsWith(`/${profile}`));
+  if (!found) throw new Error(`No source for the profile ${profile}`);
+  return found.id;
+}
+
+When('I read the settings of the profile {string}', async ({ last, request }, profile: string) => {
+  const id = await sourceOf(request, profile);
+  const response = await request.get(`/api/sources/${id}/settings`);
+  last.response = { status: response.status(), body: (await response.json()) as unknown };
+});
+
+When(
+  'I set the defaults of the profile {string} with the JSON {string}',
+  async ({ bosco, last, request }, profile: string, file: string) => {
+    const id = await sourceOf(request, profile);
+    const data = JSON.parse(
+      readFileSync(join(FEATURES, file), 'utf8').replaceAll('{{profiles}}', bosco.profilesRoot),
+    ) as unknown;
+    const response = await request.put(`/api/sources/${id}/defaults`, { data });
+    last.response = { status: response.status(), body: (await response.json()) as unknown };
+  },
+);
 
 When('I allow the permission of {string}', async ({ request }, session: string) => {
   const view = await detail(request, idOf(session));

@@ -3,7 +3,7 @@
 // Il écrit le transcript dans le profil comme Claude Code, rappelle les dossiers ajoutés (--add-dir) et s'il lit leurs
 // instructions, demande une autorisation si le message parle
 // d'« autorisation », pose une question s'il parle de « question », attend « Arrêter » s'il parle d'un « long » travail,
-// et répond en rappelant ce qu'il a reçu (réglages du tour, images) pour que les scénarios le vérifient.
+// rend la main à Bosco comme après 3 refus du vérificateur s'il parle de « refus » en « Approuver pour moi », et répond en rappelant ce qu'il a reçu (réglages du tour, images) pour que les scénarios le vérifient.
 import { randomUUID } from 'node:crypto';
 import { appendFileSync, mkdirSync } from 'node:fs';
 import { homedir } from 'node:os';
@@ -101,6 +101,18 @@ async function turn(content) {
       tool_use_id: 'toolu_bash',
     });
     return finish(answer.behavior === 'allow' ? 'Migration lancée.' : `Refusé : ${answer.message}`);
+  }
+  if (/refus/i.test(text) && option('--permission-mode') === 'auto') {
+    // Le vérificateur a refusé 3 actions de suite : Claude Code suspend « Approuver pour moi » et demande à Bosco
+    const answer = await ask({
+      tool_name: 'Bash',
+      input: { command: 'rm -rf node_modules' },
+      tool_use_id: 'toolu_rm',
+      decision_reason:
+        '3 consecutive actions were blocked. Please review the transcript before continuing. Latest blocked action: rm -rf node_modules',
+      decision_reason_type: 'classifier',
+    });
+    return finish(answer.behavior === 'allow' ? 'Nettoyage lancé.' : `Refusé : ${answer.message}`);
   }
   if (/question/i.test(text)) {
     const input = {

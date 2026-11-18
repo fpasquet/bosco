@@ -1,50 +1,61 @@
-import { APP_NAME, type EffortDto, type PilotSettingsDto } from '@bosco/domain';
+import type { EffortDto, PilotSettingsDto } from '@bosco/domain';
+import {
+  AUTO_MODE_UNAVAILABLE,
+  EFFORT_CHOICES,
+  MODEL_CHOICES,
+  PERMISSION_MODE_OPTIONS,
+  type PermissionModeOption,
+  permissionModeOption,
+  supportsAutoMode,
+} from '@/shared/lib/session-settings';
 
 /** Un choix d'un menu de la barre d'outils ; `default` tient lieu de null (réglage du profil). */
 export interface SettingOption {
   description?: string;
+  /** Grisé, avec sa raison (« Pas disponible avec ce modèle ») */
+  disabledReason?: string;
+  icon?: PermissionModeOption['icon'];
   label: string;
+  /** Accès complet : en orange */
+  risky?: boolean;
   value: string;
 }
 
 /** Valeur des menus pour un réglage laissé au profil (null) : Radix ne prend que des chaînes. */
 export const DEFAULT_VALUE = 'default';
 
-export const PERMISSION_OPTIONS: SettingOption[] = [
-  { value: 'ask', label: 'Demander', description: `Chaque autorisation arrive dans ${APP_NAME}` },
-  {
-    value: 'acceptEdits',
-    label: 'Accepter les modifications',
-    description: 'Les modifications de fichiers passent sans demander',
-  },
-  { value: 'plan', label: 'Plan', description: 'L’agent propose un plan avant de toucher aux fichiers' },
-];
+/** Les cinq modes ; « Approuver pour moi » grisé quand le modèle choisi ne le permet pas. */
+export function permissionOptions(model: null | string): SettingOption[] {
+  const auto = supportsAutoMode(model);
+  return PERMISSION_MODE_OPTIONS.map(({ description, icon, label, risky, value }) => ({
+    description,
+    icon,
+    label,
+    risky,
+    value,
+    ...(value === 'auto' && !auto && { disabledReason: AUTO_MODE_UNAVAILABLE }),
+  }));
+}
 
 export const MODEL_OPTIONS: SettingOption[] = [
   { value: DEFAULT_VALUE, label: 'Défaut du profil' },
-  { value: 'claude-opus-5-5', label: 'Opus 5.5' },
-  { value: 'claude-sonnet-5-5', label: 'Sonnet 5.5' },
-  { value: 'claude-haiku-5-5', label: 'Haiku 5.5' },
+  ...MODEL_CHOICES.map(({ label, value }) => ({ label, value })),
 ];
 
 export const EFFORT_OPTIONS: SettingOption[] = [
   { value: DEFAULT_VALUE, label: 'Effort : défaut' },
-  { value: 'low', label: 'Faible' },
-  { value: 'medium', label: 'Moyen' },
-  { value: 'high', label: 'Élevé' },
-  { value: 'xhigh', label: 'Très élevé' },
-  { value: 'max', label: 'Maximal' },
+  ...EFFORT_CHOICES.map(({ label, value }) => ({ label, value })),
 ];
 
-const EFFORTS = new Set<string>(['high', 'low', 'max', 'medium', 'xhigh']);
-const PERMISSION_MODES = new Set<string>(['acceptEdits', 'ask', 'plan']);
+const EFFORTS = new Set<string>(EFFORT_CHOICES.map(({ value }) => value));
+const PERMISSION_MODES = new Set<string>(PERMISSION_MODE_OPTIONS.map(({ value }) => value));
 
 function labelOf(options: SettingOption[], value: string): string | undefined {
   return options.find((option) => option.value === value)?.label;
 }
 
 export function permissionLabel(settings: PilotSettingsDto): string {
-  return labelOf(PERMISSION_OPTIONS, settings.permissionMode) ?? settings.permissionMode;
+  return permissionModeOption(settings.permissionMode).label;
 }
 
 /** Libellé court du modèle ; un identifiant inconnu des menus s'affiche tel quel. */

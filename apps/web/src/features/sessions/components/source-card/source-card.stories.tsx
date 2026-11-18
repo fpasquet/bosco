@@ -5,7 +5,7 @@ import { SourceCard } from './source-card';
 const meta = {
   title: 'Features/Sessions/SourceCard',
   component: SourceCard,
-  parameters: { layout: 'padded' },
+  parameters: { layout: 'padded', nextjs: { appDirectory: true } },
   decorators: [
     (Story) => (
       <ul className="rounded-card border border-line bg-surface">
@@ -15,6 +15,7 @@ const meta = {
   ],
   args: {
     label: 'perso',
+    manageHref: '/settings/sources/perso',
     path: '~/.claude-perso',
     liveTracking: true,
     lastSignalAt: new Date(Date.now() - 40_000),

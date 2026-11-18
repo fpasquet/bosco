@@ -24,10 +24,10 @@ export interface TranscriptEvent {
   usage: null | TokenUsage;
 }
 
-/** Entrée du journal d'une session : numérotée, jamais modifiée. */
-export interface JournalEntry {
-  at: Date;
-  kind: 'prompt' | 'reply' | 'tool';
-  seq: number;
-  text: string;
-}
+/**
+ * Entrée du journal d'une session : numérotée, jamais modifiée. Ce que dit le transcript, ou ce que Bosco a vu du
+ * pilotage : « Approuver pour moi » suspendu par Claude Code après des refus, de suite ou au total.
+ */
+export type JournalEntry =
+  | { at: Date; count: number; kind: 'autoModeSuspended'; seq: number; total: boolean }
+  | { at: Date; kind: 'prompt' | 'reply' | 'tool'; seq: number; text: string };

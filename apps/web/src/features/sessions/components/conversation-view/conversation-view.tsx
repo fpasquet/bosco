@@ -1,4 +1,5 @@
 import { RadioTower } from 'lucide-react';
+import { Fragment } from 'react';
 import type { ConversationTurnDto, SessionConversationDto } from '@bosco/domain';
 import { Bubble, BubbleContent } from '@/shared/ui/bubble';
 import { Message, MessageContent, MessageHeader } from '@/shared/ui/message';
@@ -6,6 +7,7 @@ import type { Todo } from '../../lib/conversation';
 import { planOf, sourcesOf } from '../../lib/conversation';
 import { clockOf } from '../../lib/detail';
 import { AgentParts } from '../agent-parts';
+import { AutoModeSuspended, type AutoModeSuspension } from '../auto-mode-suspended';
 import { PlanQueue } from '../plan-queue';
 import { SourcesList } from '../sources-list';
 
@@ -13,6 +15,8 @@ export interface ConversationViewProps {
   conversation: SessionConversationDto;
   /** La session tourne : l'outil sans résultat est en cours, et non interrompu */
   live: boolean;
+  /** Suspensions d'« Approuver pour moi » du journal, placées à leur heure entre les tours */
+  notices?: AutoModeSuspension[];
 }
 
 function Time({ at }: { at: string }) {
@@ -77,21 +81,35 @@ function AgentTurn({
  * Fil complet d'une session (E2a), sur les patterns d'AI Elements : tes demandes en bulles (Message), les réponses de
  * l'agent en Markdown, ses réflexions (Reasoning) et ses outils (Tool, Terminal, Test Results, Stack Trace, Task).
  */
-export function ConversationView({ conversation, live }: ConversationViewProps) {
+export function ConversationView({ conversation, live, notices = [] }: ConversationViewProps) {
   const { plans, turns } = planOf(conversation.turns);
   const last = turns.at(-1);
+  // Une suspension vient avant le premier tour commencé après elle
+  const before = (turn: ConversationTurnDto) =>
+    notices.filter(
+      (notice) => notice.at < turn.at && !turns.some((other) => other.at < turn.at && notice.at < other.at),
+    );
+  const after = notices.filter((notice) => !turns.some((turn) => notice.at < turn.at));
   return (
     <div className="flex flex-col gap-5">
       {conversation.partial && (
         <p className="text-xs text-muted">Longue session : seuls ses derniers échanges sont affichés.</p>
       )}
-      {turns.map((turn) => {
-        return turn.role === 'user' ? (
-          <UserTurn key={turn.id} turn={turn} />
-        ) : (
-          <AgentTurn key={turn.id} turn={turn} live={live} current={live && turn === last} plan={plans.get(turn.id)} />
-        );
-      })}
+      {turns.map((turn) => (
+        <Fragment key={turn.id}>
+          {before(turn).map((notice) => (
+            <AutoModeSuspended key={notice.seq} suspended={notice} />
+          ))}
+          {turn.role === 'user' ? (
+            <UserTurn turn={turn} />
+          ) : (
+            <AgentTurn turn={turn} live={live} current={live && turn === last} plan={plans.get(turn.id)} />
+          )}
+        </Fragment>
+      ))}
+      {after.map((notice) => (
+        <AutoModeSuspended key={notice.seq} suspended={notice} />
+      ))}
     </div>
   );
 }

@@ -6,7 +6,9 @@ import { useState } from 'react';
 import type { PilotSettingsDto, SessionDto } from '@bosco/domain';
 import { useNotices } from '@/shared/hooks/use-notices';
 import { interruptTurn, sendMessage, suggestions } from '../../api/pilot';
+import { useFullAccess } from '../../hooks/use-full-access';
 import { Composer, type ComposerValue } from '../composer';
+import { FullAccessDialog } from '../full-access-dialog';
 
 /** Réglages d'une session qui n'a encore jamais été pilotée : Demander, modèle et effort du profil. */
 export const DEFAULT_SETTINGS: PilotSettingsDto = { effort: null, model: null, permissionMode: 'ask' };
@@ -25,6 +27,7 @@ export function PilotPanel({ session }: { session: SessionDto }) {
   const client = useQueryClient();
   const push = useNotices((state) => state.push);
   const [settings, setSettings] = useState<PilotSettingsDto>(session.pilot?.settings ?? DEFAULT_SETTINGS);
+  const fullAccess = useFullAccess();
   const inTerminal = !writable(session);
   if (inTerminal && !session.channel) {
     return (
@@ -53,6 +56,12 @@ export function PilotPanel({ session }: { session: SessionDto }) {
       throw error;
     }
   };
+  // Sur le poste, passer à l'accès complet ouvre la confirmation ; il vaut dès le tour suivant (E16e)
+  const changeSettings = (next: PilotSettingsDto) => {
+    const toFullAccess = next.permissionMode === 'bypassPermissions' && settings.permissionMode !== next.permissionMode;
+    if (toFullAccess && !session.pilot?.sandbox) fullAccess.ask(() => setSettings(next));
+    else setSettings(next);
+  };
   const stop = () => {
     interruptTurn(session.id).catch((error: unknown) =>
       push(error instanceof Error ? error.message : 'Le tour ne s’est pas arrêté.', 'warning'),
@@ -79,7 +88,7 @@ export function PilotPanel({ session }: { session: SessionDto }) {
           label="Message à l’agent"
           placeholder={placeholderOf(asking, closed)}
           settings={settings}
-          onSettingsChange={setSettings}
+          onSettingsChange={changeSettings}
           onSubmit={submit}
           suggest={(kind, query) => suggestions({ sessionId: session.id }, kind, query)}
           running={session.pilot?.running ?? false}
@@ -88,6 +97,12 @@ export function PilotPanel({ session }: { session: SessionDto }) {
           textOnly={inTerminal ? 'Ouverte dans un terminal · ton message y arrive par le canal de Bosco' : undefined}
         />
       </div>
+      <FullAccessDialog
+        open={fullAccess.open}
+        project={session.project?.name ?? place ?? ''}
+        onCancel={fullAccess.cancel}
+        onConfirm={fullAccess.confirm}
+      />
     </div>
   );
 }

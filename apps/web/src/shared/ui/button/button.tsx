@@ -13,6 +13,8 @@ const buttonVariants = cva('btn', {
       secondary: 'btn-secondary',
       ghost: 'btn-ghost',
       destructive: 'btn-error',
+      // Accès complet d'une session : une action risquée, en orange
+      warning: 'btn-warning',
       link: 'btn-link',
     },
     size: {
