@@ -52,6 +52,9 @@ export function GroupMenu({ defaultOpen, group, onDelete, onSidebar, variant = '
             <Link href={`${base}/instructions`}>Instructions</Link>
           </DropdownMenu.Item>
           <DropdownMenu.Item asChild className={MENU_ITEM}>
+            <Link href={`/usage?group=${group.id}`}>Usage</Link>
+          </DropdownMenu.Item>
+          <DropdownMenu.Item asChild className={MENU_ITEM}>
             <Link href={`${base}/settings`}>Réglages</Link>
           </DropdownMenu.Item>
           <DropdownMenu.Separator className={MENU_SEPARATOR} />

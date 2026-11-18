@@ -22,6 +22,7 @@ Fonctionnalité: Navigation par lieux
       | Nouvelle session dans labo-ia    |
       | Sessions                         |
       | Contexte                         |
+      | Usage                            |
       | Réglages                         |
       | Ajouter à un groupe              |
       | Désépingler de la barre latérale |
@@ -68,6 +69,7 @@ Fonctionnalité: Navigation par lieux
       | Nouvelle session dans ce groupe |
       | Sessions                        |
       | Instructions                    |
+      | Usage                           |
       | Réglages                        |
       | Masquer de la barre latérale    |
       | Supprimer le groupe…            |

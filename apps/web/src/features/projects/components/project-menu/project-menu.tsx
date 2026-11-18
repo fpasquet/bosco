@@ -76,6 +76,9 @@ export function ProjectMenu({
             </Link>
           </DropdownMenu.Item>
           <DropdownMenu.Item asChild className={MENU_ITEM}>
+            <Link href={`/usage?project=${project.id}`}>Usage</Link>
+          </DropdownMenu.Item>
+          <DropdownMenu.Item asChild className={MENU_ITEM}>
             <Link href={`${base}/settings`}>Réglages</Link>
           </DropdownMenu.Item>
           <DropdownMenu.Separator className={MENU_SEPARATOR} />
