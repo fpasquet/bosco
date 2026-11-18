@@ -31,9 +31,19 @@ Modèles proposés : « Défaut du profil », Opus 5.5, Sonnet 5.5, Haiku 5.5 
 
 Les autorisations d'une session pilotée arrivent dans Bosco comme celles d'un terminal (voir [Autoriser ou refuser](/docs/guides/sessions#autoriser-ou-refuser)).
 
+### Répondre à une question
+
+Une question à choix arrive comme une carte au bout du fil. Quand l'agent recommande une option, elle est cochée d'office et marquée « Recommandé » ; tu peux en choisir une autre, ou « Autre » pour écrire ta réponse.
+
 ### Reprendre une session close
 
 Une session close se reprend en lui écrivant : « Session close · ton message la reprend dans Bosco, sur ce poste, dans … ». Pour la reprendre dans un terminal, « Copier la reprise » copie la commande `claude --resume` qui convient. Pour une session sur plusieurs projets, la commande ajoute les `--add-dir` de chaque projet.
+
+Une session dont Claude Code a effacé le transcript (après 30 jours) se lit encore dans Bosco, mais ne se reprend plus : la zone de message laisse la place à « Effacée par Claude Code : elle ne se reprend plus. », et aucune commande de reprise n'est proposée.
+
+## Le contexte transmis au lancement
+
+Au lancement, Bosco transmet à une session pilotée le contexte de ses projets, le principal d'abord : instructions de « Tous les projets » et des groupes, décisions acceptées, place dans l'architecture (voir [Instructions et contexte](/docs/guides/projects-and-groups#instructions-et-contexte)). Le texte est fixé au premier tour et renvoyé tel quel à chaque tour : une décision acceptée ou modifiée ensuite vaut pour les sessions lancées après, pas pour celle-ci. Il en va de même en bac à sable, où aucun serveur MCP n'entre. Une session ouverte dans un terminal, elle, lit le contexte par le [serveur MCP de Bosco](/docs/guides/mcp#serveur-mcp-de-bosco).
 
 ## Les cinq modes d'autorisation
 

@@ -11,12 +11,25 @@ description: Les cinq onglets des réglages de Bosco - Sources, Téléphone, Not
 
 Les sources sont les profils Claude Code que Bosco lit : `~/.claude` (`pro`), `~/.claude-perso` (`perso`)… Bosco les lit sans rien modifier, sauf quand tu installes le suivi en direct ou le canal.
 
+La source « Bacs à sable » est à part : « Tenue par Bosco », elle réunit les conversations de tes [bacs à sable](/docs/guides/sandbox). Elle est toujours lue, sans interrupteur, ni « Gérer », ni suivi en direct ou canal à installer, et dit « Piloté par Bosco » avec son activité (« 1 bac à sable · dernier tour à 15:12 »).
+
 Chaque profil affiche :
 
 - son libellé, « Actif » ou « En pause », son chemin, et « Gérer » ;
 - **le suivi en direct** : « Suivi en direct installé » avec la date du dernier signal, ou « Suivi en direct non installé » avec « Installer » ;
 - **le [canal de Bosco](/docs/guides/mcp#canal-de-bosco)** : « installé » ou « non installé » ;
-- l'interrupteur « Lire le profil », qui met sa lecture en pause.
+- l'interrupteur « Lire le profil », qui met sa lecture en pause : les sessions déjà lues restent dans l'historique.
+
+### Ajouter un dossier
+
+« Ajouter un dossier » surveille un autre dossier de configuration de Claude Code, celui d'un `CLAUDE_CONFIG_DIR` à toi. Il ouvre le même navigateur de dossiers que les projets, depuis `~`, mais dossiers cachés compris, puisque les profils s'appellent souvent `~/.claude-*`. Choisis le dossier, puis « Ajouter » : « Dossier ajouté : pro est surveillé. » Un dossier qui n'est pas un profil de Claude Code est refusé : « Ce dossier n'est pas un dossier de configuration de Claude Code. » Le navigateur n'existe que sur le poste.
+
+### « À mettre à jour »
+
+Un profil passe « À mettre à jour » dans deux cas :
+
+- **son suivi en direct vient d'une autre version de Bosco** (adresse, secret ou événements différents) : la ligne dit « Suivi en direct à mettre à jour », et « Mettre à jour » le réinstalle ;
+- **Bosco ne sait plus lire ses nouvelles sessions**, parce qu'une version de Claude Code a changé le format de ses transcripts : après trois nouvelles sessions illisibles d'affilée, ses nouvelles sessions ne sont plus lues, jusqu'à ce que Bosco soit mis à jour puis relancé. Les sessions déjà lues ou déjà commencées le restent.
 
 ### Installer le suivi en direct
 

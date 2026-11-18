@@ -35,7 +35,7 @@ Avec plusieurs projets, chaque projet a sa copie, sur la même branche, créée 
 | Secrets  | l'accès à l'abonnement Claude de la session                  | accès GitHub, `.npmrc`, connecteurs     |
 | Réseau   | les domaines autorisés                                       | le reste d'Internet                     |
 
-Seul le fichier d'accès du profil (`.credentials.json`) entre dans le conteneur : ni serveur MCP, ni connecteur, ni réglage du profil. Chaque conteneur a 4 Go de mémoire, 2 processeurs et 512 processus au plus, et tourne sans droits d'administration. L'image `bosco-agent` contient Node, Git, Python et ripgrep ; Bosco la construit au premier besoin.
+Seul le fichier d'accès du profil (`.credentials.json`) entre dans le conteneur : ni serveur MCP, ni connecteur, ni réglage du profil. Le contexte de ses projets (instructions des groupes, décisions) lui est transmis à son lancement, comme à toute [session pilotée](/docs/guides/piloted-sessions#le-contexte-transmis-au-lancement). Chaque conteneur a 4 Go de mémoire, 2 processeurs et 512 processus au plus, et tourne sans droits d'administration. L'image `bosco-agent` contient Node, Git, Python et ripgrep ; Bosco la construit au premier besoin.
 
 ## Le réseau sortant
 
@@ -49,11 +49,13 @@ Le filtrage se fait par nom de domaine : un domaine autorisé reste une sortie p
 
 ### Une sortie refusée
 
-L'agent reçoit une erreur 403, « Domaine refusé par Bosco : raw.githubusercontent.com ». Le fil de la session montre « Sortie réseau refusée · raw.githubusercontent.com · 15:08 », avec « Ajouter à la liste » : « Aux domaines de api-tarifs » ou « À la liste générale », le domaine déjà rempli. Les refus s'affichent pour l'instant en fin de fil, regroupés par domaine.
+L'agent reçoit une erreur 403, « Domaine refusé par Bosco : raw.githubusercontent.com ». Le fil de la session montre « Sortie réseau refusée · raw.githubusercontent.com · 15:08 » à son heure, entre les étapes de l'agent, là où il a tenté la sortie. Plusieurs refus du même domaine pendant un tour n'y font qu'une ligne, à l'heure du premier, avec le nombre de tentatives. Sur le poste, « Ajouter à la liste » propose « Aux domaines de api-tarifs » ou « À la liste générale », le domaine déjà rempli ; il vaut au tour suivant.
 
 ## Récupérer la branche
 
-La carte « Bac à sable » du détail de la session montre l'état du conteneur (« Démarré », « En veille », « Supprimé »), sa branche et « jamais récupérée » ou « récupérée à 16:20 ».
+La carte « Bac à sable » du détail de la session montre l'état du conteneur (« Démarré », « En veille », « Supprimé »), ce qu'il consomme quand il est démarré (« Processeur 0,0 / 2 cœurs », « Mémoire 1,3 / 4 Go », mesurés comme dans [les conteneurs en cours](#les-conteneurs-en-cours)), l'heure à laquelle il s'arrêtera sans nouveau message, sa branche, et « jamais récupérée » ou « récupérée à 16:20 ».
+
+Sur le téléphone, le détail d'une session en bac à sable a un onglet de plus : « Fil », « Bac à sable », « Usage ». L'onglet « Bac à sable » porte la carte, sa consommation et ses actions ; ajouter un domaine à la liste ne se fait que sur le poste.
 
 « Récupérer la branche » commite le travail en cours dans la copie (« Travail en cours de la session »), puis le rapatrie dans ton dépôt par `git fetch`, sans toucher à ta branche courante. Si la branche a avancé sur le poste entre-temps, Bosco la récupère sous un autre nom (`…-2`) et le dit. Avec plusieurs projets : « Récupérer les branches », ou projet par projet.
 
@@ -66,6 +68,8 @@ Ces actions se font entre deux tours : « Un tour est en cours : attends qu'il 
 - « Arrêter le bac à sable » et « Supprimer le bac à sable » sont dans la carte. La suppression efface le conteneur et la copie ; la session reste lisible, mais ne se reprend plus.
 
 Une session en bac à sable ne se reprend pas dans un terminal : elle n'existe que dans le conteneur.
+
+Ses conversations se lisent dans une source à part, « Bacs à sable » (`~/.local/share/bosco/sandboxes/profile`), « Tenue par Bosco » : toujours lue, sans interrupteur, ni suivi en direct, ni canal à installer. Voir [Réglages › Sources](/docs/guides/settings#sources).
 
 ## Le quota de l'abonnement
 
@@ -80,4 +84,4 @@ Au-delà du premier seuil, les messages attendent : « Quota de l'abonnement : 
 
 ## Les conteneurs en cours
 
-Quand un conteneur tourne, « Conteneurs » apparaît en bas de la barre latérale. Le panneau liste les « Bacs à sable » et les « Tours sur le poste », avec leur consommation, « Proche du plafond » au-delà de 80 %, « Voir la session » et « Arrêter le tour ». Si Docker ne répond plus : « Docker ne répond pas depuis … », avec « Réessayer ».
+Quand un conteneur tourne, « Conteneurs » apparaît en bas de la barre latérale. Le panneau liste les « Bacs à sable » et les « Tours sur le poste », avec leur consommation, « Proche du plafond » au-delà de 80 %, « Voir la session » et « Arrêter le tour ». Si Docker ne répond plus : « Docker ne répond pas depuis … », avec « Réessayer ». Les dernières mesures restent, grisées et datées (« Dernières mesures · 15:09 »), et leur « Voir la session » est désactivé jusqu'au retour de Docker ; Bosco réessaie seul toutes les 30 secondes. Sur le téléphone, « Conteneurs en cours », dans les Réglages, montre une carte par bac à sable et par tour.
