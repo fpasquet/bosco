@@ -31,7 +31,8 @@ make desktop-install          # ajoute cette application du dépôt au menu des 
 make desktop-package          # paquet .deb qui embarque le service, l'interface et Node 26 (apps/desktop/out)
 make desktop-package-install  # installe ce paquet (sudo)
 make desktop-update           # récupère le dépôt, reconstruit le paquet et l'installe (sudo)
-make beta BRANCH=feat/…       # installe la version d'une branche d'origin à la place de l'application (sudo)
+make beta                     # installe la version de la branche courante à la place de l'application (sudo)
+make beta BRANCH=feat/…       # même chose pour une autre branche, locale ou d'origin
 make android                  # APK de l'application Android (JDK 17 et SDK Android dans le dossier personnel)
 ```
 
@@ -41,7 +42,7 @@ Sans rien construire sur le poste, les applications se téléchargent depuis la 
 
 L'AppImage se lance sans le bac à sable de Chromium (`--no-sandbox`, ajouté par son lanceur) : une AppImage ne peut pas installer le `chrome-sandbox` privilégié ni le profil AppArmor qu'Ubuntu exige depuis la 23.10. Le paquet `.deb` les configure à l'installation : préfère-le si tu veux ce bac à sable.
 
-Pour essayer une branche avant sa fusion, `make beta BRANCH=<branche>` la construit dans un worktree à part (`~/.cache/bosco/beta`, gardé d'un essai à l'autre) sans toucher au dépôt courant, puis installe son paquet à la place de l'application, sur les vraies données. Sans `BRANCH`, c'est la copie de travail courante qui est installée. `make beta BRANCH=main` revient à la version stable, à condition que la branche essayée n'ait pas migré la base.
+Pour essayer une branche avant sa fusion, `make beta` construit le dernier commit de la branche courante dans un worktree à part (`~/.cache/bosco/beta`, remis à neuf à chaque essai, dépendances comprises) sans toucher au dépôt courant, puis installe son paquet à la place de l'application, sur les vraies données. Les modifications non commitées n'y sont pas. `make beta BRANCH=<branche>` en construit une autre : la branche locale si elle existe, sinon celle d'origin, qu'il n'est pas nécessaire de récupérer avant (`BRANCH=origin/<branche>` force celle d'origin). `make beta BRANCH=main` revient à la version stable, à condition que la branche essayée n'ait pas migré la base.
 
 ## Versions
 

@@ -67,12 +67,13 @@ Les releases elles-mêmes sont construites par le workflow « Release » de Gi
 Pour essayer une branche avant sa fusion, sur tes vraies données :
 
 ```bash
-make beta BRANCH=feat/usage-page   # construit la branche d'origin et installe son paquet (sudo)
-make beta                          # sans BRANCH : la copie de travail courante
+make beta                          # construit la branche courante et installe son paquet (sudo)
+make beta BRANCH=feat/usage-page   # une autre branche : la locale si elle existe, sinon celle d'origin
+make beta BRANCH=origin/feat/x     # la version poussée sur origin, même si une branche locale existe
 make beta BRANCH=main              # revenir à main
 ```
 
-La branche se construit dans un worktree à part, `~/.cache/bosco/beta`, gardé d'un essai à l'autre : le dépôt courant n'est pas touché. Le paquet remplace ensuite l'application installée.
+La branche se construit dans un worktree à part, `~/.cache/bosco/beta`, remis à neuf à chaque essai (dépendances comprises) : le dépôt courant n'est pas touché. Seul le dernier commit est construit : les modifications non commitées n'y sont pas, et `make beta` le rappelle. Une branche qui n'existe que sur origin, comme celle d'une pull request, s'essaie sans la récupérer avant ; une branche locale en retard sur celle d'origin est construite telle quelle, avec un avertissement. Le paquet remplace ensuite l'application installée.
 
 <Callout type="warn">
   `make beta BRANCH=main` ne revient en arrière que si la branche essayée n'a pas migré la base. Sinon, la version de
