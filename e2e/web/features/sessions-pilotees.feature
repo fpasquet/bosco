@@ -59,10 +59,11 @@ Fonctionnalité: Sessions pilotées par Bosco
   @CA-SESS-196
   Scénario: Une session choisit sa branche ou son worktree, la branche active par défaut
     Quand j'ouvre la page « /sessions/new »
-    Alors la liste « Branche ou worktree » vaut « main · branche active »
-    Quand je choisis « develop · branche » dans la liste « Branche ou worktree »
+    Alors la liste déroulante « Branche ou worktree » affiche « main » avec le badge « active »
+    Quand je choisis « develop » dans la liste déroulante « Branche ou worktree »
     Alors je vois le texte « Bosco crée un worktree pour develop dans .claude/worktrees du projet : ton dossier garde sa branche. »
-    Quand je choisis « feat/tarifs · worktree » dans la liste « Branche ou worktree »
+    Quand je choisis « feat/tarifs » dans la liste déroulante « Branche ou worktree »
+    Alors la liste déroulante « Branche ou worktree » affiche « feat/tarifs »
     Alors je vois le texte « Dans le dossier de ce worktree : le dossier du projet garde sa branche. »
     Et je vois le texte « Sur ce poste, sur le worktree feat/tarifs, comme dans un terminal. »
     Et la page est accessible

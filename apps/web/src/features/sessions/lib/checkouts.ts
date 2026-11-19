@@ -1,20 +1,27 @@
 import type { CheckoutChoiceDto, ProjectCheckoutsDto } from '@bosco/domain';
 import type { OptionProject } from './new-session';
 
-/** Valeur du choix par défaut : la branche active (sur le poste), ou la branche de départ du projet (en bac à sable). */
-export const DEFAULT_CHECKOUT = '';
+/**
+ * Valeur du choix par défaut : la branche active (sur le poste), ou la branche de départ du projet (en bac à sable).
+ * Une liste déroulante de Radix ne prend pas de valeur vide.
+ */
+export const DEFAULT_CHECKOUT = 'default';
 
-/** Une option du choix « Branche ou worktree », rangée sous son type. */
+/** Une option du choix « Branche ou worktree », rangée sous son groupe (Worktrees, Branches) qui dit son type. */
 export interface CheckoutOption {
-  /** « feat/tarifs · worktree », « develop · branche » : le type se lit dans le libellé, pas seulement dans le groupe */
+  /** Ce que la branche a de particulier : « active », « départ du projet » */
+  badge?: string;
+  /** Dossier d'un worktree, depuis celui du projet quand il y est (« .claude/worktrees/tarifs ») */
+  hint?: string;
+  /** Nom de la branche, ou « détaché » */
   label: string;
   value: string;
 }
 
 export interface CheckoutOptions {
   branches: CheckoutOption[];
-  /** Libellé du choix par défaut, en tête */
-  defaultLabel: string;
+  /** Le choix par défaut, en tête */
+  default: CheckoutOption;
   worktrees: CheckoutOption[];
 }
 
@@ -33,10 +40,15 @@ function projectStart(project: OptionProject, active: null | string): null | str
   return project.startBranch && project.startBranch !== active ? project.startBranch : null;
 }
 
+/** Dossier d'un worktree tel que la liste l'écrit : depuis celui du projet quand il y est. */
+function folderOf(root: string, path: string): string {
+  return path.startsWith(`${root}/`) ? path.slice(root.length + 1) : path;
+}
+
 /**
  * Options du choix « Branche ou worktree » d'un projet. En tête, le défaut : la branche active du dossier du projet, ou
- * en bac à sable la branche de départ réglée pour le projet ; puis ses worktrees, puis ses autres branches, chacun
- * nommé avec son type.
+ * en bac à sable la branche de départ réglée pour le projet ; puis ses worktrees, puis ses autres branches. Le groupe
+ * dit le type ; seule la branche active, ou celle de départ, porte un badge.
  */
 export function checkoutOptions(
   project: OptionProject,
@@ -45,19 +57,21 @@ export function checkoutOptions(
 ): CheckoutOptions {
   const active = checkouts?.active ?? project.branch;
   const start = sandboxed ? projectStart(project, active) : null;
-  const defaultLabel = start
-    ? `${start} · branche de départ du projet`
-    : `${active ?? 'branche courante'} · branche active`;
-  const branches = [...(start && active ? [active] : []), ...(checkouts?.branches ?? [])].filter(
-    (branch) => branch !== start,
-  );
+  const first: CheckoutOption = start
+    ? { badge: 'départ du projet', label: start, value: DEFAULT_CHECKOUT }
+    : { badge: 'active', label: active ?? 'branche courante', value: DEFAULT_CHECKOUT };
+  const others = (checkouts?.branches ?? []).filter((branch) => branch !== start);
   return {
-    defaultLabel,
+    default: first,
     worktrees: (checkouts?.worktrees ?? []).map(({ branch, path }) => ({
-      label: `${branch ?? 'détaché'} · worktree`,
+      hint: folderOf(project.root, path),
+      label: branch ?? 'détaché',
       value: `${WORKTREE}${path}`,
     })),
-    branches: branches.map((branch) => ({ label: `${branch} · branche`, value: `${BRANCH}${branch}` })),
+    branches: [
+      ...(start && active ? [{ badge: 'active', label: active, value: `${BRANCH}${active}` }] : []),
+      ...others.map((branch) => ({ label: branch, value: `${BRANCH}${branch}` })),
+    ],
   };
 }
 
@@ -105,6 +119,6 @@ export function sandboxHint(
     const from = worktree?.branch ?? 'son commit';
     return `Copie de ${from}, la branche du worktree, telle qu’enregistrée : ses fichiers modifiés ne sont pas copiés.`;
   }
-  const from = choice?.branch ?? options.defaultLabel.split(' · ')[0] ?? 'la branche courante';
+  const from = choice?.branch ?? options.default.label;
   return `Copie de ${from} telle qu’enregistrée : les fichiers modifiés du poste ne sont pas copiés.`;
 }

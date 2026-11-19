@@ -24,24 +24,31 @@ const checkouts: ProjectCheckoutsDto = {
 };
 
 describe('checkoutOptions', () => {
-  it('CA-SESS-195 · puts the active branch first, then the worktrees and the branches, each named with its kind', () => {
+  it('CA-SESS-195 · puts the active branch first with its badge, then the worktrees and the branches', () => {
     expect(checkoutOptions(project, checkouts, false)).toEqual({
-      defaultLabel: 'main · branche active',
-      worktrees: [{ label: 'feat/tarifs · worktree', value: `worktree:${ROOT}/.claude/worktrees/tarifs` }],
-      branches: [{ label: 'develop · branche', value: 'branch:develop' }],
+      default: { badge: 'active', label: 'main', value: 'default' },
+      worktrees: [
+        { hint: '.claude/worktrees/tarifs', label: 'feat/tarifs', value: `worktree:${ROOT}/.claude/worktrees/tarifs` },
+      ],
+      branches: [{ label: 'develop', value: 'branch:develop' }],
     });
   });
 
   it('starts a sandbox from the start branch of the project, the active branch staying a choice', () => {
     const options = checkoutOptions({ ...project, startBranch: 'develop' }, checkouts, true);
-    expect(options.defaultLabel).toBe('develop · branche de départ du projet');
-    expect(options.branches.map(({ label }) => label)).toEqual(['main · branche']);
+    expect(options.default).toEqual({ badge: 'départ du projet', label: 'develop', value: 'default' });
+    expect(options.branches).toEqual([{ badge: 'active', label: 'main', value: 'branch:main' }]);
   });
 
   it('keeps the active branch by default on the workstation, whatever the start branch of the project', () => {
-    expect(checkoutOptions({ ...project, startBranch: 'develop' }, checkouts, false).defaultLabel).toBe(
-      'main · branche active',
-    );
+    expect(checkoutOptions({ ...project, startBranch: 'develop' }, checkouts, false).default.label).toBe('main');
+  });
+
+  it('writes the folder of a worktree outside the project in full', () => {
+    const outside = { ...checkouts, worktrees: [{ branch: null, path: '/home/camille/www/review' }] };
+    expect(checkoutOptions(project, outside, false).worktrees).toEqual([
+      { hint: '/home/camille/www/review', label: 'détaché', value: 'worktree:/home/camille/www/review' },
+    ]);
   });
 });
 
@@ -49,13 +56,13 @@ describe('checkoutChoiceOf', () => {
   it('reads a branch, a worktree, or the default', () => {
     expect(checkoutChoiceOf('branch:develop')).toEqual({ kind: 'branch', branch: 'develop' });
     expect(checkoutChoiceOf('worktree:/w/t')).toEqual({ kind: 'worktree', path: '/w/t' });
-    expect(checkoutChoiceOf('')).toBeNull();
+    expect(checkoutChoiceOf('default')).toBeNull();
   });
 });
 
 describe('workdirOf and workstationHint', () => {
   it('CA-SESS-196 · works in the project, the chosen worktree, or a new worktree for another branch', () => {
-    expect(workdirOf(ROOT, '', checkouts)).toBe(ROOT);
+    expect(workdirOf(ROOT, 'default', checkouts)).toBe(ROOT);
     expect(workdirOf(ROOT, `worktree:${ROOT}/.claude/worktrees/tarifs`, checkouts)).toBe(
       `${ROOT}/.claude/worktrees/tarifs`,
     );
@@ -66,7 +73,7 @@ describe('workdirOf and workstationHint', () => {
   });
 
   it('names the choice for the summary', () => {
-    expect(checkoutName('', checkouts)).toBeNull();
+    expect(checkoutName('default', checkouts)).toBeNull();
     expect(checkoutName(`worktree:${ROOT}/.claude/worktrees/tarifs`, checkouts)).toBe('le worktree feat/tarifs');
     expect(checkoutName('branch:develop', checkouts)).toBe('la branche develop');
   });

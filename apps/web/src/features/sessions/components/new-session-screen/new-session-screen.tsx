@@ -269,7 +269,8 @@ function CheckoutFields({
               <td>
                 {project.git ? (
                   <CheckoutSelect
-                    className="select w-56 font-mono select-sm"
+                    size="sm"
+                    className="w-56"
                     ariaLabel={`${label}, pour ${project.name}`}
                     options={checkoutOptions(project, checkoutsOf(project.root), sandboxed)}
                     value={valueOf(project)}
