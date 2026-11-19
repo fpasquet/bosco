@@ -32,6 +32,10 @@ Then('l’entrée {texte} de la barre latérale est active', async ({ page }, na
   await expect(sidebar(page).getByRole('link', { name }).first()).toHaveAttribute('aria-current', 'page');
 });
 
+Then('l’entrée {texte} de la barre latérale n’est pas active', async ({ page }, name: string) => {
+  await expect(sidebar(page).getByRole('link', { name }).first()).not.toHaveAttribute('aria-current');
+});
+
 Then('la barre latérale montre le projet {texte}', async ({ page }, name: string) => {
   await expect(page.getByRole('navigation', { name: 'Projets' }).getByRole('link', { name })).toBeVisible();
 });

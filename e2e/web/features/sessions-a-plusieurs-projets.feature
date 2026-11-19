@@ -123,6 +123,8 @@ Fonctionnalité: Sessions à plusieurs projets
     Et je clique sur le lien « Hors projet » de la barre latérale
     Alors je suis sur la page « /projects »
     Et je vois le lien « Ranger les notes de la semaine »
+    Et l’entrée « Hors projet » de la barre latérale est active
+    Et l’entrée « Tous les projets » de la barre latérale n’est pas active
 
   @mobile
   @CA-SESS-138

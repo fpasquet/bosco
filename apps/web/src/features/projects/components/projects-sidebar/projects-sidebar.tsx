@@ -38,6 +38,7 @@ export function ProjectsSidebar({ activity }: ProjectsSidebarProps) {
   const active = {
     group: place.kind === 'group' ? place.id : null,
     project: place.kind === 'project' ? place.id : null,
+    outside: place.kind === 'outside',
     projects: place.kind === 'projects',
   };
   const known = new Map(overview.projects.map((project) => [project.id, project]));
