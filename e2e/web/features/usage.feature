@@ -71,6 +71,12 @@ Fonctionnalité: Usage
     Alors je vois le bouton « Retirer le filtre Projet : creneaux »
     Et l’indicateur « Coût estimé » vaut « 0,27 $ »
 
+  @NF-18
+  Scénario: La page défile dans la coquille, sans faire défiler la fenêtre ni laisser de vide en bas
+    Quand j'ouvre la page « /usage?period=all »
+    Alors je vois le bouton « creneaux : filtrer la page sur ce projet »
+    Et seul le contenu défile, la fenêtre reste à sa hauteur
+
   @CA-SESS-188
   Scénario: Les sous-agents comptent dans le coût de leur session, et leur part se lit à part
     Quand j'ouvre la page « /usage?period=all »

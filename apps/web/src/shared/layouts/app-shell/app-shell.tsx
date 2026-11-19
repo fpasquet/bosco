@@ -49,7 +49,9 @@ export function AppShell({ children, place, title }: AppShellProps) {
               </NavLink>
             ))}
           </nav>
-          <div className="-mx-1 flex min-h-0 flex-1 flex-col overflow-y-auto px-1 pb-2">
+          {/* Positionnées, les zones qui défilent gardent leurs éléments absolus (textes réservés aux lecteurs d'écran) :
+              sinon ils en sortent et la page entière défile sous la coquille */}
+          <div className="relative -mx-1 flex min-h-0 flex-1 flex-col overflow-y-auto px-1 pb-2">
             <ShellSidebar />
           </div>
           <div className="border-t border-line pt-3">
@@ -76,7 +78,7 @@ export function AppShell({ children, place, title }: AppShellProps) {
             </span>
           </header>
           <ShellBanner />
-          <main className="min-h-0 flex-1 overflow-y-auto">{children}</main>
+          <main className="relative min-h-0 flex-1 overflow-y-auto">{children}</main>
           <ShellDock />
           <nav
             aria-label="Navigation principale"

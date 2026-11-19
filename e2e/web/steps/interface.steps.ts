@@ -60,6 +60,23 @@ Then('je finis par ne plus voir le bouton {texte}', async ({ page }, name: strin
   await expect(page.getByRole('button', { name })).toHaveCount(0);
 });
 
+/** Ce que l'étape lit de `main` dans la page : les types du DOM ne sont pas chargés ici. */
+interface Scrolled {
+  clientHeight: number;
+  ownerDocument: { scrollingElement: null | { scrollHeight: number } };
+  scrollHeight: number;
+}
+
+Then('seul le contenu défile, la fenêtre reste à sa hauteur', async ({ page }) => {
+  // Le contenu plus haut que la fenêtre défile dans la coquille : la fenêtre elle-même ne défile pas
+  const main = page.getByRole('main');
+  await expect.poll(() => main.evaluate((element: Scrolled) => element.scrollHeight > element.clientHeight)).toBe(true);
+  const documentHeight = await main.evaluate(
+    (element: Scrolled) => element.ownerDocument.scrollingElement?.scrollHeight,
+  );
+  expect(documentHeight).toBe(page.viewportSize()?.height);
+});
+
 /** Contrôle automatisé WCAG 2.2 A et AA de ce qui est affiché. */
 Then('la page est accessible', async ({ page }) => {
   const { violations } = await new AxeBuilder({ page })
