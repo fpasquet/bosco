@@ -1,0 +1,44 @@
+/*
+ * Command (cmdk) : liste filtrée par un champ de recherche, rangée par groupes. cmdk pose aria-selected sur la ligne
+ * survolée ou atteinte au clavier, aria-disabled sur une ligne grisée, et l'attribut cmdk-group-heading sur le titre
+ * d'un groupe.
+ */
+@layer components {
+  .command {
+    @apply flex size-full flex-col overflow-hidden bg-surface text-ink;
+  }
+  .command-search {
+    @apply flex items-center gap-2 border-b border-line px-3;
+  }
+  .command-search-icon {
+    @apply size-4 shrink-0 text-muted;
+  }
+  .command-input {
+    @apply h-control w-full bg-transparent text-sm outline-none placeholder:text-muted;
+  }
+  .command-list {
+    @apply max-h-72 overflow-x-hidden overflow-y-auto py-1;
+  }
+  /* Sans option, la liste n'existe pas pour les lecteurs d'écran : seul le message de liste vide se lit */
+  .command-list:not(:has([role='option'])) {
+    @apply hidden;
+  }
+  .command-empty {
+    @apply px-3 py-6 text-center text-sm text-muted;
+  }
+  .command-group [cmdk-group-heading] {
+    @apply px-3 pt-2 pb-1 text-xs font-semibold text-muted;
+  }
+  .command-item {
+    @apply flex cursor-pointer items-center gap-2 px-3 py-2 text-sm outline-none select-none;
+  }
+  .command-item[aria-selected='true'] {
+    @apply bg-surface-alt;
+  }
+  .command-item[aria-disabled='true'] {
+    @apply cursor-not-allowed text-muted;
+  }
+  .command-item-check {
+    @apply size-4 shrink-0 text-primary;
+  }
+}
