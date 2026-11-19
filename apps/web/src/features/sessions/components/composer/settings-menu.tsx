@@ -14,8 +14,6 @@ export interface SettingsMenuProps {
   icon?: ReactNode;
   onChange: (value: string) => void;
   options: SettingOption[];
-  /** D'où vient la valeur (« défaut du groupe »), écrite à côté du bouton */
-  origin?: null | string;
   /** Accès complet : la puce passe en orange */
   risky?: boolean;
   /** Titre du menu ouvert */
@@ -39,7 +37,7 @@ function triggerClass(compact: boolean, risky: boolean): string {
 
 /**
  * Un réglage du tour (autorisations, modèle, effort) : bouton à chevron et liste à choix unique, coché sur le choix
- * courant ; un choix grisé dit pourquoi. L'origine de la valeur s'écrit à côté du bouton.
+ * courant ; un choix grisé dit pourquoi.
  */
 export function SettingsMenu({
   ariaLabel,
@@ -48,21 +46,16 @@ export function SettingsMenu({
   icon,
   onChange,
   options,
-  origin = null,
   risky = false,
   title,
   triggerLabel,
   value,
 }: SettingsMenuProps) {
   return (
-    <span className="inline-flex shrink-0 items-center gap-1">
+    <span className="inline-flex shrink-0">
       <DropdownMenu.Root modal={false}>
         <DropdownMenu.Trigger asChild disabled={disabled}>
-          <button
-            type="button"
-            aria-label={origin ? `${ariaLabel}, ${origin}` : ariaLabel}
-            className={triggerClass(compact, risky)}
-          >
+          <button type="button" aria-label={ariaLabel} className={triggerClass(compact, risky)}>
             {icon}
             {triggerLabel}
             <ChevronDown aria-hidden className="size-3" />
@@ -113,11 +106,6 @@ export function SettingsMenu({
           </DropdownMenu.Content>
         </DropdownMenu.Portal>
       </DropdownMenu.Root>
-      {origin && (
-        <span aria-hidden className="text-xs whitespace-nowrap text-muted">
-          {origin}
-        </span>
-      )}
     </span>
   );
 }

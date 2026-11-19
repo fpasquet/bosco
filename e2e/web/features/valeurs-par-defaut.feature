@@ -23,15 +23,24 @@ Fonctionnalité: Valeurs par défaut des sessions et modes d'autorisation
   @CA-SESS-164
   @CA-CONT-168
   @CA-CONT-171
+  @CA-SESS-198
   Scénario: Une session démarrée avec un groupe prend le mode du groupe, le modèle et l'effort du projet principal
     Étant donné le groupe « Perso » part par défaut en « Approuver pour moi »
     Et le projet « maison » règle par défaut le modèle « Sonnet 5.5 » et l’effort « élevé »
     Quand j'ouvre la page « /groups/2/sessions »
     Et je clique sur le lien « Nouvelle session dans ce groupe »
-    Alors le réglage « Autorisations » vaut « Approuver pour moi, défaut du groupe »
-    Et le réglage « Modèle » vaut « Sonnet 5.5, défaut du projet maison »
-    Et le réglage « Effort » vaut « élevé, défaut du projet maison »
+    Alors le réglage « Autorisations » vaut « Défaut : Approuver pour moi, défaut du groupe »
+    Et le réglage « Modèle » vaut « Défaut : Sonnet 5.5, défaut du projet maison »
+    Et le réglage « Effort » vaut « Défaut : effort élevé, défaut du projet maison »
+    Et le réglage « Effort » affiche « Défaut : effort élevé »
     Et la page est accessible
+    Quand j’ouvre le menu des réglages « Modèle »
+    Alors le choix « Défaut : Sonnet 5.5 » du menu est coché
+    Quand j’appuie sur Échap
+    Et je choisis « Haiku 4.5 » dans le menu des réglages « Modèle »
+    Alors le réglage « Modèle » vaut « Haiku 4.5 »
+    Quand je choisis « Défaut : Sonnet 5.5 » dans le menu des réglages « Modèle »
+    Alors le réglage « Modèle » vaut « Défaut : Sonnet 5.5, défaut du projet maison »
     Quand je saisis « Affiche les tarifs » dans le champ « Premier message »
     Et je clique sur le bouton « Démarrer »
     Alors je vois le texte « Reçu : Affiche les tarifs · mode auto · modèle claude-sonnet-5-5 · effort high »
@@ -50,6 +59,7 @@ Fonctionnalité: Valeurs par défaut des sessions et modes d'autorisation
     Quand j'ouvre la page « /sessions/new »
     Et j’ouvre le menu des réglages « Autorisations »
     Alors le menu propose les modes, dans l’ordre :
+      | Défaut : Demander          |
       | Demander                   |
       | Accepter les modifications |
       | Plan                       |
@@ -61,10 +71,13 @@ Fonctionnalité: Valeurs par défaut des sessions et modes d'autorisation
     Alors le choix « Approuver pour moi » du menu est grisé, avec sa raison « Pas disponible avec ce modèle »
 
   @CA-SESS-161
-  Scénario: En bac à sable sans mode réglé, les modifications passent, et la puce le dit
+  Scénario: En bac à sable sans mode réglé, les modifications passent, et le menu le dit
     Quand j'ouvre la page « /sessions/new »
     Et je clique sur le bouton radio « Bac à sable »
-    Alors le réglage « Autorisations » vaut « Accepter les modifications, défaut en bac à sable »
+    Alors le réglage « Autorisations » affiche « Défaut : Accepter les modifications »
+    Quand j’ouvre le menu des réglages « Autorisations »
+    Alors le choix « Défaut : Accepter les modifications » du menu est coché
+    Et je vois le texte « défaut en bac à sable »
 
   @CA-SESS-169
   @CA-SESS-172
@@ -74,7 +87,7 @@ Fonctionnalité: Valeurs par défaut des sessions et modes d'autorisation
     Alors je vois le titre « Donner l’accès complet sur le poste ? »
     Et la page est accessible
     Quand je clique sur le bouton « Annuler » de la confirmation
-    Alors le réglage « Autorisations » vaut « Demander, celui du profil Claude Code »
+    Alors le réglage « Autorisations » vaut « Défaut : Demander »
 
   @CA-SESS-170
   @CA-SESS-173
@@ -97,7 +110,7 @@ Fonctionnalité: Valeurs par défaut des sessions et modes d'autorisation
     Et je choisis « Accès complet » dans le menu des réglages « Autorisations »
     Et je clique sur le bouton « Utiliser un bac à sable » de la confirmation
     Alors le bouton radio « Bac à sable » est coché
-    Et le réglage « Autorisations » vaut « Accès complet, choisi pour cette session »
+    Et le réglage « Autorisations » vaut « Accès complet »
     Quand je saisis « Lance les tests » dans le champ « Premier message »
     Et je clique sur le bouton « Démarrer »
     Alors je vois le texte « Reçu : Lance les tests · mode bypassPermissions »
@@ -146,7 +159,7 @@ Fonctionnalité: Valeurs par défaut des sessions et modes d'autorisation
     Et je clique sur le lien « Gérer le profil perso »
     Alors je vois le titre « perso »
     Et je vois le texte « camille@exemple.dev »
-    Et la liste « Modèle » vaut « Celui du profil Claude Code · Sonnet 5.5 »
+    Et la liste « Modèle » vaut « Défaut : Sonnet 5.5 »
     Et la page est accessible
     Quand je choisis « Plan » dans le menu des réglages « Autorisations »
     Et je clique sur le bouton « Enregistrer »
@@ -159,12 +172,12 @@ Fonctionnalité: Valeurs par défaut des sessions et modes d'autorisation
     Et je choisis « Haiku 4.5 » dans la liste « Modèle »
     Et j’ouvre le menu des réglages « Autorisations »
     Alors le menu propose les modes, dans l’ordre :
-      | Celui du profil Claude Code |
-      | Demander                    |
-      | Accepter les modifications  |
-      | Plan                        |
-      | Approuver pour moi          |
-      | Accès complet               |
+      | Défaut : Demander          |
+      | Demander                   |
+      | Accepter les modifications |
+      | Plan                       |
+      | Approuver pour moi         |
+      | Accès complet              |
     Et le choix « Approuver pour moi » du menu est grisé, avec sa raison « Pas disponible avec ce modèle »
     Quand j’appuie sur Échap
     Et je choisis « Accès complet » dans le menu des réglages « Autorisations »

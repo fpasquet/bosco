@@ -59,6 +59,14 @@ Then('le réglage {texte} vaut {texte}', async ({ page }, label: string, value: 
   await expect(setting(page, label)).toHaveAccessibleName(`${label} : ${value}`);
 });
 
+Then('le réglage {texte} affiche {texte}', async ({ page }, label: string, text: string) => {
+  await expect(setting(page, label)).toHaveText(text);
+});
+
+Then('le choix {texte} du menu est coché', async ({ page }, option: string) => {
+  await expect(page.getByRole('menuitemradio', { name: new RegExp(`^${option}`) })).toBeChecked();
+});
+
 Then('le choix {texte} du menu est grisé, avec sa raison {texte}', async ({ page }, option: string, reason: string) => {
   const item = page.getByRole('menuitemradio', { name: new RegExp(`^${option}`) });
   await expect(item).toBeDisabled();

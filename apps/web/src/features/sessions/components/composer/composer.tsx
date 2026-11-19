@@ -3,15 +3,16 @@ import { EditorContent, useEditor, useEditorState } from '@tiptap/react';
 import { Plus, RadioTower } from 'lucide-react';
 import { type CSSProperties, useEffect, useId, useRef, useState, useSyncExternalStore } from 'react';
 import { useForm, useFormState, useWatch } from 'react-hook-form';
-import type { PilotImageDto, PilotSettingsDto, SuggestionDto } from '@bosco/domain';
+import type { PilotImageDto, SuggestionDto } from '@bosco/domain';
 import { useIsPhone } from '@/shared/hooks/use-is-phone';
+import type { ToolbarSettings } from './settings-options';
 import { ComposerController } from './composer-controller';
 import { ComposerHelp } from './composer-help';
 import { ImageChip } from './image-chip';
 import { IMAGE_TYPES, readImages } from './images';
 import { textOf } from './mentions';
 import { SendButton, type SendMode } from './send-button';
-import { SettingsBar, type SettingsOrigins } from './settings-bar';
+import { SettingsBar, type SettingsDefaults } from './settings-bar';
 import { listIdOf, optionIdOf, SuggestionMenu } from './suggestion-menu';
 
 export interface ComposerValue {
@@ -27,17 +28,17 @@ export interface ComposerProps {
   label: string;
   /** Hauteur de départ en lignes (1 par défaut, 4 pour une nouvelle session) */
   minRows?: number;
-  onSettingsChange: (settings: PilotSettingsDto) => void;
+  onSettingsChange: (settings: ToolbarSettings) => void;
   onStop?: () => void;
   /** Entrée ou bouton d'envoi ; le composer se vide quand la promesse se résout, et garde le contenu si elle échoue */
   onSubmit: (value: ComposerValue) => Promise<void>;
   placeholder: string;
   /** Un tour tourne : champ vide → le bouton rond devient « Arrêter » (icône square) et appelle onStop */
   running?: boolean;
-  /** D'où vient chaque réglage d'une nouvelle session (« défaut du groupe ») */
-  origins?: SettingsOrigins;
-  /** Réglages du tour : mode d'autorisations, modèle, effort (barre d'outils) */
-  settings: PilotSettingsDto;
+  /** Nouvelle session : les autorisations, le modèle et l'effort pris sans choix (« Défaut : Opus 5.5 ») */
+  defaults?: SettingsDefaults;
+  /** Réglages du tour : mode d'autorisations, modèle, effort (barre d'outils) ; null : la valeur par défaut */
+  settings: ToolbarSettings;
   /** Bouton d'envoi libellé (« Démarrer ») au lieu du bouton rond à flèche */
   submitLabel?: string;
   /** Suggestions de « @ » (fichiers) et « / » (commandes et skills), appelées à chaque frappe après le déclencheur */
@@ -80,7 +81,7 @@ export function Composer({
   onSettingsChange,
   onStop,
   onSubmit,
-  origins,
+  defaults,
   placeholder,
   running = false,
   settings,
@@ -225,7 +226,7 @@ export function Composer({
             compact
             className="flex gap-1.5 overflow-x-auto px-2 pt-2 md:hidden"
             settings={settings}
-            origins={origins}
+            defaults={defaults}
             disabled={disabled}
             onChange={onSettingsChange}
           />
@@ -259,7 +260,7 @@ export function Composer({
               <SettingsBar
                 className="flex flex-wrap items-center gap-1 max-md:hidden"
                 settings={settings}
-                origins={origins}
+                defaults={defaults}
                 disabled={disabled}
                 onChange={onSettingsChange}
               />

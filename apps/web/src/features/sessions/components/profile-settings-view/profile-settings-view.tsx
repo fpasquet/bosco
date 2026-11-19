@@ -12,7 +12,7 @@ import {
   permissionModeOption,
 } from '@/shared/lib/session-settings';
 import { Button } from '@/shared/ui/button';
-import { APP_NAME, type PermissionModeDto, type ProfileSettingsDto } from '@bosco/domain';
+import { APP_NAME, type EffortDto, type PermissionModeDto, type ProfileSettingsDto } from '@bosco/domain';
 import { SettingsMenu } from '../composer/settings-menu';
 import { DEFAULT_VALUE, permissionOptions } from '../composer/settings-options';
 
@@ -36,8 +36,6 @@ interface Values {
   permissionMode: string;
 }
 
-const CLAUDE = 'Celui du profil Claude Code';
-
 function valuesOf(defaults: ProfileSettingsDto['defaults']): Values {
   return {
     effort: defaults.effort ?? '',
@@ -46,20 +44,23 @@ function valuesOf(defaults: ProfileSettingsDto['defaults']): Values {
   };
 }
 
-/** « Celui du profil Claude Code · Sonnet 5.5 », ou seul quand le profil ne dit rien. */
-function claudeLabel(value: null | string): string {
-  return value ? `${CLAUDE} · ${value}` : CLAUDE;
+/** Sans réglage dans Bosco : « Défaut : Sonnet 5.5 », la valeur que dit le profil Claude Code, ou « Défaut » seul. */
+function defaultLabel(value: null | string): string {
+  return value ? `Défaut : ${value}` : 'Défaut';
 }
 
-/** Une valeur lue sur le téléphone : la valeur, puis d'où elle vient. */
-function ReadOnly({ label, origin, value }: { label: string; origin: string; value: string }) {
+/** Une valeur réglée pour ce profil, sinon « Défaut : … » : ce que montrent les champs, et le téléphone. */
+function shown(own: null | string, claude: null | string, name: (value: string) => string): string {
+  if (own) return name(own);
+  return defaultLabel(claude ? name(claude) : null);
+}
+
+/** Une valeur lue sur le téléphone. */
+function ReadOnly({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-baseline justify-between gap-3 py-1.5">
       <dt className="text-muted">{label}</dt>
-      <dd className="text-right">
-        <span className="block font-medium">{value}</span>
-        <span className="block text-xs text-muted">{origin}</span>
-      </dd>
+      <dd className="text-right font-medium">{value}</dd>
     </div>
   );
 }
@@ -125,7 +126,7 @@ function AccessLine({
 
 /**
  * Réglages d'un profil : son compte, et les valeurs par défaut des sessions lancées dans Bosco avec lui
- * (autorisations, modèle, effort), chacune avec son origine ; sans réglage, ce que dit le profil Claude Code, lu sans
+ * (autorisations, modèle, effort) ; sans réglage, « Défaut : … », la valeur que dit le profil Claude Code, lue sans
  * être modifié. « Utilisé par » dit les groupes et les sessions ouvertes, que l'enregistrement ne change pas. Sur le
  * téléphone, tout se lit.
  */
@@ -149,7 +150,7 @@ export function ProfileSettingsView({
   const mode = permissionModeOption((chosenMode ?? claude.permissionMode ?? 'ask') as PermissionModeDto);
   const ModeIcon = mode.icon;
   const modeOptions = [
-    { value: DEFAULT_VALUE, label: claudeLabel(permissionModeOption(claude.permissionMode ?? 'ask').label) },
+    { value: DEFAULT_VALUE, label: defaultLabel(permissionModeOption(claude.permissionMode ?? 'ask').label) },
     ...permissionOptions(model ?? null),
   ];
   const submit = handleSubmit((form) =>
@@ -159,7 +160,9 @@ export function ProfileSettingsView({
       permissionMode: (form.permissionMode === DEFAULT_VALUE ? null : form.permissionMode) as PermissionModeDto | null,
     }),
   );
-  const origin = (own: null | string) => (own ? 'Réglé pour ce profil' : CLAUDE);
+  const modeLabel = chosenMode ? mode.label : defaultLabel(mode.label);
+  const modeName = (value: string) => permissionModeOption(value as PermissionModeDto).label;
+  const effortWord = (value: string) => effortName(value as EffortDto).toLowerCase();
   return (
     <div className="flex max-w-3xl flex-col gap-4">
       <section className="flex items-center gap-3 rounded-card border border-line bg-surface px-4 py-3 shadow-card">
@@ -200,15 +203,12 @@ export function ProfileSettingsView({
       <SectionCard title="Valeurs par défaut des sessions">
         <form className="hidden flex-col gap-4 md:flex" onSubmit={(event) => void submit(event)}>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-            <div className="w-44 shrink-0">
-              <p className="font-medium">Autorisations</p>
-              <p className="text-xs text-muted">{origin(chosenMode)}</p>
-            </div>
+            <p className="w-44 shrink-0 font-medium">Autorisations</p>
             <SettingsMenu
               title="Autorisations"
-              ariaLabel={`Autorisations par défaut : ${chosenMode ? mode.label : claudeLabel(mode.label)}`}
+              ariaLabel={`Autorisations par défaut : ${modeLabel}`}
               icon={<ModeIcon aria-hidden className="size-3.5" />}
-              triggerLabel={chosenMode ? mode.label : claudeLabel(mode.label)}
+              triggerLabel={modeLabel}
               options={modeOptions}
               value={values.permissionMode ?? DEFAULT_VALUE}
               risky={mode.risky}
@@ -217,12 +217,9 @@ export function ProfileSettingsView({
             />
           </div>
           <label className="flex flex-wrap items-center gap-x-4 gap-y-1">
-            <span className="w-44 shrink-0">
-              <span className="block font-medium">Modèle</span>
-              <span className="block text-xs text-muted">{origin(values.model || null)}</span>
-            </span>
+            <span className="w-44 shrink-0 font-medium">Modèle</span>
             <select className="select w-72" disabled={busy} {...register('model')}>
-              <option value="">{claudeLabel(claude.model ? modelName(claude.model) : null)}</option>
+              <option value="">{shown(null, claude.model, modelName)}</option>
               {MODEL_CHOICES.map(({ label, value }) => (
                 <option key={value} value={value}>
                   {label}
@@ -231,12 +228,9 @@ export function ProfileSettingsView({
             </select>
           </label>
           <label className="flex flex-wrap items-center gap-x-4 gap-y-1">
-            <span className="w-44 shrink-0">
-              <span className="block font-medium">Effort</span>
-              <span className="block text-xs text-muted">{origin(values.effort || null)}</span>
-            </span>
+            <span className="w-44 shrink-0 font-medium">Effort</span>
             <select className="select w-72" disabled={busy} {...register('effort')}>
-              <option value="">{claudeLabel(claude.effort ? effortName(claude.effort).toLowerCase() : null)}</option>
+              <option value="">{shown(null, claude.effort, effortWord)}</option>
               {EFFORT_CHOICES.map(({ label, value }) => (
                 <option key={value} value={value}>
                   {label}
@@ -266,15 +260,10 @@ export function ProfileSettingsView({
         <dl className="flex flex-col divide-y divide-line md:hidden">
           <ReadOnly
             label="Autorisations"
-            value={permissionModeOption(defaults.permissionMode ?? claude.permissionMode ?? 'ask').label}
-            origin={origin(defaults.permissionMode)}
+            value={shown(defaults.permissionMode, claude.permissionMode ?? 'ask', modeName)}
           />
-          <ReadOnly label="Modèle" value={modelName(defaults.model ?? claude.model)} origin={origin(defaults.model)} />
-          <ReadOnly
-            label="Effort"
-            value={effortName(defaults.effort ?? claude.effort)}
-            origin={origin(defaults.effort)}
-          />
+          <ReadOnly label="Modèle" value={shown(defaults.model, claude.model, modelName)} />
+          <ReadOnly label="Effort" value={shown(defaults.effort, claude.effort, effortWord)} />
         </dl>
         <p className="flex items-center gap-2 text-xs text-muted md:hidden">
           <Monitor aria-hidden className="size-3.5 shrink-0" />
