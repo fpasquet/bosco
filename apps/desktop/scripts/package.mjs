@@ -4,10 +4,20 @@
 // Le workflow Release le lance avec `--release --target deb --target AppImage` : la version exacte du dépôt, l'AppImage
 // en plus du .deb, et les fichiers de mise à jour d'electron-updater (latest-linux.yml, beta-linux.yml).
 import { execFileSync } from 'node:child_process';
-import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  cpSync,
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  realpathSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from 'node:fs';
 import { createRequire } from 'node:module';
 import { arch, homedir } from 'node:os';
-import { dirname, join, resolve } from 'node:path';
+import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
 
@@ -33,6 +43,15 @@ function fail(message) {
 
 function readJson(file) {
   return JSON.parse(readFileSync(file, 'utf8'));
+}
+
+/** Fichiers d'un dossier, sans suivre les liens symboliques : un lien peut mener hors du paquet, jusque dans le dépôt. */
+function* filesOf(dir) {
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const path = join(dir, entry.name);
+    if (entry.isDirectory()) yield* filesOf(path);
+    else if (entry.isFile()) yield path;
+  }
 }
 
 const built = [
@@ -115,6 +134,17 @@ execFileSync('pnpm', ['install', '--prod', '--frozen-lockfile', '--prefer-offlin
   cwd: service,
   stdio: 'inherit',
 });
+// Next.js range ses paquets externes (shiki) dans .next/node_modules, en liens vers le node_modules du dépôt, que la
+// copie rend absolus : dans le paquet, chacun pointe en relatif vers le même paquet installé pour le service
+const externals = join(service, 'apps/web/.next/node_modules');
+for (const link of existsSync(externals) ? readdirSync(externals) : []) {
+  const path = join(externals, link);
+  const { name } = readJson(join(realpathSync(path), 'package.json'));
+  const installed = join(service, 'node_modules', name);
+  if (!existsSync(join(installed, 'package.json'))) fail(`${name} is not installed in the service, needed by ${link}`);
+  rmSync(path);
+  symlinkSync(relative(externals, installed), path);
+}
 // Ce que le service ne charge jamais : sources du moteur SQLite et ses moteurs des autres systèmes, compilateur et
 // optimiseur d'images de Next.js, outil de test, cartes de sources et déclarations de types des dépendances
 const modules = join(service, 'node_modules');
@@ -134,8 +164,8 @@ const prebuilds = join(modules, 'better-sqlite3', 'prebuilds');
 for (const file of readdirSync(prebuilds)) {
   if (file !== `linux-${arch()}.node`) rmSync(join(prebuilds, file));
 }
-for (const file of readdirSync(modules, { recursive: true })) {
-  if (/\.(?:map|d\.[cm]?ts)$/.test(file)) rmSync(join(modules, file), { force: true });
+for (const file of filesOf(modules)) {
+  if (/\.(?:map|d\.[cm]?ts)$/.test(file)) rmSync(file);
 }
 for (const file of ['pnpm-lock.yaml', 'pnpm-workspace.yaml', 'patches'])
   rmSync(join(service, file), { recursive: true });
