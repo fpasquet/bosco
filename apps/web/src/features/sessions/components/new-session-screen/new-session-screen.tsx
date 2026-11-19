@@ -61,14 +61,7 @@ import {
   sandboxDomains,
   withPrincipal,
 } from '../../lib/new-session';
-import {
-  choicesAfter,
-  effectiveSettings,
-  NO_CHOICES,
-  type SessionChoices,
-  settingsDefaults,
-  shownSettings,
-} from '../../lib/session-choices';
+import { effectiveSettings, NO_CHOICES, type SessionChoices, settingsDefaults } from '../../lib/session-choices';
 import { CheckoutSelect } from '../checkout-select';
 import { Composer, type ComposerValue } from '../composer';
 import { FullAccessDialog } from '../full-access-dialog';
@@ -651,9 +644,9 @@ function NewSessionForm({
     setChosenRoots(next);
     setProfile(null);
   };
-  const shown = shownSettings(choices, settings);
-  const changeSettings = (next: typeof settings) => {
-    const apply = () => setChoices(choicesAfter(choices, shown, next));
+  // La barre d'outils montre les choix : un réglage laissé à null coche « Défaut : … »
+  const changeSettings = (next: SessionChoices) => {
+    const apply = () => setChoices(next);
     // Sur le poste, choisir l'accès complet demande une confirmation, à chaque session
     if (next.permissionMode === 'bypassPermissions' && settings.permissionMode !== next.permissionMode && !sandboxed)
       fullAccess.ask(() => {
@@ -736,8 +729,8 @@ function NewSessionForm({
               <Composer
                 label="Premier message"
                 placeholder="Que doit faire l’agent ?"
-                settings={shown}
-                defaults={settingsDefaults(choices, defaults)}
+                settings={choices}
+                defaults={settingsDefaults(defaults)}
                 onSettingsChange={changeSettings}
                 onSubmit={submit}
                 suggest={(kind, query) => suggestions({ profile, project: project.root }, kind, query)}

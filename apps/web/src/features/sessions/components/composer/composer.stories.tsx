@@ -151,15 +151,18 @@ export const NewSession: Story = {
   },
 };
 
-/** Sans choix, le modèle et l'effort disent leur valeur par défaut : « Défaut : Sonnet 5.5 », « Défaut : effort élevé ». */
+/**
+ * Sans choix, les réglages disent leur valeur par défaut : « Défaut : Approuver pour moi », « Défaut : Sonnet 5.5 »,
+ * « Défaut : effort élevé » ; le menu dit sous cette option le niveau de Bosco qui la règle.
+ */
 export const NewSessionDefaults: Story = {
   args: {
     ...NewSession.args,
-    settings: { permissionMode: 'auto', model: null, effort: null },
+    settings: { permissionMode: null, model: null, effort: null },
     defaults: {
       effort: { origin: 'défaut du projet api-tarifs', value: 'high' },
       model: { origin: null, value: 'sonnet' },
-      permissionMode: 'défaut du groupe',
+      permissionMode: { origin: 'défaut du groupe', value: 'auto' },
     },
   },
 };

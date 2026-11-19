@@ -3,8 +3,9 @@ import { EditorContent, useEditor, useEditorState } from '@tiptap/react';
 import { Plus, RadioTower } from 'lucide-react';
 import { type CSSProperties, useEffect, useId, useRef, useState, useSyncExternalStore } from 'react';
 import { useForm, useFormState, useWatch } from 'react-hook-form';
-import type { PilotImageDto, PilotSettingsDto, SuggestionDto } from '@bosco/domain';
+import type { PilotImageDto, SuggestionDto } from '@bosco/domain';
 import { useIsPhone } from '@/shared/hooks/use-is-phone';
+import type { ToolbarSettings } from './settings-options';
 import { ComposerController } from './composer-controller';
 import { ComposerHelp } from './composer-help';
 import { ImageChip } from './image-chip';
@@ -27,17 +28,17 @@ export interface ComposerProps {
   label: string;
   /** Hauteur de départ en lignes (1 par défaut, 4 pour une nouvelle session) */
   minRows?: number;
-  onSettingsChange: (settings: PilotSettingsDto) => void;
+  onSettingsChange: (settings: ToolbarSettings) => void;
   onStop?: () => void;
   /** Entrée ou bouton d'envoi ; le composer se vide quand la promesse se résout, et garde le contenu si elle échoue */
   onSubmit: (value: ComposerValue) => Promise<void>;
   placeholder: string;
   /** Un tour tourne : champ vide → le bouton rond devient « Arrêter » (icône square) et appelle onStop */
   running?: boolean;
-  /** Nouvelle session : le modèle et l'effort pris sans choix (« Défaut : Opus 5.5 »), d'où viennent les autorisations */
+  /** Nouvelle session : les autorisations, le modèle et l'effort pris sans choix (« Défaut : Opus 5.5 ») */
   defaults?: SettingsDefaults;
-  /** Réglages du tour : mode d'autorisations, modèle, effort (barre d'outils) */
-  settings: PilotSettingsDto;
+  /** Réglages du tour : mode d'autorisations, modèle, effort (barre d'outils) ; null : la valeur par défaut */
+  settings: ToolbarSettings;
   /** Bouton d'envoi libellé (« Démarrer ») au lieu du bouton rond à flèche */
   submitLabel?: string;
   /** Suggestions de « @ » (fichiers) et « / » (commandes et skills), appelées à chaque frappe après le déclencheur */

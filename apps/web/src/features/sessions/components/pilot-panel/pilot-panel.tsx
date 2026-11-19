@@ -7,7 +7,7 @@ import type { PilotSettingsDto, SessionDto } from '@bosco/domain';
 import { useNotices } from '@/shared/hooks/use-notices';
 import { interruptTurn, changeSettings as saveSettings, sendMessage, suggestions } from '../../api/pilot';
 import { useFullAccess } from '../../hooks/use-full-access';
-import { Composer, type ComposerValue } from '../composer';
+import { Composer, type ComposerValue, type ToolbarSettings } from '../composer';
 import { FullAccessDialog } from '../full-access-dialog';
 
 /** Réglages d'une session qui n'a encore jamais été pilotée : Demander, modèle et effort du profil. */
@@ -78,8 +78,10 @@ export function PilotPanel({ erased = false, session }: { erased?: boolean; sess
         push(error instanceof Error ? error.message : 'Le réglage n’a pas changé.', 'warning');
       });
   };
-  // Sur le poste, passer à l'accès complet ouvre la confirmation
-  const changeSettings = (next: PilotSettingsDto) => {
+  // Sur le poste, passer à l'accès complet ouvre la confirmation. Une session lancée n'a pas de « Défaut » à cocher pour
+  // ses autorisations : son mode reste celui qu'elle a
+  const changeSettings = (shown: ToolbarSettings) => {
+    const next = { ...shown, permissionMode: shown.permissionMode ?? settings.permissionMode };
     const toFullAccess = next.permissionMode === 'bypassPermissions' && settings.permissionMode !== next.permissionMode;
     if (toFullAccess && !session.pilot?.sandbox) fullAccess.ask(() => apply(next));
     else apply(next);
