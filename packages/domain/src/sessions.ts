@@ -181,6 +181,19 @@ export interface PilotMessageDto {
  * Nouvelle session : projet (sa racine), profil Claude Code (son dossier ; null : selon les valeurs par défaut),
  * premier message, et les réglages choisis pour elle (null : selon les valeurs par défaut).
  */
+/** Où une session travaille dans un projet : une branche du dépôt, ou un de ses worktrees (son dossier). */
+export type CheckoutChoiceDto = { branch: string; kind: 'branch' } | { kind: 'worktree'; path: string };
+
+/**
+ * Branches et worktrees d'un projet, proposés au démarrage d'une session : la branche active de son dossier, ses
+ * worktrees (dossier et branche, null : détaché) et les branches locales ouvertes dans aucun worktree.
+ */
+export interface ProjectCheckoutsDto {
+  active: null | string;
+  branches: string[];
+  worktrees: { branch: null | string; path: string }[];
+}
+
 export interface StartSessionDto extends Omit<PilotMessageDto, 'settings'> {
   /** Groupe choisi : ses valeurs par défaut passent avant celles du projet principal */
   group?: null | number;
@@ -190,6 +203,11 @@ export interface StartSessionDto extends Omit<PilotMessageDto, 'settings'> {
   project: string;
   /** Autres projets de la session, qu'elle voit en plus du principal */
   projects?: string[];
+  /**
+   * Branche ou worktree choisi pour chaque projet, par racine ; absent : la branche active (sur le poste, le dossier du
+   * projet ; en bac à sable, la branche de départ réglée pour le projet, sinon la courante)
+   */
+  checkouts?: Record<string, CheckoutChoiceDto>;
   /**
    * Dans un bac à sable : branche de la session (null : proposée), branche de départ du principal et des
    * autres projets, par racine (null : celle réglée pour le projet, sinon la courante)

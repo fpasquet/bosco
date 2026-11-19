@@ -22,6 +22,12 @@ async function git(cwd: string, ...args: string[]): Promise<string> {
   return stdout.trim();
 }
 
+/** Point de départ d'une copie : une branche du dépôt du poste, le commit d'un worktree détaché, sinon HEAD. */
+function startPoint(startBranch: null | string): string {
+  if (!startBranch) return 'HEAD';
+  return /^[0-9a-f]{40}$/.test(startBranch) ? startBranch : `origin/${startBranch}`;
+}
+
 /** Dossier d'un projet tel que Claude Code le nomme : le chemin, chaque caractère hors lettres et chiffres en « - ». */
 function projectDir(path: string): string {
   return path.replaceAll(/[^a-zA-Z0-9]/g, '-');
@@ -114,7 +120,7 @@ export class GitSandboxes implements Sandboxes {
       const repo = this.repoOf(input.sessionId, copy);
       await git(this.root, 'clone', '--quiet', '--no-hardlinks', root, repo);
       const from = startBranch ?? (await git(repo, 'rev-parse', '--abbrev-ref', 'HEAD'));
-      const start = startBranch ? `origin/${startBranch}` : 'HEAD';
+      const start = startPoint(startBranch);
       await git(repo, 'checkout', '--quiet', '-B', input.branch, start).catch(() => {
         throw new SandboxError(
           'invalidSandboxBranch',

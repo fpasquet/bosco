@@ -16,6 +16,13 @@ import type { SessionDefaultsService } from './session-defaults.service.ts';
 import type { SessionService } from './session.service.ts';
 import { TOKEN_VARIABLE } from '../../shared/domain/profile-access.ts';
 import {
+  type CheckoutChoice,
+  NO_CHECKOUTS,
+  type ProjectCheckouts,
+  sandboxStart,
+  workstationTarget,
+} from '../domain/checkout.ts';
+import {
   type AgentQuestion,
   allowedByMode,
   answersOf,
@@ -92,6 +99,13 @@ export type SandboxState = 'missing' | 'running' | 'stopped';
  * Bacs à sable des sessions : copie du projet sur la branche de la session et dossier personnel de
  * l'agent, gardés hors du conteneur ; conteneur isolé comme un agent du worker.
  */
+/** Branches et worktrees des dépôts du poste : ce que propose le démarrage d'une session, et le worktree d'une branche. */
+export interface Checkouts {
+  /** Crée le worktree d'une branche ouverte nulle part ; son dossier */
+  addWorktree(root: string, branch: string): Promise<string>;
+  list(root: string): Promise<ProjectCheckouts>;
+}
+
 export interface Sandboxes {
   /** Profil où les conversations des bacs à sable sont gardées, rangées avec leur projet : une source surveillée */
   readonly profile: string;
@@ -287,6 +301,7 @@ export class PilotService {
   private context: PilotContext = { textOf: () => Promise.resolve(null) };
   private profiles: PilotProfiles = NO_PROFILES;
   private sandbox: null | SandboxDeps = null;
+  private checkoutsPort: Checkouts | null = null;
   /** Usage de l'abonnement lu dans le flux d'un tour, rangé par profil Claude, et ses seuils */
   private quota: PilotQuota = NO_QUOTA;
   /** État de chaque conteneur, relu par l'entretien : la vue de la session le montre sans attendre Docker */
@@ -321,6 +336,20 @@ export class PilotService {
   /** Quota de l'abonnement, branché au démarrage : chaque tour piloté le tient à jour, ses seuils le retiennent. */
   useQuota(quota: PilotQuota): void {
     this.quota = quota;
+  }
+
+  /** Branches et worktrees des dépôts du poste, branchés au démarrage. */
+  useCheckouts(checkouts: Checkouts): void {
+    this.checkoutsPort = checkouts;
+  }
+
+  /** Branches et worktrees d'un projet, proposés au démarrage d'une session ; rien pour un dossier sans git. */
+  async checkouts(root: string): Promise<ProjectCheckouts> {
+    const known = await this.sessions.knownProjects();
+    const project = known.find((candidate) => candidate.root === root);
+    if (!project) throw new PilotTargetNotFound(`Bosco ne connaît pas le projet ${root}.`);
+    if (!project.git || !this.checkoutsPort) return NO_CHECKOUTS;
+    return this.checkoutsPort.list(root);
   }
 
   /** Bacs à sable des sessions, branchés au démarrage. */
@@ -461,6 +490,11 @@ export class PilotService {
     /** Autres projets de la session, dans l'ordre ; absent : un seul projet */
     projects?: readonly string[];
     /**
+     * Branche ou worktree choisi pour chaque projet, par racine ; absent : la branche active (sur le poste, le dossier du
+     * projet ; en bac à sable, la branche de départ ci-dessous)
+     */
+    checkouts?: Readonly<Record<string, CheckoutChoice>>;
+    /**
      * Dans un bac à sable : branche de la session (null : proposée) et branche de départ de chaque
      * projet (null : celle réglée pour le projet, sinon la courante) ; startBranch vaut pour le projet principal
      */
@@ -496,11 +530,18 @@ export class PilotService {
       throw new PilotTargetNotFound('Choisis un abonnement Claude parmi les profils surveillés par Bosco (Sources).');
     this.checkQuota(source.path, Boolean(input.sandbox));
     const sessionId = this.ids.next();
-    const record: PilotRecord = input.sandbox
-      ? await this.sandboxed(sessionId, [project, ...others], source.path, message, input.sandbox)
+    const chosen = input.checkouts ?? {};
+    const all = [project, ...others];
+    const sandboxChoice = input.sandbox ? await this.withCheckouts(input.sandbox, all, chosen) : null;
+    // Sur le poste, chaque projet travaille dans le dossier de la branche ou du worktree choisi
+    const workdirs = sandboxChoice
+      ? []
+      : await Promise.all(all.map((one) => this.workdirOf(one, chosen[one.root] ?? null)));
+    const record: PilotRecord = sandboxChoice
+      ? await this.sandboxed(sessionId, all, source.path, message, sandboxChoice)
       : {
-          cwd: project.root,
-          projects: others.map(({ root }) => root),
+          cwd: workdirs[0] ?? project.root,
+          projects: workdirs.slice(1),
           sandbox: null,
           sessionId,
           settings: resolved.settings,
@@ -512,6 +553,42 @@ export class PilotService {
     await this.sessions.rememberPlace(project.root, input.sandbox ? 'sandbox' : 'workstation');
     await this.run(record, message, false);
     return record.sessionId;
+  }
+
+  /**
+   * Dossier où travaille une session du poste dans un projet : le sien sur la branche active, le worktree choisi, ou un
+   * worktree créé pour une autre branche (le dossier du projet ne change jamais de branche).
+   */
+  private async workdirOf(project: CatalogProject, choice: CheckoutChoice | null): Promise<string> {
+    if (!choice || !project.git || !this.checkoutsPort) return project.root;
+    const checkouts = await this.checkoutsPort.list(project.root);
+    const target = workstationTarget(checkouts, choice);
+    if (target.kind === 'root') return project.root;
+    if (target.kind === 'worktree') return target.path;
+    return this.checkoutsPort.addWorktree(project.root, target.branch);
+  }
+
+  /** Branches de départ d'un bac à sable : la branche ou le worktree choisi pour un projet passe avant la saisie. */
+  private async withCheckouts(
+    choice: {
+      branch: null | string;
+      startBranch: null | string;
+      startBranches?: Readonly<Record<string, null | string>>;
+    },
+    projects: readonly CatalogProject[],
+    chosen: Readonly<Record<string, CheckoutChoice>>,
+  ): Promise<{ branch: null | string; startBranch: null | string; startBranches: Record<string, null | string> }> {
+    const starts: Record<string, null | string> = { ...choice.startBranches };
+    let principal = choice.startBranch;
+    for (const [index, project] of projects.entries()) {
+      const checkout = chosen[project.root];
+      if (!checkout || !this.checkoutsPort) continue;
+      const checkouts = await this.checkoutsPort.list(project.root);
+      const start = sandboxStart(checkouts, checkout);
+      if (index === 0) principal = start;
+      else starts[project.root] = start;
+    }
+    return { branch: choice.branch, startBranch: principal, startBranches: starts };
   }
 
   /** Profil et réglages du premier tour : le choix de la session, sinon les valeurs par défaut. */

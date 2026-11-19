@@ -130,3 +130,24 @@ Feature: Piloted sessions
     When I send DELETE request to "/api/projects/1"
     Then the response code should be 409
     And the response property "code" should equal "projectHasRunningSession"
+
+  @CA-SESS-195
+  @CA-SESS-196
+  Scenario: A session on the workstation works on a worktree or another branch, and the project folder keeps its branch
+    When I read the branches and worktrees of the project "maison"
+    Then the response code should be 200
+    And the response property "active" should equal "main"
+    And the response property "worktrees.0.branch" should equal "feat/tarifs"
+    And the response property "branches.0" should equal "develop"
+    When I start a session in the project "maison" on the worktree ".claude/worktrees/tarifs"
+    Then "the started session" should end its turn with "Reçu : Lis les catégories du budget · mode acceptEdits · modèle claude-opus-5-5 · effort high · images 0"
+    And "the started session" should work in the folder ".claude/worktrees/tarifs" of "maison"
+    When I start a session in the project "maison" on the branch "develop"
+    Then "the started session" should end its turn with "Reçu : Lis les catégories du budget · mode acceptEdits · modèle claude-opus-5-5 · effort high · images 0"
+    And "the started session" should work in the folder ".claude/worktrees/develop" of "maison"
+
+  @CA-SESS-196
+  Scenario: A branch the project does not have is refused
+    When I start a session in the project "maison" on the branch "nope"
+    Then the response code should be 400
+    And the response property "code" should equal "invalidCheckout"

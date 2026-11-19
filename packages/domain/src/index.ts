@@ -2,6 +2,7 @@ export { APP_NAME } from './app-name.ts';
 export type {
   AgentQuestionDto,
   ChannelProfileDto,
+  CheckoutChoiceDto,
   ConversationPartDto,
   ConversationStepDto,
   ConversationTurnDto,
@@ -23,6 +24,7 @@ export type {
   PilotSettingsDto,
   ProfileCandidateDto,
   ProfileSettingsDto,
+  ProjectCheckoutsDto,
   ResolvedDto,
   RetrievedBranchesDto,
   SandboxBranchesDto,

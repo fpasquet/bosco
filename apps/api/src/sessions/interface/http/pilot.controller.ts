@@ -16,6 +16,7 @@ import {
 import { z } from 'zod';
 import type {
   PilotOptionsDto,
+  ProjectCheckoutsDto,
   RetrievedBranchesDto,
   SandboxBranchesDto,
   SandboxRefusalsDto,
@@ -31,6 +32,7 @@ import { DomainError } from '../../../shared/domain/domain-error.ts';
 import { sessionDefaultsSchema } from '../../../shared/interface/http/defaults-schema.ts';
 import { parseBody } from '../../../shared/interface/http/parse-body.ts';
 import { PermissionAlreadySettled } from '../../application/live-signal.service.ts';
+import { CheckoutError } from '../../domain/checkout.ts';
 import {
   EFFORTS,
   InvalidAnswers,
@@ -70,6 +72,16 @@ const startSchema = messageSchema.extend({
   project: z.string().min(1),
   /** Autres projets de la session, qu'elle voit en plus du principal */
   projects: z.array(z.string().min(1)).max(MAX_SESSION_PROJECTS).optional(),
+  /** Branche ou worktree choisi pour chaque projet, par racine ; absent : la branche active */
+  checkouts: z
+    .record(
+      z.string().min(1),
+      z.discriminatedUnion('kind', [
+        z.object({ kind: z.literal('branch'), branch: z.string().trim().min(1).max(200) }),
+        z.object({ kind: z.literal('worktree'), path: z.string().min(1).max(4096) }),
+      ]),
+    )
+    .optional(),
   /** Dans un bac à sable : branche de la session, branches de départ, null : proposées */
   sandbox: z
     .object({ branch: BRANCH, startBranch: BRANCH, startBranches: z.record(z.string(), BRANCH).optional() })
@@ -83,6 +95,8 @@ const defaultsQuery = z.object({
   project: z.string().min(1).optional(),
   sandbox: z.enum(['true', 'false']).optional(),
 });
+
+const checkoutsQuery = z.object({ project: z.string().min(1) });
 
 const retrieveSchema = z.object({ project: z.string().min(1).nullish() }).nullish();
 
@@ -109,6 +123,7 @@ function translate(error: unknown): never {
   // Une branche refusée est une erreur de saisie ; un bac à sable indisponible, supprimé ou occupé, un conflit
   if (error instanceof SandboxError && error.code === 'invalidSandboxBranch')
     throw new BadRequestException({ code: error.code, message: error.message });
+  if (error instanceof CheckoutError) throw new BadRequestException({ code: error.code, message: error.message });
   if (error instanceof PermissionAlreadySettled) throw new ConflictException({ code: 'questionAlreadyAnswered' });
   if (error instanceof DomainError) throw new ConflictException({ code: error.code, message: error.message });
   throw error;
@@ -148,6 +163,18 @@ export class PilotController {
     return this.pilot.options();
   }
 
+  /** Branches et worktrees d'un projet (sa racine), proposés au démarrage d'une session. */
+  @Get('pilot/checkouts')
+  async checkouts(@Query() query: unknown): Promise<ProjectCheckoutsDto> {
+    const { project } = parseBody(checkoutsQuery, query);
+    try {
+      const { active, branches, worktrees } = await this.pilot.checkouts(project);
+      return { active, branches, worktrees: worktrees.map(({ branch, path }) => ({ branch, path })) };
+    } catch (error) {
+      translate(error);
+    }
+  }
+
   /** « Démarrer la session ». */
   @Post('pilot/sessions')
   async start(@Body() body: unknown): Promise<{ sessionId: string }> {
@@ -160,6 +187,7 @@ export class PilotController {
         profile: input.profile,
         project: input.project,
         projects: input.projects ?? [],
+        checkouts: input.checkouts ?? {},
         sandbox: input.sandbox ?? null,
       });
       return { sessionId };
