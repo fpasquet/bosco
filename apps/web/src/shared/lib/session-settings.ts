@@ -84,18 +84,38 @@ export function permissionModeOption(mode: PermissionModeDto): PermissionModeOpt
   );
 }
 
+const ALIAS = /^(haiku|opus|sonnet)(\[1m\])?$/i;
+
+/**
+ * Choix des menus qui désigne ce modèle : son identifiant, une version datée (« claude-haiku-4-5-20251001 ») ou un alias
+ * de Claude Code (« opus », « sonnet[1m] »), qui vaut le dernier modèle de sa famille ; undefined pour un modèle inconnu.
+ */
+export function modelChoice(model: null | string): ModelOption | undefined {
+  if (!model) return undefined;
+  const family = ALIAS.exec(model)?.[1]?.toLowerCase();
+  if (family) return MODEL_CHOICES.find(({ value }) => value.startsWith(`claude-${family}-`));
+  return MODEL_CHOICES.find(
+    ({ value }) => model === value || model.startsWith(`${value}-`) || model.startsWith(`${value}[`),
+  );
+}
+
 /** « Approuver pour moi » marche avec ce modèle ; null (celui de Claude Code) ou un modèle inconnu : oui. */
 export function supportsAutoMode(model: null | string): boolean {
   if (!model) return true;
-  const known = MODEL_CHOICES.find(({ value }) => value === model || model.startsWith(value));
+  const known = modelChoice(model);
   if (known) return known.autoMode;
   return !/haiku-4|claude-3/.test(model);
 }
 
-/** Libellé court d'un modèle ; un identifiant inconnu des menus s'affiche tel quel, null : celui du profil. */
+/**
+ * Libellé court d'un modèle (« Opus 5.5 », « Sonnet 5.5 · 1M » pour « sonnet[1m] ») ; un identifiant inconnu des menus
+ * s'affiche tel quel, null : celui du profil.
+ */
 export function modelName(model: null | string): string {
   if (!model) return 'Défaut du profil';
-  return MODEL_CHOICES.find(({ value }) => value === model)?.label ?? model;
+  const choice = modelChoice(model);
+  if (!choice) return model;
+  return /\[1m\]$/i.test(model) ? `${choice.label} · 1M` : choice.label;
 }
 
 export function effortName(effort: EffortDto | null): string {

@@ -6,6 +6,7 @@ export type ShellPlace =
   | { id: number; kind: 'project' }
   | { kind: 'history' }
   | { kind: 'other' }
+  | { kind: 'outside' }
   | { kind: 'overview' }
   | { kind: 'projects' }
   | { kind: 'settings' }
@@ -33,7 +34,7 @@ export const MOBILE_TABS: readonly NavItem[] = [
   { href: '/', label: 'Ensemble', icon: LayoutDashboard, places: ['overview'] },
   // L'onglet Historique s'ouvre sur la bascule « Sessions | Usage »
   { href: '/history', label: 'Historique', icon: History, places: ['history', 'usage'] },
-  { href: '/projects', label: 'Projets', icon: FolderGit2, places: ['projects', 'project', 'group'] },
+  { href: '/projects', label: 'Projets', icon: FolderGit2, places: ['projects', 'outside', 'project', 'group'] },
   // Sur le téléphone, la racine des Réglages est l'onglet Sources, suivi des autres onglets
   { href: '/settings/sources', label: 'Réglages', icon: Settings, places: ['settings'] },
 ];

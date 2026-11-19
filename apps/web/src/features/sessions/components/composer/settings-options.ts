@@ -3,6 +3,8 @@ import {
   AUTO_MODE_UNAVAILABLE,
   EFFORT_CHOICES,
   MODEL_CHOICES,
+  modelChoice,
+  modelName,
   PERMISSION_MODE_OPTIONS,
   type PermissionModeOption,
   permissionModeOption,
@@ -58,9 +60,14 @@ export function permissionLabel(settings: PilotSettingsDto): string {
   return permissionModeOption(settings.permissionMode).label;
 }
 
-/** Libellé court du modèle ; un identifiant inconnu des menus s'affiche tel quel. */
+/** Libellé court du modèle, alias de Claude Code compris (« opus » : « Opus 5.5 ») ; un modèle inconnu reste tel quel. */
 export function modelLabel(settings: PilotSettingsDto): string {
-  return labelOf(MODEL_OPTIONS, settings.model ?? DEFAULT_VALUE) ?? settings.model ?? '';
+  return modelName(settings.model);
+}
+
+/** Option cochée du menu des modèles : celle que désigne le modèle, même par un alias de Claude Code. */
+export function modelValue(settings: PilotSettingsDto): string {
+  return modelChoice(settings.model)?.value ?? settings.model ?? DEFAULT_VALUE;
 }
 
 export function effortLabel(settings: PilotSettingsDto): string {

@@ -9,8 +9,8 @@ export interface SidebarActivity {
 }
 
 export interface SidebarPlacesProps {
-  /** Ligne active : la page du projet ou du groupe ouvert, ou « Tous les projets » */
-  active: { group: null | number; project: null | number; projects: boolean };
+  /** Ligne active : la page du projet ou du groupe ouvert, « Tous les projets » ou « Hors projet » */
+  active: { group: null | number; outside?: boolean; project: null | number; projects: boolean };
   /** Nombre de projets ajoutés, compteur de « Tous les projets » */
   allProjects: number;
   groupMenu: (id: number) => ReactNode;
@@ -128,8 +128,12 @@ export function SidebarPlaces({
             </Link>
           </li>
           <li className={ROW}>
-            {/* Ouvre « Tous les projets » sur sa section « Hors projet » */}
-            <Link href="/projects#outside" className={LINK}>
+            {/* Ouvre « Tous les projets » sur sa section « Hors projet », la ligne active */}
+            <Link
+              href="/projects?section=outside#outside"
+              aria-current={active.outside ? 'page' : undefined}
+              className={LINK}
+            >
               <FolderOpen aria-hidden className="size-4 shrink-0" />
               <span className="truncate">Hors projet</span>
               <Count count={outside.count} waiting={outside.waiting} />

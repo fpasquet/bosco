@@ -8,6 +8,7 @@ import {
   effortLabel,
   MODEL_OPTIONS,
   modelLabel,
+  modelValue,
   permissionLabel,
   permissionOptions,
   withEffort,
@@ -68,7 +69,7 @@ export function SettingsBar({
         ariaLabel={`Modèle : ${model}`}
         triggerLabel={model}
         options={MODEL_OPTIONS}
-        value={settings.model ?? DEFAULT_VALUE}
+        value={modelValue(settings)}
         origin={origins.model}
         compact={compact}
         disabled={disabled}

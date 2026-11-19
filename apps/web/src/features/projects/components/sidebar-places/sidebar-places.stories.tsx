@@ -57,5 +57,10 @@ export const ProjectActive: Story = { args: { active: { group: null, project: 2,
 /** La page « Tous les projets » est ouverte. */
 export const AllProjects: Story = { args: { active: { group: null, project: null, projects: true } } };
 
+/** « Hors projet » est ouvert : sa ligne est active, pas celle de « Tous les projets ». */
+export const OutsideActive: Story = {
+  args: { active: { group: null, outside: true, project: null, projects: false } },
+};
+
 /** Aucun groupe encore : l'intitulé garde son ＋. */
 export const NoGroups: Story = { args: { groups: [] } };
