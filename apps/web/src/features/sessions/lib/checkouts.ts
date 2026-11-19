@@ -107,11 +107,21 @@ export function checkoutName(value: string, checkouts: ProjectCheckoutsDto | und
   return `le worktree ${worktree?.branch ?? 'détaché'}`;
 }
 
-/** Ce que dit le choix sous le champ, en bac à sable : d'où part la copie, et ce qu'elle ne prend pas. */
+/** « 3 fichiers modifiés du poste non copiés », ou null quand la copie prend tout. */
+export function uncopied(changes: null | number): null | string {
+  if (!changes) return null;
+  return changes > 1 ? `${changes} fichiers modifiés du poste non copiés` : '1 fichier modifié du poste non copié';
+}
+
+/**
+ * Ce que dit le choix sous le champ, en bac à sable : d'où part la copie, et ce qu'elle ne prend pas, avec le nombre de
+ * fichiers modifiés du dossier du projet, comme la colonne « Copie » de plusieurs projets.
+ */
 export function sandboxHint(
   value: string,
   checkouts: ProjectCheckoutsDto | undefined,
   options: CheckoutOptions,
+  changes: null | number,
 ): string {
   const choice = checkoutChoiceOf(value);
   if (choice?.kind === 'worktree') {
@@ -120,5 +130,5 @@ export function sandboxHint(
     return `Copie de ${from}, la branche du worktree, telle qu’enregistrée : ses fichiers modifiés ne sont pas copiés.`;
   }
   const from = choice?.branch ?? options.default.label;
-  return `Copie de ${from} telle qu’enregistrée : les fichiers modifiés du poste ne sont pas copiés.`;
+  return `Copie de ${from} telle qu’enregistrée : ${uncopied(changes) ?? 'aucun fichier modifié sur le poste'}.`;
 }

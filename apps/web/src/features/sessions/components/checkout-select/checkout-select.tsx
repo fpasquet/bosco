@@ -1,14 +1,9 @@
 'use client';
 import { FolderGit2, GitBranch } from 'lucide-react';
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from '@/shared/ui/select';
+import { useId, useState } from 'react';
+import { cn } from '@/lib/cn';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/shared/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@/shared/ui/popover';
 import type { CheckoutOption, CheckoutOptions } from '../../lib/checkouts';
 
 export interface CheckoutSelectProps {
@@ -30,20 +25,23 @@ function Badge({ text }: { text: string }) {
   return <span className="badge shrink-0 badge-soft font-sans badge-sm badge-primary">{text}</span>;
 }
 
-/** Une option : le nom de la branche, puis son badge (« active ») ou le dossier du worktree. */
-function Option({ option }: { option: CheckoutOption }) {
+/** Nom d'une branche et son badge ; pour un worktree, son dossier dessous. */
+function OptionText({ option }: { option: CheckoutOption }) {
   return (
-    <SelectItem value={option.value}>
-      <span className="truncate font-mono">{option.label}</span>
-      {option.badge && <Badge text={option.badge} />}
+    <span className="flex min-w-0 flex-col">
+      <span className="flex min-w-0 items-center gap-2">
+        <span className="min-w-0 truncate font-mono">{option.label}</span>
+        {option.badge && <Badge text={option.badge} />}
+      </span>
       {option.hint && <span className="truncate text-xs text-muted">{option.hint}</span>}
-    </SelectItem>
+    </span>
   );
 }
 
 /**
- * Choix de la branche ou du worktree d'un projet : le défaut en tête (la branche active, avec son badge), puis les
- * worktrees et les branches, rangés sous leur groupe qui dit leur type. Le bouton reprend le nom choisi et son badge.
+ * Choix de la branche ou du worktree d'un projet : un bouton qui montre le choix, puis une liste à recherche, le
+ * défaut en tête (la branche active, avec son badge), les worktrees et les branches rangés sous leur groupe, qui dit
+ * leur type. La recherche lit le nom d'une branche et le dossier d'un worktree.
  */
 export function CheckoutSelect({
   ariaLabel,
@@ -56,41 +54,70 @@ export function CheckoutSelect({
   size = 'md',
   value,
 }: CheckoutSelectProps) {
+  const [open, setOpen] = useState(false);
+  const listId = useId();
   const all = [options.default, ...options.worktrees, ...options.branches];
   const chosen = all.find((option) => option.value === value) ?? options.default;
   const worktree = options.worktrees.includes(chosen);
   const Icon = worktree ? FolderGit2 : GitBranch;
+  const choose = (next: string) => {
+    onChange(next);
+    setOpen(false);
+  };
+  const item = (option: CheckoutOption) => (
+    <CommandItem
+      key={option.value}
+      value={option.value}
+      keywords={[option.label, option.hint ?? '', option.badge ?? '']}
+      checked={option.value === chosen.value}
+      onSelect={choose}
+    >
+      <OptionText option={option} />
+    </CommandItem>
+  );
   return (
-    <Select value={chosen.value} onValueChange={onChange} disabled={disabled}>
-      <SelectTrigger id={id} size={size} className={className} aria-label={ariaLabel} aria-describedby={describedBy}>
-        <SelectValue>
-          <span className="flex min-w-0 items-center gap-2">
-            <Icon aria-hidden className="size-4 shrink-0 text-muted" />
-            <span className="truncate font-mono">{chosen.label}</span>
+    <Popover open={open} onOpenChange={setOpen} modal={false}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          id={id}
+          role="combobox"
+          aria-expanded={open}
+          aria-controls={listId}
+          aria-label={ariaLabel}
+          aria-describedby={describedBy}
+          disabled={disabled}
+          className={cn('select w-full gap-2 text-left', size === 'sm' && 'select-sm', className)}
+        >
+          <Icon aria-hidden className="size-4 shrink-0 text-muted" />
+          <span className="flex min-w-0 flex-1 items-center gap-2">
+            <span className="min-w-0 truncate font-mono">{chosen.label}</span>
             {chosen.badge && <Badge text={chosen.badge} />}
-            {worktree && <span className="sr-only">, worktree</span>}
           </span>
-        </SelectValue>
-      </SelectTrigger>
-      <SelectContent>
-        <Option option={options.default} />
-        {options.worktrees.length > 0 && (
-          <SelectGroup>
-            <SelectLabel>Worktrees</SelectLabel>
-            {options.worktrees.map((option) => (
-              <Option key={option.value} option={option} />
-            ))}
-          </SelectGroup>
-        )}
-        {options.branches.length > 0 && (
-          <SelectGroup>
-            <SelectLabel>Branches</SelectLabel>
-            {options.branches.map((option) => (
-              <Option key={option.value} option={option} />
-            ))}
-          </SelectGroup>
-        )}
-      </SelectContent>
-    </Select>
+          {worktree && <span className="sr-only">, worktree</span>}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        id={listId}
+        aria-label="Branches et worktrees"
+        align="start"
+        className="popover-content-trigger p-0"
+      >
+        {/* Radix place le focus dans le calque à l'ouverture : sur la recherche, son premier champ */}
+        <Command label="Rechercher une branche ou un worktree">
+          <CommandInput placeholder="Rechercher…" />
+          <CommandEmpty>Aucune branche ni aucun worktree à ce nom.</CommandEmpty>
+          <CommandList>
+            <CommandGroup>{item(options.default)}</CommandGroup>
+            {options.worktrees.length > 0 && (
+              <CommandGroup heading="Worktrees">{options.worktrees.map(item)}</CommandGroup>
+            )}
+            {options.branches.length > 0 && (
+              <CommandGroup heading="Branches">{options.branches.map(item)}</CommandGroup>
+            )}
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
 }

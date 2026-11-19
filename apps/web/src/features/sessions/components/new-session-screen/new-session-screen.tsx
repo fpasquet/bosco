@@ -48,6 +48,7 @@ import {
   checkoutOptions,
   DEFAULT_CHECKOUT,
   sandboxHint,
+  uncopied,
   workdirOf,
   workstationHint,
 } from '../../lib/checkouts';
@@ -197,12 +198,6 @@ export interface NewSessionOrigin {
   project: null | number;
 }
 
-/** « 3 fichiers modifiés du poste non copiés », ou « — » quand la copie prend tout. */
-function uncopied(changes: null | number): string {
-  if (!changes) return '—';
-  return changes > 1 ? `${changes} fichiers modifiés du poste non copiés` : '1 fichier modifié du poste non copié';
-}
-
 /** Branches et worktrees des projets choisis, lus à la demande, par racine. */
 type CheckoutsOf = (root: string) => ProjectCheckoutsDto | undefined;
 
@@ -232,7 +227,7 @@ function CheckoutFields({
     const options = checkoutOptions(principal, checkoutsOf(principal.root), sandboxed);
     const value = valueOf(principal);
     return (
-      <div className="flex min-w-0 flex-col gap-1.5 sm:max-w-md">
+      <div className="flex min-w-0 flex-col gap-1.5 sm:max-w-xl">
         <label htmlFor="session-checkout" className="text-sm font-medium">
           {label}
         </label>
@@ -245,7 +240,7 @@ function CheckoutFields({
         />
         <p id="session-checkout-help" className="text-xs text-muted">
           {sandboxed
-            ? sandboxHint(value, checkoutsOf(principal.root), options)
+            ? sandboxHint(value, checkoutsOf(principal.root), options, principal.changes)
             : workstationHint(value, checkoutsOf(principal.root))}
         </p>
       </div>
@@ -257,20 +252,20 @@ function CheckoutFields({
         <caption className="sr-only">Branche ou worktree de chaque projet</caption>
         <thead className="text-xs text-muted">
           <tr>
-            <th className="font-medium">Projet</th>
-            <th className="font-medium">{label}</th>
+            <th className="font-medium whitespace-nowrap">Projet</th>
+            <th className="w-full font-medium">{label}</th>
             {sandboxed && <th className="font-medium">Copie</th>}
           </tr>
         </thead>
         <tbody>
           {chosen.map((project) => (
             <tr key={project.root}>
-              <td>{project.name}</td>
+              <td className="whitespace-nowrap">{project.name}</td>
               <td>
                 {project.git ? (
                   <CheckoutSelect
                     size="sm"
-                    className="w-56"
+                    className="min-w-64"
                     ariaLabel={`${label}, pour ${project.name}`}
                     options={checkoutOptions(project, checkoutsOf(project.root), sandboxed)}
                     value={valueOf(project)}
@@ -280,7 +275,9 @@ function CheckoutFields({
                   <span className="text-xs text-muted">sans git : son dossier</span>
                 )}
               </td>
-              {sandboxed && <td className="text-xs text-muted">{uncopied(project.changes)}</td>}
+              {sandboxed && (
+                <td className="text-xs whitespace-nowrap text-muted">{uncopied(project.changes) ?? '—'}</td>
+              )}
             </tr>
           ))}
         </tbody>
@@ -357,7 +354,7 @@ function SandboxFields({
 }) {
   const several = chosen.length > 1;
   return (
-    <label className="flex min-w-0 flex-col gap-1.5 sm:max-w-md">
+    <label className="flex min-w-0 flex-col gap-1.5 sm:max-w-xl">
       <span className="text-sm font-medium">Branche de la session</span>
       <input
         className="input w-full font-mono"

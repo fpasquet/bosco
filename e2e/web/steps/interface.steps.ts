@@ -101,6 +101,19 @@ When('je choisis {texte} dans la liste déroulante {texte}', async ({ page }, op
   await page.getByRole('option', { name: startsWith(option) }).click();
 });
 
+When('je cherche {texte} dans la liste déroulante {texte}', async ({ page }, text: string, label: string) => {
+  await dropdown(page, label).click();
+  await page.getByRole('combobox', { name: /^Rechercher/ }).fill(text);
+});
+
+When('je choisis {texte} dans la liste ouverte', async ({ page }, option: string) => {
+  await page.getByRole('option', { name: startsWith(option) }).click();
+});
+
+Then('la liste ouverte ne propose pas {texte}', async ({ page }, option: string) => {
+  await expect(page.getByRole('option', { name: startsWith(option) })).toHaveCount(0);
+});
+
 Then('la liste déroulante {texte} affiche {texte}', async ({ page }, label: string, text: string) => {
   await expect(dropdown(page, label)).toContainText(text);
 });

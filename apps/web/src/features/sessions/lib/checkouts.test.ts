@@ -1,7 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import type { ProjectCheckoutsDto } from '@bosco/domain';
 import type { OptionProject } from './new-session';
-import { checkoutChoiceOf, checkoutName, checkoutOptions, workdirOf, workstationHint } from './checkouts';
+import {
+  checkoutChoiceOf,
+  checkoutName,
+  checkoutOptions,
+  sandboxHint,
+  uncopied,
+  workdirOf,
+  workstationHint,
+} from './checkouts';
 
 const ROOT = '/home/camille/www/site-clubs';
 
@@ -76,5 +84,22 @@ describe('workdirOf and workstationHint', () => {
     expect(checkoutName('default', checkouts)).toBeNull();
     expect(checkoutName(`worktree:${ROOT}/.claude/worktrees/tarifs`, checkouts)).toBe('le worktree feat/tarifs');
     expect(checkoutName('branch:develop', checkouts)).toBe('la branche develop');
+  });
+});
+
+describe('sandboxHint', () => {
+  it('CA-SESS-197 · says where the copy starts, and how many changed files it leaves, as for several projects', () => {
+    const options = checkoutOptions(project, checkouts, true);
+    expect(sandboxHint('default', checkouts, options, 2)).toBe(
+      'Copie de main telle qu’enregistrée : 2 fichiers modifiés du poste non copiés.',
+    );
+    expect(sandboxHint('branch:develop', checkouts, options, 0)).toBe(
+      'Copie de develop telle qu’enregistrée : aucun fichier modifié sur le poste.',
+    );
+    expect(sandboxHint(`worktree:${ROOT}/.claude/worktrees/tarifs`, checkouts, options, 2)).toBe(
+      'Copie de feat/tarifs, la branche du worktree, telle qu’enregistrée : ses fichiers modifiés ne sont pas copiés.',
+    );
+    expect(uncopied(1)).toBe('1 fichier modifié du poste non copié');
+    expect(uncopied(null)).toBeNull();
   });
 });

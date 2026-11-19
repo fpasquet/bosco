@@ -42,19 +42,45 @@ type Story = StoryObj<typeof meta>;
 /** La branche active par défaut, avec son badge. */
 export const Default: Story = {};
 
-/**
- * Ouverte : le défaut, puis les worktrees avec leur dossier et les branches, le groupe disant le type. Radix masque le
- * reste de la page tant que la liste est ouverte : la règle aria-hidden-focus ne vaut pas pour cet état.
- */
+/** Ouverte : la recherche en tête, le défaut, puis les worktrees avec leur dossier et les branches sous leur groupe. */
 export const Open: Story = {
-  parameters: { a11y: { config: { rules: [{ id: 'aria-hidden-focus', enabled: false }] } } },
   play: async ({ canvasElement }) => {
     await userEvent.click(within(canvasElement).getByRole('combobox', { name: 'Branche ou worktree' }));
     const body = within(canvasElement.ownerDocument.body);
-    // L'apparition de la liste s'anime : son contenu est là avant d'être tout à fait opaque
     await expect(await body.findByRole('option', { name: /feat\/tarifs/ })).toBeInTheDocument();
     await expect(body.getByText('Worktrees')).toBeInTheDocument();
   },
+};
+
+/** Une recherche ne garde que les branches et les worktrees qui la contiennent, dans leur nom ou leur dossier. */
+export const Searched: Story = {
+  play: async ({ canvasElement }) => {
+    await userEvent.click(within(canvasElement).getByRole('combobox', { name: 'Branche ou worktree' }));
+    const body = within(canvasElement.ownerDocument.body);
+    await userEvent.type(await body.findByRole('combobox', { name: 'Rechercher une branche ou un worktree' }), 'crene');
+    await expect(body.getByRole('option', { name: /fix\/creneaux/ })).toBeInTheDocument();
+    await expect(body.queryByRole('option', { name: /develop/ })).not.toBeInTheDocument();
+  },
+};
+
+/** Un nom de branche long : tronqué, le badge et la flèche restent visibles. */
+export const LongName: Story = {
+  args: {
+    size: 'sm',
+    className: 'min-w-64',
+    options: {
+      default: { badge: 'active', label: 'memory/task-16b7103c-with-a-very-long-branch-name', value: 'default' },
+      worktrees: [],
+      branches: [],
+    },
+  },
+  decorators: [
+    (Story) => (
+      <div className="w-64">
+        <Story />
+      </div>
+    ),
+  ],
 };
 
 /** Un worktree choisi : son icône et son nom. */
