@@ -1,2 +1,2 @@
 export { Composer, type ComposerProps, type ComposerValue } from './composer';
-export type { SettingsOrigins } from './settings-bar';
+export type { SettingsDefaults } from './settings-bar';

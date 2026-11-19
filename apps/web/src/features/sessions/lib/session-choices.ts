@@ -6,8 +6,6 @@ export type SessionChoices = Omit<SessionDefaultsDto, 'profile'>;
 
 export const NO_CHOICES: SessionChoices = { effort: null, model: null, permissionMode: null };
 
-type Key = keyof SessionChoices;
-
 /** Réglages du premier tour : le choix de la session, sinon la valeur par défaut (« Demander » tant qu'elle se lit). */
 export function effectiveSettings(
   chosen: SessionChoices,
@@ -20,16 +18,31 @@ export function effectiveSettings(
   };
 }
 
-/** D'où vient chaque réglage : « choisi pour cette session », ou l'origine de la valeur par défaut. */
-export function settingsOrigins(
-  chosen: SessionChoices,
-  defaults: SessionDefaultsResolvedDto | undefined,
-): Record<Key, null | string> {
-  const origin = (key: Key) => {
-    if (chosen[key] !== null) return 'choisi pour cette session';
-    return defaults ? originLabel(defaults[key].origin) : null;
+/** Une valeur par défaut, et le niveau de Bosco qui la règle ; celle du profil Claude Code n'a pas d'origine à dire. */
+function fallbackOf(resolved: SessionDefaultsResolvedDto['effort'] | SessionDefaultsResolvedDto['model']) {
+  return {
+    origin: resolved.origin.level === 'claudeProfile' ? null : originLabel(resolved.origin),
+    value: resolved.value,
   };
-  return { effort: origin('effort'), model: origin('model'), permissionMode: origin('permissionMode') };
+}
+
+/**
+ * Ce que la barre d'outils dit des valeurs par défaut : le modèle et l'effort qu'une session prend sans choix, et d'où
+ * viennent les autorisations (« choisi pour cette session », ou l'origine de leur valeur par défaut).
+ */
+export function settingsDefaults(chosen: SessionChoices, defaults: SessionDefaultsResolvedDto | undefined) {
+  if (!defaults) return { permissionMode: chosen.permissionMode === null ? null : 'choisi pour cette session' };
+  return {
+    effort: fallbackOf(defaults.effort),
+    model: fallbackOf(defaults.model),
+    permissionMode:
+      chosen.permissionMode === null ? originLabel(defaults.permissionMode.origin) : 'choisi pour cette session',
+  };
+}
+
+/** Réglages que montre la barre d'outils : le modèle et l'effort choisis seulement, null cochant « Défaut : … ». */
+export function shownSettings(chosen: SessionChoices, settings: PilotSettingsDto): PilotSettingsDto {
+  return { ...settings, effort: chosen.effort, model: chosen.model };
 }
 
 /** Un réglage changé dans la barre d'outils devient un choix de la session ; les autres restent aux valeurs par défaut. */

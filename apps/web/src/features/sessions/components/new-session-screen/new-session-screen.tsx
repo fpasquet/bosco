@@ -66,7 +66,8 @@ import {
   effectiveSettings,
   NO_CHOICES,
   type SessionChoices,
-  settingsOrigins,
+  settingsDefaults,
+  shownSettings,
 } from '../../lib/session-choices';
 import { CheckoutSelect } from '../checkout-select';
 import { Composer, type ComposerValue } from '../composer';
@@ -650,8 +651,9 @@ function NewSessionForm({
     setChosenRoots(next);
     setProfile(null);
   };
+  const shown = shownSettings(choices, settings);
   const changeSettings = (next: typeof settings) => {
-    const apply = () => setChoices(choicesAfter(choices, settings, next));
+    const apply = () => setChoices(choicesAfter(choices, shown, next));
     // Sur le poste, choisir l'accès complet demande une confirmation, à chaque session
     if (next.permissionMode === 'bypassPermissions' && settings.permissionMode !== next.permissionMode && !sandboxed)
       fullAccess.ask(() => {
@@ -734,8 +736,8 @@ function NewSessionForm({
               <Composer
                 label="Premier message"
                 placeholder="Que doit faire l’agent ?"
-                settings={settings}
-                origins={settingsOrigins(choices, defaults)}
+                settings={shown}
+                defaults={settingsDefaults(choices, defaults)}
                 onSettingsChange={changeSettings}
                 onSubmit={submit}
                 suggest={(kind, query) => suggestions({ profile, project: project.root }, kind, query)}

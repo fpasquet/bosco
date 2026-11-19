@@ -2,6 +2,7 @@ import type { EffortDto, PilotSettingsDto } from '@bosco/domain';
 import {
   AUTO_MODE_UNAVAILABLE,
   EFFORT_CHOICES,
+  effortName,
   MODEL_CHOICES,
   modelChoice,
   modelName,
@@ -26,6 +27,15 @@ export interface SettingOption {
 /** Valeur des menus pour un réglage laissé au profil (null) : Radix ne prend que des chaînes. */
 export const DEFAULT_VALUE = 'default';
 
+/**
+ * Valeur par défaut d'un réglage d'une nouvelle session, prise tant que la personne n'en choisit pas : la valeur (null :
+ * inconnue) et le niveau de Bosco qui la règle (« défaut du projet maison » ; null : rien à en dire).
+ */
+export interface SettingDefault {
+  origin: null | string;
+  value: null | string;
+}
+
 /** Les cinq modes ; « Approuver pour moi » grisé quand le modèle choisi ne le permet pas. */
 export function permissionOptions(model: null | string): SettingOption[] {
   const auto = supportsAutoMode(model);
@@ -39,30 +49,48 @@ export function permissionOptions(model: null | string): SettingOption[] {
   }));
 }
 
-export const MODEL_OPTIONS: SettingOption[] = [
-  { value: DEFAULT_VALUE, label: 'Défaut du profil' },
-  ...MODEL_CHOICES.map(({ label, value }) => ({ label, value })),
-];
+/** Première option d'un menu : « Défaut : Opus 5.5 » quand la valeur par défaut se connaît, avec son origine. */
+function defaultOption(value: null | string, origin: null | string | undefined): SettingOption {
+  return {
+    value: DEFAULT_VALUE,
+    label: value ? `Défaut : ${value}` : 'Défaut',
+    ...(origin && { description: origin }),
+  };
+}
 
-export const EFFORT_OPTIONS: SettingOption[] = [
-  { value: DEFAULT_VALUE, label: 'Effort : défaut' },
-  ...EFFORT_CHOICES.map(({ label, value }) => ({ label, value })),
-];
+/** Un effort tel qu'il se dit dans une phrase : « élevé ». */
+export function effortWord(effort: string): string {
+  return effortName(effort as EffortDto).toLowerCase();
+}
+
+export function modelOptions(fallback?: SettingDefault): SettingOption[] {
+  return [
+    defaultOption(fallback?.value ? modelName(fallback.value) : null, fallback?.origin),
+    ...MODEL_CHOICES.map(({ label, value }) => ({ label, value })),
+  ];
+}
+
+export function effortOptions(fallback?: SettingDefault): SettingOption[] {
+  return [
+    defaultOption(fallback?.value ? effortWord(fallback.value) : null, fallback?.origin),
+    ...EFFORT_CHOICES.map(({ label, value }) => ({ label, value })),
+  ];
+}
 
 const EFFORTS = new Set<string>(EFFORT_CHOICES.map(({ value }) => value));
 const PERMISSION_MODES = new Set<string>(PERMISSION_MODE_OPTIONS.map(({ value }) => value));
-
-function labelOf(options: SettingOption[], value: string): string | undefined {
-  return options.find((option) => option.value === value)?.label;
-}
 
 export function permissionLabel(settings: PilotSettingsDto): string {
   return permissionModeOption(settings.permissionMode).label;
 }
 
-/** Libellé court du modèle, alias de Claude Code compris (« opus » : « Opus 5.5 ») ; un modèle inconnu reste tel quel. */
-export function modelLabel(settings: PilotSettingsDto): string {
-  return modelName(settings.model);
+/**
+ * Texte du bouton du modèle : le modèle choisi (alias de Claude Code compris, « opus » : « Opus 5.5 »), sinon
+ * « Défaut : Opus 5.5 », ou « Défaut » quand la valeur par défaut ne se connaît pas.
+ */
+export function modelLabel(settings: PilotSettingsDto, fallback?: SettingDefault): string {
+  if (settings.model) return modelName(settings.model);
+  return fallback?.value ? `Défaut : ${modelName(fallback.value)}` : 'Défaut';
 }
 
 /** Option cochée du menu des modèles : celle que désigne le modèle, même par un alias de Claude Code. */
@@ -70,9 +98,19 @@ export function modelValue(settings: PilotSettingsDto): string {
   return modelChoice(settings.model)?.value ?? settings.model ?? DEFAULT_VALUE;
 }
 
-export function effortLabel(settings: PilotSettingsDto): string {
-  if (!settings.effort) return 'Effort : défaut';
-  return `Effort : ${(labelOf(EFFORT_OPTIONS, settings.effort) ?? settings.effort).toLowerCase()}`;
+/** Texte du bouton de l'effort : « Effort : élevé » choisi, « Défaut : effort élevé », ou « Effort : défaut ». */
+export function effortLabel(settings: PilotSettingsDto, fallback?: SettingDefault): string {
+  if (settings.effort) return `Effort : ${effortWord(settings.effort)}`;
+  return fallback?.value ? `Défaut : effort ${effortWord(fallback.value)}` : 'Effort : défaut';
+}
+
+/**
+ * Nom accessible d'un bouton : son texte visible, précédé du réglage s'il ne le dit pas (« Modèle : Défaut : Sonnet
+ * 5.5 »), puis l'origine d'une valeur par défaut (« défaut du projet maison »).
+ */
+export function spokenLabel(title: string, label: string, origin: null | string | undefined): string {
+  const named = label.startsWith(title) ? label : `${title} : ${label}`;
+  return origin ? `${named}, ${origin}` : named;
 }
 
 export function withPermissionMode(settings: PilotSettingsDto, value: string): PilotSettingsDto {

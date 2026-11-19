@@ -4,22 +4,27 @@ import { permissionModeOption } from '@/shared/lib/session-settings';
 import { SettingsMenu } from './settings-menu';
 import {
   DEFAULT_VALUE,
-  EFFORT_OPTIONS,
   effortLabel,
-  MODEL_OPTIONS,
+  effortOptions,
   modelLabel,
+  modelOptions,
   modelValue,
   permissionLabel,
   permissionOptions,
+  type SettingDefault,
+  spokenLabel,
   withEffort,
   withModel,
   withPermissionMode,
 } from './settings-options';
 
-/** D'où vient chaque réglage d'une nouvelle session (« défaut du groupe ») ; absent : rien à dire. */
-export interface SettingsOrigins {
-  effort?: null | string;
-  model?: null | string;
+/**
+ * Valeurs par défaut d'une nouvelle session : le modèle et l'effort qu'elle prend sans choix (« Défaut : Opus 5.5 »),
+ * et d'où viennent les autorisations (« défaut du groupe »).
+ */
+export interface SettingsDefaults {
+  effort?: SettingDefault;
+  model?: SettingDefault;
   permissionMode?: null | string;
 }
 
@@ -27,28 +32,33 @@ export interface SettingsBarProps {
   className?: string;
   /** Rangée de puces du téléphone */
   compact?: boolean;
+  /** Nouvelle session : ses valeurs par défaut ; absent : « Défaut » sans valeur */
+  defaults?: SettingsDefaults;
   disabled?: boolean;
   onChange: (settings: PilotSettingsDto) => void;
-  origins?: SettingsOrigins;
+  /** Réglages choisis ; un modèle ou un effort null : celui par défaut */
   settings: PilotSettingsDto;
 }
 
 /**
  * Les trois réglages du tour : les cinq modes d'autorisations, chacun avec son icône (Accès complet en orange,
- * « Approuver pour moi » grisé quand le modèle ne le permet pas), le modèle et l'effort ; chacun dit d'où il vient.
+ * « Approuver pour moi » grisé quand le modèle ne le permet pas), le modèle et l'effort. Sans choix, le modèle et
+ * l'effort cochent leur première option, « Défaut : Opus 5.5 », qui dit seule d'où vient la valeur.
  */
 export function SettingsBar({
   className,
   compact = false,
+  defaults = {},
   disabled = false,
   onChange,
-  origins = {},
   settings,
 }: SettingsBarProps) {
   const permission = permissionLabel(settings);
-  const model = modelLabel(settings);
   const mode = permissionModeOption(settings.permissionMode);
   const ModeIcon = mode.icon;
+  const model = settings.model ?? defaults.model?.value ?? null;
+  const modelText = modelLabel(settings, defaults.model);
+  const effortText = effortLabel(settings, defaults.effort);
   return (
     <div className={className}>
       <SettingsMenu
@@ -56,9 +66,9 @@ export function SettingsBar({
         ariaLabel={`Autorisations : ${permission}`}
         icon={<ModeIcon aria-hidden className={compact ? 'size-3' : 'size-3.5'} />}
         triggerLabel={permission}
-        options={permissionOptions(settings.model)}
+        options={permissionOptions(model)}
         value={settings.permissionMode}
-        origin={origins.permissionMode}
+        origin={defaults.permissionMode}
         risky={mode.risky}
         compact={compact}
         disabled={disabled}
@@ -66,22 +76,20 @@ export function SettingsBar({
       />
       <SettingsMenu
         title="Modèle"
-        ariaLabel={`Modèle : ${model}`}
-        triggerLabel={model}
-        options={MODEL_OPTIONS}
+        ariaLabel={spokenLabel('Modèle', modelText, settings.model ? null : defaults.model?.origin)}
+        triggerLabel={modelText}
+        options={modelOptions(defaults.model)}
         value={modelValue(settings)}
-        origin={origins.model}
         compact={compact}
         disabled={disabled}
         onChange={(value) => onChange(withModel(settings, value))}
       />
       <SettingsMenu
         title="Effort"
-        ariaLabel={effortLabel(settings)}
-        triggerLabel={effortLabel(settings)}
-        options={EFFORT_OPTIONS}
+        ariaLabel={spokenLabel('Effort', effortText, settings.effort ? null : defaults.effort?.origin)}
+        triggerLabel={effortText}
+        options={effortOptions(defaults.effort)}
         value={settings.effort ?? DEFAULT_VALUE}
-        origin={origins.effort}
         compact={compact}
         disabled={disabled}
         onChange={(value) => onChange(withEffort(settings, value))}

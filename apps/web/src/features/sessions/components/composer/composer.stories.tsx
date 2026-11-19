@@ -151,6 +151,19 @@ export const NewSession: Story = {
   },
 };
 
+/** Sans choix, le modèle et l'effort disent leur valeur par défaut : « Défaut : Sonnet 5.5 », « Défaut : effort élevé ». */
+export const NewSessionDefaults: Story = {
+  args: {
+    ...NewSession.args,
+    settings: { permissionMode: 'auto', model: null, effort: null },
+    defaults: {
+      effort: { origin: 'défaut du projet api-tarifs', value: 'high' },
+      model: { origin: null, value: 'sonnet' },
+      permissionMode: 'défaut du groupe',
+    },
+  },
+};
+
 /** Téléphone : collée en bas de l'écran, réglages en puces au-dessus de l'éditeur, suggestions en feuille. */
 export const Mobile: Story = {
   globals: { viewport: { value: 'mobile1' } },
