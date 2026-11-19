@@ -1,0 +1,23 @@
+/*
+ * Popover (Radix) : calque flottant à la surface des menus, qui s'ouvre depuis son déclencheur (variables de Radix).
+ * `popover-content-trigger` : aussi large que son déclencheur, une liste de choix sous son champ.
+ */
+@layer components {
+  .popover-content {
+    @apply z-50 flex w-72 flex-col gap-2 rounded-card border border-line bg-surface p-3 text-sm text-ink shadow-overlay outline-none;
+    transform-origin: var(--radix-popover-content-transform-origin);
+  }
+  .popover-content-trigger {
+    width: max(var(--radix-popover-trigger-width), 18rem);
+    max-width: calc(100vw - 1rem);
+  }
+  .popover-header {
+    @apply flex flex-col gap-0.5;
+  }
+  .popover-title {
+    @apply font-medium;
+  }
+  .popover-description {
+    @apply text-muted;
+  }
+}

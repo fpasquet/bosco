@@ -1,5 +1,5 @@
 'use client';
-import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Box,
   Download,
@@ -16,17 +16,42 @@ import {
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import type { GroupDto, PilotOptionsDto, SessionDefaultsResolvedDto, SessionDto, StartSessionDto } from '@bosco/domain';
+import type {
+  CheckoutChoiceDto,
+  GroupDto,
+  PilotOptionsDto,
+  ProjectCheckoutsDto,
+  SessionDefaultsResolvedDto,
+  SessionDto,
+  StartSessionDto,
+} from '@bosco/domain';
 import { displayPath } from '@/lib/format';
 import { PageSkeleton } from '@/shared/components/page-skeleton';
 import { useNotices } from '@/shared/hooks/use-notices';
 import { originLabel } from '@/shared/lib/session-settings';
 import { Breadcrumbs } from '@/shared/ui/breadcrumbs';
 import { groupQuery, groupsQuery } from '../../api/groups';
-import { isolationQuery, pilotDefaultsQuery, pilotOptionsQuery, startSession, suggestions } from '../../api/pilot';
+import {
+  checkoutsQuery,
+  isolationQuery,
+  pilotDefaultsQuery,
+  pilotOptionsQuery,
+  startSession,
+  suggestions,
+} from '../../api/pilot';
 import { sessionsQuery } from '../../api/sessions';
 import { sourcesQuery } from '../../api/sources';
 import { useFullAccess } from '../../hooks/use-full-access';
+import {
+  checkoutChoiceOf,
+  checkoutName,
+  checkoutOptions,
+  DEFAULT_CHECKOUT,
+  sandboxHint,
+  uncopied,
+  workdirOf,
+  workstationHint,
+} from '../../lib/checkouts';
 import {
   groupProjects,
   namesList,
@@ -43,19 +68,31 @@ import {
   type SessionChoices,
   settingsOrigins,
 } from '../../lib/session-choices';
+import { CheckoutSelect } from '../checkout-select';
 import { Composer, type ComposerValue } from '../composer';
 import { FullAccessDialog } from '../full-access-dialog';
 import { ProjectsField } from '../projects-field';
 
 /** Récapitulatif d'une session sur le poste : le projet principal, et ceux qu'elle voit en plus. */
-function WorkstationSummary({ others, principal }: { others: string[]; principal: string }) {
+function WorkstationSummary({
+  checkout,
+  others,
+  principal,
+}: {
+  /** Branche ou worktree choisi pour le projet principal (« le worktree feat/tarifs ») ; null : sa branche active */
+  checkout: null | string;
+  others: string[];
+  principal: string;
+}) {
+  const place = checkout ? `sur ${checkout}` : 'dans le dossier du projet';
+  const principalPlace = checkout ? `${principal}, ${place}` : principal;
   return (
     <>
       <p className="flex gap-2">
         <Monitor aria-hidden className="mt-0.5 size-4 shrink-0 text-muted" />
         {others.length === 0
-          ? 'Sur ce poste, dans le dossier du projet, comme dans un terminal.'
-          : `Sur ce poste, dans ${principal} ; elle voit aussi ${namesList(others)}.`}
+          ? `Sur ce poste, ${place}, comme dans un terminal.`
+          : `Sur ce poste, dans ${principalPlace} ; elle voit aussi ${namesList(others)}.`}
       </p>
       <p className="text-xs font-semibold text-muted">Ensuite</p>
       <p className="flex gap-2">
@@ -161,49 +198,86 @@ export interface NewSessionOrigin {
   project: null | number;
 }
 
-/** « 3 fichiers modifiés du poste non copiés », ou « — » quand la copie prend tout. */
-function uncopied(changes: null | number): string {
-  if (!changes) return '—';
-  return changes > 1 ? `${changes} fichiers modifiés du poste non copiés` : '1 fichier modifié du poste non copié';
-}
+/** Branches et worktrees des projets choisis, lus à la demande, par racine. */
+type CheckoutsOf = (root: string) => ProjectCheckoutsDto | undefined;
 
 /**
- * Copies d'une session à plusieurs projets en bac à sable : pour chaque projet, d'où part sa copie et ce qui
- * n'y entre pas.
+ * Branche ou worktree de chaque projet de la session : sur le poste, où elle travaille ; en bac à sable, d'où part sa
+ * copie. Par défaut, la branche active ; un seul projet a son champ, plusieurs un tableau, la copie en bac à sable.
  */
-function SandboxCopies({
-  from,
-  onFrom,
-  projects,
+function CheckoutFields({
+  checkoutsOf,
+  chosen,
+  onChange,
+  sandboxed,
+  values,
 }: {
-  from: (project: OptionProject) => string;
-  onFrom: (root: string, branch: string) => void;
-  projects: OptionProject[];
+  checkoutsOf: CheckoutsOf;
+  chosen: OptionProject[];
+  onChange: (root: string, value: string) => void;
+  sandboxed: boolean;
+  values: Readonly<Record<string, string>>;
 }) {
+  const label = sandboxed ? 'Partir de' : 'Branche ou worktree';
+  const withGit = chosen.filter(({ git }) => git);
+  const [principal] = withGit;
+  if (!principal) return null;
+  const valueOf = (project: OptionProject) => values[project.root] ?? DEFAULT_CHECKOUT;
+  if (chosen.length === 1) {
+    const options = checkoutOptions(principal, checkoutsOf(principal.root), sandboxed);
+    const value = valueOf(principal);
+    return (
+      <div className="flex min-w-0 flex-col gap-1.5 sm:max-w-xl">
+        <label htmlFor="session-checkout" className="text-sm font-medium">
+          {label}
+        </label>
+        <CheckoutSelect
+          id="session-checkout"
+          describedBy="session-checkout-help"
+          options={options}
+          value={value}
+          onChange={(next) => onChange(principal.root, next)}
+        />
+        <p id="session-checkout-help" className="text-xs text-muted">
+          {sandboxed
+            ? sandboxHint(value, checkoutsOf(principal.root), options, principal.changes)
+            : workstationHint(value, checkoutsOf(principal.root))}
+        </p>
+      </div>
+    );
+  }
   return (
-    <div className="overflow-x-auto rounded-control border border-line sm:col-span-2">
+    <div className="overflow-x-auto rounded-control border border-line">
       <table className="table table-sm">
-        <caption className="sr-only">Copies des projets</caption>
+        <caption className="sr-only">Branche ou worktree de chaque projet</caption>
         <thead className="text-xs text-muted">
           <tr>
-            <th className="font-medium">Projet</th>
-            <th className="font-medium">Partir de</th>
-            <th className="font-medium">Copie</th>
+            <th className="font-medium whitespace-nowrap">Projet</th>
+            <th className="w-full font-medium">{label}</th>
+            {sandboxed && <th className="font-medium">Copie</th>}
           </tr>
         </thead>
         <tbody>
-          {projects.map((project) => (
+          {chosen.map((project) => (
             <tr key={project.root}>
-              <td>{project.name}</td>
+              <td className="whitespace-nowrap">{project.name}</td>
               <td>
-                <input
-                  className="input w-40 font-mono input-sm"
-                  aria-label={`Partir de, pour ${project.name}`}
-                  value={from(project)}
-                  onChange={(event) => onFrom(project.root, event.target.value)}
-                />
+                {project.git ? (
+                  <CheckoutSelect
+                    size="sm"
+                    className="min-w-64"
+                    ariaLabel={`${label}, pour ${project.name}`}
+                    options={checkoutOptions(project, checkoutsOf(project.root), sandboxed)}
+                    value={valueOf(project)}
+                    onChange={(next) => onChange(project.root, next)}
+                  />
+                ) : (
+                  <span className="text-xs text-muted">sans git : son dossier</span>
+                )}
               </td>
-              <td className="text-xs text-muted">{uncopied(project.changes)}</td>
+              {sandboxed && (
+                <td className="text-xs whitespace-nowrap text-muted">{uncopied(project.changes) ?? '—'}</td>
+              )}
             </tr>
           ))}
         </tbody>
@@ -217,10 +291,11 @@ function busyProjects(
   sessions: readonly SessionDto[],
   chosen: readonly OptionProject[],
   sandboxed: boolean,
+  dirOf: (project: OptionProject) => string,
 ): { project: OptionProject; session: SessionDto }[] {
   if (sandboxed) return [];
   return chosen.flatMap((project) => {
-    const session = openIn(sessions, project.root);
+    const session = openIn(sessions, project.root, dirOf(project));
     return session ? [{ project, session }] : [];
   });
 }
@@ -267,55 +342,32 @@ function BusyWarnings({ busy, named }: { busy: { project: OptionProject; session
   ));
 }
 
-/**
- * Branches d'une session en bac à sable : d'où part la copie de chaque projet, et la branche de la
- * session, la même dans chacun.
- */
+/** Branche d'une session en bac à sable : la même dans chaque projet, créée d'où part sa copie. */
 function SandboxFields({
   branch,
   chosen,
-  from,
   onBranch,
-  onFrom,
 }: {
   branch: string;
   chosen: OptionProject[];
-  from: (project: OptionProject) => string;
   onBranch: (branch: string) => void;
-  onFrom: (root: string, branch: string) => void;
 }) {
-  const [principal] = chosen;
   const several = chosen.length > 1;
-  const start = principal ? from(principal) : '';
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-      {several || !principal ? (
-        <SandboxCopies projects={chosen} from={from} onFrom={onFrom} />
-      ) : (
-        <label className="flex min-w-0 flex-col gap-1.5">
-          <span className="text-sm font-medium">Partir de</span>
-          <input
-            className="input w-full font-mono"
-            value={start}
-            onChange={(event) => onFrom(principal.root, event.target.value)}
-          />
-        </label>
-      )}
-      <label className="flex min-w-0 flex-col gap-1.5">
-        <span className="text-sm font-medium">Branche de la session</span>
-        <input
-          className="input w-full font-mono"
-          placeholder="bosco/s-… d’après le premier message"
-          value={branch}
-          onChange={(event) => onBranch(event.target.value)}
-        />
-      </label>
-      <p className="text-xs text-muted sm:col-span-2">
+    <label className="flex min-w-0 flex-col gap-1.5 sm:max-w-xl">
+      <span className="text-sm font-medium">Branche de la session</span>
+      <input
+        className="input w-full font-mono"
+        placeholder="bosco/s-… d’après le premier message"
+        value={branch}
+        onChange={(event) => onBranch(event.target.value)}
+      />
+      <span className="text-xs text-muted">
         {several
           ? `Créée dans chacun des ${chosen.length} projets ; un nom déjà pris dans l’un d’eux est refusé. Chaque copie prend sa branche telle qu’enregistrée.`
-          : `Copie de ${start || 'la branche courante'} telle qu’enregistrée : les fichiers modifiés du poste ne sont pas copiés.`}
-      </p>
-    </div>
+          : 'Créée dans la copie, d’où elle part ; « Récupérer la branche » la ramène dans le projet.'}
+      </span>
+    </label>
   );
 }
 
@@ -350,11 +402,14 @@ function Header({
 /** Récapitulatif de droite : où la session tourne, ce que voit l'agent et comment elle se poursuit. */
 function Summary({
   branch,
+  checkout,
   chosen,
   general,
   sandboxed,
 }: {
   branch: string;
+  /** Branche ou worktree choisi pour le projet principal ; null : sa branche active */
+  checkout: null | string;
   chosen: OptionProject[];
   general: string[];
   sandboxed: boolean;
@@ -371,15 +426,10 @@ function Summary({
           domains={sandboxDomains(general, chosen).length}
         />
       ) : (
-        <WorkstationSummary principal={names[0] ?? ''} others={names.slice(1)} />
+        <WorkstationSummary checkout={checkout} principal={names[0] ?? ''} others={names.slice(1)} />
       )}
     </aside>
   );
-}
-
-/** Branche de départ d'une copie : celle saisie, sinon celle réglée pour le projet, sinon sa branche courante. */
-function startFrom(typed: Readonly<Record<string, string>>, project: OptionProject): string {
-  return typed[project.root] ?? project.startBranch ?? project.branch ?? '';
 }
 
 /** Pourquoi le bac à sable est grisé : Docker, ou un projet de la session sans git ; null s'il est possible. */
@@ -389,14 +439,25 @@ function sandboxReason(unavailable: null | string, chosen: readonly OptionProjec
   return unavailable ?? (withoutGit ? `${withoutGit.name} n’est pas un dépôt git` : null);
 }
 
-/** Bac à sable demandé au démarrage : la branche de la session et la branche de départ de chaque projet. */
-function sandboxChoice(branch: string, chosen: readonly OptionProject[], fromOf: (project: OptionProject) => string) {
-  const [principal, ...others] = chosen;
-  return {
-    branch: branch.trim() || null,
-    startBranch: (principal && fromOf(principal).trim()) || null,
-    startBranches: Object.fromEntries(others.map((other) => [other.root, fromOf(other).trim() || null])),
-  };
+/**
+ * Bac à sable demandé au démarrage : la branche de la session ; d'où part chaque copie vient du choix « Partir de »,
+ * sinon de la branche réglée pour le projet, sinon de sa branche courante.
+ */
+function sandboxChoice(branch: string) {
+  return { branch: branch.trim() || null, startBranch: null, startBranches: {} };
+}
+
+/** Branche ou worktree choisi pour chaque projet, sauf le défaut, tel que l'API le reçoit. */
+function checkoutsChoice(
+  chosen: readonly OptionProject[],
+  values: Readonly<Record<string, string>>,
+): Record<string, CheckoutChoiceDto> {
+  return Object.fromEntries(
+    chosen.flatMap(({ git, root }) => {
+      const choice = git ? checkoutChoiceOf(values[root] ?? DEFAULT_CHECKOUT) : null;
+      return choice ? [[root, choice]] : [];
+    }),
+  );
 }
 
 /** Projets d'une session partie d'un groupe (ses projets, le principal en tête) ou d'un projet. */
@@ -550,7 +611,7 @@ function NewSessionForm({
   // L'accès complet confirmé pour cette session : le démarrage ne le redemande pas
   const [confirmed, setConfirmed] = useState(false);
   const [chosenWhere, setWhere] = useState<'sandbox' | 'workstation' | null>(null);
-  const [startBranches, setStartBranches] = useState<Record<string, string>>({});
+  const [checkoutValues, setCheckoutValues] = useState<Record<string, string>>({});
   const [branch, setBranch] = useState('');
   // Partie d'un groupe, la session prend ses projets, le principal en tête ; d'un projet, ce projet
   const roots = chosenRoots ?? originRoots(group ?? undefined, options.projects, origin.project);
@@ -574,9 +635,17 @@ function NewSessionForm({
   });
   const profile = chosenProfile ?? defaults?.profile.value ?? options.profiles[0]?.path ?? null;
   const settings = effectiveSettings(choices, defaults);
+  // Branches et worktrees des projets git choisis, lus quand ils entrent dans la session
+  const checkoutResults = useQueries({
+    queries: chosen.filter(({ git }) => git).map(({ root }) => ({ ...checkoutsQuery(root), staleTime: 30_000 })),
+  });
+  const gitRoots = chosen.filter(({ git }) => git).map(({ root }) => root);
+  const checkoutsOf = (root: string) => checkoutResults[gitRoots.indexOf(root)]?.data;
+  const checkoutOf = (candidate: OptionProject) => checkoutValues[candidate.root] ?? DEFAULT_CHECKOUT;
   // Le bac à sable travaille sur ses propres copies : une session du terminal dans le même dossier ne le gêne pas
-  const busy = busyProjects(sessions ?? [], chosen, sandboxed);
-  const fromOf = (candidate: OptionProject) => startFrom(startBranches, candidate);
+  const busy = busyProjects(sessions ?? [], chosen, sandboxed, (candidate) =>
+    workdirOf(candidate.root, checkoutOf(candidate), checkoutsOf(candidate.root)),
+  );
   const changeProjects = (next: string[]) => {
     setChosenRoots(next);
     setProfile(null);
@@ -600,7 +669,8 @@ function NewSessionForm({
       project: project.root,
       projects: others.map(({ root }) => root),
       settings: choices,
-      sandbox: sandboxed ? sandboxChoice(branch, chosen, fromOf) : null,
+      checkouts: checkoutsChoice(chosen, checkoutValues),
+      sandbox: sandboxed ? sandboxChoice(branch) : null,
     });
   };
   // Un accès complet venu d'un réglage par défaut se confirme aussi au démarrage, sauf en bac à sable
@@ -652,15 +722,14 @@ function NewSessionForm({
                 />
               </div>
               <WhereField where={where} unavailable={sandboxUnavailable} onChoose={setWhere} />
-              {sandboxed && (
-                <SandboxFields
-                  branch={branch}
-                  chosen={chosen}
-                  from={fromOf}
-                  onBranch={setBranch}
-                  onFrom={(root, value) => setStartBranches({ ...startBranches, [root]: value })}
-                />
-              )}
+              <CheckoutFields
+                checkoutsOf={checkoutsOf}
+                chosen={chosen}
+                sandboxed={sandboxed}
+                values={checkoutValues}
+                onChange={(root, value) => setCheckoutValues({ ...checkoutValues, [root]: value })}
+              />
+              {sandboxed && <SandboxFields branch={branch} chosen={chosen} onBranch={setBranch} />}
               <BusyWarnings busy={busy} named={chosen.length > 1} />
               <Composer
                 label="Premier message"
@@ -680,7 +749,13 @@ function NewSessionForm({
             </p>
           )}
         </div>
-        <Summary branch={branch} chosen={chosen} general={general} sandboxed={sandboxed} />
+        <Summary
+          branch={branch}
+          checkout={project ? checkoutName(checkoutOf(project), checkoutsOf(project.root)) : null}
+          chosen={chosen}
+          general={general}
+          sandboxed={sandboxed}
+        />
       </div>
       <FullAccessDialog
         open={fullAccess.open}

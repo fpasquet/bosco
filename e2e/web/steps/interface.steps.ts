@@ -1,6 +1,6 @@
 // Phrases d'interface génériques, par rôle accessible ; les textes s'écrivent entre guillemets français.
 import AxeBuilder from '@axe-core/playwright';
-import { expect } from '@playwright/test';
+import { expect, type Page } from '@playwright/test';
 import { defineParameterType } from 'playwright-bdd';
 import { Then, When } from './fixtures.ts';
 
@@ -91,6 +91,41 @@ When('je choisis {texte} dans la liste {texte}', async ({ page }, option: string
 When('je bascule l’interrupteur {texte}', async ({ page }, label: string) => {
   await page.getByRole('switch', { name: label }).click();
 });
+
+/** Liste déroulante de Radix (rôle combobox), par son étiquette ; une option par le début de son nom. */
+const dropdown = (page: Page, label: string) => page.getByRole('combobox', { name: label, exact: true });
+const startsWith = (text: string) => new RegExp(`^${text.replaceAll(/[$()*+.?[\\\]^{|}]/g, '\\$&')}`);
+
+When('je choisis {texte} dans la liste déroulante {texte}', async ({ page }, option: string, label: string) => {
+  await dropdown(page, label).click();
+  await page.getByRole('option', { name: startsWith(option) }).click();
+});
+
+When('je cherche {texte} dans la liste déroulante {texte}', async ({ page }, text: string, label: string) => {
+  await dropdown(page, label).click();
+  await page.getByRole('combobox', { name: /^Rechercher/ }).fill(text);
+});
+
+When('je choisis {texte} dans la liste ouverte', async ({ page }, option: string) => {
+  await page.getByRole('option', { name: startsWith(option) }).click();
+});
+
+Then('la liste ouverte ne propose pas {texte}', async ({ page }, option: string) => {
+  await expect(page.getByRole('option', { name: startsWith(option) })).toHaveCount(0);
+});
+
+Then('la liste déroulante {texte} affiche {texte}', async ({ page }, label: string, text: string) => {
+  await expect(dropdown(page, label)).toContainText(text);
+});
+
+Then(
+  'la liste déroulante {texte} affiche {texte} avec le badge {texte}',
+  async ({ page }, label: string, text: string, badge: string) => {
+    const field = dropdown(page, label);
+    await expect(field).toContainText(text);
+    await expect(field.getByText(badge, { exact: true })).toBeVisible();
+  },
+);
 
 Then('la liste {texte} vaut {texte}', async ({ page }, label: string, option: string) => {
   await expect(page.getByLabel(label).locator('option:checked')).toHaveText(option);

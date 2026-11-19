@@ -19,6 +19,12 @@ Feature: Sessions in a sandbox
     When I write to "the started session" with the JSON "fixtures/pilot/schema.json"
     Then "the started session" should end its turn with "Reçu : Vérifie aussi le schéma de config · mode acceptEdits · modèle défaut · effort défaut · images 0"
 
+  @CA-SESS-197
+  Scenario: The copy of a sandbox starts from the worktree chosen for the project
+    When I start a session in the project "maison" with the JSON "fixtures/pilot/start-sandbox.json" on the worktree ".claude/worktrees/tarifs"
+    Then the response code should be 201
+    And "the started session" should run in a sandbox on the branch "bosco/s-typescript-6" from "feat/tarifs", "running"
+
   @CA-SESS-192
   Scenario: The data services of the Compose file start with the sandbox, not the services built from the repository
     Given the project "maison" has the Compose file "fixtures/compose/docker-compose.yml"

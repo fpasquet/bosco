@@ -22,7 +22,8 @@ interface SessionView {
     };
     settings: { effort: null | string; model: null | string; permissionMode: string };
   };
-  project: null | { name: string };
+  /** Dossier de travail à l'intérieur du projet (« .claude/worktrees/tarifs »), vide à sa racine */
+  project: null | { folder: string; name: string };
   sourceId: string;
   waiting:
     | null
@@ -92,6 +93,53 @@ When(
   },
 );
 
+When('I read the branches and worktrees of the project {string}', async ({ bosco, last, request }, project: string) => {
+  const response = await request.get('/api/pilot/checkouts', {
+    params: { project: join(bosco.profilesRoot, project) },
+  });
+  last.response = { status: response.status(), body: (await response.json()) as unknown };
+});
+
+/** Démarre une session sur le poste, sur une branche ou un worktree du projet ; la réponse de Bosco. */
+async function startOn(
+  request: APIRequestContext,
+  root: string,
+  profilesRoot: string,
+  checkout: Record<string, string>,
+  file = 'fixtures/pilot/start-maison.json',
+): Promise<{ body: { sessionId?: string }; status: number }> {
+  const body = { ...message(file, profilesRoot), project: root };
+  const response = await request.post('/api/pilot/sessions', { data: { ...body, checkouts: { [root]: checkout } } });
+  const json = (await response.json()) as { sessionId?: string };
+  started = json.sessionId ?? '';
+  return { status: response.status(), body: json };
+}
+
+When(
+  'I start a session in the project {string} on the branch {string}',
+  async ({ bosco, last, request }, project: string, branch: string) => {
+    const root = join(bosco.profilesRoot, project);
+    last.response = await startOn(request, root, bosco.profilesRoot, { kind: 'branch', branch });
+  },
+);
+
+When(
+  'I start a session in the project {string} on the worktree {string}',
+  async ({ bosco, last, request }, project: string, folder: string) => {
+    const root = join(bosco.profilesRoot, project);
+    last.response = await startOn(request, root, bosco.profilesRoot, { kind: 'worktree', path: join(root, folder) });
+  },
+);
+
+When(
+  'I start a session in the project {string} with the JSON {string} on the worktree {string}',
+  async ({ bosco, last, request }, project: string, file: string, folder: string) => {
+    const root = join(bosco.profilesRoot, project);
+    const checkout = { kind: 'worktree', path: join(root, folder) };
+    last.response = await startOn(request, root, bosco.profilesRoot, checkout, file);
+  },
+);
+
 When('I write to {string} with the JSON {string}', async ({ bosco, last, request }, session: string, file: string) => {
   const response = await request.post(`/api/sessions/${idOf(session)}/messages`, {
     data: message(file, bosco.profilesRoot),
@@ -152,6 +200,14 @@ Then('{string} should be piloted with:', async ({ request }, session: string, ta
   }
   expect(actual).toEqual(expected);
 });
+
+Then(
+  '{string} should work in the folder {string} of {string}',
+  async ({ request }, session: string, folder: string, project: string) => {
+    const view = await eventually(request, idOf(session), (current) => current.project?.folder === folder);
+    expect(view.project?.name).toBe(project);
+  },
+);
 
 Then('{string} should wait for the permission {string}', async ({ request }, session: string, detailText: string) => {
   await eventually(

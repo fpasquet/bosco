@@ -119,3 +119,14 @@ Fonctionnalité: Sessions en bac à sable
     Alors le tableau des sessions montre « Bac à sable »
     Quand j'ouvre la page « /history »
     Alors je vois l’étiquette « Bac à sable »
+
+  @CA-SESS-197
+  Scénario: La copie d'un bac à sable part de la branche ou du worktree choisi
+    Quand j'ouvre la page « /sessions/new »
+    Et je clique sur le bouton radio « Bac à sable »
+    Alors la liste déroulante « Partir de » affiche « main » avec le badge « active »
+    Quand je choisis « feat/tarifs » dans la liste déroulante « Partir de »
+    Alors je vois le texte « Copie de feat/tarifs, la branche du worktree, telle qu’enregistrée »
+    Quand je saisis « Monte TypeScript en version 6 » dans le champ « Premier message »
+    Et je clique sur le bouton « Démarrer »
+    Alors je vois le texte « Reçu : Monte TypeScript en version 6 · mode acceptEdits · modèle défaut · effort défaut · images 0 »

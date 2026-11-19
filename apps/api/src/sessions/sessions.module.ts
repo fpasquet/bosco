@@ -34,6 +34,8 @@ import { FileTranscriptFiles } from './infrastructure/claude-code/transcript-fil
 import { FileTranscriptReplay } from './infrastructure/claude-code/transcript-replay.ts';
 import { FileTranscriptWatcher } from './infrastructure/claude-code/transcript-watcher.ts';
 import { SessionEventsBus } from './infrastructure/events/session-events.bus.ts';
+import { GitCheckouts } from './infrastructure/git/git-checkouts.ts';
+import { ScriptedCheckouts } from './infrastructure/git/scripted-checkouts.ts';
 import { loadHookSecret } from './infrastructure/hooks/hook-secret.ts';
 import { NotifySendAlerts, RecordingNotifier } from './infrastructure/notifications/desktop-notifier.ts';
 import { PresenceTracker } from './infrastructure/notifications/presence.ts';
@@ -232,8 +234,8 @@ const conversations = new FileConversationReader();
         liveSignals: LiveSignalService,
         sessionService: SessionService,
         bus: SessionEventsBus,
-      ) =>
-        new PilotService(
+      ) => {
+        const pilot = new PilotService(
           new MikroOrmPilotRepository(orm),
           new ClaudeTurnRunner(config.pilotClaude),
           liveSignals,
@@ -245,7 +247,11 @@ const conversations = new FileConversationReader();
           clock,
           { next: randomUUID },
           new FileTranscriptFiles(),
-        ),
+        );
+        // Dans les scénarios, les projets ne sont pas de vrais dépôts : branches et worktrees scriptés
+        pilot.useCheckouts(config.testing ? new ScriptedCheckouts() : new GitCheckouts());
+        return pilot;
+      },
     },
     {
       provide: CHANNEL_SERVICE,

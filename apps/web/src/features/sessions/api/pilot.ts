@@ -4,6 +4,7 @@ import type {
   PilotMessageDto,
   PilotOptionsDto,
   PilotSettingsDto,
+  ProjectCheckoutsDto,
   ProjectDetailDto,
   RetrievedBranchesDto,
   SandboxBranchesDto,
@@ -51,6 +52,17 @@ export const pilotOptionsQuery = {
     return (await response.json()) as PilotOptionsDto;
   },
 };
+
+/** Branches et worktrees d'un projet (sa racine), proposés au démarrage d'une session. */
+export function checkoutsQuery(project: string) {
+  return {
+    queryKey: ['pilot', 'checkouts', project],
+    queryFn: async (): Promise<ProjectCheckoutsDto> => {
+      const response = await call(`/api/pilot/checkouts?${new URLSearchParams({ project }).toString()}`);
+      return (await response.json()) as ProjectCheckoutsDto;
+    },
+  };
+}
 
 /** Ce qui décide des valeurs d'une nouvelle session : projet principal, groupe, profil choisi, bac à sable. */
 export interface DefaultsTarget {

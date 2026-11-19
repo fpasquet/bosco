@@ -20,7 +20,7 @@ Si l'un manque, « Bac à sable » est grisé dans « Nouvelle session », a
 
 Dans « Nouvelle session », choisis « Où elle tourne » › « Bac à sable ». Deux champs s'ajoutent :
 
-- **« Partir de »** : la branche de départ, celle réglée dans les réglages du projet, sinon la branche courante du dossier ;
+- **« Partir de »** : d'où part la copie. Par défaut, la branche réglée dans les réglages du projet (badge « départ du projet »), sinon la branche active du dossier (badge « active »). La liste propose aussi les worktrees du dépôt, dont la copie prend la branche (le commit d'un worktree détaché), et ses autres branches ;
 - **« Branche de la session »** : un nom qui commence par `bosco/s-`, proposé d'après le premier message, par exemple `bosco/s-typescript-6`. Un nom déjà pris est refusé.
 
 Bosco fait alors un clone Git autonome du projet, sans objet partagé avec ton dépôt, crée la branche de session à partir de la branche de départ, et démarre le conteneur. Les fichiers non commités du poste ne sont pas copiés.
