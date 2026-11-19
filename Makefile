@@ -45,19 +45,8 @@ desktop-update: ## Pull the repository, rebuild the .deb package and install it 
 	$(MAKE) desktop-package
 	$(MAKE) desktop-package-install
 
-beta: ## Build the .deb package of a branch and install it over the running one (sudo; BRANCH=<origin branch>, this checkout by default)
-ifdef BRANCH
-	@# La branche se construit dans un worktree à part, gardé entre deux essais : le dépôt courant n'est pas touché
-	git fetch origin $(BRANCH)
-	git worktree prune
-	@if [ -d "$(BETA_DIR)" ]; then git -C "$(BETA_DIR)" checkout --quiet --force --detach origin/$(BRANCH); \
-		else git worktree add --detach "$(BETA_DIR)" origin/$(BRANCH); fi
-	@# Dans un worktree neuf, pnpm reprend Electron de son cache sans lancer le script qui télécharge son binaire
-	cd "$(BETA_DIR)" && pnpm install --frozen-lockfile && (cd apps/desktop && node node_modules/electron/install.js) && \
-		$(MAKE) desktop-package desktop-package-install
-else
-	$(MAKE) desktop-package desktop-package-install
-endif
+beta: ## Build the .deb package of a branch in a clean worktree and install it over the running one (sudo; BRANCH=<local or origin branch>, the current one by default)
+	@BETA_DIR="$(BETA_DIR)" BRANCH="$(BRANCH)" MAKE="$(MAKE)" sh scripts/beta.sh
 
 # Outils Android dans le dossier personnel (JDK 17, SDK), comme les a installés le lot 4
 JAVA_HOME ?= $(HOME)/.local/jdk-17
