@@ -36,11 +36,16 @@ export function sandboxDomains(general: readonly string[], projects: readonly Op
 }
 
 /** Une session du terminal encore vivante dans ce dossier : deux agents y modifieraient les mêmes fichiers. */
-export function openIn(sessions: readonly SessionDto[], root: string): null | SessionDto {
+export function openIn(sessions: readonly SessionDto[], root: string, dir: string = root): null | SessionDto {
+  // Dans un worktree, seules les sessions de son dossier modifient les mêmes fichiers
+  const inside = (session: SessionDto) =>
+    dir === root
+      ? session.project?.root === root
+      : session.projectPath === dir || Boolean(session.projectPath?.startsWith(`${dir}/`));
   return (
     sessions.find(
       (session) =>
-        session.project?.root === root &&
+        inside(session) &&
         !session.pilot &&
         (session.openInTerminal || session.state === 'running' || session.state === 'waiting'),
     ) ?? null
