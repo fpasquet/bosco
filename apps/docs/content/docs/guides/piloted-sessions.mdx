@@ -19,11 +19,11 @@ Le formulaire demande :
 - **« Branche ou worktree »** : où la session travaille dans chaque projet git. Par défaut, la branche active du dossier, marquée du badge « active ». La liste range ensuite les worktrees du dépôt sous « Worktrees », chacun avec son dossier, puis ses autres branches sous « Branches ». Un worktree fait tourner la session dans son dossier. Une autre branche reçoit un worktree que Bosco crée dans `.claude/worktrees` du projet, ignoré par Git sans toucher au `.gitignore` : ton dossier ne change jamais de branche. Avec plusieurs projets, chacun a sa liste.
 - **« Premier message »** : ce que l'agent doit faire, par exemple « Ajoute le bloc des tarifs sous chaque club, en t'appuyant sur l'API d'api-tarifs. ». `@` cite un fichier ; tu peux joindre 5 images au plus (PNG, JPEG, GIF ou WebP, 5 Mo chacune).
 
-La barre d'outils du message porte trois menus : **« Autorisations »**, **modèle** et **effort**. À côté de chaque puce, Bosco écrit d'où vient sa valeur (voir [Valeurs par défaut](#valeurs-par-défaut)). « Démarrer » lance la session.
+La barre d'outils du message porte trois menus : **« Autorisations »**, **modèle** et **effort**. Tant que tu n'en choisis pas, le modèle et l'effort cochent leur première option, qui donne la valeur par défaut : « Défaut : Opus 5.5 », « Défaut : effort élevé ». Quand un projet, un groupe ou le profil la règle dans Bosco, le menu le dit sous cette option (« défaut du projet api-tarifs »). À côté des autorisations, Bosco écrit d'où vient leur valeur (voir [Valeurs par défaut](#valeurs-par-défaut)). « Démarrer » lance la session.
 
 Si une session est déjà ouverte dans le même dossier, dans un terminal, Bosco prévient : « Une session est déjà ouverte dans ce dossier, dans un terminal : les deux agents modifieraient les mêmes fichiers. » Dans un worktree, seule une session ouverte dans ce worktree le déclenche. L'avertissement ne bloque pas.
 
-Modèles proposés : « Défaut du profil », Opus 5.5, Sonnet 5.5, Haiku 5.5 et Haiku 4.5. Efforts : « Effort : défaut », Faible, Moyen, Élevé, Très élevé, Maximal.
+Modèles proposés : « Défaut : … », Opus 5.5, Sonnet 5.5, Haiku 5.5 et Haiku 4.5. Efforts : « Défaut : … », Faible, Moyen, Élevé, Très élevé, Maximal. Revenir à « Défaut » rend la valeur par défaut, même si elle change ensuite.
 
 ## Écrire à la session
 
@@ -84,7 +84,7 @@ Sans rien nulle part, le mode est « Demander ». En bac à sable, si aucun ni
 
 Le profil (l'abonnement) suit le même ordre, de la session au groupe puis au projet, et sinon le profil par défaut de Réglages › Abonnement Claude.
 
-L'interface dit toujours d'où vient une valeur : « choisi pour cette session », « défaut du groupe », « défaut du projet api-tarifs », « défaut du profil pro », « celui du profil Claude Code », « défaut en bac à sable ».
+L'interface dit d'où vient une valeur : à côté des autorisations (« choisi pour cette session », « défaut du groupe », « défaut du projet api-tarifs », « défaut du profil pro », « celui du profil Claude Code », « défaut en bac à sable »), et sous l'option « Défaut : … » des menus du modèle et de l'effort quand un niveau de Bosco la règle. Une valeur lue dans le profil Claude Code s'y affiche sans origine : « Défaut : Opus 5.5 ».
 
 ### Où régler les valeurs par défaut
 
