@@ -15,6 +15,7 @@ import type {
 import type { SessionDefaultsService } from './session-defaults.service.ts';
 import type { SessionService } from './session.service.ts';
 import { TOKEN_VARIABLE } from '../../shared/domain/profile-access.ts';
+import { actionTargetOf } from '../domain/action-summary.ts';
 import {
   type CheckoutChoice,
   NO_CHECKOUTS,
@@ -278,15 +279,6 @@ interface SandboxDeps {
   sandboxes: Sandboxes;
   /** La branche a du travail non récupéré : le bac à sable sera supprimé demain */
   warn: (sessionId: string, branch: string) => Promise<void>;
-}
-
-/** Ce que l'agent veut faire, comme le montre la carte d'autorisation : la commande, le fichier ou l'adresse. */
-function detailOf(input: Record<string, unknown>): null | string {
-  for (const key of ['command', 'file_path', 'notebook_path', 'url', 'pattern']) {
-    const value = input[key];
-    if (typeof value === 'string' && value) return value;
-  }
-  return null;
 }
 
 /**
@@ -1087,7 +1079,7 @@ export class PilotService {
         turn.asking = tool;
         return this.signals.requestPermission(
           origin,
-          { tool, detail: detailOf(input) },
+          { tool, detail: actionTargetOf(tool, input) },
           (onAbandon) => turn.abandons.set(requestId, () => onAbandon('Tour arrêté')),
           'pilot',
         );

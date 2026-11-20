@@ -16,6 +16,7 @@
     "dev": "node scripts/dev.mjs"
   },
   "dependencies": {
+    "@ai-sdk/harness": "1.0.187",
     "@bosco/domain": "workspace:*",
     "@mikro-orm/core": "7.2.8",
     "@mikro-orm/migrations": "7.2.8",
@@ -23,6 +24,9 @@
     "@nestjs/common": "12.4.0",
     "@nestjs/core": "12.4.0",
     "@nestjs/platform-fastify": "12.4.0",
+    "ai": "7.0.176",
+    "ai-sdk-harness-approval": "0.2.1",
+    "ai-sdk-harness-network": "0.1.0",
     "chokidar": "6.0.0",
     "commander": "15.1.0",
     "next": "16.4.5",
