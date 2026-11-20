@@ -2,7 +2,7 @@
 
 Ce qui change d'une version de Bosco à l'autre, tiré des messages de commit de `main`. Les versions beta paraissent en pre-release sur GitHub ; ici, la dernière beta décrit tout ce qui a changé depuis la dernière version stable.
 
-## [0.1.0-beta.2](https://github.com/fpasquet/bosco/releases/tag/v0.1.0-beta.2) - 2026-11-20
+## [0.1.0-beta.3](https://github.com/fpasquet/bosco/releases/tag/v0.1.0-beta.3) - 2026-11-20
 
 ### Nouveautés
 
@@ -66,6 +66,7 @@ Ce qui change d'une version de Bosco à l'autre, tiré des messages de commit de
 
 ### Corrections
 
+- **desktop** · Run the AppImage without libfuse2, and add it to the applications menu ([#77](https://github.com/fpasquet/bosco/pull/77))
 - **web** · Keep the window from scrolling under the app shell on long pages ([#76](https://github.com/fpasquet/bosco/pull/76))
 - **desktop** · Keep Next.js externals inside the package and the repository intact ([#75](https://github.com/fpasquet/bosco/pull/75))
 - **web** · Read the model aliases of Claude Code, and make Outside projects the active row ([#71](https://github.com/fpasquet/bosco/pull/71))
