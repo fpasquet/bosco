@@ -7,7 +7,7 @@ export function autostartFile(home: string): string {
 }
 
 /** Entrée de bureau qui lance l'application ; --hidden : dans la barre système seulement. */
-export function desktopEntry(command: string, icon: string, hidden: boolean): string {
+export function desktopEntry(command: string, icon: string, hidden: boolean, windowClass = 'Bosco'): string {
   return [
     '[Desktop Entry]',
     'Type=Application',
@@ -17,7 +17,7 @@ export function desktopEntry(command: string, icon: string, hidden: boolean): st
     `Icon=${icon}`,
     'Terminal=false',
     'Categories=Development;',
-    'StartupWMClass=Bosco',
+    `StartupWMClass=${windowClass}`,
     '',
   ].join('\n');
 }

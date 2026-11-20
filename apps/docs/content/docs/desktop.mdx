@@ -30,6 +30,17 @@ chmod +x bosco-desktop_0.1.0-beta.1_x86_64.AppImage
 
 Un seul fichier, sans installation, pour toute distribution Linux. Elle se met à jour seule depuis les releases : garde-la à un endroit fixe (par exemple `~/Applications`), la mise à jour la remplace sur place.
 
+Dès son premier lancement, elle s'ajoute au menu des applications, avec son icône : `~/.local/share/applications/bosco-desktop.desktop` lance le fichier AppImage, et l'icône est copiée dans `~/.local/share/icons/hicolor/256x256/apps/`. Si tu la déplaces, l'entrée suit au lancement suivant. Pour la retirer du menu, supprime ces deux fichiers. Cette entrée porte le même nom que celle du paquet `.deb` : si les deux sont installés, le menu lance l'AppImage.
+
+L'AppImage embarque FUSE, avec lequel elle se monte : elle ne demande au poste que `fusermount`, du paquet `fuse3` qu'Ubuntu installe d'office. Sans lui, `./bosco-desktop_*_x86_64.AppImage --appimage-extract-and-run` la lance quand même : elle se décompresse alors dans `/tmp` à chaque lancement, plus lentement.
+
+<Callout type="warn" title="Jusqu'à la 0.1.0-beta.2 : FUSE 2 requis">
+  Les AppImage jusqu'à la 0.1.0-beta.2 se montent avec FUSE 2, qu'Ubuntu n'installe plus depuis la 22.04. Sans lui,
+  elles s'arrêtent aussitôt sur `dlopen(): error loading libfuse.so.2` et `AppImages require FUSE to run`. Installe-le
+  (`sudo apt install libfuse2t64`, `libfuse2` sur Ubuntu 22.04 et Debian 12), ou lance-les avec
+  `--appimage-extract-and-run`. Elles ne s'ajoutent pas non plus au menu des applications.
+</Callout>
+
 <Callout type="warn" title="Sans le bac à sable de Chromium">
   Une AppImage ne peut pas installer le `chrome-sandbox` privilégié ni le profil AppArmor : son lanceur ajoute
   `--no-sandbox`. Préfère le paquet `.deb` si tu veux ce bac à sable. Le [bac à sable de Bosco](/docs/guides/sandbox),
@@ -106,7 +117,7 @@ L'icône change dès qu'une session t'attend, et son infobulle dit combien : «�
 4. « Ouvrir Bosco », « Nouvelle session » et la case « Suspendre les notifications 1 h ».
 5. La case « Lancer au démarrage » et « Quitter Bosco ».
 
-« Lancer au démarrage » écrit `~/.config/autostart/bosco.desktop` : Bosco démarre avec ta session, fenêtre fermée, dans la barre système.
+« Lancer au démarrage » écrit `~/.config/autostart/bosco.desktop` : Bosco démarre avec ta session, fenêtre fermée, dans la barre système. Pour l'AppImage, cette entrée lance le fichier AppImage lui-même.
 
 ## Les notifications
 

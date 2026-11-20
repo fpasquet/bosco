@@ -19,6 +19,7 @@ import type { NotificationDto, SessionDto } from '@bosco/domain';
 import { installKind, preferencesOf, updaterChannel } from './auto-update.ts';
 import { isAutostart, setAutostart } from './autostart.ts';
 import { LiveEvents } from './events.ts';
+import { execArgument, installLauncher, launcherIcon } from './launcher.ts';
 import { nativeText, pathOf } from './notification-text.ts';
 import { loadPreferences, savePreferences } from './preferences.ts';
 import { choiceOf, type ServiceChoice, serviceChoiceDialog } from './service-choice.ts';
@@ -105,7 +106,7 @@ function act(action: TrayAction): void {
       refreshTray();
       break;
     case 'autostart':
-      setAutostart(homedir(), !isAutostart(homedir()), launchCommand(), join(ASSETS, 'icon-256.png'));
+      setAutostart(homedir(), !isAutostart(homedir()), launchCommand(), appIcon());
       refreshTray();
       break;
     case 'quit':
@@ -122,11 +123,28 @@ function act(action: TrayAction): void {
   }
 }
 
-/** Relancée comme elle l'a été : l'exécutable du paquet, ou Electron sur le dossier du dépôt (sans bac à sable si
- * chrome-sandbox n'est pas configuré) */
+/** Relancée comme elle l'a été : le fichier AppImage, l'exécutable du paquet, ou Electron sur le dossier du dépôt (sans
+ * bac à sable si chrome-sandbox n'est pas configuré). L'exécutable d'une AppImage est dans son montage, qui change à
+ * chaque lancement : c'est le fichier AppImage qu'on relance. */
 function launchCommand(): string {
   const sandbox = process.argv.filter((arg) => arg === '--no-sandbox');
+  if (process.env.APPIMAGE) return [execArgument(process.env.APPIMAGE), ...sandbox].join(' ');
   return [process.execPath, ...(app.isPackaged ? [] : [APP_DIR]), ...sandbox].join(' ');
+}
+
+/** Icône des entrées de bureau : pour l'AppImage, sa copie hors du montage, que le lanceur installe. */
+function appIcon(): string {
+  return process.env.APPIMAGE ? launcherIcon(homedir()) : join(ASSETS, 'icon-256.png');
+}
+
+/** L'AppImage écrit son entrée dans le menu des applications, avec son icône ; le paquet .deb a déjà la sienne. */
+function installAppImageLauncher(): void {
+  if (!process.env.APPIMAGE) return;
+  try {
+    installLauncher(homedir(), launchCommand(), join(ASSETS, 'icon-256.png'));
+  } catch (error) {
+    console.error(`Launcher not installed: ${error instanceof Error ? error.message : String(error)}`);
+  }
 }
 
 function refreshTray(): void {
@@ -288,6 +306,7 @@ else {
     service?.process.kill('SIGTERM');
   });
   void app.whenReady().then(async () => {
+    installAppImageLauncher();
     const ready = await ensureService();
     if (!ready) {
       app.quit();

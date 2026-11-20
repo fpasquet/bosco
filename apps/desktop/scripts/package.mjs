@@ -255,6 +255,9 @@ const artifacts = await build({
     },
     // La version complète, date et commit compris : electron-builder n'en garderait que « 0.1.0 »
     deb: { compression: 'xz', fpm: ['--version', version] },
+    // Le lanceur statique de l'AppImage (type2-runtime 20251108) : l'ancien, par défaut, charge libfuse.so.2, qu'Ubuntu
+    // n'installe plus depuis la 22.04 ; celui-ci embarque FUSE et ne demande au poste que fusermount3 (paquet fuse3)
+    toolsets: { appimage: '1.0.3' },
   },
 });
 for (const artifact of artifacts) console.log(`Built ${artifact}`);
