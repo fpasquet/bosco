@@ -17,7 +17,7 @@ Chaque version de Bosco est publiée sur [GitHub](https://github.com/fpasquet/bo
 
 Le paquet `.deb` configure à l'installation le bac à sable de Chromium et le profil AppArmor qu'Ubuntu exige. L'AppImage ne le peut pas : elle se lance sans ce bac à sable (`--no-sandbox`). Le [bac à sable de Bosco](/docs/guides/sandbox), où tournent les sessions, n'en dépend pas : il marche avec l'un comme avec l'autre.
 
-Les deux applications du poste embarquent le service de Bosco et Node 26 : rien d'autre à installer, sauf Docker pour le bac à sable et, pour l'AppImage, FUSE 2 (`libfuse2t64`), qu'Ubuntu n'installe plus depuis la 22.04. Elles gardent leurs données dans `~/.local/share/bosco`, les mêmes que le service lancé [depuis le dépôt](/docs/installation#depuis-le-dépôt).
+Les deux applications du poste embarquent le service de Bosco et Node 26 : rien d'autre à installer, sauf Docker pour le bac à sable. L'AppImage embarque FUSE : elle ne demande que `fusermount`, du paquet `fuse3`, installé d'office sur Ubuntu. Elles gardent leurs données dans `~/.local/share/bosco`, les mêmes que le service lancé [depuis le dépôt](/docs/installation#depuis-le-dépôt).
 
 ## Installer
 
@@ -34,12 +34,11 @@ Si apt signale que `_apt` ne peut pas lire le fichier, copie-le d'abord dans `/t
 <Tab value="AppImage">
 
 ```bash
-sudo apt install libfuse2t64   # FUSE 2, une seule fois (libfuse2 sur Ubuntu 22.04 et Debian 12)
 chmod +x bosco-desktop_*_x86_64.AppImage
 ./bosco-desktop_*_x86_64.AppImage
 ```
 
-Sans FUSE 2, l'AppImage s'arrête sur `dlopen(): error loading libfuse.so.2` ; `--appimage-extract-and-run` la lance quand même, sans droits d'administration (voir [Application du poste](/docs/desktop#lappimage)).
+Dès son premier lancement, Bosco apparaît dans le menu des applications, avec son icône. Jusqu'à la 0.1.0-beta.2, l'AppImage demande FUSE 2 et s'arrête sans lui sur `dlopen(): error loading libfuse.so.2` : `sudo apt install libfuse2t64` (voir [Application du poste](/docs/desktop#lappimage)).
 
 Garde le fichier à un endroit fixe (par exemple `~/Applications`) : la mise à jour automatique le remplace sur place.
 

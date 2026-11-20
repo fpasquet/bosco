@@ -26,7 +26,7 @@ sudo apt install ./bosco-desktop_*_amd64.deb      # paquet .deb : Bosco rejoint 
 chmod +x bosco-desktop_*_x86_64.AppImage && ./bosco-desktop_*_x86_64.AppImage   # ou l'AppImage
 ```
 
-L'AppImage demande FUSE 2, qu'Ubuntu n'installe plus depuis la 22.04 : `sudo apt install libfuse2t64` (`libfuse2` sur Ubuntu 22.04 et Debian 12) si elle s'arrête sur `error loading libfuse.so.2`.
+L'AppImage s'ajoute au menu des applications dès son premier lancement. Jusqu'à la 0.1.0-beta.2, elle demande FUSE 2 : `sudo apt install libfuse2t64` (`libfuse2` sur Ubuntu 22.04 et Debian 12) si elle s'arrête sur `error loading libfuse.so.2`.
 
 L'application démarre son service sur `http://127.0.0.1:4870` et ouvre sa fenêtre. Passe ensuite au [premier lancement](#premier-lancement).
 
