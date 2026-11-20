@@ -30,6 +30,20 @@ chmod +x bosco-desktop_0.1.0-beta.1_x86_64.AppImage
 
 Un seul fichier, sans installation, pour toute distribution Linux. Elle se met à jour seule depuis les releases : garde-la à un endroit fixe (par exemple `~/Applications`), la mise à jour la remplace sur place.
 
+<Callout type="warn" title="FUSE 2 requis">
+  L'AppImage se monte avec FUSE 2, qu'Ubuntu n'installe plus depuis la 22.04 (seul FUSE 3 est là). Sans lui, elle
+  s'arrête aussitôt sur `dlopen(): error loading libfuse.so.2` et `AppImages require FUSE to run`.
+</Callout>
+
+Installe-le une fois :
+
+```bash
+sudo apt install libfuse2t64   # Ubuntu 24.04 et suivants, Debian 13
+sudo apt install libfuse2      # Ubuntu 22.04, Debian 12
+```
+
+Sans droits d'administration, `./bosco-desktop_*_x86_64.AppImage --appimage-extract-and-run` la lance quand même : elle se décompresse alors dans `/tmp` à chaque lancement, plus lentement.
+
 <Callout type="warn" title="Sans le bac à sable de Chromium">
   Une AppImage ne peut pas installer le `chrome-sandbox` privilégié ni le profil AppArmor : son lanceur ajoute
   `--no-sandbox`. Préfère le paquet `.deb` si tu veux ce bac à sable. Le [bac à sable de Bosco](/docs/guides/sandbox),
