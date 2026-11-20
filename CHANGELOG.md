@@ -2,10 +2,12 @@
 
 Ce qui change d'une version de Bosco à l'autre, tiré des messages de commit de `main`. Les versions beta paraissent en pre-release sur GitHub ; ici, la dernière beta décrit tout ce qui a changé depuis la dernière version stable.
 
-## [0.1.0-beta.1](https://github.com/fpasquet/bosco/releases/tag/v0.1.0-beta.1) - 2026-11-18
+## [0.1.0-beta.2](https://github.com/fpasquet/bosco/releases/tag/v0.1.0-beta.2) - 2026-11-20
 
 ### Nouveautés
 
+- **web** · Check « Défaut : Opus 5.5 » for the default model and effort of a session ([#74](https://github.com/fpasquet/bosco/pull/74))
+- Choose the branch or the worktree of each project when starting a session ([#72](https://github.com/fpasquet/bosco/pull/72))
 - **projects** · Adopt the repositories of the sessions as projects and show every project in the usage ([#66](https://github.com/fpasquet/bosco/pull/66))
 - Reach the subscription of a profile with a declared long-lived token ([#65](https://github.com/fpasquet/bosco/pull/65))
 - Remove a source, import the whole history and reset Bosco ([#63](https://github.com/fpasquet/bosco/pull/63))
@@ -64,6 +66,10 @@ Ce qui change d'une version de Bosco à l'autre, tiré des messages de commit de
 
 ### Corrections
 
+- **web** · Keep the window from scrolling under the app shell on long pages ([#76](https://github.com/fpasquet/bosco/pull/76))
+- **desktop** · Keep Next.js externals inside the package and the repository intact ([#75](https://github.com/fpasquet/bosco/pull/75))
+- **web** · Read the model aliases of Claude Code, and make Outside projects the active row ([#71](https://github.com/fpasquet/bosco/pull/71))
+- **docs** · Give the Pages address of the site and show the labels of the download buttons ([#70](https://github.com/fpasquet/bosco/pull/70))
 - **release** · Download the Electron binary when it is missing, and drop the SDK tools package ([#68](https://github.com/fpasquet/bosco/pull/68))
 - **sandbox** · Start the data services, apply a mode change to the running turn, align the containers panel ([#67](https://github.com/fpasquet/bosco/pull/67))
 - Count the usage of the subagents of a session ([#64](https://github.com/fpasquet/bosco/pull/64))
@@ -78,6 +84,7 @@ Ce qui change d'une version de Bosco à l'autre, tiré des messages de commit de
 
 ### Documentation
 
+- Add a documentation site with the app downloads, deployed to Cloudflare Pages ([#61](https://github.com/fpasquet/bosco/pull/61))
 - **requirements** · Export the requirements with the sessions-first screens delivered ([#49](https://github.com/fpasquet/bosco/pull/49))
 - Add the README
 - **requirements** · Export the requirements from the specs repository
@@ -85,6 +92,8 @@ Ce qui change d'une version de Bosco à l'autre, tiré des messages de commit de
 
 ### Construction et CI
 
+- **make** · Build make beta in a clean worktree, from a local or an origin branch ([#73](https://github.com/fpasquet/bosco/pull/73))
+- Speed up the CI and the Release workflow ([#69](https://github.com/fpasquet/bosco/pull/69))
 - Publish versions with a Release workflow, a changelog and in-app updates ([#50](https://github.com/fpasquet/bosco/pull/50))
 - **make** · Add a beta target that installs the package of a branch over the running one ([#41](https://github.com/fpasquet/bosco/pull/41))
 - Update the GitHub Actions to their Node 24 versions ([#1](https://github.com/fpasquet/bosco/pull/1))

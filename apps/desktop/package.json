@@ -1,6 +1,6 @@
 {
   "name": "@bosco/desktop",
-  "version": "0.1.0-beta.1",
+  "version": "0.1.0-beta.2",
   "private": true,
   "description": "Application du poste (Linux) : une coquille autour du service et de l'interface de Bosco, avec la barre système et les notifications natives. Facultative : Bosco se lance toujours dans le navigateur.",
   "author": "fpasquet <fab.pasquet@gmail.com>",
