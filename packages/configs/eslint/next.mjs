@@ -34,5 +34,10 @@ export function next(options) {
         ],
       },
     },
+    {
+      // Cloudflare Pages ne reconnaît un middleware que sous le nom _middleware.ts, que le kebab-case refuse
+      files: ['functions/**/_middleware.ts'],
+      rules: { 'check-file/filename-naming-convention': 'off' },
+    },
   ];
 }

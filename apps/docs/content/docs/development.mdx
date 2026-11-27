@@ -90,7 +90,7 @@ Les captures de `apps/docs/public/screenshots` se reprennent avec `make docs-scr
 
 ### Publier le site
 
-Le workflow « Docs » (`.github/workflows/docs.yml`) publie le site sur Cloudflare Pages, à l'adresse [bosco-c5q.pages.dev](https://bosco-c5q.pages.dev) tant qu'aucun domaine n'est rattaché (le nom `bosco` était pris, Cloudflare l'a suffixé) :
+Le workflow « Docs » (`.github/workflows/docs.yml`) publie le site sur Cloudflare Pages, à l'adresse [bosco.suitebase.dev](https://bosco.suitebase.dev), domaine rattaché au projet. L'adresse du projet, `bosco-c5q.pages.dev` (le nom `bosco` était pris, Cloudflare l'a suffixé), y renvoie par une redirection 301 : c'est le middleware `apps/docs/functions/_middleware.ts`, publié avec l'export. Le site est publié :
 
 - à chaque push sur `main` qui touche `apps/docs`, le lockfile ou le workflow ;
 - après chaque exécution réussie du workflow « Release », pour que la page Télécharger donne la nouvelle version ;
@@ -103,7 +103,7 @@ gh secret set CLOUDFLARE_API_TOKEN --repo fpasquet/bosco
 gh secret set CLOUDFLARE_ACCOUNT_ID --repo fpasquet/bosco
 ```
 
-La variable facultative `NEXT_PUBLIC_SITE_URL` donne l'adresse publique du site : à régler si Cloudflare a suffixé le nom du projet (déjà pris) ou quand un domaine est rattaché. `make docs-deploy` publie depuis le poste, après `wrangler login`.
+La variable facultative `NEXT_PUBLIC_SITE_URL` donne l'adresse publique du site, `https://bosco.suitebase.dev` par défaut : à régler si le site change de domaine, avec les noms d'hôte du middleware. `make docs-deploy` publie depuis le poste, après `wrangler login`.
 
 ## Publier une version
 
