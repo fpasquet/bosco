@@ -8,7 +8,7 @@
     "docs:dev": "fumadocs-mdx && next dev --port 4890 --hostname 127.0.0.1",
     "build": "next build",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc -p functions",
     "test": "vitest run"
   },
   "dependencies": {
@@ -25,6 +25,7 @@
   },
   "devDependencies": {
     "@bosco/configs": "workspace:*",
+    "@cloudflare/workers-types": "5.20261125.1",
     "@tailwindcss/postcss": "4.3.3",
     "@types/mdx": "2.0.14",
     "@types/node": "26.6.6",
